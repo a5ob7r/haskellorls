@@ -1,9 +1,10 @@
 module Main where
 
+import qualified Data.Map.Strict as Map
 import Data.List(transpose)
 import Data.List.Split
+import Data.Maybe
 import System.Environment(getArgs, getEnv)
-import System.FilePath.Glob
 import System.FilePath.Posix
 import System.Posix.Files
 import System.Posix.Types
@@ -12,6 +13,8 @@ import System.Posix.User
 import System.Directory.Extra
 import Data.Time.Clock.POSIX
 import Data.Time.Format.ISO8601
+
+type FilenamePtnMap = Map.Map String String
 
 data Node = Node { name :: String
                  , mode :: String
@@ -26,9 +29,10 @@ main = do
   path <- pure head <*> getArgs
   contents <- listContents $ path
   nodes <- mapM node contents
+  indicators <- colorIndicators
   let additionals = decorator nodes fs
       names = map name nodes
-  namesWithColor <- mapM (\name -> pure colorize <*> (escapeSecuenceFromLSCOLOR name) <*> pure name) names
+      namesWithColor = map (\name -> colorize (lookupEscSec indicators name) name) names
   mapM_ putStrLn . map (\(a, b) -> a ++ " " ++ b) $ zip additionals namesWithColor
     where fs = [mode, owner, group, size, mtime]
 
@@ -48,33 +52,47 @@ leftPadding c n s | n > len = pad ++ s
         pad = take padSize . repeat $ c
 leftPadding _ _ s = s
 
+-- {{{ Filename Colorization
 {-| Colorize String with ansii escape sequence.
 -}
 colorize :: String -> String -> String
 colorize esc str = "\^[[" ++ esc ++ "m" ++ str ++ "\^[[m"
 
-escapeSecuenceFromLSCOLOR :: String -> IO String
-escapeSecuenceFromLSCOLOR name = do
-  indicators <- colorIndicators
-  return . snd . headWithDefault (compile "", "") . filter (\(ptn, _) -> match ptn name) $ indicators
+lookupEscSec :: FilenamePtnMap -> String -> String
+lookupEscSec ptnMap query = f $ Map.lookup query ptnMap
+  where
+    f Nothing = Map.findWithDefault "" (takeExtension query) ptnMap
+    f (Just x) = x
 
-headWithDefault :: a -> [a] -> a
-headWithDefault d [] = d
-headWithDefault _ xs = head xs
-
-colorIndicators :: IO [(Pattern, String)]
+colorIndicators :: IO FilenamePtnMap
 colorIndicators = do
   envLSCOLORS <- getLSCOLORS
-  return . map makePatternEscapePair . filter (\s -> '*' == (head s)) . endBy ":" $ envLSCOLORS
+  return . Map.fromList . filenameEscSecs . concat . map (maybeToList . makePatternEscapePair) . endBy ":" $ envLSCOLORS
 
-makePatternEscapePair :: String -> (Pattern, String)
-makePatternEscapePair s = (ptn, esc)
+filenameEscSecs :: [(String, String)] -> [(String, String)]
+filenameEscSecs =  concat . map (maybeToList . filenamePtnEscSec)
+
+filenamePtnEscSec :: (String, String) -> Maybe (String, String)
+filenamePtnEscSec (ptn, esc) = finenamePattern ptn >>= (\ext -> Just (ext, esc))
+
+finenamePattern :: String -> Maybe String
+finenamePattern str = f str >>= g
+  where f s = if (length s) >= 1
+                 then Just s
+                 else Nothing
+        g s = if (head s) == '*'
+                 then Just $ drop 1 s
+                 else Nothing
+
+makePatternEscapePair :: String -> Maybe (String, String)
+makePatternEscapePair s = if (length pairs) == 2
+                              then Just (head pairs, last pairs)
+                              else Nothing
   where pairs = splitOn "=" s
-        ptn = compile (head pairs)
-        esc = last pairs
 
 getLSCOLORS :: IO String
 getLSCOLORS = getEnv "LS_COLORS"
+-- }}}
 
 node :: FilePath -> IO Node
 node path = do
