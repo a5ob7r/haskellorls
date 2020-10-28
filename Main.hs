@@ -1,7 +1,9 @@
 module Main where
 
 import Data.List(transpose)
-import System.Environment(getArgs)
+import Data.List.Split
+import System.Environment(getArgs, getEnv)
+import System.FilePath.Glob
 import System.FilePath.Posix
 import System.Posix.Files
 import System.Posix.Types
@@ -26,7 +28,8 @@ main = do
   nodes <- mapM node contents
   let additionals = decorator nodes fs
       names = map name nodes
-  mapM_ putStrLn . map (\(a, b) -> a ++ " " ++ b) $ zip additionals names
+  namesWithColor <- mapM (\name -> pure colorize <*> (escapeSecuenceFromLSCOLOR name) <*> pure name) names
+  mapM_ putStrLn . map (\(a, b) -> a ++ " " ++ b) $ zip additionals namesWithColor
     where fs = [mode, owner, group, size, mtime]
 
 decorator :: [Node] -> [Node -> String] -> [String]
@@ -44,6 +47,34 @@ leftPadding c n s | n > len = pad ++ s
         padSize = n - len
         pad = take padSize . repeat $ c
 leftPadding _ _ s = s
+
+{-| Colorize String with ansii escape sequence.
+-}
+colorize :: String -> String -> String
+colorize esc str = "\^[[" ++ esc ++ "m" ++ str ++ "\^[[m"
+
+escapeSecuenceFromLSCOLOR :: String -> IO String
+escapeSecuenceFromLSCOLOR name = do
+  indicators <- colorIndicators
+  return . snd . headWithDefault (compile "", "") . filter (\(ptn, _) -> match ptn name) $ indicators
+
+headWithDefault :: a -> [a] -> a
+headWithDefault d [] = d
+headWithDefault _ xs = head xs
+
+colorIndicators :: IO [(Pattern, String)]
+colorIndicators = do
+  envLSCOLORS <- getLSCOLORS
+  return . map makePatternEscapePair . filter (\s -> '*' == (head s)) . endBy ":" $ envLSCOLORS
+
+makePatternEscapePair :: String -> (Pattern, String)
+makePatternEscapePair s = (ptn, esc)
+  where pairs = splitOn "=" s
+        ptn = compile (head pairs)
+        esc = last pairs
+
+getLSCOLORS :: IO String
+getLSCOLORS = getEnv "LS_COLORS"
 
 node :: FilePath -> IO Node
 node path = do
