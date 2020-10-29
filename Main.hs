@@ -1,10 +1,13 @@
 module Main where
 
-import qualified Data.Map.Strict as Map
-import Data.List(transpose)
+import Data.Char (toUpper)
+import Data.Foldable.Extra (find)
+import Data.List (transpose)
+import Data.List.Extra (tails)
 import Data.List.Split
+import qualified Data.Map.Strict as Map
 import Data.Maybe
-import System.Environment(getArgs, getEnv)
+import System.Environment (getArgs, getEnv)
 import System.FilePath.Posix
 import System.Posix.Files
 import System.Posix.Types
@@ -58,11 +61,13 @@ leftPadding _ _ s = s
 colorize :: String -> String -> String
 colorize esc str = "\^[[" ++ esc ++ "m" ++ str ++ "\^[[m"
 
+{-| Lookup ascii escape sequence. At first, lookup with a query as it is. If
+    fails to lookup, change a query to the extension and re lookup.
+-}
 lookupEscSec :: FilenamePtnMap -> String -> String
-lookupEscSec ptnMap query = f $ Map.lookup query ptnMap
-  where
-    f Nothing = Map.findWithDefault "" (takeExtension query) ptnMap
-    f (Just x) = x
+lookupEscSec ptnMap = f . mapMaybe (\q -> Map.lookup q ptnMap) . reverse . tails . toUppers
+  where f [] = ""
+        f xs = head xs
 
 colorIndicators :: IO FilenamePtnMap
 colorIndicators = do
@@ -81,7 +86,7 @@ finenamePattern str = f str >>= g
                  then Just s
                  else Nothing
         g s = if (head s) == '*'
-                 then Just $ drop 1 s
+                 then Just . toUppers . drop 1 $ s
                  else Nothing
 
 makePatternEscapePair :: String -> Maybe (String, String)
@@ -92,6 +97,9 @@ makePatternEscapePair s = if (length pairs) == 2
 
 getLSCOLORS :: IO String
 getLSCOLORS = getEnv "LS_COLORS"
+
+toUppers :: String -> String
+toUppers = map toUpper
 -- }}}
 
 node :: FilePath -> IO Node
