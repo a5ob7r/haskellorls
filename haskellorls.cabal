@@ -1,22 +1,13 @@
 cabal-version: 2.2
 name: haskellorls
 version: 0.1.0.0
--- synopsis:
--- description:
--- bug-reports:
--- license:
-license-file: LICENSE
 author: a5ob7r
 maintainer: 12132068+a5ob7r@users.noreply.github.com
--- copyright:
--- category:
 build-type: Simple
-extra-source-files: CHANGELOG.md
+extra-source-files: README.md CHANGELOG.md
 
 executable haskellorls
   main-is: Main.hs
-  -- other-modules:
-  -- other-extensions:
   build-depends:
       base >=4.14 && <4.15
     , containers
@@ -26,5 +17,5 @@ executable haskellorls
     , time
     , unix
     , unix-time
-  -- hs-source-dirs:
+  ghc-options: -Wall
   default-language: Haskell2010
