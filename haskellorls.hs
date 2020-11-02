@@ -10,12 +10,12 @@ import Haskellorls.Node
 
 main :: IO ()
 main = do
-  path <- pure head <*> getArgs
-  contents <- listContents $ path
+  path <- head <$> getArgs
+  contents <- listContents path
   nodes <- mapM node contents
   indicators <- colorIndicators
   let additionals = decorator nodes fs
-      names = map name nodes
+      names = map nodeName nodes
       namesWithColor = map (\name -> colorize (lookupEscSec indicators name) name) names
-  mapM_ putStrLn . map (\(a, b) -> a ++ " " ++ b) $ zip additionals namesWithColor
-    where fs = [mode, owner, group, size, mtime]
+  mapM_ (putStrLn . (\(a, b) -> a ++ " " ++ b)) $ zip additionals namesWithColor
+    where fs = [nodeMode, nodeOwner, nodeGroup, nodeSize, nodeMtime]

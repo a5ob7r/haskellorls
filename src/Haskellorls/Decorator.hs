@@ -1,11 +1,11 @@
-module Haskellorls.Decorator where
+module Haskellorls.Decorator (decorator) where
 
 import Data.List (transpose)
 
 import Haskellorls.Node
 
 decorator :: [Node] -> [Node -> String] -> [String]
-decorator nodes = map join . transpose . map (\f -> decorator' nodes f)
+decorator nodes = map join . transpose . map (decorator' nodes)
   where join = foldr1 (\l r -> l ++ " " ++ r)
 
 decorator' :: [Node] -> (Node -> String) -> [String]
@@ -17,5 +17,5 @@ leftPadding :: Char -> Int -> String -> String
 leftPadding c n s | n > len = pad ++ s
   where len = length s
         padSize = n - len
-        pad = take padSize . repeat $ c
+        pad = replicate padSize c
 leftPadding _ _ s = s

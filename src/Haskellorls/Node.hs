@@ -86,8 +86,8 @@ groupFileMode = classFileMode [isGroupReadMode, isGroupWriteMode, isGroupExecute
 otherFileMode :: FileMode -> String
 otherFileMode = classFileMode [isOtherReadMode, isOtherWriteMode, isOtherExecuteMode]
 
-classFileMode :: [(FileMode -> Bool)] -> FileMode -> String
-classFileMode fs mode = foldl (\l r -> l ++ r) "" . map (\(f, perm) -> perm f mode) $ zip fs perms
+classFileMode :: [FileMode -> Bool] -> FileMode -> String
+classFileMode fs mode = concatMap (\(f, perm) -> perm f mode) $ zip fs perms
   where
     perms = [readablePerm, writablePerm, executablePerm]
 
