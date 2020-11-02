@@ -31,10 +31,10 @@ filenameEscSecs :: [(String, String)] -> [(String, String)]
 filenameEscSecs =  concat . map (maybeToList . filenamePtnEscSec)
 
 filenamePtnEscSec :: (String, String) -> Maybe (String, String)
-filenamePtnEscSec (ptn, esc) = finenamePattern ptn >>= (\ext -> Just (ext, esc))
+filenamePtnEscSec (ptn, esc) = filenamePattern ptn >>= (\ext -> Just (ext, esc))
 
-finenamePattern :: String -> Maybe String
-finenamePattern str = f str >>= g
+filenamePattern :: String -> Maybe String
+filenamePattern str = f str >>= g
   where f s = if (length s) >= 1
                  then Just s
                  else Nothing
