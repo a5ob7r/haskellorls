@@ -1,4 +1,13 @@
-module Haskellorls.Node where
+module Haskellorls.Node
+  ( Node
+  , node
+  , nodeName
+  , nodeMode
+  , nodeOwner
+  , nodeGroup
+  , nodeSize
+  , nodeMtime
+  ) where
 
 import System.FilePath.Posix
 import System.Posix.Files
@@ -8,12 +17,12 @@ import System.Posix.User
 import Data.Time.Clock.POSIX
 import Data.Time.Format.ISO8601
 
-data Node = Node { name :: String
-                 , mode :: String
-                 , owner :: String
-                 , group :: String
-                 , size :: String
-                 , mtime :: String
+data Node = Node { nodeName :: String
+                 , nodeMode :: String
+                 , nodeOwner :: String
+                 , nodeGroup :: String
+                 , nodeSize :: String
+                 , nodeMtime :: String
                  } deriving (Show)
 
 node :: FilePath -> IO Node
@@ -25,12 +34,12 @@ node path = do
   group <- groupNameOf status
   size <- fileSizeOf status
   mtime <- modificationTimeOf status
-  return $ Node { name = name
-                , mode = mode
-                , owner = owner
-                , group = group
-                , size = size
-                , mtime = mtime
+  return $ Node { nodeName = name
+                , nodeMode = mode
+                , nodeOwner = owner
+                , nodeGroup = group
+                , nodeSize = size
+                , nodeMtime = mtime
                 }
 
 userNameOf :: FileStatus -> IO String
