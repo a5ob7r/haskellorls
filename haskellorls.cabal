@@ -6,10 +6,15 @@ maintainer: 12132068+a5ob7r@users.noreply.github.com
 build-type: Simple
 extra-source-files: README.md CHANGELOG.md
 
-executable haskellorls
-  main-is: Main.hs
+common shared-properties
+  build-depends: base >=4.14 && <4.15
+  ghc-options: -Wall
+  default-language: Haskell2010
+
+library
+  import: shared-properties
+  hs-source-dirs: src
   build-depends:
-      base >=4.14 && <4.15
     , containers
     , extra
     , filepath
@@ -17,5 +22,14 @@ executable haskellorls
     , time
     , unix
     , unix-time
-  ghc-options: -Wall
-  default-language: Haskell2010
+  exposed-modules:
+      Haskellorls.Color
+      Haskellorls.Decorator
+      Haskellorls.Node
+
+executable haskellorls
+  import: shared-properties
+  main-is: Main.hs
+  build-depends:
+    , extra
+    , haskellorls
