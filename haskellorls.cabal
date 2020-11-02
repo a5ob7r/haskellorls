@@ -29,7 +29,7 @@ library
 
 executable haskellorls
   import: shared-properties
-  main-is: Main.hs
+  main-is: haskellorls.hs
   build-depends:
     , extra
     , haskellorls
