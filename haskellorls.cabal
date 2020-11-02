@@ -33,3 +33,17 @@ executable haskellorls
   build-depends:
     , extra
     , haskellorls
+
+test-suite test
+  import: shared-properties
+  type: exitcode-stdio-1.0
+  main-is: Driver.hs
+  hs-source-dirs: test
+  build-depends:
+    , containers
+    , haskellorls
+    , tasty
+    , tasty-hunit
+  build-tool-depends: tasty-discover:tasty-discover
+  other-modules:
+    ColorTest
