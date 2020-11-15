@@ -8,7 +8,7 @@ import qualified Data.Map.Strict as Map (Map, empty, lookup, fromList)
 import Data.List (isPrefixOf)
 import Data.List.Extra (tails)
 import Data.List.Split (endBy, splitOn)
-import Data.Maybe (mapMaybe)
+import qualified Data.Maybe as Maybe (mapMaybe, fromMaybe)
 import System.Environment (getEnv)
 
 import Haskellorls.Node
@@ -83,7 +83,7 @@ configFrom lsColors = Config
   , resetEscapeSequence = "0"
   , normalEscapeSequence = ""
   , fileEscaseSequence = ""
-  , directoryEscapeSequence = "01;34"
+  , directoryEscapeSequence = Maybe.fromMaybe (directoryEscapeSequence def) $ "di" `Map.lookup` parametors
   , symlinkEscapeSequence = "01;36"
   , pipeEscapeSequence = "33"
   , socketEscapeSequence = "01;35"
@@ -103,7 +103,10 @@ configFrom lsColors = Config
   , clearLineEscapeSequence = "\^[[K"
   , fileColorIndicator = indicator
   }
-    where indicator = colorIndicatorsFrom lsColors
+    where
+      def = defaultConfig
+      indicator = colorIndicatorsFrom lsColors
+      parametors = parametorsFrom lsColors
 
 colorizedNodeName :: Config -> Node -> String
 colorizedNodeName conf nd = start ++ name ++ end
@@ -124,12 +127,12 @@ lookupEscSec conf nd = case nodeType nd of
     fails to lookup, change a query to the extension and re lookup.
 -}
 lookupFilenameEscSec :: FilenamePtnMap -> String -> String
-lookupFilenameEscSec ptnMap = f . mapMaybe (`Map.lookup` ptnMap) . reverse . tails . toUppers
+lookupFilenameEscSec ptnMap = f . Maybe.mapMaybe (`Map.lookup` ptnMap) . reverse . tails . toUppers
   where f [] = ""
         f xs = head xs
 
 colorIndicatorsFrom :: String -> FilenamePtnMap
-colorIndicatorsFrom = Map.fromList . mapMaybe f . endBy ":"
+colorIndicatorsFrom = Map.fromList . Maybe.mapMaybe f . endBy ":"
     where f s = makePatternEscapePair s >>= filenamePtnEscSec
 
 filenamePtnEscSec :: (String, String) -> Maybe (String, String)
@@ -139,6 +142,15 @@ filenamePattern :: String -> Maybe String
 filenamePattern str = if "*" `isPrefixOf` str
                          then Just . toUppers . drop 1 $ str
                          else Nothing
+
+parametorsFrom :: String -> FilenamePtnMap
+parametorsFrom = Map.fromList . Maybe.mapMaybe f . endBy ":"
+  where f s = makePatternEscapePair s >>= paramatorPtnEscSec
+
+paramatorPtnEscSec :: (String, String) -> Maybe (String, String)
+paramatorPtnEscSec (ptn, esc) = if "*" `isPrefixOf` ptn
+                                   then Nothing
+                                   else Just (ptn, esc)
 
 makePatternEscapePair :: String -> Maybe (String, String)
 makePatternEscapePair s = if length pairs == 2
