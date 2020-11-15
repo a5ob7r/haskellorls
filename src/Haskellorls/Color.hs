@@ -9,7 +9,7 @@ import Data.List (isPrefixOf)
 import Data.List.Extra (tails)
 import Data.List.Split (endBy, splitOn)
 import qualified Data.Maybe as Maybe (mapMaybe, fromMaybe)
-import System.Environment (getEnv)
+import System.Environment (lookupEnv)
 
 import Haskellorls.Node
 
@@ -159,7 +159,7 @@ makePatternEscapePair s = if length pairs == 2
   where pairs = splitOn "=" s
 
 getLSCOLORS :: IO String
-getLSCOLORS = getEnv "LS_COLORS"
+getLSCOLORS = Maybe.fromMaybe "" <$> lookupEnv "LS_COLORS"
 
 toUppers :: String -> String
 toUppers = map toUpper
