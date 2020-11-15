@@ -1,16 +1,19 @@
 module Main where
 
-import System.Environment (getArgs)
+import Data.Maybe (fromMaybe, listToMaybe)
 
 import System.Directory.Extra
+import qualified Options.Applicative as OA
 
 import qualified Haskellorls.Color as Color
 import Haskellorls.Decorator
 import Haskellorls.Node
+import qualified Haskellorls.Option as Option
 
 main :: IO ()
 main = do
-  path <- head <$> getArgs
+  options <- OA.execParser Option.opts
+  let path = fromMaybe "." . listToMaybe $ Option.targets options
   contents <- listContents path
   nodes <- mapM node contents
   cConfig <- Color.config

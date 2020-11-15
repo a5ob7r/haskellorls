@@ -18,6 +18,7 @@ library
     , containers
     , extra
     , filepath
+    , optparse-applicative
     , split
     , time
     , unix
@@ -26,6 +27,7 @@ library
       Haskellorls.Color
       Haskellorls.Decorator
       Haskellorls.Node
+      Haskellorls.Option
 
 executable haskellorls
   import: shared-properties
@@ -33,6 +35,7 @@ executable haskellorls
   build-depends:
     , extra
     , haskellorls
+    , optparse-applicative
 
 test-suite test
   import: shared-properties
