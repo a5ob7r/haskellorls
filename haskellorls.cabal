@@ -41,9 +41,14 @@ test-suite test
   hs-source-dirs: test
   build-depends:
     , containers
+    , directory
+    , filepath
     , haskellorls
     , tasty
     , tasty-hunit
+    , temporary
+    , unix
   build-tool-depends: tasty-discover:tasty-discover
   other-modules:
     ColorTest
+    NodeTest
