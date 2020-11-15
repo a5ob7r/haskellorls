@@ -2,49 +2,28 @@ module ColorTest where
 
 import System.Environment (setEnv)
 
-import qualified Data.Map.Strict as Map
-import Test.Tasty.HUnit
+import System.IO.Temp (withSystemTempDirectory)
+import System.FilePath.Posix ((</>))
+import Test.Tasty.HUnit (assertEqual)
 
 import Haskellorls.Color
+import Haskellorls.Node
 
-unit_colorize :: IO ()
-unit_colorize = assertEqual "Return a string which is wrapped with escase sequence" "\^[[38;5;1mCOLORIZE\^[[m" $ colorize "38;5;1" "COLORIZE"
+tempNode :: FilePath -> FilePath -> IO Node
+tempNode directoryPath filename = do
+  let filepath = directoryPath </> filename
+  writeFile filepath ""
+  node filepath
 
-unit_lookupEscSec :: IO ()
-unit_lookupEscSec = do
+unit_colorizedNodeName :: IO ()
+unit_colorizedNodeName = do
   setEnv "LS_COLORS" "*.hs=38;5;81:*.lhs=38;5;71:"
-  indicators <- colorIndicators
-  assertEqual "Return a escape sequence param when is passed valid key" "38;5;81" $ lookupEscSec indicators "haskellorls.hs"
-  assertEqual "Return '' when indicator doesn't have the key" "" $ lookupEscSec indicators "haskellorls.hss"
+  conf <- config
+  withSystemTempDirectory "" $ \directoryPath -> do
+    nd1 <- tempNode directoryPath "haskellorls.hs"
+    nd2 <- tempNode directoryPath "haskellorls.lhs"
+    nd3 <- tempNode directoryPath "haskellorls"
 
-unit_colorIndicators :: IO ()
-unit_colorIndicators = do
-  setEnv "LS_COLORS" "*.hs=38;5;81:*.lhs=38;5;81:"
-  indicators <- colorIndicators
-  assertEqual "Retrun color indicator map which is generated from 'LS_COLORS'" (Map.fromList [(".HS", "38;5;81"), (".LHS", "38;5;81")]) indicators
-
-unit_filenamePtnEscSec :: IO ()
-unit_filenamePtnEscSec = do
-  assertEqual "Return a pair which have valid filename pattern key" (Just (".HS", "38;5;81")) $ filenamePtnEscSec ("*.hs", "38;5;81")
-  assertEqual "Return Nothing when have invalid filename pattern key" Nothing $ filenamePtnEscSec ("hs", "38;5;81")
-
-unit_filenamePattern :: IO ()
-unit_filenamePattern = do
-  assertEqual "Return a upperized filename pattern string when is passed valid filename pattern stirng" (Just "README") $ filenamePattern "*readme"
-  assertEqual "Return a upperized file extension pattern string when is passed valid filename pattern stirng" (Just ".HS") $ filenamePattern "*.hs"
-  assertEqual "Return Nothing when is passed invalid filename pattern stirng which the header charactor is not '*'" Nothing $ filenamePattern ".hs"
-  assertEqual "Return Nothing when is passed ' '(space)" Nothing $ filenamePattern ""
-
-unit_makePatternEscapePair :: IO ()
-unit_makePatternEscapePair = do
-  assertEqual "Return a pair which key and escase sequence params when valid string as key value pair is passed" (Just ("*.hs", "38;5;81")) $ makePatternEscapePair "*.hs=38;5;81"
-  assertEqual "Return Nothing when invalid string as key value pair is passed" Nothing $ makePatternEscapePair "*.hs=38;5;81:*.lhs=38;5;81:"
-
-unit_getLSCOLORS :: IO ()
-unit_getLSCOLORS = do
-  setEnv "LS_COLORS" "*.hs=38;5;81:*.lhs=38;5;81:"
-  env <- getLSCOLORS
-  assertEqual "Return a string which is fetched from the `LS_COLORS` environment varirble" "*.hs=38;5;81:*.lhs=38;5;81:" env
-
-unit_toUpper :: IO ()
-unit_toUpper = assertEqual "Return a string which all letter is uppper case" "HASKELLORLS" $ toUppers "haskellorls"
+    assertEqual "Return a string which is wrapped with haskell escase sequence" "\^[[38;5;81mhaskellorls.hs\^[[m" $ colorizedNodeName conf nd1
+    assertEqual "Return a string which is wrapped with literal haskell escase sequence" "\^[[38;5;71mhaskellorls.lhs\^[[m" $ colorizedNodeName conf nd2
+    assertEqual "Return a string which is wrapped with void escase sequence" "\^[[mhaskellorls\^[[m" $ colorizedNodeName conf nd3

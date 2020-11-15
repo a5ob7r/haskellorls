@@ -1,5 +1,6 @@
 module Haskellorls.Node
-  ( Node
+  ( NodeType(Directory, File)
+  , Node
   , node
   , nodeName
   , nodeMode
@@ -7,6 +8,7 @@ module Haskellorls.Node
   , nodeGroup
   , nodeSize
   , nodeMtime
+  , nodeType
   ) where
 
 import System.FilePath.Posix
@@ -17,30 +19,42 @@ import System.Posix.User
 import Data.Time.Clock.POSIX
 import Data.Time.Format.ISO8601
 
+data NodeType = Directory
+              | File
+              deriving (Show)
+
 data Node = Node { nodeName :: String
                  , nodeMode :: String
                  , nodeOwner :: String
                  , nodeGroup :: String
                  , nodeSize :: String
                  , nodeMtime :: String
+                 , nodeType :: NodeType
                  } deriving (Show)
 
 node :: FilePath -> IO Node
 node path = do
-  let name = takeFileName path
   status <- getFileStatus path
   mode <- fileModeOf status
   owner <- userNameOf status
   group <- groupNameOf status
   size <- fileSizeOf status
   mtime <- modificationTimeOf status
+  let name = takeFileName path
+      ntype = nodeTypeOf status
   return $ Node { nodeName = name
                 , nodeMode = mode
                 , nodeOwner = owner
                 , nodeGroup = group
                 , nodeSize = size
                 , nodeMtime = mtime
+                , nodeType = ntype
                 }
+
+nodeTypeOf :: FileStatus -> NodeType
+nodeTypeOf status
+  | isDirectory status = Directory
+  | otherwise = File
 
 userNameOf :: FileStatus -> IO String
 userNameOf = fmap userName . getUserEntryForID . fileOwner
