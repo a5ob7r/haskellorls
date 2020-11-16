@@ -1,6 +1,6 @@
 module Haskellorls.Option
   ( Option(color, long, targets)
-  , ColorOpt
+  , ColorOpt(..)
   , opts
   ) where
 
