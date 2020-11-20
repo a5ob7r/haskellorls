@@ -20,12 +20,14 @@ library
     , filepath
     , optparse-applicative
     , split
+    , terminal-size
     , time
     , unix
     , unix-time
   exposed-modules:
       Haskellorls.Color
       Haskellorls.Decorator
+      Haskellorls.Grid
       Haskellorls.Node
       Haskellorls.Option
 
