@@ -1,5 +1,5 @@
 module Haskellorls.Node
-  ( NodeType(Directory, File)
+  ( NodeType(..)
   , Node
   , node
   , nodeName
@@ -20,6 +20,7 @@ import Data.Time.Clock.POSIX
 import Data.Time.Format.ISO8601
 
 data NodeType = Directory
+              | Executable
               | File
               deriving (Show)
 
@@ -54,7 +55,10 @@ node path = do
 nodeTypeOf :: FileStatus -> NodeType
 nodeTypeOf status
   | isDirectory status = Directory
+  | isExecutableMode mode = Executable
   | otherwise = File
+    where
+      mode = fileMode status
 
 userNameOf :: FileStatus -> IO String
 userNameOf = fmap userName . getUserEntryForID . fileOwner
@@ -149,3 +153,6 @@ isOtherWriteMode = hasFileMode otherWriteMode
 
 isOtherExecuteMode :: FileMode -> Bool
 isOtherExecuteMode = hasFileMode otherExecuteMode
+
+isExecutableMode :: FileMode -> Bool
+isExecutableMode = or . sequence [isOwnerExecuteMode, isGroupExecuteMode, isOtherExecuteMode]

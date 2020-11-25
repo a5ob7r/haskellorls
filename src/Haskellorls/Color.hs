@@ -91,7 +91,7 @@ configFrom lsColors = Config
   , charDeviceEscapeSequence = "01;33"
   , missingFileEscapeSequence = ""
   , orphanedSymlink = ""
-  , executableEscapeSequence = "01;32"
+  , executableEscapeSequence = Maybe.fromMaybe (executableEscapeSequence def) $ "ex" `Map.lookup` parametors
   , doorEscapeSequence = "01;35"
   , setuidEscapeSequence = "37;41"
   , setguiEscapeSequence = "30;43"
@@ -121,6 +121,7 @@ colorizedNodeName conf nd = start ++ name ++ end
 lookupEscSec :: Config -> Node -> String
 lookupEscSec conf nd = case nodeType nd of
   Directory -> directoryEscapeSequence conf
+  Executable -> executableEscapeSequence conf
   File -> lookupFilenameEscSec (fileColorIndicator conf) $ nodeName nd
 
 {-| Lookup ascii escape sequence. At first, lookup with a query as it is. If
