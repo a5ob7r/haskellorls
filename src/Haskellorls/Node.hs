@@ -24,6 +24,7 @@ data NodeType = Directory
               | NamedPipe
               | Socket
               | BlockDevise
+              | CharDevise
               | Executable
               | File
               deriving (Show)
@@ -63,6 +64,7 @@ nodeTypeOf status
   | isNamedPipe status = NamedPipe
   | isSocket status = Socket
   | isBlockDevice status = BlockDevise
+  | isCharacterDevice status = CharDevise
   | isExecutableMode mode = Executable
   | otherwise = File
     where

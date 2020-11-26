@@ -88,7 +88,7 @@ configFrom lsColors = Config
   , pipeEscapeSequence = Maybe.fromMaybe (pipeEscapeSequence def) $ "pi" `Map.lookup` parametors
   , socketEscapeSequence = Maybe.fromMaybe (socketEscapeSequence def) $ "so" `Map.lookup` parametors
   , blockDeviceEscapeSequence = Maybe.fromMaybe (blockDeviceEscapeSequence def) $ "bd" `Map.lookup` parametors
-  , charDeviceEscapeSequence = "01;33"
+  , charDeviceEscapeSequence = Maybe.fromMaybe (charDeviceEscapeSequence def) $ "cd" `Map.lookup` parametors
   , missingFileEscapeSequence = ""
   , orphanedSymlink = ""
   , executableEscapeSequence = Maybe.fromMaybe (executableEscapeSequence def) $ "ex" `Map.lookup` parametors
@@ -125,6 +125,7 @@ lookupEscSec conf nd = case nodeType nd of
   NamedPipe -> pipeEscapeSequence conf
   Socket -> socketEscapeSequence conf
   BlockDevise -> blockDeviceEscapeSequence conf
+  CharDevise -> charDeviceEscapeSequence conf
   Executable -> executableEscapeSequence conf
   File -> lookupFilenameEscSec (fileColorIndicator conf) $ nodeName nd
 
