@@ -26,6 +26,8 @@ data NodeType = Directory
               | BlockDevise
               | CharDevise
               | DoorsDevise -- NOTE: Doors device is not implemented on Linux
+              | Setuid
+              | Setgid
               | Executable
               | File
               deriving (Show)
@@ -66,6 +68,8 @@ nodeTypeOf status
   | isSocket status = Socket
   | isBlockDevice status = BlockDevise
   | isCharacterDevice status = CharDevise
+  | isSetuidMode mode = Setuid
+  | isSetgidMode mode = Setgid
   | isExecutableMode mode = Executable
   | otherwise = File
     where
@@ -167,3 +171,9 @@ isOtherExecuteMode = hasFileMode otherExecuteMode
 
 isExecutableMode :: FileMode -> Bool
 isExecutableMode = or . sequence [isOwnerExecuteMode, isGroupExecuteMode, isOtherExecuteMode]
+
+isSetuidMode :: FileMode -> Bool
+isSetuidMode = hasFileMode setUserIDMode
+
+isSetgidMode :: FileMode -> Bool
+isSetgidMode = hasFileMode setGroupIDMode
