@@ -25,6 +25,7 @@ data NodeType = Directory
               | Socket
               | BlockDevise
               | CharDevise
+              | DoorsDevise -- NOTE: Doors device is not implemented on Linux
               | Executable
               | File
               deriving (Show)

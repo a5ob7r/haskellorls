@@ -92,7 +92,7 @@ configFrom lsColors = Config
   , missingFileEscapeSequence = ""
   , orphanedSymlink = ""
   , executableEscapeSequence = Maybe.fromMaybe (executableEscapeSequence def) $ "ex" `Map.lookup` parametors
-  , doorEscapeSequence = "01;35"
+  , doorEscapeSequence = Maybe.fromMaybe (executableEscapeSequence def) $ "do" `Map.lookup` parametors
   , setuidEscapeSequence = "37;41"
   , setguiEscapeSequence = "30;43"
   , stickyEscapeSequence = "37;44"
@@ -126,6 +126,7 @@ lookupEscSec conf nd = case nodeType nd of
   Socket -> socketEscapeSequence conf
   BlockDevise -> blockDeviceEscapeSequence conf
   CharDevise -> charDeviceEscapeSequence conf
+  DoorsDevise -> doorEscapeSequence conf
   Executable -> executableEscapeSequence conf
   File -> lookupFilenameEscSec (fileColorIndicator conf) $ nodeName nd
 
