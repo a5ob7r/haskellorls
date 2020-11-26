@@ -84,7 +84,7 @@ configFrom lsColors = Config
   , normalEscapeSequence = ""
   , fileEscaseSequence = ""
   , directoryEscapeSequence = Maybe.fromMaybe (directoryEscapeSequence def) $ "di" `Map.lookup` parametors
-  , symlinkEscapeSequence = "01;36"
+  , symlinkEscapeSequence = symlinkEscapeSequence def
   , pipeEscapeSequence = "33"
   , socketEscapeSequence = "01;35"
   , blockDeviceEscapeSequence = "01;33"
@@ -121,6 +121,7 @@ colorizedNodeName conf nd = start ++ name ++ end
 lookupEscSec :: Config -> Node -> String
 lookupEscSec conf nd = case nodeType nd of
   Directory -> directoryEscapeSequence conf
+  SymbolicLink -> symlinkEscapeSequence conf
   Executable -> executableEscapeSequence conf
   File -> lookupFilenameEscSec (fileColorIndicator conf) $ nodeName nd
 

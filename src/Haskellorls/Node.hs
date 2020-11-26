@@ -20,6 +20,7 @@ import Data.Time.Clock.POSIX
 import Data.Time.Format.ISO8601
 
 data NodeType = Directory
+              | SymbolicLink
               | Executable
               | File
               deriving (Show)
@@ -35,7 +36,7 @@ data Node = Node { nodeName :: String
 
 node :: FilePath -> IO Node
 node path = do
-  status <- getFileStatus path
+  status <- getSymbolicLinkStatus path
   mode <- fileModeOf status
   owner <- userNameOf status
   group <- groupNameOf status
@@ -55,6 +56,7 @@ node path = do
 nodeTypeOf :: FileStatus -> NodeType
 nodeTypeOf status
   | isDirectory status = Directory
+  | isSymbolicLink status = SymbolicLink
   | isExecutableMode mode = Executable
   | otherwise = File
     where
