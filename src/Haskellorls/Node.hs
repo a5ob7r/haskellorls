@@ -23,6 +23,7 @@ data NodeType = Directory
               | SymbolicLink
               | NamedPipe
               | Socket
+              | BlockDevise
               | Executable
               | File
               deriving (Show)
@@ -61,6 +62,7 @@ nodeTypeOf status
   | isSymbolicLink status = SymbolicLink
   | isNamedPipe status = NamedPipe
   | isSocket status = Socket
+  | isBlockDevice status = BlockDevise
   | isExecutableMode mode = Executable
   | otherwise = File
     where
