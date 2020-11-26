@@ -22,6 +22,7 @@ import Data.Time.Format.ISO8601
 data NodeType = Directory
               | SymbolicLink
               | NamedPipe
+              | Socket
               | Executable
               | File
               deriving (Show)
@@ -59,6 +60,7 @@ nodeTypeOf status
   | isDirectory status = Directory
   | isSymbolicLink status = SymbolicLink
   | isNamedPipe status = NamedPipe
+  | isSocket status = Socket
   | isExecutableMode mode = Executable
   | otherwise = File
     where
