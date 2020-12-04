@@ -33,6 +33,7 @@ data NodeType = Directory
               | OtherWritable
               | Executable
               | File
+              | Orphan
               deriving (Show)
 
 data Node = Node { nodeName :: String
@@ -65,12 +66,17 @@ node path = do
 
 nodeTypeOf :: FileStatus -> NodeType
 nodeTypeOf status
+  | isRegularFile status = regularFileNodeTypeOf status
   | isDirectory status = directoryNodeTypeOf status
   | isSymbolicLink status = SymbolicLink
   | isNamedPipe status = NamedPipe
   | isSocket status = Socket
   | isBlockDevice status = BlockDevise
   | isCharacterDevice status = CharDevise
+  | otherwise = Orphan
+
+regularFileNodeTypeOf :: FileStatus -> NodeType
+regularFileNodeTypeOf status
   | isSetuidMode mode = Setuid
   | isSetgidMode mode = Setgid
   | isExecutableMode mode = Executable

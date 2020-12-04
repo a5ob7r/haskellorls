@@ -29,7 +29,7 @@ data Config = Config
   , blockDeviceEscapeSequence :: String
   , charDeviceEscapeSequence :: String
   , missingFileEscapeSequence :: String
-  , orphanedSymlink :: String
+  , orphanedSymlinkEscapeSequence :: String
   , executableEscapeSequence :: String
   , doorEscapeSequence :: String
   , setuidEscapeSequence :: String
@@ -58,7 +58,7 @@ defaultConfig = Config
   , blockDeviceEscapeSequence = "01;33"
   , charDeviceEscapeSequence = "01;33"
   , missingFileEscapeSequence = ""
-  , orphanedSymlink = ""
+  , orphanedSymlinkEscapeSequence = ""
   , executableEscapeSequence = "01;32"
   , doorEscapeSequence = "01;35"
   , setuidEscapeSequence = "37;41"
@@ -90,7 +90,7 @@ configFrom lsColors = Config
   , blockDeviceEscapeSequence = Maybe.fromMaybe (blockDeviceEscapeSequence def) $ "bd" `Map.lookup` parametors
   , charDeviceEscapeSequence = Maybe.fromMaybe (charDeviceEscapeSequence def) $ "cd" `Map.lookup` parametors
   , missingFileEscapeSequence = ""
-  , orphanedSymlink = ""
+  , orphanedSymlinkEscapeSequence = Maybe.fromMaybe (orphanedSymlinkEscapeSequence def) $ "or" `Map.lookup` parametors
   , executableEscapeSequence = Maybe.fromMaybe (executableEscapeSequence def) $ "ex" `Map.lookup` parametors
   , doorEscapeSequence = Maybe.fromMaybe (executableEscapeSequence def) $ "do" `Map.lookup` parametors
   , setuidEscapeSequence = Maybe.fromMaybe (setuidEscapeSequence def) $ "su" `Map.lookup` parametors
@@ -134,6 +134,7 @@ lookupEscSec conf nd = case nodeType nd of
   OtherWritable -> otherWritableEscapeSequence conf
   Executable -> executableEscapeSequence conf
   File -> lookupFilenameEscSec (fileColorIndicator conf) $ nodeName nd
+  Orphan -> orphanedSymlinkEscapeSequence conf
 
 {-| Lookup ascii escape sequence. At first, lookup with a query as it is. If
     fails to lookup, change a query to the extension and re lookup.
