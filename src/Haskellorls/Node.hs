@@ -28,6 +28,9 @@ data NodeType = Directory
               | DoorsDevise -- NOTE: Doors device is not implemented on Linux
               | Setuid
               | Setgid
+              | Sticky
+              | StickyOtherWritable
+              | OtherWritable
               | Executable
               | File
               deriving (Show)
@@ -62,7 +65,7 @@ node path = do
 
 nodeTypeOf :: FileStatus -> NodeType
 nodeTypeOf status
-  | isDirectory status = Directory
+  | isDirectory status = directoryNodeTypeOf status
   | isSymbolicLink status = SymbolicLink
   | isNamedPipe status = NamedPipe
   | isSocket status = Socket
@@ -72,6 +75,15 @@ nodeTypeOf status
   | isSetgidMode mode = Setgid
   | isExecutableMode mode = Executable
   | otherwise = File
+    where
+      mode = fileMode status
+
+directoryNodeTypeOf :: FileStatus -> NodeType
+directoryNodeTypeOf status
+  | isStickyOtherWrite mode = StickyOtherWritable
+  | isOtherWriteMode mode = OtherWritable
+  | isStickyMode mode = Sticky
+  | otherwise = Directory
     where
       mode = fileMode status
 
@@ -177,3 +189,15 @@ isSetuidMode = hasFileMode setUserIDMode
 
 isSetgidMode :: FileMode -> Bool
 isSetgidMode = hasFileMode setGroupIDMode
+
+isStickyMode :: FileMode -> Bool
+isStickyMode = hasFileMode stickyMode
+
+isStickyOtherWrite :: FileMode -> Bool
+isStickyOtherWrite = hasFileMode stickyOtherWriteMode
+
+stickyMode :: FileMode
+stickyMode = 548
+
+stickyOtherWriteMode :: FileMode
+stickyOtherWriteMode = unionFileModes stickyMode otherWriteMode
