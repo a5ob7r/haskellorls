@@ -84,7 +84,7 @@ configFrom lsColors = Config
   , normalEscapeSequence = ""
   , fileEscaseSequence = ""
   , directoryEscapeSequence = Maybe.fromMaybe (directoryEscapeSequence def) $ "di" `Map.lookup` parametors
-  , symlinkEscapeSequence = symlinkEscapeSequence def
+  , symlinkEscapeSequence = Maybe.fromMaybe (symlinkEscapeSequence def) $ "ln" `Map.lookup` parametors
   , pipeEscapeSequence = Maybe.fromMaybe (pipeEscapeSequence def) $ "pi" `Map.lookup` parametors
   , socketEscapeSequence = Maybe.fromMaybe (socketEscapeSequence def) $ "so" `Map.lookup` parametors
   , blockDeviceEscapeSequence = Maybe.fromMaybe (blockDeviceEscapeSequence def) $ "bd" `Map.lookup` parametors
@@ -118,10 +118,12 @@ colorizedNodeName conf nd = start ++ name ++ end
       name = nodeName nd
       escSec = lookupEscSec conf nd
 
+{-| TODO: Lookup link destination node if a `ln` value in `LS_COLORS` is "target".
+-}
 lookupEscSec :: Config -> Node -> String
 lookupEscSec conf nd = case nodeType nd of
   Directory -> directoryEscapeSequence conf
-  SymbolicLink -> symlinkEscapeSequence conf
+  SymbolicLink -> symlinkEscSeq
   NamedPipe -> pipeEscapeSequence conf
   Socket -> socketEscapeSequence conf
   BlockDevise -> blockDeviceEscapeSequence conf
@@ -133,8 +135,12 @@ lookupEscSec conf nd = case nodeType nd of
   StickyOtherWritable -> stickyOtherWritableEscapeSequence conf
   OtherWritable -> otherWritableEscapeSequence conf
   Executable -> executableEscapeSequence conf
-  File -> lookupFilenameEscSec (fileColorIndicator conf) $ nodeName nd
+  File -> fileEscSeq
   Orphan -> orphanedSymlinkEscapeSequence conf
+  where
+    fileEscSeq = lookupFilenameEscSec (fileColorIndicator conf) $ nodeName nd
+    symlinkEscSeq = if symlinkEscSeq == "target" then fileEscSeq else symlinkEscSeq'
+    symlinkEscSeq' = symlinkEscapeSequence conf
 
 {-| Lookup ascii escape sequence. At first, lookup with a query as it is. If
     fails to lookup, change a query to the extension and re lookup.
