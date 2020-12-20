@@ -40,11 +40,11 @@ run opt = do
       nodeNamesForDisplay = map nodePrinter nodes
       lookupUser = flip Ownership.lookupUserName uidSubstTable
       lookupGroup = flip Ownership.lookupGroupName gidSubstTable
-      fs = [ Field.showFilemodeField . Field.filemodeField . Node.nodeStatus
-           , lookupUser . Files.fileOwner . Node.nodeStatus
-           , lookupGroup . Files.fileGroup . Node.nodeStatus
-           , Size.rawFileSize . Node.nodeStatus
-           , Time.fileModificationTime . Node.nodeStatus
+      fs = [ Field.showFilemodeField . Field.filemodeField . Node.nodeInfoStatus
+           , lookupUser . Files.fileOwner . Node.nodeInfoStatus
+           , lookupGroup . Files.fileGroup . Node.nodeInfoStatus
+           , Size.rawFileSize . Node.nodeInfoStatus
+           , Time.fileModificationTime . Node.nodeInfoStatus
            ]
   if Option.long opt
      then do

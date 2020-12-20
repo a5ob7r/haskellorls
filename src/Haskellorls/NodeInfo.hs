@@ -1,8 +1,11 @@
 module Haskellorls.NodeInfo
   ( NodeInfo(..)
   , nodeInfo
+  , nodeInfoStatus
   ) where
 
+import qualified Data.List as L (isPrefixOf)
+import qualified System.FilePath.Posix as Posix (takeDirectory, (</>))
 import qualified System.Posix.Files as Files
     ( FileStatus
     , getSymbolicLinkStatus
@@ -13,38 +16,58 @@ import qualified System.Posix.Files as Files
     )
 
 data NodeInfo
-  = NoInfo
-  | NodeInfo
-      { nodePath :: FilePath
-      , nodeStatus :: Files.FileStatus
-      , destNode :: NodeInfo
+  = FileInfo
+      { getFilePath :: FilePath
+      , getFileStatus :: Files.FileStatus
+      }
+  | LinkInfo
+      { getLinkPath :: FilePath
+      , getLinkStatus :: Files.FileStatus
+      , getDestPath :: FilePath
+      , getDestStatus :: Files.FileStatus
+      }
+  | OrphanedLinkInfo
+      { getOrphanedLinkPath :: FilePath
+      , getOrphanedLinkStatus :: Files.FileStatus
+      , getDestPath :: FilePath
       }
 
 nodeInfo :: FilePath -> IO NodeInfo
 nodeInfo path = do
   status <- Files.getSymbolicLinkStatus path
-  dest <- if Files.isSymbolicLink status
-             then linkNodeInfo path
-             else return NoInfo
-  return $ NodeInfo { nodePath = path
-                    , nodeStatus = status
-                    , destNode = dest
-                    }
+  if Files.isSymbolicLink status
+     then do
+       linkPath <- Files.readSymbolicLink path
+       let linkAbsPath = linkDestPath path linkPath
+       isLinked <- Files.fileExist linkAbsPath
+       if isLinked
+          then do
+            destStatus <- linkDestStatus path linkPath
+            return $ LinkInfo { getLinkPath = path
+                              , getLinkStatus = status
+                              , getDestPath = linkPath
+                              , getDestStatus = destStatus
+                              }
+          else return $ OrphanedLinkInfo { getOrphanedLinkPath = path
+                                         , getOrphanedLinkStatus = status
+                                         , getDestPath = path
+                                         }
+     else return $ FileInfo { getFilePath = path
+                            , getFileStatus = status
+                            }
 
-{- Return symbolic link destination node info if `path` shows symbolic link.
--}
-linkNodeInfo :: FilePath -> IO NodeInfo
-linkNodeInfo path = do
-  linkPath <- Files.readSymbolicLink path
-  isLinked <- Files.fileExist linkPath
-  if isLinked
-     then linkNodeInfo' linkPath
-     else return NoInfo
+linkDestPath :: FilePath -> FilePath -> FilePath
+linkDestPath parPath linkPath = if "/" `L.isPrefixOf` linkPath
+                                   then linkPath
+                                   else Posix.takeDirectory parPath Posix.</> linkPath
 
-linkNodeInfo' :: FilePath -> IO NodeInfo
-linkNodeInfo' path = do
-  status <- Files.getFileStatus path
-  return $ NodeInfo { nodePath = path
-                    , nodeStatus = status
-                    , destNode = NoInfo
-                    }
+linkDestStatus :: FilePath -> FilePath -> IO Files.FileStatus
+linkDestStatus parPath = Files.getFileStatus . linkDestPath parPath
+
+nodeInfoStatus :: NodeInfo -> Files.FileStatus
+nodeInfoStatus node = nodeStatus node
+  where
+    nodeStatus = case node of
+                   FileInfo {} -> getFileStatus
+                   LinkInfo {} -> getLinkStatus
+                   OrphanedLinkInfo {} -> getOrphanedLinkStatus

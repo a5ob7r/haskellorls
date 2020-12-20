@@ -187,10 +187,8 @@ colorizedNodeName conf nd = start ++ name ++ end
       name = nodeName nd
       escSec = lookupEscSec conf nd
 
-{-| TODO: Lookup link destination node if a `ln` value in `LS_COLORS` is "target".
--}
 lookupEscSec :: Config -> Node.NodeInfo -> String
-lookupEscSec conf nd = case nodeTypeOf $ Node.nodeStatus nd of
+lookupEscSec conf nd = case nodeTypeOf $ Node.nodeInfoStatus nd of
   Directory -> directoryEscapeSequence conf
   SymbolicLink -> symlinkEscSeq
   NamedPipe -> pipeEscapeSequence conf
@@ -204,11 +202,20 @@ lookupEscSec conf nd = case nodeTypeOf $ Node.nodeStatus nd of
   StickyOtherWritable -> stickyOtherWritableEscapeSequence conf
   OtherWritable -> otherWritableEscapeSequence conf
   Executable -> executableEscapeSequence conf
-  File -> fileEscSeq
-  Orphan -> orphanedSymlinkEscapeSequence conf
+  File -> lookupFilenameEscSec (fileColorIndicator conf) $ nodeName nd
+  Orphan -> orphanedSymlinkEscSeq
   where
-    fileEscSeq = lookupFilenameEscSec (fileColorIndicator conf) $ nodeName nd
-    symlinkEscSeq = if symlinkEscSeq' == "target" then fileEscSeq else symlinkEscSeq'
+    orphanedSymlinkEscSeq = orphanedSymlinkEscapeSequence conf
+    symlinkEscSeq = case nd of
+                      Node.FileInfo {} -> lookupSymlinkEscSeq
+                      Node.LinkInfo {} -> lookupSymlinkEscSeq
+                      Node.OrphanedLinkInfo {} -> orphanedSymlinkEscSeq
+    lookupSymlinkEscSeq = if symlinkEscSeq' == "target"
+                             then lookupEscSec conf $ Node.FileInfo
+                               { Node.getFilePath = Node.getDestPath nd
+                               , Node.getFileStatus = Node.getDestStatus nd
+                               }
+                             else symlinkEscSeq'
     symlinkEscSeq' = symlinkEscapeSequence conf
 
 {-| Lookup ascii escape sequence. At first, lookup with a query as it is. If
@@ -253,7 +260,12 @@ toUppers :: String -> String
 toUppers = map toUpper
 
 nodeName :: Node.NodeInfo -> String
-nodeName = Posix.takeFileName . Node.nodePath
+nodeName node = Posix.takeFileName name
+  where
+    name = case node of
+             Node.FileInfo {} -> Node.getFilePath node
+             Node.LinkInfo {} -> Node.getLinkPath node
+             Node.OrphanedLinkInfo {} -> Node.getOrphanedLinkPath node
 
 hasFileMode :: Types.FileMode -> Types.FileMode -> Bool
 hasFileMode x y = x == Files.intersectFileModes x y
