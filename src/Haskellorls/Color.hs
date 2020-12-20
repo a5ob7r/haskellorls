@@ -208,7 +208,7 @@ lookupEscSec conf nd = case (nodeTypeOf $ Node.nodeStatus nd) of
   Orphan -> orphanedSymlinkEscapeSequence conf
   where
     fileEscSeq = lookupFilenameEscSec (fileColorIndicator conf) $ nodeName nd
-    symlinkEscSeq = if symlinkEscSeq == "target" then fileEscSeq else symlinkEscSeq'
+    symlinkEscSeq = if symlinkEscSeq' == "target" then fileEscSeq else symlinkEscSeq'
     symlinkEscSeq' = symlinkEscapeSequence conf
 
 {-| Lookup ascii escape sequence. At first, lookup with a query as it is. If
