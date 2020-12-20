@@ -4,12 +4,17 @@ import Data.Maybe (fromMaybe, listToMaybe)
 import System.Directory.Extra
 import System.IO
 import qualified Options.Applicative as OA
+import qualified System.Posix.Files as Files (fileOwner, fileGroup)
 
 import qualified Haskellorls.Color as Color
 import Haskellorls.Decorator
+import qualified Haskellorls.Field as Field
 import qualified Haskellorls.Grid as Grid
-import Haskellorls.Node
+import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
+import qualified Haskellorls.Size as Size
+import qualified Haskellorls.Time as Time
+import qualified Haskellorls.Ownership as Ownership
 
 main :: IO ()
 main = do
@@ -20,8 +25,10 @@ run :: Option.Option -> IO ()
 run opt = do
   let path = fromMaybe "." . listToMaybe $ Option.targets opt
   contents <- listContents path
-  nodes <- mapM node contents
+  nodes <- mapM Node.nodeInfo contents
   cConfig <- Color.config
+  uidSubstTable <- Ownership.getUserIdSubstTable
+  gidSubstTable <- Ownership.getGroupIdSubstTable
   shouldColorize <- case Option.color opt of
                       Option.NEVER -> return False
                       Option.ALWAYS -> return True
@@ -29,11 +36,18 @@ run opt = do
   let additionals = decorator nodes fs
       nodePrinter = if shouldColorize
                        then Color.colorizedNodeName cConfig
-                       else nodeName
+                       else Color.nodeName
       nodeNamesForDisplay = map nodePrinter nodes
+      lookupUser = flip Ownership.lookupUserName uidSubstTable
+      lookupGroup = flip Ownership.lookupGroupName gidSubstTable
+      fs = [ Field.showFilemodeField . Field.filemodeField . Node.nodeStatus
+           , lookupUser . Files.fileOwner . Node.nodeStatus
+           , lookupGroup . Files.fileGroup . Node.nodeStatus
+           , Size.rawFileSize . Node.nodeStatus
+           , Time.fileModificationTime . Node.nodeStatus
+           ]
   if Option.long opt
      then do
        mapM_ (putStrLn . (\(a, b) -> a ++ " " ++ b)) $ zip additionals nodeNamesForDisplay
      else do
        Grid.showNodesWithGridForm nodes nodePrinter
-    where fs = [nodeMode, nodeOwner, nodeGroup, nodeSize, nodeMtime]

@@ -5,15 +5,16 @@ module Haskellorls.Grid
 import Data.List (intercalate, transpose)
 import qualified System.Console.Terminal.Size as TS
 
-import Haskellorls.Node
+import qualified Haskellorls.NodeInfo as Node
+import qualified Haskellorls.Color as Color
 
 newtype Grid = Grid { unGrid :: [[String]] }
   deriving Show
 
-showNodesWithGridForm :: [Node] -> (Node -> String) -> IO ()
+showNodesWithGridForm :: [Node.NodeInfo] -> (Node.NodeInfo -> String) -> IO ()
 showNodesWithGridForm nodes nodePrinter = do
   colSize <- terminalColumnSize
-  let names = map nodeName nodes
+  let names = map Color.nodeName nodes
       grid = validGrid names colSize
       maxColLens = maximumColumnLengths grid
       nodeGrid = transNest (length $ unGrid grid) nodes
@@ -36,10 +37,10 @@ relu n
   | n >= 0 = n
   | otherwise = -n
 
-gridLine :: [Node] -> [Int] -> (Node -> String) -> String
+gridLine :: [Node.NodeInfo] -> [Int] -> (Node.NodeInfo -> String) -> String
 gridLine ns maxColLens nodePrinter = intercalate gridMargin $ zipWith (\nd pad -> nodePrinter nd ++ replicate pad ' ') ns paddings
   where
-    paddings = zipWith (\nd colLen -> colLen - length (nodeName nd)) ns maxColLens
+    paddings = zipWith (\nd colLen -> colLen - length (Color.nodeName nd)) ns maxColLens
 
 validGrid :: [String] -> Int -> Grid
 validGrid ss colSize = validGrid' ss colSize 1

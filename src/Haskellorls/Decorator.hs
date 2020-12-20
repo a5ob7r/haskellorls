@@ -2,13 +2,13 @@ module Haskellorls.Decorator (decorator) where
 
 import Data.List (transpose)
 
-import Haskellorls.Node
+import Haskellorls.NodeInfo
 
-decorator :: [Node] -> [Node -> String] -> [String]
+decorator :: [NodeInfo] -> [NodeInfo -> String] -> [String]
 decorator nodes = map join . transpose . map (decorator' nodes)
   where join = foldr1 (\l r -> l ++ " " ++ r)
 
-decorator' :: [Node] -> (Node -> String) -> [String]
+decorator' :: [NodeInfo] -> (NodeInfo -> String) -> [String]
 decorator' nodes f = map (leftPadding ' ' maxLength) nodes'
   where nodes' = map f nodes
         maxLength = maximum . map length $ nodes'

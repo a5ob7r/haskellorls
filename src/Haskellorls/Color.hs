@@ -1,6 +1,7 @@
 module Haskellorls.Color
   ( config
   , colorizedNodeName
+  , nodeName
   ) where
 
 import Data.Char (toUpper)
@@ -10,10 +11,49 @@ import Data.List.Extra (tails)
 import Data.List.Split (endBy, splitOn)
 import qualified Data.Maybe as Maybe (mapMaybe, fromMaybe)
 import System.Environment (lookupEnv)
+import qualified System.FilePath.Posix as Posix (takeFileName)
+import qualified System.Posix.Files as Files
+    ( FileStatus
+    , isRegularFile
+    , isDirectory
+    , isSymbolicLink
+    , isNamedPipe
+    , isSocket
+    , isBlockDevice
+    , isCharacterDevice
+    , ownerExecuteMode
+    , groupExecuteMode
+    , otherWriteMode
+    , otherExecuteMode
+    , intersectFileModes
+    , unionFileModes
+    , setGroupIDMode
+    , setUserIDMode
+    , fileMode
+    )
+import qualified System.Posix.Types as Types (FileMode)
 
-import Haskellorls.Node
+import qualified Haskellorls.NodeInfo as Node
 
 type FilenamePtnMap = Map.Map String String
+
+data NodeType
+  = Directory
+  | SymbolicLink
+  | NamedPipe
+  | Socket
+  | BlockDevise
+  | CharDevise
+  | DoorsDevise -- NOTE: Doors device is not implemented on Linux
+  | Setuid
+  | Setgid
+  | Sticky
+  | StickyOtherWritable
+  | OtherWritable
+  | Executable
+  | File
+  | Orphan
+  deriving (Show)
 
 data Config = Config
   { leftEscapeSequence :: String
@@ -108,7 +148,36 @@ configFrom lsColors = Config
       indicator = colorIndicatorsFrom lsColors
       parametors = parametorsFrom lsColors
 
-colorizedNodeName :: Config -> Node -> String
+nodeTypeOf :: Files.FileStatus -> NodeType
+nodeTypeOf status
+  | Files.isRegularFile status = regularFileNodeTypeOf status
+  | Files.isDirectory status = directoryNodeTypeOf status
+  | Files.isSymbolicLink status = SymbolicLink
+  | Files.isNamedPipe status = NamedPipe
+  | Files.isSocket status = Socket
+  | Files.isBlockDevice status = BlockDevise
+  | Files.isCharacterDevice status = CharDevise
+  | otherwise = Orphan
+
+regularFileNodeTypeOf :: Files.FileStatus -> NodeType
+regularFileNodeTypeOf status
+  | isSetuidMode mode = Setuid
+  | isSetgidMode mode = Setgid
+  | isExecutableMode mode = Executable
+  | otherwise = File
+    where
+      mode = Files.fileMode status
+
+directoryNodeTypeOf :: Files.FileStatus -> NodeType
+directoryNodeTypeOf status
+  | isStickyOtherWrite mode = StickyOtherWritable
+  | isOtherWriteMode mode = OtherWritable
+  | isStickyMode mode = Sticky
+  | otherwise = Directory
+    where
+      mode = Files.fileMode status
+
+colorizedNodeName :: Config -> Node.NodeInfo -> String
 colorizedNodeName conf nd = start ++ name ++ end
     where
       left = leftEscapeSequence conf
@@ -120,8 +189,8 @@ colorizedNodeName conf nd = start ++ name ++ end
 
 {-| TODO: Lookup link destination node if a `ln` value in `LS_COLORS` is "target".
 -}
-lookupEscSec :: Config -> Node -> String
-lookupEscSec conf nd = case nodeType nd of
+lookupEscSec :: Config -> Node.NodeInfo -> String
+lookupEscSec conf nd = case (nodeTypeOf $ Node.nodeStatus nd) of
   Directory -> directoryEscapeSequence conf
   SymbolicLink -> symlinkEscSeq
   NamedPipe -> pipeEscapeSequence conf
@@ -182,3 +251,42 @@ getLSCOLORS = Maybe.fromMaybe "" <$> lookupEnv "LS_COLORS"
 
 toUppers :: String -> String
 toUppers = map toUpper
+
+nodeName :: Node.NodeInfo -> String
+nodeName = Posix.takeFileName . Node.nodePath
+
+hasFileMode :: Types.FileMode -> Types.FileMode -> Bool
+hasFileMode x y = x == Files.intersectFileModes x y
+
+isOwnerExecuteMode :: Types.FileMode -> Bool
+isOwnerExecuteMode = hasFileMode Files.ownerExecuteMode
+
+isGroupExecuteMode :: Types.FileMode -> Bool
+isGroupExecuteMode = hasFileMode Files.groupExecuteMode
+
+isOtherWriteMode :: Types.FileMode -> Bool
+isOtherWriteMode = hasFileMode Files.otherWriteMode
+
+isOtherExecuteMode :: Types.FileMode -> Bool
+isOtherExecuteMode = hasFileMode Files.otherExecuteMode
+
+isExecutableMode :: Types.FileMode -> Bool
+isExecutableMode = or . sequence [isOwnerExecuteMode, isGroupExecuteMode, isOtherExecuteMode]
+
+isSetuidMode :: Types.FileMode -> Bool
+isSetuidMode = hasFileMode Files.setUserIDMode
+
+isSetgidMode :: Types.FileMode -> Bool
+isSetgidMode = hasFileMode Files.setGroupIDMode
+
+isStickyMode :: Types.FileMode -> Bool
+isStickyMode = hasFileMode stickyMode
+
+isStickyOtherWrite :: Types.FileMode -> Bool
+isStickyOtherWrite = hasFileMode stickyOtherWriteMode
+
+stickyMode :: Types.FileMode
+stickyMode = 548
+
+stickyOtherWriteMode :: Types.FileMode
+stickyOtherWriteMode = Files.unionFileModes stickyMode Files.otherWriteMode

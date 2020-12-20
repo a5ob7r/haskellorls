@@ -27,9 +27,13 @@ library
   exposed-modules:
       Haskellorls.Color
       Haskellorls.Decorator
+      Haskellorls.Field
       Haskellorls.Grid
-      Haskellorls.Node
+      Haskellorls.NodeInfo
       Haskellorls.Option
+      Haskellorls.Ownership
+      Haskellorls.Size
+      Haskellorls.Time
 
 executable haskellorls
   import: shared-properties
@@ -38,6 +42,7 @@ executable haskellorls
     , extra
     , haskellorls
     , optparse-applicative
+    , unix
 
 test-suite test
   import: shared-properties
@@ -56,4 +61,3 @@ test-suite test
   build-tool-depends: tasty-discover:tasty-discover
   other-modules:
     ColorTest
-    NodeTest
