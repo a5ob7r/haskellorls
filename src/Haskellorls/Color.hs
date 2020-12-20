@@ -190,7 +190,7 @@ colorizedNodeName conf nd = start ++ name ++ end
 {-| TODO: Lookup link destination node if a `ln` value in `LS_COLORS` is "target".
 -}
 lookupEscSec :: Config -> Node.NodeInfo -> String
-lookupEscSec conf nd = case (nodeTypeOf $ Node.nodeStatus nd) of
+lookupEscSec conf nd = case nodeTypeOf $ Node.nodeStatus nd of
   Directory -> directoryEscapeSequence conf
   SymbolicLink -> symlinkEscSeq
   NamedPipe -> pipeEscapeSequence conf
