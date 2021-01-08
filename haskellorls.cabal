@@ -33,6 +33,7 @@ library
       Haskellorls.Option
       Haskellorls.Ownership
       Haskellorls.Size
+      Haskellorls.YetAnotherString
       Haskellorls.Time
 
 executable haskellorls

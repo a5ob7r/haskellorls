@@ -1,7 +1,10 @@
 module Haskellorls.Color
-  ( config
+  ( Config(..)
+  , config
+  , ExtensionConfig (..)
   , colorizedNodeName
   , nodeName
+  , applyEscapeSequence
   ) where
 
 import Data.Char (toUpper)
@@ -81,6 +84,22 @@ data Config = Config
   , multiHardlinkEscapeSequence :: String
   , clearLineEscapeSequence :: String
   , fileColorIndicator :: FilenamePtnMap
+  , extensionColorConfig :: ExtensionConfig
+  }
+
+data ExtensionConfig = ExtensionConfig
+  { userReadPermBitEscapeSequence :: String
+  , userWritePermBitEscapeSequence :: String
+  , userExecPermBitFileEscapeSequence :: String
+  , userExecPermBitOtherEscapeSequence :: String
+  , groupReadPermBitEscapeSequence :: String
+  , groupWritePermBitEscapeSequence :: String
+  , groupExecPermBitEscapeSequence :: String
+  , otherReadPermBitEscapeSequence :: String
+  , otherWritePermBitEscapeSequence :: String
+  , otherExecPermBitEscapeSequence :: String
+  , sPermBitFileEscapeSequence :: String
+  , sPermBitOtherEscapeSequence :: String
   }
 
 defaultConfig :: Config
@@ -110,6 +129,23 @@ defaultConfig = Config
   , multiHardlinkEscapeSequence = ""
   , clearLineEscapeSequence = "\^[[K"
   , fileColorIndicator = Map.empty
+  , extensionColorConfig = defaultExtensionConfig
+  }
+
+defaultExtensionConfig :: ExtensionConfig
+defaultExtensionConfig = ExtensionConfig
+  { userReadPermBitEscapeSequence = "1;33"
+  , userWritePermBitEscapeSequence = "1;31"
+  , userExecPermBitFileEscapeSequence = "1;32"
+  , userExecPermBitOtherEscapeSequence = "1;92"
+  , groupReadPermBitEscapeSequence = "1;33"
+  , groupWritePermBitEscapeSequence = "1;31"
+  , groupExecPermBitEscapeSequence = "1;32"
+  , otherReadPermBitEscapeSequence = "1;33"
+  , otherWritePermBitEscapeSequence = "1;31"
+  , otherExecPermBitEscapeSequence = "1;32"
+  , sPermBitFileEscapeSequence = "1;96"
+  , sPermBitOtherEscapeSequence = "1;96"
   }
 
 config :: IO Config
@@ -142,11 +178,37 @@ configFrom lsColors = Config
   , multiHardlinkEscapeSequence = ""
   , clearLineEscapeSequence = "\^[[K"
   , fileColorIndicator = indicator
+  , extensionColorConfig = extensionConfigFrom ""
   }
     where
       def = defaultConfig
       indicator = colorIndicatorsFrom lsColors
       parametors = parametorsFrom lsColors
+
+extensionConfigFrom :: String -> ExtensionConfig
+extensionConfigFrom lsColors = ExtensionConfig
+  { userReadPermBitEscapeSequence = Maybe.fromMaybe (userReadPermBitEscapeSequence def) $ "ur" `Map.lookup` parametors
+  , userWritePermBitEscapeSequence = Maybe.fromMaybe (userWritePermBitEscapeSequence def) $ "uw" `Map.lookup` parametors
+  , userExecPermBitFileEscapeSequence = Maybe.fromMaybe (userExecPermBitFileEscapeSequence def) $ "ux" `Map.lookup` parametors
+  , userExecPermBitOtherEscapeSequence = Maybe.fromMaybe (userExecPermBitOtherEscapeSequence def) $ "ue" `Map.lookup` parametors
+  , groupReadPermBitEscapeSequence = Maybe.fromMaybe (groupReadPermBitEscapeSequence def) $ "gr" `Map.lookup` parametors
+  , groupWritePermBitEscapeSequence = Maybe.fromMaybe (groupWritePermBitEscapeSequence def) $ "gw" `Map.lookup` parametors
+  , groupExecPermBitEscapeSequence = Maybe.fromMaybe (groupExecPermBitEscapeSequence def) $ "gx" `Map.lookup` parametors
+  , otherReadPermBitEscapeSequence = Maybe.fromMaybe (otherReadPermBitEscapeSequence def) $ "tr" `Map.lookup` parametors
+  , otherWritePermBitEscapeSequence = Maybe.fromMaybe (otherWritePermBitEscapeSequence def) $ "tw" `Map.lookup` parametors
+  , otherExecPermBitEscapeSequence = Maybe.fromMaybe (otherExecPermBitEscapeSequence def) $ "tx" `Map.lookup` parametors
+  , sPermBitFileEscapeSequence = Maybe.fromMaybe (sPermBitFileEscapeSequence def) $ "su" `Map.lookup` parametors
+  , sPermBitOtherEscapeSequence = Maybe.fromMaybe (sPermBitOtherEscapeSequence def) $ "sf" `Map.lookup` parametors
+  }
+    where
+      def = defaultExtensionConfig
+      parametors = parametorsFrom lsColors
+
+applyEscapeSequence :: Config -> String -> String
+applyEscapeSequence conf escSeq = left ++ escSeq ++ right
+  where
+    left = leftEscapeSequence conf
+    right = rightEscapeSequence conf
 
 nodeTypeOf :: Files.FileStatus -> NodeType
 nodeTypeOf status

@@ -4,6 +4,7 @@ module Haskellorls.Field
   , fileTypeLetter
   , filemodeBitPatternTypeLetter
   , showFilemodeField
+  , showFilemodeFieldWithColor
   ) where
 
 import System.Posix.Files
@@ -30,6 +31,13 @@ import System.Posix.Files
     , FileStatus
     )
 import System.Posix.Types ( FileMode )
+
+import qualified Haskellorls.Color as Color
+  ( Config(..)
+  , ExtensionConfig (..)
+  , applyEscapeSequence
+  )
+import qualified Haskellorls.YetAnotherString as YAString (WrapedString (..))
 
 data FilemodeBitPatternType
   = READ
@@ -85,8 +93,13 @@ filemodeField status = FilemodeField
     where
       mode = fileMode status
 
-showFilemodeField :: FilemodeField -> String
-showFilemodeField field = fType:permFields
+showFilemodeField :: FilemodeField -> [YAString.WrapedString]
+showFilemodeField field =
+  [YAString.WrapedString { YAString.wrappedStringPrefix = ""
+                         , YAString.wrappedStringMain = fType:permFields
+                         , YAString.wrappedStringSuffix = ""
+                         }
+  ]
   where
     fType = fileTypeLetter $ getFiletype field
     permFields = map (\f -> filemodeBitPatternTypeLetter $ f field) permLetterFuncs
@@ -103,6 +116,155 @@ permLetterFuncs =
   , getOtherWrite
   , getOtherExec
   ]
+
+showFilemodeFieldWithColor :: Color.Config -> FilemodeField -> [YAString.WrapedString]
+showFilemodeFieldWithColor config field =
+  [ fType
+  , userReadLetter
+  , userWriteLetter
+  , userExecLetter
+  , groupReadLetter
+  , groupWriteLetter
+  , groupExecLetter
+  , otherReadLetter
+  , otherWriteLetter
+  , otherExecLetter
+  ]
+  where
+    fType = filetypeLetterWithColor config $ getFiletype field
+    userReadLetter = userReadLetterWithColor config $ getUserRead field
+    userWriteLetter = userWriteLetterWithColor config $ getUserWrite field
+    userExecLetter = userExecLetterWithColor config $ getUserExec field
+    groupReadLetter = groupReadLetterWithColor config $ getGroupRead field
+    groupWriteLetter = groupWriteLetterWithColor config $ getGroupWrite field
+    groupExecLetter = groupExecLetterWithColor config $ getGroupExec field
+    otherReadLetter = otherReadLetterWithColor config $ getOtherRead field
+    otherWriteLetter = otherWriteLetterWithColor config $ getOtherWrite field
+    otherExecLetter = otherExecLetterWithColor config $ getOtherExec field
+
+filetypeLetterWithColor :: Color.Config -> FileType -> YAString.WrapedString
+filetypeLetterWithColor config filetype = YAString.WrapedString
+  { YAString.wrappedStringPrefix = Color.applyEscapeSequence config escSeq
+  , YAString.wrappedStringMain = [fType]
+  , YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
+  }
+  where
+    fType = fileTypeLetter filetype
+    escSeq = fileTypeEscapeSequence config filetype
+
+userReadLetterWithColor :: Color.Config -> FilemodeBitPatternType -> YAString.WrapedString
+userReadLetterWithColor config ptn = YAString.WrapedString
+  { YAString.wrappedStringPrefix = Color.applyEscapeSequence config escSeq
+  , YAString.wrappedStringMain = [letter]
+  , YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
+  }
+  where
+    letter = filemodeBitPatternTypeLetter ptn
+    escSeq = case ptn of
+               READ -> Color.userReadPermBitEscapeSequence $ Color.extensionColorConfig config
+               _ -> ""
+
+userWriteLetterWithColor :: Color.Config -> FilemodeBitPatternType -> YAString.WrapedString
+userWriteLetterWithColor config ptn = YAString.WrapedString
+  { YAString.wrappedStringPrefix = Color.applyEscapeSequence config escSeq
+  , YAString.wrappedStringMain = [letter]
+  , YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
+  }
+  where
+    letter = filemodeBitPatternTypeLetter ptn
+    escSeq = case ptn of
+               WRITE -> Color.userWritePermBitEscapeSequence $ Color.extensionColorConfig config
+               _ -> ""
+
+userExecLetterWithColor :: Color.Config -> FilemodeBitPatternType -> YAString.WrapedString
+userExecLetterWithColor config ptn = YAString.WrapedString
+  { YAString.wrappedStringPrefix = Color.applyEscapeSequence config escSeq
+  , YAString.wrappedStringMain = [letter]
+  , YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
+  }
+  where
+    letter = filemodeBitPatternTypeLetter ptn
+    escSeq = case ptn of
+      E_SETUID -> Color.setuidEscapeSequence config
+      SETUID -> Color.setuidEscapeSequence config
+      EXEC -> Color.userExecPermBitFileEscapeSequence $ Color.extensionColorConfig config
+      _ -> ""
+
+groupReadLetterWithColor :: Color.Config -> FilemodeBitPatternType -> YAString.WrapedString
+groupReadLetterWithColor config ptn = YAString.WrapedString
+  { YAString.wrappedStringPrefix = Color.applyEscapeSequence config escSeq
+  , YAString.wrappedStringMain = [letter]
+  , YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
+  }
+  where
+    letter = filemodeBitPatternTypeLetter ptn
+    escSeq = case ptn of
+               READ -> Color.groupReadPermBitEscapeSequence $ Color.extensionColorConfig config
+               _ -> ""
+
+groupWriteLetterWithColor :: Color.Config -> FilemodeBitPatternType -> YAString.WrapedString
+groupWriteLetterWithColor config ptn = YAString.WrapedString
+  { YAString.wrappedStringPrefix = Color.applyEscapeSequence config escSeq
+  , YAString.wrappedStringMain = [letter]
+  , YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
+  }
+  where
+    letter = filemodeBitPatternTypeLetter ptn
+    escSeq = case ptn of
+               WRITE -> Color.groupWritePermBitEscapeSequence $ Color.extensionColorConfig config
+               _ -> ""
+
+groupExecLetterWithColor :: Color.Config -> FilemodeBitPatternType -> YAString.WrapedString
+groupExecLetterWithColor config ptn = YAString.WrapedString
+  { YAString.wrappedStringPrefix = Color.applyEscapeSequence config escSeq
+  , YAString.wrappedStringMain = [letter]
+  , YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
+  }
+  where
+    letter = filemodeBitPatternTypeLetter ptn
+    escSeq = case ptn of
+      E_SETGID -> Color.setguiEscapeSequence config
+      SETGID -> Color.setguiEscapeSequence config
+      EXEC -> Color.groupExecPermBitEscapeSequence $ Color.extensionColorConfig config
+      _ -> ""
+
+otherReadLetterWithColor :: Color.Config -> FilemodeBitPatternType -> YAString.WrapedString
+otherReadLetterWithColor config ptn = YAString.WrapedString
+  { YAString.wrappedStringPrefix = Color.applyEscapeSequence config escSeq
+  , YAString.wrappedStringMain = [letter]
+  , YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
+  }
+  where
+    letter = filemodeBitPatternTypeLetter ptn
+    escSeq = case ptn of
+               READ -> Color.otherReadPermBitEscapeSequence $ Color.extensionColorConfig config
+               _ -> ""
+
+otherWriteLetterWithColor :: Color.Config -> FilemodeBitPatternType -> YAString.WrapedString
+otherWriteLetterWithColor config ptn = YAString.WrapedString
+  { YAString.wrappedStringPrefix = Color.applyEscapeSequence config escSeq
+  , YAString.wrappedStringMain = [letter]
+  , YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
+  }
+  where
+    letter = filemodeBitPatternTypeLetter ptn
+    escSeq = case ptn of
+               WRITE -> Color.otherWritePermBitEscapeSequence $ Color.extensionColorConfig config
+               _ -> ""
+
+otherExecLetterWithColor :: Color.Config -> FilemodeBitPatternType -> YAString.WrapedString
+otherExecLetterWithColor config ptn = YAString.WrapedString
+  { YAString.wrappedStringPrefix = Color.applyEscapeSequence config escSeq
+  , YAString.wrappedStringMain = [letter]
+  , YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
+  }
+  where
+    letter = filemodeBitPatternTypeLetter ptn
+    escSeq = case ptn of
+      E_STICKY -> Color.stickyEscapeSequence config
+      STICKY -> Color.stickyEscapeSequence config
+      EXEC -> Color.otherExecPermBitEscapeSequence $ Color.extensionColorConfig config
+      _ -> ""
 
 -- File type field charactor {{{
 regularFileLetter :: Char
@@ -152,6 +314,20 @@ fileTypeLetter fType = case fType of
                          FIFO -> fifoLetter
                          SOCK -> socketLetter
                          OTHER -> otherLetter
+
+fileTypeEscapeSequence :: Color.Config -> FileType -> String
+fileTypeEscapeSequence config fType =
+  case fType of
+    REGULAR -> Color.fileEscaseSequence config
+    BLOCK -> Color.blockDeviceEscapeSequence config
+    CHAR -> Color.charDeviceEscapeSequence config
+    DIR -> Color.directoryEscapeSequence config
+    SYMLINK -> if symlinkEscSeq == "target" then "" else symlinkEscSeq
+    FIFO -> Color.pipeEscapeSequence config
+    SOCK -> Color.socketEscapeSequence config
+    OTHER -> ""
+    where
+      symlinkEscSeq = Color.symlinkEscapeSequence config
 -- }}}
 
 -- File mode field charactor {{{

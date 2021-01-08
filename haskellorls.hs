@@ -15,6 +15,7 @@ import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Size as Size
 import qualified Haskellorls.Time as Time
 import qualified Haskellorls.Ownership as Ownership
+import qualified Haskellorls.YetAnotherString as YAString (WrapedString (..))
 
 main :: IO ()
 main = do
@@ -37,14 +38,49 @@ run opt = do
       nodePrinter = if shouldColorize
                        then Color.colorizedNodeName cConfig
                        else Color.nodeName
+      filemodeFieldPrinter = if shouldColorize
+                                then Field.showFilemodeFieldWithColor cConfig
+                                else Field.showFilemodeField
+      fileOwnerFieldPrinter node =
+        [ YAString.WrapedString { YAString.wrappedStringPrefix = ""
+                                , YAString.wrappedStringMain = owner
+                                , YAString.wrappedStringSuffix = ""
+                                }
+        ]
+          where
+            owner = lookupUser . Files.fileOwner . Node.nodeInfoStatus $ node
+      fileGroupFieldPrinter node =
+        [ YAString.WrapedString { YAString.wrappedStringPrefix = ""
+                                , YAString.wrappedStringMain = group
+                                , YAString.wrappedStringSuffix = ""
+                                }
+        ]
+          where
+            group = lookupGroup . Files.fileGroup . Node.nodeInfoStatus $ node
+      fileSizeFieldPrinter node =
+        [ YAString.WrapedString { YAString.wrappedStringPrefix = ""
+                                , YAString.wrappedStringMain = size
+                                , YAString.wrappedStringSuffix = ""
+                                }
+        ]
+          where
+            size = Size.rawFileSize . Node.nodeInfoStatus $ node
+      fileTimeFileldPrinter node =
+        [ YAString.WrapedString { YAString.wrappedStringPrefix = ""
+                                , YAString.wrappedStringMain = time
+                                , YAString.wrappedStringSuffix = ""
+                                }
+        ]
+          where
+            time = Time.fileModificationTime . Node.nodeInfoStatus $ node
       nodeNamesForDisplay = map nodePrinter nodes
       lookupUser = flip Ownership.lookupUserName uidSubstTable
       lookupGroup = flip Ownership.lookupGroupName gidSubstTable
-      fs = [ Field.showFilemodeField . Field.filemodeField . Node.nodeInfoStatus
-           , lookupUser . Files.fileOwner . Node.nodeInfoStatus
-           , lookupGroup . Files.fileGroup . Node.nodeInfoStatus
-           , Size.rawFileSize . Node.nodeInfoStatus
-           , Time.fileModificationTime . Node.nodeInfoStatus
+      fs = [ filemodeFieldPrinter . Field.filemodeField . Node.nodeInfoStatus
+           , fileOwnerFieldPrinter
+           , fileGroupFieldPrinter
+           , fileSizeFieldPrinter
+           , fileTimeFileldPrinter
            ]
   if Option.long opt
      then do
