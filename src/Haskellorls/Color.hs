@@ -100,6 +100,10 @@ data ExtensionConfig = ExtensionConfig
   , otherExecPermBitEscapeSequence :: String
   , sPermBitFileEscapeSequence :: String
   , sPermBitOtherEscapeSequence :: String
+  , ownerYourselfEscapeSequence :: String
+  , ownerNotYourselfEscapeSequence :: String
+  , groupYouBelongsToEscapeSequence :: String
+  , groupYouNotBelongsToEscapeSequence :: String
   }
 
 defaultConfig :: Config
@@ -146,6 +150,10 @@ defaultExtensionConfig = ExtensionConfig
   , otherExecPermBitEscapeSequence = "1;32"
   , sPermBitFileEscapeSequence = "1;96"
   , sPermBitOtherEscapeSequence = "1;96"
+  , ownerYourselfEscapeSequence = "1;33"
+  , ownerNotYourselfEscapeSequence = ""
+  , groupYouBelongsToEscapeSequence = "1;33"
+  , groupYouNotBelongsToEscapeSequence = ""
   }
 
 config :: IO Config
@@ -199,6 +207,10 @@ extensionConfigFrom lsColors = ExtensionConfig
   , otherExecPermBitEscapeSequence = Maybe.fromMaybe (otherExecPermBitEscapeSequence def) $ "tx" `Map.lookup` parametors
   , sPermBitFileEscapeSequence = Maybe.fromMaybe (sPermBitFileEscapeSequence def) $ "su" `Map.lookup` parametors
   , sPermBitOtherEscapeSequence = Maybe.fromMaybe (sPermBitOtherEscapeSequence def) $ "sf" `Map.lookup` parametors
+  , ownerYourselfEscapeSequence = Maybe.fromMaybe (ownerYourselfEscapeSequence def) $ "uu" `Map.lookup` parametors
+  , ownerNotYourselfEscapeSequence = Maybe.fromMaybe (ownerNotYourselfEscapeSequence def) $ "un" `Map.lookup` parametors
+  , groupYouBelongsToEscapeSequence = Maybe.fromMaybe (groupYouBelongsToEscapeSequence def) $ "gu" `Map.lookup` parametors
+  , groupYouNotBelongsToEscapeSequence = Maybe.fromMaybe (groupYouNotBelongsToEscapeSequence def) $ "gn" `Map.lookup` parametors
   }
     where
       def = defaultExtensionConfig
