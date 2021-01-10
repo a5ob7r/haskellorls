@@ -48,11 +48,16 @@ run opt = do
       fileGroupFieldPrinter = if shouldColorize
                                  then Ownership.coloredGroupName gidSubstTable cConfig userInfo
                                  else toWrappedStringArray . Ownership.groupName gidSubstTable
+      fileSizeType = Size.blockSizeTypeFrom modeStr
+        where
+          modeStr
+            | bSize /= "" = bSize
+            | Option.humanReadable opt = "HUMANi"
+            | otherwise = ""
+          bSize = Option.blockSize opt
       fileSizeFieldPrinter = if shouldColorize
-                                then Size.coloredFileSizeFuncFor sizeType cConfig
-                                else toWrappedStringArray . Size.fileSizeFuncFor sizeType
-                                  where
-                                    sizeType = Size.blockSizeTypeFrom "HUMANi"
+                                then Size.coloredFileSizeFuncFor fileSizeType cConfig
+                                else toWrappedStringArray . Size.fileSizeFuncFor fileSizeType
       fileTimeFileldPrinter = toWrappedStringArray . Time.fileModificationTime . Node.nodeInfoStatus
       nodeNamesForDisplay = map nodePrinter nodes
       fs = [ filemodeFieldPrinter . Field.filemodeField . Node.nodeInfoStatus

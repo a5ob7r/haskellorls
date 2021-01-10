@@ -1,5 +1,5 @@
 module Haskellorls.Option
-  ( Option(color, long, targets)
+  ( Option (..)
   , ColorOpt(..)
   , opts
   ) where
@@ -10,6 +10,8 @@ import qualified Options.Applicative as OA
 data Option = Option
   { color :: ColorOpt
   , long :: Bool
+  , humanReadable :: Bool
+  , blockSize :: String
   , targets :: [String]
   } deriving Show
 
@@ -27,6 +29,8 @@ optionParser :: OA.Parser Option
 optionParser = Option
   <$> colorParser
   <*> longParser
+  <*> humanReadableParser
+  <*> blockSizeParser
   <*> argParser
 
 colorParser :: OA.Parser ColorOpt
@@ -46,6 +50,19 @@ parseColorOpt = OA.str >>= f
 
 longParser :: OA.Parser Bool
 longParser = OA.switch (OA.short 'l')
+
+humanReadableParser :: OA.Parser Bool
+humanReadableParser = OA.switch
+  ( OA.short 'h'
+    <> OA.long "human-readable"
+  )
+
+blockSizeParser :: OA.Parser String
+blockSizeParser = OA.strOption
+  ( OA.long "block-size"
+    <> OA.metavar "SIZE"
+    <> OA.value ""
+  )
 
 argParser :: OA.Parser [String]
 argParser = many . OA.strArgument $ OA.metavar "[FILE]..."
