@@ -104,6 +104,25 @@ data ExtensionConfig = ExtensionConfig
   , ownerNotYourselfEscapeSequence :: String
   , groupYouBelongsToEscapeSequence :: String
   , groupYouNotBelongsToEscapeSequence :: String
+  , fileSizeNumberEscapeSequence :: String
+  , fileSizeNumberBypeEscapeSequence :: String
+  , fileSizeNumberKiloEscapeSequence :: String
+  , fileSizeNumberMegaEscapeSequence :: String
+  , fileSizeNumberGigaEscapeSequence :: String
+  , fileSizeNumberTeraEscapeSequence :: String
+  , fileSizeNumberPetaEscapeSequence :: String
+  , fileSizeNumberExaEscapeSequence :: String
+  , fileSizeNumberZettaEscapeSequence :: String
+  , fileSizeNumberYottaEscapeSequence :: String
+  , fileSizeUnitBypeEscapeSequence :: String
+  , fileSizeUnitKiloEscapeSequence :: String
+  , fileSizeUnitMegaEscapeSequence :: String
+  , fileSizeUnitGigaEscapeSequence :: String
+  , fileSizeUnitTeraEscapeSequence :: String
+  , fileSizeUnitPetaEscapeSequence :: String
+  , fileSizeUnitExaEscapeSequence :: String
+  , fileSizeUnitZettaEscapeSequence :: String
+  , fileSizeUnitYottaEscapeSequence :: String
   }
 
 defaultConfig :: Config
@@ -154,6 +173,25 @@ defaultExtensionConfig = ExtensionConfig
   , ownerNotYourselfEscapeSequence = ""
   , groupYouBelongsToEscapeSequence = "1;33"
   , groupYouNotBelongsToEscapeSequence = ""
+  , fileSizeNumberEscapeSequence = "1;32"
+  , fileSizeNumberBypeEscapeSequence = "1;32"
+  , fileSizeNumberKiloEscapeSequence = "1;32"
+  , fileSizeNumberMegaEscapeSequence = "1;32"
+  , fileSizeNumberGigaEscapeSequence = "1;32"
+  , fileSizeNumberTeraEscapeSequence = "1;32"
+  , fileSizeNumberPetaEscapeSequence = "1;32"
+  , fileSizeNumberExaEscapeSequence = "1;32"
+  , fileSizeNumberZettaEscapeSequence = "1;32"
+  , fileSizeNumberYottaEscapeSequence = "1;32"
+  , fileSizeUnitBypeEscapeSequence = "32"
+  , fileSizeUnitKiloEscapeSequence = "32"
+  , fileSizeUnitMegaEscapeSequence = "32"
+  , fileSizeUnitGigaEscapeSequence = "32"
+  , fileSizeUnitTeraEscapeSequence = "32"
+  , fileSizeUnitPetaEscapeSequence = "32"
+  , fileSizeUnitExaEscapeSequence = "32"
+  , fileSizeUnitZettaEscapeSequence = "32"
+  , fileSizeUnitYottaEscapeSequence = "32"
   }
 
 config :: IO Config
@@ -211,6 +249,25 @@ extensionConfigFrom lsColors = ExtensionConfig
   , ownerNotYourselfEscapeSequence = Maybe.fromMaybe (ownerNotYourselfEscapeSequence def) $ "un" `Map.lookup` parametors
   , groupYouBelongsToEscapeSequence = Maybe.fromMaybe (groupYouBelongsToEscapeSequence def) $ "gu" `Map.lookup` parametors
   , groupYouNotBelongsToEscapeSequence = Maybe.fromMaybe (groupYouNotBelongsToEscapeSequence def) $ "gn" `Map.lookup` parametors
+  , fileSizeNumberEscapeSequence = Maybe.fromMaybe (fileSizeNumberEscapeSequence def) $ "sn" `Map.lookup` parametors
+  , fileSizeNumberBypeEscapeSequence = Maybe.fromMaybe (fileSizeNumberBypeEscapeSequence def) $ "nb" `Map.lookup` parametors
+  , fileSizeNumberKiloEscapeSequence = Maybe.fromMaybe (fileSizeNumberKiloEscapeSequence def) $ "nk" `Map.lookup` parametors
+  , fileSizeNumberMegaEscapeSequence = Maybe.fromMaybe (fileSizeNumberMegaEscapeSequence def) $ "nm" `Map.lookup` parametors
+  , fileSizeNumberGigaEscapeSequence = Maybe.fromMaybe (fileSizeNumberGigaEscapeSequence def) $ "ng" `Map.lookup` parametors
+  , fileSizeNumberTeraEscapeSequence = Maybe.fromMaybe (fileSizeNumberTeraEscapeSequence def) $ "nt" `Map.lookup` parametors
+  , fileSizeNumberPetaEscapeSequence = Maybe.fromMaybe (fileSizeNumberPetaEscapeSequence def) $ "np" `Map.lookup` parametors
+  , fileSizeNumberExaEscapeSequence = Maybe.fromMaybe (fileSizeNumberExaEscapeSequence def) $ "ne" `Map.lookup` parametors
+  , fileSizeNumberZettaEscapeSequence = Maybe.fromMaybe (fileSizeNumberZettaEscapeSequence def) $ "nz" `Map.lookup` parametors
+  , fileSizeNumberYottaEscapeSequence = Maybe.fromMaybe (fileSizeNumberYottaEscapeSequence def) $ "ny" `Map.lookup` parametors
+  , fileSizeUnitBypeEscapeSequence = Maybe.fromMaybe (fileSizeUnitBypeEscapeSequence def) $ "ub" `Map.lookup` parametors
+  , fileSizeUnitKiloEscapeSequence = Maybe.fromMaybe (fileSizeUnitKiloEscapeSequence def) $ "uk" `Map.lookup` parametors
+  , fileSizeUnitMegaEscapeSequence = Maybe.fromMaybe (fileSizeUnitMegaEscapeSequence def) $ "um" `Map.lookup` parametors
+  , fileSizeUnitGigaEscapeSequence = Maybe.fromMaybe (fileSizeUnitGigaEscapeSequence def) $ "ug" `Map.lookup` parametors
+  , fileSizeUnitTeraEscapeSequence = Maybe.fromMaybe (fileSizeUnitTeraEscapeSequence def) $ "ut" `Map.lookup` parametors
+  , fileSizeUnitPetaEscapeSequence = Maybe.fromMaybe (fileSizeUnitPetaEscapeSequence def) $ "up" `Map.lookup` parametors
+  , fileSizeUnitExaEscapeSequence = Maybe.fromMaybe (fileSizeUnitExaEscapeSequence def) $ "ue" `Map.lookup` parametors
+  , fileSizeUnitZettaEscapeSequence = Maybe.fromMaybe (fileSizeUnitZettaEscapeSequence def) $ "uz" `Map.lookup` parametors
+  , fileSizeUnitYottaEscapeSequence = Maybe.fromMaybe (fileSizeUnitYottaEscapeSequence def) $ "uy" `Map.lookup` parametors
   }
     where
       def = defaultExtensionConfig
