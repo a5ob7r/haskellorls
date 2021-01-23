@@ -58,7 +58,9 @@ run opt = do
       fileSizeFieldPrinter = if shouldColorize
                                 then Size.coloredFileSizeFuncFor fileSizeType cConfig
                                 else toWrappedStringArray . Size.fileSizeFuncFor fileSizeType
-      fileTimeFileldPrinter = toWrappedStringArray . Time.fileModificationTime . Node.nodeInfoStatus
+      fileTimeFileldPrinter = toWrappedStringArray . Time.toString . fileTime . Node.nodeInfoStatus
+        where
+          fileTime = Time.fileTime . Time.timeTypeFrom $ Option.time opt
       nodeNamesForDisplay = map nodePrinter nodes
       fs = [ filemodeFieldPrinter . Field.filemodeField . Node.nodeInfoStatus
            , fileOwnerFieldPrinter
