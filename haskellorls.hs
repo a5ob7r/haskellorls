@@ -4,6 +4,8 @@ import Data.Maybe (fromMaybe, listToMaybe)
 import System.Directory.Extra
 import System.IO
 import qualified Options.Applicative as OA
+import qualified Data.Time.Format as Format
+import qualified System.Posix.Time as PTime
 
 import qualified Haskellorls.Color as Color
 import Haskellorls.Decorator
@@ -31,6 +33,7 @@ run opt = do
   uidSubstTable <- Ownership.getUserIdSubstTable
   gidSubstTable <- Ownership.getGroupIdSubstTable
   userInfo <- UserInfo.userInfo
+  currentTime <- PTime.epochTime
   shouldColorize <- case Option.color opt of
                       Option.NEVER -> return False
                       Option.ALWAYS -> return True
@@ -58,9 +61,13 @@ run opt = do
       fileSizeFieldPrinter = if shouldColorize
                                 then Size.coloredFileSizeFuncFor fileSizeType cConfig
                                 else toWrappedStringArray . Size.fileSizeFuncFor fileSizeType
-      fileTimeFileldPrinter = toWrappedStringArray . Time.toString . fileTime . Node.nodeInfoStatus
+      fileTimeFileldPrinter = if shouldColorize
+                                then Time.coloredTimeStyleFunc cConfig Format.defaultTimeLocale currentTime timeStyle . fileTime . Node.nodeInfoStatus
+                                else toWrappedStringArray . timeStyleFunc . fileTime . Node.nodeInfoStatus
         where
+          timeStyleFunc = Time.timeStyleFunc Format.defaultTimeLocale currentTime timeStyle
           fileTime = Time.fileTime . Time.timeTypeFrom $ Option.time opt
+          timeStyle = Time.timeStyleFrom $ Option.timeStyle opt
       nodeNamesForDisplay = map nodePrinter nodes
       fs = [ filemodeFieldPrinter . Field.filemodeField . Node.nodeInfoStatus
            , fileOwnerFieldPrinter

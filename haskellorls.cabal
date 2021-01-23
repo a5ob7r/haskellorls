@@ -23,7 +23,6 @@ library
     , terminal-size
     , time
     , unix
-    , unix-time
   exposed-modules:
       Haskellorls.Color
       Haskellorls.Decorator
@@ -44,4 +43,5 @@ executable haskellorls
     , extra
     , haskellorls
     , optparse-applicative
+    , time
     , unix

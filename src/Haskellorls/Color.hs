@@ -123,6 +123,7 @@ data ExtensionConfig = ExtensionConfig
   , fileSizeUnitExaEscapeSequence :: String
   , fileSizeUnitZettaEscapeSequence :: String
   , fileSizeUnitYottaEscapeSequence :: String
+  , dateEscapeSequence :: String
   }
 
 defaultConfig :: Config
@@ -192,6 +193,7 @@ defaultExtensionConfig = ExtensionConfig
   , fileSizeUnitExaEscapeSequence = "32"
   , fileSizeUnitZettaEscapeSequence = "32"
   , fileSizeUnitYottaEscapeSequence = "32"
+  , dateEscapeSequence = "34"
   }
 
 config :: IO Config
@@ -268,6 +270,7 @@ extensionConfigFrom lsColors = ExtensionConfig
   , fileSizeUnitExaEscapeSequence = Maybe.fromMaybe (fileSizeUnitExaEscapeSequence def) $ "ue" `Map.lookup` parametors
   , fileSizeUnitZettaEscapeSequence = Maybe.fromMaybe (fileSizeUnitZettaEscapeSequence def) $ "uz" `Map.lookup` parametors
   , fileSizeUnitYottaEscapeSequence = Maybe.fromMaybe (fileSizeUnitYottaEscapeSequence def) $ "uy" `Map.lookup` parametors
+  , dateEscapeSequence = Maybe.fromMaybe (dateEscapeSequence def) $ "da" `Map.lookup` parametors
   }
     where
       def = defaultExtensionConfig

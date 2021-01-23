@@ -13,6 +13,7 @@ data Option = Option
   , humanReadable :: Bool
   , blockSize :: String
   , time :: String
+  , timeStyle :: String
   , targets :: [String]
   } deriving Show
 
@@ -33,6 +34,7 @@ optionParser = Option
   <*> humanReadableParser
   <*> blockSizeParser
   <*> timeParser
+  <*> timeStyleParser
   <*> argParser
 
 colorParser :: OA.Parser ColorOpt
@@ -70,6 +72,13 @@ timeParser :: OA.Parser String
 timeParser = OA.strOption
   ( OA.long "time"
     <> OA.metavar "WORD"
+    <> OA.value ""
+  )
+
+timeStyleParser :: OA.Parser String
+timeStyleParser = OA.strOption
+  ( OA.long "time-style"
+    <> OA.metavar "TYPE_STYLE"
     <> OA.value ""
   )
 
