@@ -1,11 +1,12 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module Haskellorls.YetAnotherString
-  ( YetAnotherString (..)
-  , Char
-  , String
-  , WrapedString (..)
-  ) where
+  ( YetAnotherString (..),
+    Char,
+    String,
+    WrapedString (..),
+  )
+where
 
 class YetAnotherString a where
   yaShow :: a -> String
@@ -22,19 +23,20 @@ instance YetAnotherString String where
   yaShow' = id
 
 data WrapedString = WrapedString
-  { wrappedStringPrefix :: String
-  , wrappedStringMain :: String
-  , wrappedStringSuffix :: String
+  { wrappedStringPrefix :: String,
+    wrappedStringMain :: String,
+    wrappedStringSuffix :: String
   }
 
 instance YetAnotherString WrapedString where
   yaShow = wrappedStringMain
   yaShow' wStr = concatMap (\f -> f wStr) fs
     where
-      fs = [ wrappedStringPrefix
-           , wrappedStringMain
-           , wrappedStringSuffix
-           ]
+      fs =
+        [ wrappedStringPrefix,
+          wrappedStringMain,
+          wrappedStringSuffix
+        ]
 
 instance YetAnotherString [WrapedString] where
   yaShow = concatMap yaShow

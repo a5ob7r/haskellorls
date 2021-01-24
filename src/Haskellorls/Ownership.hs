@@ -7,37 +7,38 @@
 -- NOTE: owner also be called as user.
 
 module Haskellorls.Ownership
-  ( ownerName
-  , numericOwnerName
-  , coloredOwnerName
-  , coloredNumericOwnerName
-  , groupName
-  , numericGroupName
-  , coloredGroupName
-  , coloredNumericGroupName
-  , getGroupIdSubstTable
-  , getUserIdSubstTable
-  ) where
+  ( ownerName,
+    numericOwnerName,
+    coloredOwnerName,
+    coloredNumericOwnerName,
+    groupName,
+    numericGroupName,
+    coloredGroupName,
+    coloredNumericGroupName,
+    getGroupIdSubstTable,
+    getUserIdSubstTable,
+  )
+where
 
-import qualified System.Posix.Files as Files
-import qualified System.Posix.Types as Types
-    ( UserID
-    , GroupID
-    )
-import qualified System.Posix.User as User
-    ( getAllGroupEntries
-    , getAllUserEntries
-    , GroupEntry (groupName, groupID)
-    , UserEntry (userName, userID)
-    )
 import qualified Data.Map.Strict as M (Map, fromList, (!))
-
 import qualified Haskellorls.Color as Color
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.UserInfo as UserInfo
 import qualified Haskellorls.YetAnotherString as YAString (WrapedString (..))
+import qualified System.Posix.Files as Files
+import qualified System.Posix.Types as Types
+  ( GroupID,
+    UserID,
+  )
+import qualified System.Posix.User as User
+  ( GroupEntry (groupID, groupName),
+    UserEntry (userID, userName),
+    getAllGroupEntries,
+    getAllUserEntries,
+  )
 
 type UserIdSubstTable = M.Map Types.UserID String
+
 type GroupIdSubstTable = M.Map Types.GroupID String
 
 -- Utilities {{{
@@ -56,6 +57,7 @@ getGroupIdSubstTable :: IO GroupIdSubstTable
 getGroupIdSubstTable = do
   entries <- User.getAllGroupEntries
   return . M.fromList $ map (\entry -> (User.groupID entry, User.groupName entry)) entries
+
 -- }}}
 
 -- Owner name {{{
@@ -78,18 +80,21 @@ coloredNumericOwnerName = coloredOwnerAs numericOwnerName
 
 coloredOwnerAs :: (Node.NodeInfo -> String) -> Color.Config -> UserInfo.UserInfo -> Node.NodeInfo -> [YAString.WrapedString]
 coloredOwnerAs f config user node =
-  [ YAString.WrapedString { YAString.wrappedStringPrefix = Color.applyEscapeSequence config escSeq
-                          , YAString.wrappedStringMain = f node
-                          , YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-                          }
+  [ YAString.WrapedString
+      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config escSeq,
+        YAString.wrappedStringMain = f node,
+        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
+      }
   ]
   where
-    escSeq = if currentUserID == nodeOwnerID
-                then Color.ownerYourselfEscapeSequence extConfig
-                else Color.ownerNotYourselfEscapeSequence extConfig
+    escSeq =
+      if currentUserID == nodeOwnerID
+        then Color.ownerYourselfEscapeSequence extConfig
+        else Color.ownerNotYourselfEscapeSequence extConfig
     currentUserID = UserInfo.userInfoUserID user
     nodeOwnerID = Files.fileOwner $ Node.nodeInfoStatus node
     extConfig = Color.extensionColorConfig config
+
 -- }}}
 
 -- Group name {{{
@@ -108,20 +113,23 @@ coloredGroupName :: GroupIdSubstTable -> Color.Config -> UserInfo.UserInfo -> No
 coloredGroupName table = coloredGroupAs (groupName table)
 
 coloredNumericGroupName :: Color.Config -> UserInfo.UserInfo -> Node.NodeInfo -> [YAString.WrapedString]
-coloredNumericGroupName  = coloredGroupAs numericGroupName
+coloredNumericGroupName = coloredGroupAs numericGroupName
 
 coloredGroupAs :: (Node.NodeInfo -> String) -> Color.Config -> UserInfo.UserInfo -> Node.NodeInfo -> [YAString.WrapedString]
 coloredGroupAs f config user node =
-  [ YAString.WrapedString { YAString.wrappedStringPrefix = Color.applyEscapeSequence config escSeq
-                          , YAString.wrappedStringMain = f node
-                          , YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-                          }
+  [ YAString.WrapedString
+      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config escSeq,
+        YAString.wrappedStringMain = f node,
+        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
+      }
   ]
   where
-    escSeq = if nodeGroupID `elem` groupIDs
-                then Color.groupYouBelongsToEscapeSequence extConfig
-                else Color.groupYouNotBelongsToEscapeSequence extConfig
+    escSeq =
+      if nodeGroupID `elem` groupIDs
+        then Color.groupYouBelongsToEscapeSequence extConfig
+        else Color.groupYouNotBelongsToEscapeSequence extConfig
     groupIDs = UserInfo.userInfoGroupIDs user
     nodeGroupID = Files.fileGroup $ Node.nodeInfoStatus node
     extConfig = Color.extensionColorConfig config
+
 -- }}}

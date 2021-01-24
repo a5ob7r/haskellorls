@@ -1,12 +1,13 @@
 module Haskellorls.Sort
-  ( sorter
-  ) where
+  ( sorter,
+  )
+where
 
 import qualified Data.List as L
-import qualified System.Posix.Files as Files
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Time as Time
+import qualified System.Posix.Files as Files
 
 data SortType
   = NONE
@@ -31,9 +32,9 @@ order opt
 sortTypeFrom :: Option.Option -> SortType
 sortTypeFrom opt
   | sort == "time" = case timeType of
-                       Time.MODIFICATION -> MODIFICATIONTIME
-                       Time.ACCESS -> ACCESSTIME
-                       Time.CHANGE -> CHANGETIME
+    Time.MODIFICATION -> MODIFICATIONTIME
+    Time.ACCESS -> ACCESSTIME
+    Time.CHANGE -> CHANGETIME
   | otherwise = sortTypeFrom' sort
   where
     sort = Option.sort opt
