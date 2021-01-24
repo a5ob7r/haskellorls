@@ -1,49 +1,51 @@
-cabal-version: 2.2
-name: haskellorls
-version: 0.1.0.0
-author: a5ob7r
-maintainer: 12132068+a5ob7r@users.noreply.github.com
-build-type: Simple
-extra-source-files: README.md CHANGELOG.md
-
-common shared-properties
-  build-depends: base >=4.14 && <4.15
-  ghc-options: -Wall
-  default-language: Haskell2010
+cabal-version:      2.2
+name:               haskellorls
+version:            0.1.0.0
+maintainer:         12132068+a5ob7r@users.noreply.github.com
+author:             a5ob7r
+build-type:         Simple
+extra-source-files:
+    README.md
+    CHANGELOG.md
 
 library
-  import: shared-properties
-  hs-source-dirs: src
-  build-depends:
-    , containers
-    , directory
-    , extra
-    , filepath
-    , optparse-applicative
-    , split
-    , terminal-size
-    , time
-    , unix
-  exposed-modules:
-      Haskellorls.Color
-      Haskellorls.Decorator
-      Haskellorls.Entry
-      Haskellorls.Field
-      Haskellorls.Grid
-      Haskellorls.NodeInfo
-      Haskellorls.Option
-      Haskellorls.Ownership
-      Haskellorls.Size
-      Haskellorls.Sort
-      Haskellorls.UserInfo
-      Haskellorls.YetAnotherString
-      Haskellorls.Time
+    exposed-modules:
+        Haskellorls.Color
+        Haskellorls.Decorator
+        Haskellorls.Entry
+        Haskellorls.Field
+        Haskellorls.Grid
+        Haskellorls.NodeInfo
+        Haskellorls.Option
+        Haskellorls.Ownership
+        Haskellorls.Size
+        Haskellorls.Sort
+        Haskellorls.UserInfo
+        Haskellorls.YetAnotherString
+        Haskellorls.Time
+
+    hs-source-dirs:   src
+    default-language: Haskell2010
+    ghc-options:      -Wall
+    build-depends:
+        base >=4.14 && <4.15,
+        containers -any,
+        directory -any,
+        extra -any,
+        filepath -any,
+        optparse-applicative -any,
+        split -any,
+        terminal-size -any,
+        time -any,
+        unix -any
 
 executable haskellorls
-  import: shared-properties
-  main-is: haskellorls.hs
-  build-depends:
-    , haskellorls
-    , optparse-applicative
-    , time
-    , unix
+    main-is:          haskellorls.hs
+    default-language: Haskell2010
+    ghc-options:      -Wall
+    build-depends:
+        base >=4.14 && <4.15,
+        haskellorls -any,
+        optparse-applicative -any,
+        time -any,
+        unix -any
