@@ -2,61 +2,20 @@ module Haskellorls.Color
   ( Config (..),
     config,
     ExtensionConfig (..),
-    colorizedNodeName,
-    nodeName,
     applyEscapeSequence,
+    lookupFilenameEscSec,
   )
 where
 
+import Data.List.Extra (tails)
 import Data.Char (toUpper)
 import Data.List (isPrefixOf)
-import Data.List.Extra (tails)
 import Data.List.Split (endBy, splitOn)
 import qualified Data.Map.Strict as Map (Map, empty, fromList, lookup)
 import qualified Data.Maybe as Maybe (fromMaybe, mapMaybe)
-import qualified Haskellorls.NodeInfo as Node
 import System.Environment (lookupEnv)
-import qualified System.FilePath.Posix as Posix (takeFileName)
-import qualified System.Posix.Files as Files
-  ( FileStatus,
-    fileMode,
-    groupExecuteMode,
-    intersectFileModes,
-    isBlockDevice,
-    isCharacterDevice,
-    isDirectory,
-    isNamedPipe,
-    isRegularFile,
-    isSocket,
-    isSymbolicLink,
-    otherExecuteMode,
-    otherWriteMode,
-    ownerExecuteMode,
-    setGroupIDMode,
-    setUserIDMode,
-    unionFileModes,
-  )
-import qualified System.Posix.Types as Types (FileMode)
 
 type FilenamePtnMap = Map.Map String String
-
-data NodeType
-  = Directory
-  | SymbolicLink
-  | NamedPipe
-  | Socket
-  | BlockDevise
-  | CharDevise
-  | DoorsDevise -- NOTE: Doors device is not implemented on Linux
-  | Setuid
-  | Setgid
-  | Sticky
-  | StickyOtherWritable
-  | OtherWritable
-  | Executable
-  | File
-  | Orphan
-  deriving (Show)
 
 data Config = Config
   { leftEscapeSequence :: String,
@@ -286,87 +245,6 @@ applyEscapeSequence conf escSeq = left ++ escSeq ++ right
     left = leftEscapeSequence conf
     right = rightEscapeSequence conf
 
-nodeTypeOf :: Files.FileStatus -> NodeType
-nodeTypeOf status
-  | Files.isRegularFile status = regularFileNodeTypeOf status
-  | Files.isDirectory status = directoryNodeTypeOf status
-  | Files.isSymbolicLink status = SymbolicLink
-  | Files.isNamedPipe status = NamedPipe
-  | Files.isSocket status = Socket
-  | Files.isBlockDevice status = BlockDevise
-  | Files.isCharacterDevice status = CharDevise
-  | otherwise = Orphan
-
-regularFileNodeTypeOf :: Files.FileStatus -> NodeType
-regularFileNodeTypeOf status
-  | isSetuidMode mode = Setuid
-  | isSetgidMode mode = Setgid
-  | isExecutableMode mode = Executable
-  | otherwise = File
-  where
-    mode = Files.fileMode status
-
-directoryNodeTypeOf :: Files.FileStatus -> NodeType
-directoryNodeTypeOf status
-  | isStickyOtherWrite mode = StickyOtherWritable
-  | isOtherWriteMode mode = OtherWritable
-  | isStickyMode mode = Sticky
-  | otherwise = Directory
-  where
-    mode = Files.fileMode status
-
-colorizedNodeName :: Config -> Node.NodeInfo -> String
-colorizedNodeName conf nd = start ++ name ++ end
-  where
-    left = leftEscapeSequence conf
-    right = rightEscapeSequence conf
-    end = left ++ right
-    start = left ++ escSec ++ right
-    name = nodeName nd
-    escSec = lookupEscSec conf nd
-
-lookupEscSec :: Config -> Node.NodeInfo -> String
-lookupEscSec conf nd = case nodeTypeOf $ Node.nodeInfoStatus nd of
-  Directory -> directoryEscapeSequence conf
-  SymbolicLink -> symlinkEscSeq
-  NamedPipe -> pipeEscapeSequence conf
-  Socket -> socketEscapeSequence conf
-  BlockDevise -> blockDeviceEscapeSequence conf
-  CharDevise -> charDeviceEscapeSequence conf
-  DoorsDevise -> doorEscapeSequence conf
-  Setuid -> setuidEscapeSequence conf
-  Setgid -> setguiEscapeSequence conf
-  Sticky -> stickyEscapeSequence conf
-  StickyOtherWritable -> stickyOtherWritableEscapeSequence conf
-  OtherWritable -> otherWritableEscapeSequence conf
-  Executable -> executableEscapeSequence conf
-  File -> lookupFilenameEscSec (fileColorIndicator conf) $ nodeName nd
-  Orphan -> orphanedSymlinkEscSeq
-  where
-    orphanedSymlinkEscSeq = orphanedSymlinkEscapeSequence conf
-    symlinkEscSeq = case nd of
-      Node.FileInfo {} -> lookupSymlinkEscSeq
-      Node.LinkInfo {} -> lookupSymlinkEscSeq
-      Node.OrphanedLinkInfo {} -> orphanedSymlinkEscSeq
-    lookupSymlinkEscSeq =
-      if symlinkEscSeq' == "target"
-        then
-          lookupEscSec conf $
-            Node.FileInfo
-              { Node.getFilePath = Node.getDestPath nd,
-                Node.getFileStatus = Node.getDestStatus nd
-              }
-        else symlinkEscSeq'
-    symlinkEscSeq' = symlinkEscapeSequence conf
-
--- | Lookup ascii escape sequence. At first, lookup with a query as it is. If
---    fails to lookup, change a query to the extension and re lookup.
-lookupFilenameEscSec :: FilenamePtnMap -> String -> String
-lookupFilenameEscSec ptnMap = f . Maybe.mapMaybe (`Map.lookup` ptnMap) . reverse . tails . toUppers
-  where
-    f [] = ""
-    f xs = head xs
-
 colorIndicatorsFrom :: String -> FilenamePtnMap
 colorIndicatorsFrom = Map.fromList . Maybe.mapMaybe f . endBy ":"
   where
@@ -403,49 +281,13 @@ makePatternEscapePair s =
 getLSCOLORS :: IO String
 getLSCOLORS = Maybe.fromMaybe "" <$> lookupEnv "LS_COLORS"
 
+-- | Lookup ascii escape sequence. At first, lookup with a query as it is. If
+--    fails to lookup, change a query to the extension and re lookup.
+lookupFilenameEscSec :: FilenamePtnMap -> String -> String
+lookupFilenameEscSec ptnMap = f . Maybe.mapMaybe (`Map.lookup` ptnMap) . reverse . tails . toUppers
+  where
+    f [] = ""
+    f xs = head xs
+
 toUppers :: String -> String
 toUppers = map toUpper
-
-nodeName :: Node.NodeInfo -> String
-nodeName node = Posix.takeFileName name
-  where
-    name = case node of
-      Node.FileInfo {} -> Node.getFilePath node
-      Node.LinkInfo {} -> Node.getLinkPath node
-      Node.OrphanedLinkInfo {} -> Node.getOrphanedLinkPath node
-
-hasFileMode :: Types.FileMode -> Types.FileMode -> Bool
-hasFileMode x y = x == Files.intersectFileModes x y
-
-isOwnerExecuteMode :: Types.FileMode -> Bool
-isOwnerExecuteMode = hasFileMode Files.ownerExecuteMode
-
-isGroupExecuteMode :: Types.FileMode -> Bool
-isGroupExecuteMode = hasFileMode Files.groupExecuteMode
-
-isOtherWriteMode :: Types.FileMode -> Bool
-isOtherWriteMode = hasFileMode Files.otherWriteMode
-
-isOtherExecuteMode :: Types.FileMode -> Bool
-isOtherExecuteMode = hasFileMode Files.otherExecuteMode
-
-isExecutableMode :: Types.FileMode -> Bool
-isExecutableMode = or . sequence [isOwnerExecuteMode, isGroupExecuteMode, isOtherExecuteMode]
-
-isSetuidMode :: Types.FileMode -> Bool
-isSetuidMode = hasFileMode Files.setUserIDMode
-
-isSetgidMode :: Types.FileMode -> Bool
-isSetgidMode = hasFileMode Files.setGroupIDMode
-
-isStickyMode :: Types.FileMode -> Bool
-isStickyMode = hasFileMode stickyMode
-
-isStickyOtherWrite :: Types.FileMode -> Bool
-isStickyOtherWrite = hasFileMode stickyOtherWriteMode
-
-stickyMode :: Types.FileMode
-stickyMode = 548
-
-stickyOtherWriteMode :: Types.FileMode
-stickyOtherWriteMode = Files.unionFileModes stickyMode Files.otherWriteMode

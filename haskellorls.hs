@@ -7,6 +7,7 @@ import Haskellorls.Decorator
 import qualified Haskellorls.Entry as Entry
 import qualified Haskellorls.Field as Field
 import qualified Haskellorls.Grid as Grid
+import qualified Haskellorls.Name as Name
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Ownership as Ownership
@@ -41,8 +42,8 @@ run opt = do
   let additionals = decorator nodes fs
       nodePrinter =
         if shouldColorize
-          then Color.colorizedNodeName cConfig
-          else Color.nodeName
+          then Name.colorizedNodeName cConfig
+          else Name.nodeName
       filemodeFieldPrinter =
         if shouldColorize
           then Field.showFilemodeFieldWithColor cConfig

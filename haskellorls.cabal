@@ -15,6 +15,7 @@ library
         Haskellorls.Entry
         Haskellorls.Field
         Haskellorls.Grid
+        Haskellorls.Name
         Haskellorls.NodeInfo
         Haskellorls.Option
         Haskellorls.Ownership
