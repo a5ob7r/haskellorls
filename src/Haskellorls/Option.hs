@@ -16,6 +16,8 @@ data Option = Option
   , timeStyle :: String
   , all :: Bool
   , almostAll :: Bool
+  , sort :: String
+  , reverse :: Bool
   , targets :: [String]
   } deriving Show
 
@@ -39,6 +41,8 @@ optionParser = Option
   <*> timeStyleParser
   <*> allParser
   <*> almostAllParser
+  <*> sortParser
+  <*> reverseParser
   <*> argParser
 
 colorParser :: OA.Parser ColorOpt
@@ -96,6 +100,19 @@ almostAllParser :: OA.Parser Bool
 almostAllParser = OA.switch
   ( OA.short 'A'
     <> OA.long "almost-all"
+  )
+
+sortParser :: OA.Parser String
+sortParser = OA.strOption
+  ( OA.long "sort"
+    <> OA.metavar "WORD"
+    <> OA.value "name"
+  )
+
+reverseParser :: OA.Parser Bool
+reverseParser = OA.switch
+  ( OA.short 'r'
+    <> OA.long "reverse"
   )
 
 argParser :: OA.Parser [String]

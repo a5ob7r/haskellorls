@@ -32,6 +32,7 @@ library
       Haskellorls.Option
       Haskellorls.Ownership
       Haskellorls.Size
+      Haskellorls.Sort
       Haskellorls.UserInfo
       Haskellorls.YetAnotherString
       Haskellorls.Time

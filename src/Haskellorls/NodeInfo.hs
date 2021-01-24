@@ -2,18 +2,12 @@ module Haskellorls.NodeInfo
   ( NodeInfo(..)
   , nodeInfo
   , nodeInfoStatus
+  , nodeInfoPath
   ) where
 
-import qualified Data.List as L (isPrefixOf)
+import qualified Data.List as L
 import qualified System.FilePath.Posix as Posix (takeDirectory, (</>))
 import qualified System.Posix.Files as Files
-    ( FileStatus
-    , getSymbolicLinkStatus
-    , isSymbolicLink
-    , readSymbolicLink
-    , fileExist
-    , getFileStatus
-    )
 
 data NodeInfo
   = FileInfo
@@ -71,3 +65,11 @@ nodeInfoStatus node = nodeStatus node
                    FileInfo {} -> getFileStatus
                    LinkInfo {} -> getLinkStatus
                    OrphanedLinkInfo {} -> getOrphanedLinkStatus
+
+nodeInfoPath :: NodeInfo -> FilePath
+nodeInfoPath node = pathFunc node
+  where
+    pathFunc = case node of
+                 FileInfo {} -> getFilePath
+                 LinkInfo {} -> getLinkPath
+                 OrphanedLinkInfo {} -> getOrphanedLinkPath

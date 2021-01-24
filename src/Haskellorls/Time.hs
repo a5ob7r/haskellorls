@@ -13,7 +13,8 @@
 -- - birth time(birth, creation)
 
 module Haskellorls.Time
-  ( timeTypeFrom
+  ( TimeType (..)
+  , timeTypeFrom
   , fileTime
   , timeStyleFrom
   , timeStyleFunc

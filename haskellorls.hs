@@ -7,6 +7,7 @@ import qualified Data.Time.Format as Format
 import qualified System.Posix.Time as PTime
 import qualified System.Directory as Directory
 
+import qualified Haskellorls.Sort as Sort
 import qualified Haskellorls.Color as Color
 import Haskellorls.Decorator
 import qualified Haskellorls.Field as Field
@@ -28,7 +29,7 @@ run :: Option.Option -> IO ()
 run opt = do
   let path = fromMaybe "." . listToMaybe $ Option.targets opt
   contents <- listContents opt path
-  nodes <- mapM Node.nodeInfo contents
+  nodes <- fmap (Sort.sorter opt) . mapM Node.nodeInfo $ contents
   cConfig <- Color.config
   uidSubstTable <- Ownership.getUserIdSubstTable
   gidSubstTable <- Ownership.getGroupIdSubstTable
