@@ -4,12 +4,14 @@ module Haskellorls.Entry
 
 import qualified Haskellorls.Option as Option
 import qualified System.Directory as Directory
+import qualified System.FilePath.Posix as Posix
 
 listContents :: Option.Option -> FilePath -> IO [FilePath]
-listContents opt
-  | Option.all opt = listAllEntries
-  | Option.almostAll opt = listSemiAllEntries
-  | otherwise = listEntries
+listContents opt path = map (path Posix.</>) <$> list path
+  where
+    list | Option.all opt = listAllEntries
+         | Option.almostAll opt = listSemiAllEntries
+         | otherwise = listEntries
 
 listAllEntries :: FilePath -> IO [FilePath]
 listAllEntries = Directory.getDirectoryContents
