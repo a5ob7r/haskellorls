@@ -40,7 +40,7 @@ executable haskellorls
   import: shared-properties
   main-is: haskellorls.hs
   build-depends:
-    , extra
+    , directory
     , haskellorls
     , optparse-applicative
     , time

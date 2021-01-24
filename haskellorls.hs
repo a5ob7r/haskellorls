@@ -1,11 +1,11 @@
 module Main where
 
 import Data.Maybe (fromMaybe, listToMaybe)
-import System.Directory.Extra
 import System.IO
 import qualified Options.Applicative as OA
 import qualified Data.Time.Format as Format
 import qualified System.Posix.Time as PTime
+import qualified System.Directory as Directory
 
 import qualified Haskellorls.Color as Color
 import Haskellorls.Decorator
@@ -27,7 +27,7 @@ main = do
 run :: Option.Option -> IO ()
 run opt = do
   let path = fromMaybe "." . listToMaybe $ Option.targets opt
-  contents <- listContents path
+  contents <- listContents opt path
   nodes <- mapM Node.nodeInfo contents
   cConfig <- Color.config
   uidSubstTable <- Ownership.getUserIdSubstTable
@@ -80,6 +80,26 @@ run opt = do
        mapM_ (putStrLn . (\(a, b) -> a ++ " " ++ b)) $ zip additionals nodeNamesForDisplay
      else do
        Grid.showNodesWithGridForm nodes nodePrinter
+
+listContents :: Option.Option -> FilePath -> IO [FilePath]
+listContents opt
+  | Option.all opt = listAllEntries
+  | Option.almostAll opt = listSemiAllEntries
+  | otherwise = listEntries
+
+listAllEntries :: FilePath -> IO [FilePath]
+listAllEntries = Directory.getDirectoryContents
+
+listSemiAllEntries :: FilePath -> IO [FilePath]
+listSemiAllEntries = Directory.listDirectory
+
+listEntries :: FilePath -> IO [FilePath]
+listEntries = fmap (filter $ not . isHiddenEntries) . listSemiAllEntries
+
+isHiddenEntries :: FilePath -> Bool
+isHiddenEntries [] = False
+isHiddenEntries ('.':_) = True
+isHiddenEntries _ = False
 
 toWrappedStringArray :: String -> [YAString.WrapedString]
 toWrappedStringArray s = [toWrappedString s]

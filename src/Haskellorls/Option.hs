@@ -14,6 +14,8 @@ data Option = Option
   , blockSize :: String
   , time :: String
   , timeStyle :: String
+  , all :: Bool
+  , almostAll :: Bool
   , targets :: [String]
   } deriving Show
 
@@ -35,6 +37,8 @@ optionParser = Option
   <*> blockSizeParser
   <*> timeParser
   <*> timeStyleParser
+  <*> allParser
+  <*> almostAllParser
   <*> argParser
 
 colorParser :: OA.Parser ColorOpt
@@ -80,6 +84,18 @@ timeStyleParser = OA.strOption
   ( OA.long "time-style"
     <> OA.metavar "TYPE_STYLE"
     <> OA.value ""
+  )
+
+allParser :: OA.Parser Bool
+allParser = OA.switch
+  ( OA.short 'a'
+    <> OA.long "all"
+  )
+
+almostAllParser :: OA.Parser Bool
+almostAllParser = OA.switch
+  ( OA.short 'A'
+    <> OA.long "almost-all"
   )
 
 argParser :: OA.Parser [String]
