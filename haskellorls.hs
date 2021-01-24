@@ -15,7 +15,7 @@ import qualified Haskellorls.Size as Size
 import qualified Haskellorls.Sort as Sort
 import qualified Haskellorls.Time as Time
 import qualified Haskellorls.UserInfo as UserInfo
-import qualified Haskellorls.YetAnotherString as YAString (WrapedString (..))
+import qualified Haskellorls.YetAnotherString as YAString
 import qualified Options.Applicative as OA
 import System.IO
 import qualified System.Posix.Time as PTime
@@ -51,11 +51,11 @@ run opt = do
       fileOwnerFieldPrinter =
         if shouldColorize
           then Ownership.coloredOwnerName uidSubstTable cConfig userInfo
-          else toWrappedStringArray . Ownership.ownerName uidSubstTable
+          else YAString.toWrappedStringArray . Ownership.ownerName uidSubstTable
       fileGroupFieldPrinter =
         if shouldColorize
           then Ownership.coloredGroupName gidSubstTable cConfig userInfo
-          else toWrappedStringArray . Ownership.groupName gidSubstTable
+          else YAString.toWrappedStringArray . Ownership.groupName gidSubstTable
       fileSizeType = Size.blockSizeTypeFrom modeStr
         where
           modeStr
@@ -66,11 +66,11 @@ run opt = do
       fileSizeFieldPrinter =
         if shouldColorize
           then Size.coloredFileSizeFuncFor fileSizeType cConfig
-          else toWrappedStringArray . Size.fileSizeFuncFor fileSizeType
+          else YAString.toWrappedStringArray . Size.fileSizeFuncFor fileSizeType
       fileTimeFileldPrinter =
         if shouldColorize
           then Time.coloredTimeStyleFunc cConfig Format.defaultTimeLocale currentTime timeStyle . fileTime . Node.nodeInfoStatus
-          else toWrappedStringArray . timeStyleFunc . fileTime . Node.nodeInfoStatus
+          else YAString.toWrappedStringArray . timeStyleFunc . fileTime . Node.nodeInfoStatus
         where
           timeStyleFunc = Time.timeStyleFunc Format.defaultTimeLocale currentTime timeStyle
           fileTime = Time.fileTime . Time.timeTypeFrom $ Option.time opt
@@ -88,14 +88,3 @@ run opt = do
       mapM_ (putStrLn . (\(a, b) -> a ++ " " ++ b)) $ zip additionals nodeNamesForDisplay
     else do
       Grid.showNodesWithGridForm nodes nodePrinter
-
-toWrappedStringArray :: String -> [YAString.WrapedString]
-toWrappedStringArray s = [toWrappedString s]
-
-toWrappedString :: String -> YAString.WrapedString
-toWrappedString s =
-  YAString.WrapedString
-    { YAString.wrappedStringPrefix = "",
-      YAString.wrappedStringMain = s,
-      YAString.wrappedStringSuffix = ""
-    }

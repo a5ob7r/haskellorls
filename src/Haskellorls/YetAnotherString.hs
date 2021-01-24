@@ -5,6 +5,7 @@ module Haskellorls.YetAnotherString
     Char,
     String,
     WrapedString (..),
+    toWrappedStringArray
   )
 where
 
@@ -41,3 +42,14 @@ instance YetAnotherString WrapedString where
 instance YetAnotherString [WrapedString] where
   yaShow = concatMap yaShow
   yaShow' = concatMap yaShow'
+
+toWrappedStringArray :: String -> [WrapedString]
+toWrappedStringArray s = [toWrappedString s]
+
+toWrappedString :: String -> WrapedString
+toWrappedString s =
+  WrapedString
+    { wrappedStringPrefix = "",
+      wrappedStringMain = s,
+      wrappedStringSuffix = ""
+    }

@@ -13,7 +13,7 @@ import qualified Haskellorls.Color as Color
     ExtensionConfig (..),
     applyEscapeSequence,
   )
-import qualified Haskellorls.YetAnotherString as YAString (WrapedString (..))
+import qualified Haskellorls.YetAnotherString as YAString
 import System.Posix.Files
   ( FileStatus,
     fileMode,
@@ -95,13 +95,7 @@ filemodeField status =
     mode = fileMode status
 
 showFilemodeField :: FilemodeField -> [YAString.WrapedString]
-showFilemodeField field =
-  [ YAString.WrapedString
-      { YAString.wrappedStringPrefix = "",
-        YAString.wrappedStringMain = fType : permFields,
-        YAString.wrappedStringSuffix = ""
-      }
-  ]
+showFilemodeField field = YAString.toWrappedStringArray $ fType : permFields
   where
     fType = fileTypeLetter $ getFiletype field
     permFields = map (\f -> filemodeBitPatternTypeLetter $ f field) permLetterFuncs
