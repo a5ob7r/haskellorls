@@ -32,7 +32,6 @@ opts =
     (optionParser OA.<**> OA.helper)
     ( OA.fullDesc
         <> OA.progDesc "Haskellorls = Haskell color ls"
-        <> OA.header "HEADER"
     )
 
 optionParser :: OA.Parser Option
