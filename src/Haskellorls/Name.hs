@@ -6,6 +6,7 @@ where
 
 import qualified Haskellorls.Color as Color
 import qualified Haskellorls.NodeInfo as Node
+import qualified Haskellorls.YetAnotherString as YAString
 import qualified System.FilePath.Posix as Posix (takeFileName)
 import qualified System.Posix.Files as Files
   ( FileStatus,
@@ -75,15 +76,17 @@ directoryNodeTypeOf status
   where
     mode = Files.fileMode status
 
-colorizedNodeName :: Color.Config -> Node.NodeInfo -> String
-colorizedNodeName conf nd = start ++ name ++ end
+colorizedNodeName :: Color.Config -> Node.NodeInfo -> [YAString.WrapedString]
+colorizedNodeName config nd =
+  [ YAString.WrapedString
+      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config escSec,
+        YAString.wrappedStringMain = name,
+        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
+      }
+  ]
   where
-    left = Color.leftEscapeSequence conf
-    right = Color.rightEscapeSequence conf
-    end = left ++ right
-    start = left ++ escSec ++ right
     name = nodeName nd
-    escSec = lookupEscSec conf nd
+    escSec = lookupEscSec config nd
 
 lookupEscSec :: Color.Config -> Node.NodeInfo -> String
 lookupEscSec conf nd = case nodeTypeOf $ Node.nodeInfoStatus nd of

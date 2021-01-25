@@ -4,21 +4,23 @@ module Haskellorls.Grid
 where
 
 import Data.List (intercalate, transpose)
+import qualified Haskellorls.Decorator as Decorator
 import qualified Haskellorls.Name as Name
 import qualified Haskellorls.NodeInfo as Node
+import qualified Haskellorls.YetAnotherString as YAString
 import qualified System.Console.Terminal.Size as TS
 
 newtype Grid = Grid {unGrid :: [[String]]}
   deriving (Show)
 
-showNodesWithGridForm :: [Node.NodeInfo] -> (Node.NodeInfo -> String) -> IO ()
-showNodesWithGridForm nodes nodePrinter = do
+showNodesWithGridForm :: [Node.NodeInfo] -> Decorator.Printer -> IO ()
+showNodesWithGridForm nodes printer = do
   colSize <- terminalColumnSize
   let names = map Name.nodeName nodes
       grid = validGrid names colSize
       maxColLens = maximumColumnLengths grid
       nodeGrid = transNest (length $ unGrid grid) nodes
-      gridLines = map (\nds -> gridLine nds maxColLens nodePrinter) nodeGrid
+      gridLines = map (\nds -> gridLine nds maxColLens printer) nodeGrid
   mapM_ putStrLn gridLines
 
 gridMargin :: String
@@ -37,8 +39,8 @@ relu n
   | n >= 0 = n
   | otherwise = - n
 
-gridLine :: [Node.NodeInfo] -> [Int] -> (Node.NodeInfo -> String) -> String
-gridLine ns maxColLens nodePrinter = intercalate gridMargin $ zipWith (\nd pad -> nodePrinter nd ++ replicate pad ' ') ns paddings
+gridLine :: [Node.NodeInfo] -> [Int] -> Decorator.Printer -> String
+gridLine ns maxColLens printer = intercalate gridMargin $ zipWith (\nd pad -> YAString.yaShow' (printer nd) ++ replicate pad ' ') ns paddings
   where
     paddings = zipWith (\nd colLen -> colLen - length (Name.nodeName nd)) ns maxColLens
 
