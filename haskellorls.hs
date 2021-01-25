@@ -18,7 +18,7 @@ run :: Option.Option -> IO ()
 run opt = do
   let targets = Option.targets opt
       targets' = if null targets then ["."] else targets
-  files <- Entry.buildFiles targets'
+  files <- Entry.buildFiles opt targets'
   printers <- Decorator.buildPrinters opt
   let runner = run' opt printers
       actions = map runner $ Entry.toEntries files
