@@ -19,7 +19,7 @@ data Option = Option
     almostAll :: Bool,
     sort :: String,
     reverse :: Bool,
-    targets :: [String]
+    targets :: [FilePath]
   }
   deriving (Show)
 
