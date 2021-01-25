@@ -1,6 +1,6 @@
 module Main where
 
-import Data.Maybe (fromMaybe, listToMaybe)
+import qualified Data.List as List
 import qualified Haskellorls.Decorator as Decorator
 import qualified Haskellorls.Entry as Entry
 import qualified Haskellorls.Grid as Grid
@@ -16,10 +16,19 @@ main = do
 
 run :: Option.Option -> IO ()
 run opt = do
-  let path = fromMaybe "." . listToMaybe $ Option.targets opt
-  contents <- Entry.listContents opt path
-  nodes <- fmap (Sort.sorter opt) . mapM Node.nodeInfo $ contents
+  let targets = Option.targets opt
+      targets' = if null targets then ["."] else targets
+  files <- Entry.buildFiles targets'
   printers <- Decorator.buildPrinters opt
+  let runner = run' opt printers
+      actions = map runner $ Entry.toEntries files
+      actions' = List.intersperse (putStrLn "") actions
+  sequence_ actions'
+
+run' :: Option.Option -> Decorator.Printers -> Entry.Entry -> IO ()
+run' opt printers (Entry.Entry _ path contents) = do
+  if null path then return () else putStrLn $ path ++ ":"
+  nodes <- fmap (Sort.sorter opt) . mapM Node.nodeInfo $ contents
   if Option.long opt
     then do
       mapM_ putStrLn $ Decorator.buildLines nodes printers [Decorator.FILEFIELD, Decorator.FILEOWNER, Decorator.FILEGROUP, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
