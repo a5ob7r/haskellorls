@@ -393,7 +393,7 @@ groupReadModeType mode
 
 groupWriteModeType :: FileMode -> FilemodeBitPatternType
 groupWriteModeType mode
-  | hasGroupWriteMode mode = READ
+  | hasGroupWriteMode mode = WRITE
   | otherwise = NOTHING
 
 groupExecModeType :: FileMode -> FilemodeBitPatternType
