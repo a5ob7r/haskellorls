@@ -9,7 +9,6 @@ where
 
 import qualified Haskellorls.Option as Option
 import qualified System.Directory as Directory
-import qualified System.FilePath.Posix as Posix
 import qualified System.Posix.Files as Files
 
 data EntryType = FILES | DIRECTORY
@@ -57,7 +56,7 @@ buildFiles opt paths = do
     g = Files.isDirectory . snd
 
 listContents :: Option.Option -> FilePath -> IO [FilePath]
-listContents opt path = map (path Posix.</>) <$> list path
+listContents opt = list
   where
     list
       | Option.all opt = listAllEntries

@@ -28,7 +28,7 @@ run opt = do
 run' :: Option.Option -> Decorator.Printers -> Entry.Entry -> IO ()
 run' opt printers (Entry.Entry _ path contents) = do
   if null path then return () else putStrLn $ path ++ ":"
-  nodes <- fmap (Sort.sorter opt) . mapM Node.nodeInfo $ contents
+  nodes <- fmap (Sort.sorter opt) . mapM (Node.nodeInfo path) $ contents
   if Option.long opt
     then do
       mapM_ putStrLn $ Decorator.buildLines nodes printers [Decorator.FILEFIELD, Decorator.FILEOWNER, Decorator.FILEGROUP, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]

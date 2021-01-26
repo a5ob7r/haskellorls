@@ -7,7 +7,6 @@ where
 import qualified Haskellorls.Color as Color
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.YetAnotherString as YAString
-import qualified System.FilePath.Posix as Posix (takeFileName)
 import qualified System.Posix.Files as Files
   ( FileStatus,
     fileMode,
@@ -122,13 +121,8 @@ lookupEscSec conf nd = case nodeTypeOf $ Node.nodeInfoStatus nd of
         else symlinkEscSeq'
     symlinkEscSeq' = Color.symlinkEscapeSequence conf
 
-nodeName :: Node.NodeInfo -> String
-nodeName node = Posix.takeFileName name
-  where
-    name = case node of
-      Node.FileInfo {} -> Node.getFilePath node
-      Node.LinkInfo {} -> Node.getLinkPath node
-      Node.OrphanedLinkInfo {} -> Node.getOrphanedLinkPath node
+nodeName :: Node.NodeInfo -> FilePath
+nodeName = Node.nodeInfoPath
 
 hasFileMode :: Types.FileMode -> Types.FileMode -> Bool
 hasFileMode x y = x == Files.intersectFileModes x y

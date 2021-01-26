@@ -27,8 +27,8 @@ data NodeInfo
         getDestPath :: FilePath
       }
 
-nodeInfo :: FilePath -> IO NodeInfo
-nodeInfo path = do
+nodeInfo :: FilePath -> FilePath -> IO NodeInfo
+nodeInfo dirname basename = do
   status <- Files.getSymbolicLinkStatus path
   if Files.isSymbolicLink status
     then do
@@ -40,7 +40,7 @@ nodeInfo path = do
           destStatus <- linkDestStatus path linkPath
           return $
             LinkInfo
-              { getLinkPath = path,
+              { getLinkPath = basename,
                 getLinkStatus = status,
                 getDestPath = linkPath,
                 getDestStatus = destStatus
@@ -48,16 +48,18 @@ nodeInfo path = do
         else
           return $
             OrphanedLinkInfo
-              { getOrphanedLinkPath = path,
+              { getOrphanedLinkPath = basename,
                 getOrphanedLinkStatus = status,
                 getDestPath = path
               }
     else
       return $
         FileInfo
-          { getFilePath = path,
+          { getFilePath = basename,
             getFileStatus = status
           }
+  where
+    path = dirname Posix.</> basename
 
 linkDestPath :: FilePath -> FilePath -> FilePath
 linkDestPath parPath linkPath =
