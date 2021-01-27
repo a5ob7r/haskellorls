@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+#
+# Auto generate shell completions using optparse-applicative.
+#
+
+# Set useful shell options
+set -Cueo pipefail
+
+readonly FILEBASE=$(dirname "${BASH_SOURCE[0]}")
+
+cd "${FILEBASE}/.."
+
+readonly CMD='cabal run --verbose=0 haskellorls --'
+
+echo ':: Generate a completion for bash'
+$CMD --bash-completion-script '$(which haskellorls)' | tee etc/completions/haskellorls.bash
+
+echo
+echo ':: Generate a completion for zsh'
+$CMD --zsh-completion-script '$(which haskellorls)' | tee etc/completions/haskellorls.zsh
+
+echo
+echo ':: Generate a completion for fish'
+$CMD --fish-completion-script '$(which haskellorls)' | tee etc/completions/haskellorls.fish
