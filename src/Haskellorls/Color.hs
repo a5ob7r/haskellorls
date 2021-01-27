@@ -119,16 +119,16 @@ defaultConfig =
 defaultExtensionConfig :: ExtensionConfig
 defaultExtensionConfig =
   ExtensionConfig
-    { userReadPermBitEscapeSequence = "1;33",
+    { userReadPermBitEscapeSequence = "1;32",
       userWritePermBitEscapeSequence = "1;31",
-      userExecPermBitFileEscapeSequence = "1;32",
+      userExecPermBitFileEscapeSequence = "1;33",
       userExecPermBitOtherEscapeSequence = "1;92",
-      groupReadPermBitEscapeSequence = "1;33",
+      groupReadPermBitEscapeSequence = "1;32",
       groupWritePermBitEscapeSequence = "1;31",
-      groupExecPermBitEscapeSequence = "1;32",
-      otherReadPermBitEscapeSequence = "1;33",
+      groupExecPermBitEscapeSequence = "1;33",
+      otherReadPermBitEscapeSequence = "1;32",
       otherWritePermBitEscapeSequence = "1;31",
-      otherExecPermBitEscapeSequence = "1;32",
+      otherExecPermBitEscapeSequence = "1;33",
       sPermBitFileEscapeSequence = "1;96",
       sPermBitOtherEscapeSequence = "1;96",
       ownerYourselfEscapeSequence = "1;33",
