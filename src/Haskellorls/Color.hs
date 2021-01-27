@@ -158,7 +158,7 @@ defaultExtensionConfig =
     }
 
 config :: IO Config
-config = configFrom <$> getLSCOLORS
+config = configFrom <$> getLSCOLORS <> getEXACOLORS
 
 configFrom :: String -> Config
 configFrom lsColors =
@@ -188,7 +188,7 @@ configFrom lsColors =
       multiHardlinkEscapeSequence = "",
       clearLineEscapeSequence = "\^[[K",
       fileColorIndicator = indicator,
-      extensionColorConfig = extensionConfigFrom ""
+      extensionColorConfig = extensionConfigFrom lsColors
     }
   where
     def = defaultConfig
@@ -280,6 +280,9 @@ makePatternEscapePair s =
 
 getLSCOLORS :: IO String
 getLSCOLORS = Maybe.fromMaybe "" <$> lookupEnv "LS_COLORS"
+
+getEXACOLORS :: IO String
+getEXACOLORS = Maybe.fromMaybe "" <$> lookupEnv "EXA_COLORS"
 
 -- | Lookup ascii escape sequence. At first, lookup with a query as it is. If
 --    fails to lookup, change a query to the extension and re lookup.
