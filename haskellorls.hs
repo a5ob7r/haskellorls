@@ -31,14 +31,28 @@ run' opt printers (Entry.Entry eType path contents) = do
     Entry.FILES -> return ()
     _ -> putStrLn $ path ++ ":"
   nodes <- fmap (Sort.sorter opt) . mapM (Node.nodeInfo path) $ contents
-  if long || oneline
+  if isLongStyle opt
     then do
-      mapM_ putStrLn $ Decorator.buildLines nodes printers pTypes
+      mapM_ putStrLn . Decorator.buildLines nodes printers $ buildPrinterTypes opt
     else do
       Grid.showNodesWithGridForm nodes $ Decorator.fileNamePrinter printers
+
+isLongStyle :: Option.Option -> Bool
+isLongStyle opt = or . mapF opt $ [Option.long, Option.oneline, Option.longWithoutGroup]
+
+buildPrinterTypes :: Option.Option -> [Decorator.PrinterType]
+buildPrinterTypes opt
+  | isLongWithoutGroup = [Decorator.FILEFIELD, Decorator.FILEOWNER, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
+  | long = [Decorator.FILEFIELD, Decorator.FILEOWNER, Decorator.FILEGROUP, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
+  | oneline = [Decorator.FILENAME]
+  | otherwise = []
   where
+    isLongWithoutGroup = longWithoutGroup || long && noGroup
     long = Option.long opt
     oneline = Option.oneline opt
-    pTypes
-      | long = [Decorator.FILEFIELD, Decorator.FILEOWNER, Decorator.FILEGROUP, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
-      | otherwise = [Decorator.FILENAME]
+    noGroup = Option.noGroup opt
+    longWithoutGroup = Option.longWithoutGroup opt
+
+mapF :: a -> [a -> b] -> [b]
+mapF _ [] = []
+mapF x (f:fs) = f x : mapF x fs
