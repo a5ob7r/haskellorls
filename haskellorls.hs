@@ -31,11 +31,15 @@ run' opt printers (Entry.Entry eType path contents) = do
     Entry.FILES -> return ()
     _ -> putStrLn $ path ++ ":"
   nodes <- fmap (Sort.sorter opt) . mapM (Node.nodeInfo path) $ contents
-  if isLongStyle opt
-    then do
-      mapM_ putStrLn . Decorator.buildLines nodes printers $ buildPrinterTypes opt
-    else do
-      Grid.showNodesWithGridForm nodes $ Decorator.fileNamePrinter printers
+  colLen <- Grid.terminalColumnSize
+  let outputs =
+        if isLongStyle opt
+          then Decorator.buildLines nodes printers $ buildPrinterTypes opt
+          else Grid.renderGrid $ Grid.buildValidGrid colLen nodes'
+        where
+          printer = Decorator.fileNamePrinter printers
+          nodes' = map printer nodes
+  mapM_ putStrLn outputs
 
 isLongStyle :: Option.Option -> Bool
 isLongStyle opt = or . mapF opt $ [Option.long, Option.oneline, Option.longWithoutGroup, Option.longWithoutOwner]
