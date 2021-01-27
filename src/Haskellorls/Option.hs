@@ -29,11 +29,9 @@ data ColorOpt = NEVER | ALWAYS | AUTO
 
 opts :: OA.ParserInfo Option
 opts =
-  OA.info
-    (optionParser OA.<**> OA.helper)
-    ( OA.fullDesc
-        <> OA.progDesc "Haskellorls = Haskell color ls"
-    )
+  OA.info (optionParser OA.<**> OA.helper) $
+    OA.fullDesc
+      <> OA.progDesc "Haskellorls = Haskell color ls"
 
 optionParser :: OA.Parser Option
 optionParser =
@@ -53,12 +51,10 @@ optionParser =
 
 colorParser :: OA.Parser ColorOpt
 colorParser =
-  OA.option
-    parseColorOpt
-    ( OA.long "color"
-        <> OA.metavar "WHEN"
-        <> OA.value NEVER
-    )
+  OA.option parseColorOpt $
+    OA.long "color"
+      <> OA.metavar "WHEN"
+      <> OA.value NEVER
 
 parseColorOpt :: OA.ReadM ColorOpt
 parseColorOpt = OA.str >>= f
@@ -70,71 +66,62 @@ parseColorOpt = OA.str >>= f
       _ -> OA.readerError "Only never, always or auto"
 
 longParser :: OA.Parser Bool
-longParser = OA.switch (OA.short 'l')
+longParser = OA.switch $ OA.short 'l'
 
 humanReadableParser :: OA.Parser Bool
 humanReadableParser =
-  OA.switch
-    ( OA.short 'h'
-        <> OA.long "human-readable"
-    )
+  OA.switch $
+    OA.short 'h'
+      <> OA.long "human-readable"
 
 blockSizeParser :: OA.Parser String
 blockSizeParser =
-  OA.strOption
-    ( OA.long "block-size"
-        <> OA.metavar "SIZE"
-        <> OA.value ""
-    )
+  OA.strOption $
+    OA.long "block-size"
+      <> OA.metavar "SIZE"
+      <> OA.value ""
 
 timeParser :: OA.Parser String
 timeParser =
-  OA.strOption
-    ( OA.long "time"
-        <> OA.metavar "WORD"
-        <> OA.value ""
-    )
+  OA.strOption $
+    OA.long "time"
+      <> OA.metavar "WORD"
+      <> OA.value ""
 
 timeStyleParser :: OA.Parser String
 timeStyleParser =
-  OA.strOption
-    ( OA.long "time-style"
-        <> OA.metavar "TYPE_STYLE"
-        <> OA.value ""
-    )
+  OA.strOption $
+    OA.long "time-style"
+      <> OA.metavar "TYPE_STYLE"
+      <> OA.value ""
 
 allParser :: OA.Parser Bool
 allParser =
-  OA.switch
-    ( OA.short 'a'
-        <> OA.long "all"
-    )
+  OA.switch $
+    OA.short 'a'
+      <> OA.long "all"
 
 almostAllParser :: OA.Parser Bool
 almostAllParser =
-  OA.switch
-    ( OA.short 'A'
-        <> OA.long "almost-all"
-    )
+  OA.switch $
+    OA.short 'A'
+      <> OA.long "almost-all"
 
 sortParser :: OA.Parser String
 sortParser =
-  OA.strOption
-    ( OA.long "sort"
-        <> OA.metavar "WORD"
-        <> OA.value "name"
-    )
+  OA.strOption $
+    OA.long "sort"
+      <> OA.metavar "WORD"
+      <> OA.value "name"
 
 reverseParser :: OA.Parser Bool
 reverseParser =
-  OA.switch
-    ( OA.short 'r'
-        <> OA.long "reverse"
-    )
+  OA.switch $
+    OA.short 'r'
+      <> OA.long "reverse"
 
 onelineParser :: OA.Parser Bool
-onelineParser =
-  OA.switch $ OA.short '1'
+onelineParser = OA.switch $ OA.short '1'
 
 argParser :: OA.Parser [String]
 argParser = many . OA.strArgument $ OA.metavar "[FILE]..."
