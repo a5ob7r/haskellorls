@@ -30,8 +30,7 @@ toEntries (Files fEntry@(Entry _ _ contents) dEntries) = fEntry' ++ dEntries'
     fEntry' = [fEntry | not $ null contents]
     dEntry = head dEntries
     dEntries'
-      | null dEntries = []
-      | null contents && length dEntries == 1 = [dEntry { entryPath = "" }]
+      | null contents && length dEntries == 1 = [dEntry { entryType = FILES }]
       | otherwise = dEntries
 
 buildDirectoryEntries :: Option.Option -> FilePath -> IO Entry

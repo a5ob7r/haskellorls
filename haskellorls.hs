@@ -26,8 +26,10 @@ run opt = do
   sequence_ actions'
 
 run' :: Option.Option -> Decorator.Printers -> Entry.Entry -> IO ()
-run' opt printers (Entry.Entry _ path contents) = do
-  if null path then return () else putStrLn $ path ++ ":"
+run' opt printers (Entry.Entry eType path contents) = do
+  case eType of
+    Entry.FILES -> return ()
+    _ -> putStrLn $ path ++ ":"
   nodes <- fmap (Sort.sorter opt) . mapM (Node.nodeInfo path) $ contents
   if Option.long opt
     then do
