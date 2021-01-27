@@ -22,6 +22,7 @@ data Option = Option
     oneline :: Bool,
     noGroup :: Bool,
     longWithoutGroup :: Bool,
+    longWithoutOwner :: Bool,
     targets :: [FilePath]
   }
   deriving (Show)
@@ -51,6 +52,7 @@ optionParser =
     <*> onelineParser
     <*> noGroupParser
     <*> longWithoutGroupParser
+    <*> longWithoutOwnerParser
     <*> argParser
 
 colorParser :: OA.Parser ColorOpt
@@ -135,6 +137,9 @@ noGroupParser =
 
 longWithoutGroupParser :: OA.Parser Bool
 longWithoutGroupParser = OA.switch $ OA.short 'o'
+
+longWithoutOwnerParser :: OA.Parser Bool
+longWithoutOwnerParser = OA.switch $ OA.short 'g'
 
 argParser :: OA.Parser [String]
 argParser = many . OA.strArgument $ OA.metavar "[FILE]..."

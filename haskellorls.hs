@@ -38,20 +38,25 @@ run' opt printers (Entry.Entry eType path contents) = do
       Grid.showNodesWithGridForm nodes $ Decorator.fileNamePrinter printers
 
 isLongStyle :: Option.Option -> Bool
-isLongStyle opt = or . mapF opt $ [Option.long, Option.oneline, Option.longWithoutGroup]
+isLongStyle opt = or . mapF opt $ [Option.long, Option.oneline, Option.longWithoutGroup, Option.longWithoutOwner]
 
 buildPrinterTypes :: Option.Option -> [Decorator.PrinterType]
 buildPrinterTypes opt
+  | isLongWithoutOwnerAndGroup = [Decorator.FILEFIELD, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
   | isLongWithoutGroup = [Decorator.FILEFIELD, Decorator.FILEOWNER, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
+  | isLongWithoutOwner = [Decorator.FILEFIELD, Decorator.FILEGROUP, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
   | long = [Decorator.FILEFIELD, Decorator.FILEOWNER, Decorator.FILEGROUP, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
   | oneline = [Decorator.FILENAME]
   | otherwise = []
   where
+    isLongWithoutOwnerAndGroup = isLongWithoutOwner && (isLongWithoutGroup || noGroup)
     isLongWithoutGroup = longWithoutGroup || long && noGroup
+    isLongWithoutOwner = longWithoutOwner
     long = Option.long opt
     oneline = Option.oneline opt
     noGroup = Option.noGroup opt
     longWithoutGroup = Option.longWithoutGroup opt
+    longWithoutOwner = Option.longWithoutOwner opt
 
 mapF :: a -> [a -> b] -> [b]
 mapF _ [] = []
