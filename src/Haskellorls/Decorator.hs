@@ -135,7 +135,7 @@ buildColumn nodes printers pType = map alignmenter nodes'
   where
     printer = printerSelectorFor pType printers
     nodes' = map printer nodes
-    maxLen = maximum $ map YAString.yaLength nodes'
+    maxLen = YAString.maximumLength nodes'
     aType = alignmentTypeFor pType
     aBuilder = alignmenterBuilderSelectorFor aType
     alignmenter = aBuilder ' ' maxLen

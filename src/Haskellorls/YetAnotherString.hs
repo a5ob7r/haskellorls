@@ -5,7 +5,8 @@ module Haskellorls.YetAnotherString
     Char,
     String,
     WrapedString (..),
-    toWrappedStringArray
+    toWrappedStringArray,
+    maximumLength,
   )
 where
 
@@ -42,6 +43,9 @@ instance YetAnotherString WrapedString where
 instance YetAnotherString [WrapedString] where
   yaShow = concatMap yaShow
   yaShow' = concatMap yaShow'
+
+maximumLength :: YetAnotherString a => [a] -> Int
+maximumLength = maximum . map yaLength
 
 toWrappedStringArray :: String -> [WrapedString]
 toWrappedStringArray s = [toWrappedString s]
