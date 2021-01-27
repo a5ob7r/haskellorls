@@ -31,8 +31,14 @@ run' opt printers (Entry.Entry eType path contents) = do
     Entry.FILES -> return ()
     _ -> putStrLn $ path ++ ":"
   nodes <- fmap (Sort.sorter opt) . mapM (Node.nodeInfo path) $ contents
-  if Option.long opt
+  if long || oneline
     then do
-      mapM_ putStrLn $ Decorator.buildLines nodes printers [Decorator.FILEFIELD, Decorator.FILEOWNER, Decorator.FILEGROUP, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
+      mapM_ putStrLn $ Decorator.buildLines nodes printers pTypes
     else do
       Grid.showNodesWithGridForm nodes $ Decorator.fileNamePrinter printers
+  where
+    long = Option.long opt
+    oneline = Option.oneline opt
+    pTypes
+      | long = [Decorator.FILEFIELD, Decorator.FILEOWNER, Decorator.FILEGROUP, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
+      | otherwise = [Decorator.FILENAME]

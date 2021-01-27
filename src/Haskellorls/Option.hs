@@ -19,6 +19,7 @@ data Option = Option
     almostAll :: Bool,
     sort :: String,
     reverse :: Bool,
+    oneline :: Bool,
     targets :: [FilePath]
   }
   deriving (Show)
@@ -47,6 +48,7 @@ optionParser =
     <*> almostAllParser
     <*> sortParser
     <*> reverseParser
+    <*> onelineParser
     <*> argParser
 
 colorParser :: OA.Parser ColorOpt
@@ -129,6 +131,10 @@ reverseParser =
     ( OA.short 'r'
         <> OA.long "reverse"
     )
+
+onelineParser :: OA.Parser Bool
+onelineParser =
+  OA.switch $ OA.short '1'
 
 argParser :: OA.Parser [String]
 argParser = many . OA.strArgument $ OA.metavar "[FILE]..."
