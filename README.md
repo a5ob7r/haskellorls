@@ -11,6 +11,15 @@ In addition, maybe have some options and colored output which exa has as long as
 $ cabal install
 ```
 
+## Config
+
+If want to use color parameters like exa default,
+
+```sh
+$ export EXA_COLORS='ur=1;33:uw=1;31:ux=1;32:ue=1;92:gr=32:gw=31:gx=33:tr=32:tw=31:tx=33:su=96:sf=96:uu=1;33:gu=1;33:'
+$ haskellorls --color=auto -l
+```
+
 ## Development
 
 Build and run.
