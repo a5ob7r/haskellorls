@@ -13,7 +13,9 @@ terminalColumnSize :: IO Int
 terminalColumnSize = maybe 0 TS.width <$> TS.size
 
 nest :: Int -> [a] -> [[a]]
-nest n xs = nest' m xs
+nest n xs
+  | n > 0 = nest' m xs
+  | otherwise = nest 1 xs
   where
     m = length xs `div` n
 
