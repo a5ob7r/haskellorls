@@ -20,7 +20,9 @@ nest n xs = nest' m xs
 nest' :: Int -> [a] -> [[a]]
 nest' _ [] = []
 nest' 0 xs = nest' 1 xs
-nest' n xs = take n xs : nest' n (drop n xs)
+nest' n xs = h : nest' n t
+  where
+    (h, t) = splitAt n xs
 
 buildValidGrid :: Int -> [[YAString.WrapedString]] -> [[[YAString.WrapedString]]]
 buildValidGrid columnLength sss
