@@ -30,7 +30,6 @@ $ cabal run haskellorls
 
 ## TODO
 
-- Fix a crash when link destination is orphens link.
 - Add locale support for time style.
 - Add extra sort method.
 - Fix name sort for GNU ls compatibility.
