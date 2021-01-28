@@ -42,7 +42,7 @@ run' opt printers (Entry.Entry eType path contents) = do
   mapM_ putStrLn outputs
 
 isLongStyle :: Option.Option -> Bool
-isLongStyle opt = or . mapF opt $ [Option.long, Option.oneline, Option.longWithoutGroup, Option.longWithoutOwner]
+isLongStyle opt = any (\f -> f opt) [Option.long, Option.oneline, Option.longWithoutGroup, Option.longWithoutOwner]
 
 buildPrinterTypes :: Option.Option -> [Decorator.PrinterType]
 buildPrinterTypes opt
@@ -61,7 +61,3 @@ buildPrinterTypes opt
     noGroup = Option.noGroup opt
     longWithoutGroup = Option.longWithoutGroup opt
     longWithoutOwner = Option.longWithoutOwner opt
-
-mapF :: a -> [a -> b] -> [b]
-mapF _ [] = []
-mapF x (f:fs) = f x : mapF x fs
