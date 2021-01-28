@@ -28,6 +28,7 @@ nest' n xs = h : nest' n t
 
 buildValidGrid :: Int -> [[YAString.WrapedString]] -> [[[YAString.WrapedString]]]
 buildValidGrid columnLength sss
+  | columnLength < 1 = buildGrid 1 sss
   | null sss = []
   | otherwise = last . takeWhile (validateGrid columnLength) $ map (`buildGrid` sss) [1..columnLength]
 
