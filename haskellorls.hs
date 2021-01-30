@@ -46,10 +46,10 @@ isLongStyle opt = any (\f -> f opt) [Option.long, Option.oneline, Option.longWit
 
 buildPrinterTypes :: Option.Option -> [Decorator.PrinterType]
 buildPrinterTypes opt
-  | isLongWithoutOwnerAndGroup = [Decorator.FILEFIELD, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
-  | isLongWithoutGroup = [Decorator.FILEFIELD, Decorator.FILEOWNER, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
-  | isLongWithoutOwner = [Decorator.FILEFIELD, Decorator.FILEGROUP, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
-  | long = [Decorator.FILEFIELD, Decorator.FILEOWNER, Decorator.FILEGROUP, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
+  | isLongWithoutOwnerAndGroup = [Decorator.FILEFIELD, Decorator.FILELINK, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
+  | isLongWithoutGroup = [Decorator.FILEFIELD, Decorator.FILELINK, Decorator.FILEOWNER, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
+  | isLongWithoutOwner = [Decorator.FILEFIELD, Decorator.FILELINK, Decorator.FILEGROUP, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
+  | long = [Decorator.FILEFIELD, Decorator.FILELINK, Decorator.FILEOWNER, Decorator.FILEGROUP, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
   | oneline = [Decorator.FILENAME]
   | otherwise = []
   where

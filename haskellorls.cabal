@@ -26,6 +26,7 @@ library
         Haskellorls.UserInfo
         Haskellorls.YetAnotherString
         Haskellorls.Time
+        Haskellorls.Link
 
     hs-source-dirs:   src
     default-language: Haskell2010

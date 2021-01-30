@@ -19,6 +19,7 @@ import qualified Haskellorls.Name as Name
 import qualified Haskellorls.Ownership as Ownership
 import qualified Haskellorls.Size as Size
 import qualified Haskellorls.Time as Time
+import qualified Haskellorls.Link as Link
 import qualified Haskellorls.UserInfo as UserInfo
 import qualified Haskellorls.YetAnotherString as YAString
 import qualified System.Posix.Time as PTime
@@ -26,6 +27,7 @@ import System.IO
 
 data PrinterType
   = FILEFIELD
+  | FILELINK
   | FILEOWNER
   | FILEGROUP
   | FILESIZE
@@ -43,6 +45,7 @@ data AlighmentType
 
 data Printers = Printers
   { fileFieldPrinter :: Printer,
+    fileLinkPrinter :: Printer,
     fileOwnerPrinter :: Printer,
     fileGroupPrinter :: Printer,
     fileSizePrinter :: Printer,
@@ -53,6 +56,7 @@ data Printers = Printers
 alignmentTypeFor :: PrinterType -> AlighmentType
 alignmentTypeFor dType = case dType of
   FILEFIELD -> NONE
+  FILELINK -> RIGHT
   FILEOWNER -> LEFT
   FILEGROUP -> LEFT
   FILESIZE -> RIGHT
@@ -62,6 +66,7 @@ alignmentTypeFor dType = case dType of
 printerSelectorFor :: PrinterType -> Printers -> Printer
 printerSelectorFor pType = case pType of
   FILEFIELD -> fileFieldPrinter
+  FILELINK -> fileLinkPrinter
   FILEOWNER -> fileOwnerPrinter
   FILEGROUP -> fileGroupPrinter
   FILESIZE -> fileSizePrinter
@@ -93,6 +98,10 @@ buildPrinters opt = do
         if shouldColorize
           then Field.showFilemodeFieldWithColor cConfig
           else Field.showFilemodeField
+      fileLinkFieldPrinter =
+        if shouldColorize
+          then Link.nodeLinksNumberWithColor cConfig
+          else YAString.toWrappedStringArray . show . Link.nodeLinksNumber
       fileOwnerFieldPrinter =
         if shouldColorize
           then Ownership.coloredOwnerName uidSubstTable cConfig userInfo
@@ -123,6 +132,7 @@ buildPrinters opt = do
   return $
     Printers
       { fileFieldPrinter = filemodeFieldPrinter . Field.filemodeField . Node.nodeInfoStatus,
+        fileLinkPrinter = fileLinkFieldPrinter,
         fileOwnerPrinter = fileOwnerFieldPrinter,
         fileGroupPrinter = fileGroupFieldPrinter,
         fileSizePrinter = fileSizeFieldPrinter,
