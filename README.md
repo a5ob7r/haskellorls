@@ -1,5 +1,7 @@
 # Haskellorls
 
+![CI](https://github.com/a5ob7r/haskellorls/workflows/CI/badge.svg)
+
 Haskell implementation of [exa](https://github.com/ogham/exa) flavored GNU ls.
 
 The goal of this project is to create a software which has GNU ls compatiblities about options and output.
