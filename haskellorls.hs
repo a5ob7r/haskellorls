@@ -34,12 +34,12 @@ run' opt printers (Entry.Entry eType path contents) = do
   colLen <- Grid.terminalColumnSize
   let outputs =
         if isLongStyle opt
-          then Decorator.buildLines nodes printers $ buildPrinterTypes opt
-          else Grid.renderGrid $ Grid.buildValidGrid colLen nodes'
+          then List.transpose [Decorator.buildLines nodes printers $ buildPrinterTypes opt]
+          else Grid.buildValidGrid colLen nodes'
         where
           printer = Decorator.fileNamePrinter printers
           nodes' = map printer nodes
-  mapM_ putStrLn outputs
+  mapM_ putStrLn $ Grid.renderGrid outputs
 
 isLongStyle :: Option.Option -> Bool
 isLongStyle opt = any (\f -> f opt) [Option.long, Option.oneline, Option.longWithoutGroup, Option.longWithoutOwner]

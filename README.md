@@ -39,7 +39,6 @@ $ cabal run haskellorls
 - Fix size size printer for charactor devices.
 - Add -F and --file-type options.
 - Add -I or --ignore=PATTERN and --hide=PATTERN options.
-- Integrate grid and long style rendering logic.
 - Add an interface model for deriving command parameters from args and options.
 - Add a printer to show link destination of symbolic link node.
 - Improve performances.

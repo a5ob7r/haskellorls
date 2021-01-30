@@ -9,7 +9,7 @@ module Haskellorls.Decorator
   )
 where
 
-import Data.List (transpose)
+import qualified Data.List as List
 import qualified Data.Time.Format as Format
 import qualified Haskellorls.Field as Field
 import qualified Haskellorls.NodeInfo as Node
@@ -33,7 +33,7 @@ data PrinterType
   | FILENAME
 
 type Printer = Node.NodeInfo -> [YAString.WrapedString]
-type Alignmenter = forall a . YAString.YetAnotherString a => a -> String
+type Alignmenter = [YAString.WrapedString] -> [YAString.WrapedString]
 type AlignmenterBuilder = Char -> Int -> Alignmenter
 
 data AlighmentType
@@ -130,7 +130,7 @@ buildPrinters opt = do
         fileNamePrinter = nodePrinter
       }
 
-buildColumn :: [Node.NodeInfo] -> Printers -> PrinterType -> [String]
+buildColumn :: [Node.NodeInfo] -> Printers -> PrinterType -> [[YAString.WrapedString]]
 buildColumn nodes printers pType = map alignmenter nodes'
   where
     printer = printerSelectorFor pType printers
@@ -140,11 +140,13 @@ buildColumn nodes printers pType = map alignmenter nodes'
     aBuilder = alignmenterBuilderSelectorFor aType
     alignmenter = aBuilder ' ' maxLen
 
-buildGrid :: [Node.NodeInfo] -> Printers -> [PrinterType] -> [[String]]
-buildGrid nodes printers = transpose . map (buildColumn nodes printers)
+buildGrid :: [Node.NodeInfo] -> Printers -> [PrinterType] -> [[[YAString.WrapedString]]]
+buildGrid nodes printers = List.transpose . map (buildColumn nodes printers)
 
-buildLines :: [Node.NodeInfo] -> Printers -> [PrinterType] -> [String]
-buildLines nodes printers types = map unwords $ buildGrid nodes printers types
+buildLines :: [Node.NodeInfo] -> Printers -> [PrinterType] -> [[YAString.WrapedString]]
+buildLines nodes printers types = map cat $ buildGrid nodes printers types
+  where
+    cat = List.intercalate (YAString.toWrappedStringArray " ")
 
 leftPadding :: AlignmenterBuilder
 leftPadding c n | n > -1 = padding c (-n)
@@ -155,12 +157,12 @@ rightPadding c n | n > -1 = padding c n
 rightPadding c n = noPadding c n
 
 noPadding :: AlignmenterBuilder
-noPadding _ _ = YAString.yaShow'
+noPadding _ _ = id
 
 padding :: AlignmenterBuilder
 padding c n ys
   | n' > len = padding' c padSize ys
-  | otherwise = YAString.yaShow' ys
+  | otherwise = ys
   where
     n' = abs n
     len = YAString.yaLength ys
@@ -168,8 +170,8 @@ padding c n ys
 
 padding' :: AlignmenterBuilder
 padding' c n ys
-  | n > 0 = YAString.yaShow' ys ++ pad
-  | n < 0 = pad ++ YAString.yaShow' ys
-  | otherwise = YAString.yaShow' ys
+  | n > 0 = ys ++ pad
+  | n < 0 = pad ++ ys
+  | otherwise = ys
   where
-    pad = replicate (abs n) c
+    pad = YAString.toWrappedStringArray $ replicate (abs n) c
