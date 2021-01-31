@@ -91,24 +91,25 @@ buildPrinters opt = do
     Option.NEVER -> return False
     Option.ALWAYS -> return True
     Option.AUTO -> hIsTerminalDevice stdout
-  let nodePrinter =
+  let isEnableExtraColor = Option.extraColor opt
+      nodePrinter =
         if shouldColorize
           then Name.colorizedNodeName cConfig
           else YAString.toWrappedStringArray . Name.nodeName
       filemodeFieldPrinter =
-        if shouldColorize
+        if shouldColorize && isEnableExtraColor
           then Field.showFilemodeFieldWithColor cConfig
           else Field.showFilemodeField
       fileLinkFieldPrinter =
-        if shouldColorize
+        if shouldColorize && isEnableExtraColor
           then Link.nodeLinksNumberWithColor cConfig
           else YAString.toWrappedStringArray . show . Link.nodeLinksNumber
       fileOwnerFieldPrinter =
-        if shouldColorize
+        if shouldColorize && isEnableExtraColor
           then Ownership.coloredOwnerName uidSubstTable cConfig userInfo
           else YAString.toWrappedStringArray . Ownership.ownerName uidSubstTable
       fileGroupFieldPrinter =
-        if shouldColorize
+        if shouldColorize && isEnableExtraColor
           then Ownership.coloredGroupName gidSubstTable cConfig userInfo
           else YAString.toWrappedStringArray . Ownership.groupName gidSubstTable
       fileSizeType = Size.blockSizeTypeFrom modeStr
@@ -119,11 +120,11 @@ buildPrinters opt = do
             | otherwise = ""
           bSize = Option.blockSize opt
       fileSizeFieldPrinter =
-        if shouldColorize
+        if shouldColorize && isEnableExtraColor
           then Size.coloredFileSizeFuncFor fileSizeType cConfig
           else YAString.toWrappedStringArray . Size.fileSizeFuncFor fileSizeType
       fileTimeFileldPrinter =
-        if shouldColorize
+        if shouldColorize && isEnableExtraColor
           then Time.coloredTimeStyleFunc cConfig Format.defaultTimeLocale currentTime timeStyle . fileTime . Node.nodeInfoStatus
           else YAString.toWrappedStringArray . timeStyleFunc . fileTime . Node.nodeInfoStatus
         where

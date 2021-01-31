@@ -10,6 +10,7 @@ import qualified Options.Applicative as OA
 
 data Option = Option
   { color :: ColorOpt,
+    extraColor :: Bool,
     long :: Bool,
     humanReadable :: Bool,
     blockSize :: String,
@@ -41,6 +42,7 @@ optionParser :: OA.Parser Option
 optionParser =
   Option
     <$> colorParser
+    <*> extraColorParser
     <*> longParser
     <*> humanReadableParser
     <*> blockSizeParser
@@ -72,6 +74,12 @@ parseColorOpt = OA.str >>= f
       "always" -> return ALWAYS
       "auto" -> return AUTO
       _ -> OA.readerError "Only never, always or auto"
+
+extraColorParser :: OA.Parser Bool
+extraColorParser =
+  OA.switch $
+    OA.long "extra-color"
+      <> OA.help "Enable extra coloring which is incompatible for GNU ls."
 
 longParser :: OA.Parser Bool
 longParser = OA.switch $ OA.short 'l'
