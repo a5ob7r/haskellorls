@@ -5,7 +5,8 @@ module Haskellorls.Decorator
     Printers (..),
     PrinterType (..),
     buildPrinters,
-    buildLines
+    buildLines,
+    buildPrinterTypes,
   )
 where
 
@@ -139,6 +140,24 @@ buildPrinters opt = do
         fileTimePrinter = fileTimeFileldPrinter,
         fileNamePrinter = nodePrinter
       }
+
+buildPrinterTypes :: Option.Option -> [PrinterType]
+buildPrinterTypes opt
+  | isLongWithoutOwnerAndGroup = [FILEFIELD, FILELINK, FILESIZE, FILETIME, FILENAME]
+  | isLongWithoutGroup = [FILEFIELD, FILELINK, FILEOWNER, FILESIZE, FILETIME, FILENAME]
+  | isLongWithoutOwner = [FILEFIELD, FILELINK, FILEGROUP, FILESIZE, FILETIME, FILENAME]
+  | long = [FILEFIELD, FILELINK, FILEOWNER, FILEGROUP, FILESIZE, FILETIME, FILENAME]
+  | oneline = [FILENAME]
+  | otherwise = [FILENAME]
+  where
+    isLongWithoutOwnerAndGroup = isLongWithoutOwner && (isLongWithoutGroup || noGroup)
+    isLongWithoutGroup = longWithoutGroup || long && noGroup
+    isLongWithoutOwner = longWithoutOwner
+    long = Option.long opt
+    oneline = Option.oneline opt
+    noGroup = Option.noGroup opt
+    longWithoutGroup = Option.longWithoutGroup opt
+    longWithoutOwner = Option.longWithoutOwner opt
 
 buildColumn :: [Node.NodeInfo] -> Printers -> PrinterType -> [[YAString.WrapedString]]
 buildColumn nodes printers pType = map alignmenter nodes'

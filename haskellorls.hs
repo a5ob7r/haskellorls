@@ -32,23 +32,5 @@ run' opt printers (Entry.Entry eType path contents) = do
     _ -> putStrLn $ path ++ ":"
   nodes <- fmap (Sort.sorter opt) . mapM (Node.nodeInfo path) $ contents
   colLen <- Grid.virtualColumnSize opt
-  let nodes' = Decorator.buildLines nodes printers $ buildPrinterTypes opt
+  let nodes' = Decorator.buildLines nodes printers $ Decorator.buildPrinterTypes opt
   mapM_ putStrLn . Grid.renderGrid $ Grid.buildValidGrid colLen nodes'
-
-buildPrinterTypes :: Option.Option -> [Decorator.PrinterType]
-buildPrinterTypes opt
-  | isLongWithoutOwnerAndGroup = [Decorator.FILEFIELD, Decorator.FILELINK, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
-  | isLongWithoutGroup = [Decorator.FILEFIELD, Decorator.FILELINK, Decorator.FILEOWNER, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
-  | isLongWithoutOwner = [Decorator.FILEFIELD, Decorator.FILELINK, Decorator.FILEGROUP, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
-  | long = [Decorator.FILEFIELD, Decorator.FILELINK, Decorator.FILEOWNER, Decorator.FILEGROUP, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
-  | oneline = [Decorator.FILENAME]
-  | otherwise = [Decorator.FILENAME]
-  where
-    isLongWithoutOwnerAndGroup = isLongWithoutOwner && (isLongWithoutGroup || noGroup)
-    isLongWithoutGroup = longWithoutGroup || long && noGroup
-    isLongWithoutOwner = longWithoutOwner
-    long = Option.long opt
-    oneline = Option.oneline opt
-    noGroup = Option.noGroup opt
-    longWithoutGroup = Option.longWithoutGroup opt
-    longWithoutOwner = Option.longWithoutOwner opt
