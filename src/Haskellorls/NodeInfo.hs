@@ -9,7 +9,7 @@ where
 import qualified Control.Exception.Base as Exception
 import qualified Data.Either as Either
 import qualified Data.List as L
-import qualified System.FilePath.Posix as Posix (takeDirectory, (</>))
+import qualified System.FilePath.Posix as Posix
 import qualified System.Posix.Files as Files
 
 data NodeInfo

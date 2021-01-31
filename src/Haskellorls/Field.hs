@@ -9,35 +9,9 @@ module Haskellorls.Field
 where
 
 import qualified Haskellorls.Color as Color
-  ( Config (..),
-    ExtensionConfig (..),
-    applyEscapeSequence,
-  )
 import qualified Haskellorls.YetAnotherString as YAString
-import System.Posix.Files
-  ( FileStatus,
-    fileMode,
-    groupExecuteMode,
-    groupReadMode,
-    groupWriteMode,
-    intersectFileModes,
-    isBlockDevice,
-    isCharacterDevice,
-    isDirectory,
-    isNamedPipe,
-    isRegularFile,
-    isSocket,
-    isSymbolicLink,
-    otherExecuteMode,
-    otherReadMode,
-    otherWriteMode,
-    ownerExecuteMode,
-    ownerReadMode,
-    ownerWriteMode,
-    setGroupIDMode,
-    setUserIDMode,
-  )
-import System.Posix.Types (FileMode)
+import qualified System.Posix.Files as Files
+import qualified System.Posix.Types as Types
 
 data FilemodeBitPatternType
   = READ
@@ -77,7 +51,7 @@ data FilemodeField = FilemodeField
     getOtherExec :: FilemodeBitPatternType
   }
 
-filemodeField :: FileStatus -> FilemodeField
+filemodeField :: Files.FileStatus -> FilemodeField
 filemodeField status =
   FilemodeField
     { getFiletype = fileType status,
@@ -92,7 +66,7 @@ filemodeField status =
       getOtherExec = otherExecModeType mode
     }
   where
-    mode = fileMode status
+    mode = Files.fileMode status
 
 showFilemodeField :: FilemodeField -> [YAString.WrapedString]
 showFilemodeField field = YAString.toWrappedStringArray $ fType : permFields
@@ -300,15 +274,15 @@ otherLetter = '?'
 -- }}}
 
 -- Utilities for file type {{{
-fileType :: FileStatus -> FileType
+fileType :: Files.FileStatus -> FileType
 fileType status
-  | isRegularFile status = REGULAR
-  | isDirectory status = DIR
-  | isBlockDevice status = BLOCK
-  | isCharacterDevice status = CHAR
-  | isSymbolicLink status = SYMLINK
-  | isNamedPipe status = FIFO
-  | isSocket status = SOCK
+  | Files.isRegularFile status = REGULAR
+  | Files.isDirectory status = DIR
+  | Files.isBlockDevice status = BLOCK
+  | Files.isCharacterDevice status = CHAR
+  | Files.isSymbolicLink status = SYMLINK
+  | Files.isNamedPipe status = FIFO
+  | Files.isSocket status = SOCK
   | otherwise = OTHER
 
 fileTypeLetter :: FileType -> Char
@@ -366,17 +340,17 @@ stickyNoExecFieldLetter = 'T'
 -- }}}
 
 -- Utilities to get file mode bit type {{{
-userReadModeType :: FileMode -> FilemodeBitPatternType
+userReadModeType :: Types.FileMode -> FilemodeBitPatternType
 userReadModeType mode
   | hasUserReadMode mode = READ
   | otherwise = NOTHING
 
-userWriteModeType :: FileMode -> FilemodeBitPatternType
+userWriteModeType :: Types.FileMode -> FilemodeBitPatternType
 userWriteModeType mode
   | hasUserWriteMode mode = WRITE
   | otherwise = NOTHING
 
-userExecModeType :: FileMode -> FilemodeBitPatternType
+userExecModeType :: Types.FileMode -> FilemodeBitPatternType
 userExecModeType mode
   | isSetuid && isExec = E_SETUID
   | isSetuid = SETUID
@@ -386,17 +360,17 @@ userExecModeType mode
     isExec = hasUserExecMode mode
     isSetuid = hasSetuidMode mode
 
-groupReadModeType :: FileMode -> FilemodeBitPatternType
+groupReadModeType :: Types.FileMode -> FilemodeBitPatternType
 groupReadModeType mode
   | hasGroupReadMode mode = READ
   | otherwise = NOTHING
 
-groupWriteModeType :: FileMode -> FilemodeBitPatternType
+groupWriteModeType :: Types.FileMode -> FilemodeBitPatternType
 groupWriteModeType mode
   | hasGroupWriteMode mode = WRITE
   | otherwise = NOTHING
 
-groupExecModeType :: FileMode -> FilemodeBitPatternType
+groupExecModeType :: Types.FileMode -> FilemodeBitPatternType
 groupExecModeType mode
   | isSetgid && isExec = E_SETGID
   | isSetgid = SETGID
@@ -406,17 +380,17 @@ groupExecModeType mode
     isExec = hasGroupExecMode mode
     isSetgid = hasSetgidMode mode
 
-otherReadModeType :: FileMode -> FilemodeBitPatternType
+otherReadModeType :: Types.FileMode -> FilemodeBitPatternType
 otherReadModeType mode
   | hasOtherReadMode mode = READ
   | otherwise = NOTHING
 
-otherWriteModeType :: FileMode -> FilemodeBitPatternType
+otherWriteModeType :: Types.FileMode -> FilemodeBitPatternType
 otherWriteModeType mode
   | hasOtherWriteMode mode = WRITE
   | otherwise = NOTHING
 
-otherExecModeType :: FileMode -> FilemodeBitPatternType
+otherExecModeType :: Types.FileMode -> FilemodeBitPatternType
 otherExecModeType mode
   | isSticky && isExec = E_STICKY
   | isSticky = STICKY
@@ -442,46 +416,46 @@ filemodeBitPatternTypeLetter ptnType = case ptnType of
 -- }}}
 
 -- Utilities to get whether or not has a file mode {{{
-hasUserReadMode :: FileMode -> Bool
-hasUserReadMode mode = mode `hasFileMode` ownerReadMode
+hasUserReadMode :: Types.FileMode -> Bool
+hasUserReadMode mode = mode `hasFileMode` Files.ownerReadMode
 
-hasUserWriteMode :: FileMode -> Bool
-hasUserWriteMode mode = mode `hasFileMode` ownerWriteMode
+hasUserWriteMode :: Types.FileMode -> Bool
+hasUserWriteMode mode = mode `hasFileMode` Files.ownerWriteMode
 
-hasUserExecMode :: FileMode -> Bool
-hasUserExecMode mode = mode `hasFileMode` ownerExecuteMode
+hasUserExecMode :: Types.FileMode -> Bool
+hasUserExecMode mode = mode `hasFileMode` Files.ownerExecuteMode
 
-hasSetuidMode :: FileMode -> Bool
-hasSetuidMode mode = mode `hasFileMode` setUserIDMode
+hasSetuidMode :: Types.FileMode -> Bool
+hasSetuidMode mode = mode `hasFileMode` Files.setUserIDMode
 
-hasGroupReadMode :: FileMode -> Bool
-hasGroupReadMode mode = mode `hasFileMode` groupReadMode
+hasGroupReadMode :: Types.FileMode -> Bool
+hasGroupReadMode mode = mode `hasFileMode` Files.groupReadMode
 
-hasGroupWriteMode :: FileMode -> Bool
-hasGroupWriteMode mode = mode `hasFileMode` groupWriteMode
+hasGroupWriteMode :: Types.FileMode -> Bool
+hasGroupWriteMode mode = mode `hasFileMode` Files.groupWriteMode
 
-hasGroupExecMode :: FileMode -> Bool
-hasGroupExecMode mode = mode `hasFileMode` groupExecuteMode
+hasGroupExecMode :: Types.FileMode -> Bool
+hasGroupExecMode mode = mode `hasFileMode` Files.groupExecuteMode
 
-hasSetgidMode :: FileMode -> Bool
-hasSetgidMode mode = mode `hasFileMode` setGroupIDMode
+hasSetgidMode :: Types.FileMode -> Bool
+hasSetgidMode mode = mode `hasFileMode` Files.setGroupIDMode
 
-hasOtherReadMode :: FileMode -> Bool
-hasOtherReadMode mode = mode `hasFileMode` otherReadMode
+hasOtherReadMode :: Types.FileMode -> Bool
+hasOtherReadMode mode = mode `hasFileMode` Files.otherReadMode
 
-hasOtherWriteMode :: FileMode -> Bool
-hasOtherWriteMode mode = mode `hasFileMode` otherWriteMode
+hasOtherWriteMode :: Types.FileMode -> Bool
+hasOtherWriteMode mode = mode `hasFileMode` Files.otherWriteMode
 
-hasOtherExecMode :: FileMode -> Bool
-hasOtherExecMode mode = mode `hasFileMode` otherExecuteMode
+hasOtherExecMode :: Types.FileMode -> Bool
+hasOtherExecMode mode = mode `hasFileMode` Files.otherExecuteMode
 
-hasStickyMode :: FileMode -> Bool
+hasStickyMode :: Types.FileMode -> Bool
 hasStickyMode mode = mode `hasFileMode` stickyMode
 
-hasFileMode :: FileMode -> FileMode -> Bool
-hasFileMode x y = y == intersectFileModes x y
+hasFileMode :: Types.FileMode -> Types.FileMode -> Bool
+hasFileMode x y = y == Files.intersectFileModes x y
 
-stickyMode :: FileMode
+stickyMode :: Types.FileMode
 stickyMode = 548
 
 -- }}}

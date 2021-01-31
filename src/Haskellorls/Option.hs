@@ -5,7 +5,7 @@ module Haskellorls.Option
   )
 where
 
-import Control.Applicative (many)
+import qualified Control.Applicative as A
 import qualified Options.Applicative as OA
 
 data Option = Option
@@ -185,4 +185,4 @@ versionParser =
       <> OA.help "Show version info"
 
 argParser :: OA.Parser [String]
-argParser = many . OA.strArgument $ OA.metavar "[FILE]..."
+argParser = A.many . OA.strArgument $ OA.metavar "[FILE]..."

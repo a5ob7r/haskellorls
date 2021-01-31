@@ -8,25 +8,7 @@ import qualified Haskellorls.Color as Color
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.YetAnotherString as YAString
 import qualified System.Posix.Files as Files
-  ( FileStatus,
-    fileMode,
-    groupExecuteMode,
-    intersectFileModes,
-    isBlockDevice,
-    isCharacterDevice,
-    isDirectory,
-    isNamedPipe,
-    isRegularFile,
-    isSocket,
-    isSymbolicLink,
-    otherExecuteMode,
-    otherWriteMode,
-    ownerExecuteMode,
-    setGroupIDMode,
-    setUserIDMode,
-    unionFileModes,
-  )
-import qualified System.Posix.Types as Types (FileMode)
+import qualified System.Posix.Types as Types
 
 data NodeType
   = Directory

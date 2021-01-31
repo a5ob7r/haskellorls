@@ -4,8 +4,8 @@ module Haskellorls.UserInfo
   )
 where
 
-import qualified System.Posix.Types as Types (GroupID, UserID)
-import qualified System.Posix.User as User (getGroups, getRealUserID)
+import qualified System.Posix.Types as Types
+import qualified System.Posix.User as User
 
 data UserInfo = UserInfo
   { userInfoUserID :: Types.UserID,

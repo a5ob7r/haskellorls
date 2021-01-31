@@ -7,13 +7,13 @@ module Haskellorls.Color
   )
 where
 
-import Data.Char (toUpper)
-import Data.List (isPrefixOf)
-import Data.List.Extra (tails)
-import Data.List.Split (endBy, splitOn)
-import qualified Data.Map.Strict as Map (Map, empty, fromList, lookup)
-import qualified Data.Maybe as Maybe (fromMaybe, mapMaybe)
-import System.Environment (lookupEnv)
+import qualified Data.Char as Char
+import qualified Data.List as List
+import qualified Data.List.Extra as Extra
+import qualified Data.List.Split as Split
+import qualified Data.Map.Strict as Map
+import qualified Data.Maybe as Maybe
+import qualified System.Environment as Env
 
 type FilenamePtnMap = Map.Map String String
 
@@ -252,7 +252,7 @@ applyEscapeSequence conf escSeq = left ++ escSeq ++ right
     right = rightEscapeSequence conf
 
 colorIndicatorsFrom :: String -> FilenamePtnMap
-colorIndicatorsFrom = Map.fromList . Maybe.mapMaybe f . endBy ":"
+colorIndicatorsFrom = Map.fromList . Maybe.mapMaybe f . Split.endBy ":"
   where
     f s = makePatternEscapePair s >>= filenamePtnEscSec
 
@@ -261,18 +261,18 @@ filenamePtnEscSec (ptn, esc) = filenamePattern ptn >>= (\ext -> Just (ext, esc))
 
 filenamePattern :: String -> Maybe String
 filenamePattern str =
-  if "*" `isPrefixOf` str
+  if "*" `List.isPrefixOf` str
     then Just . toUppers . drop 1 $ str
     else Nothing
 
 parametorsFrom :: String -> FilenamePtnMap
-parametorsFrom = Map.fromList . Maybe.mapMaybe f . endBy ":"
+parametorsFrom = Map.fromList . Maybe.mapMaybe f . Split.endBy ":"
   where
     f s = makePatternEscapePair s >>= paramatorPtnEscSec
 
 paramatorPtnEscSec :: (String, String) -> Maybe (String, String)
 paramatorPtnEscSec (ptn, esc) =
-  if "*" `isPrefixOf` ptn
+  if "*" `List.isPrefixOf` ptn
     then Nothing
     else Just (ptn, esc)
 
@@ -282,21 +282,21 @@ makePatternEscapePair s =
     then Just (head pairs, last pairs)
     else Nothing
   where
-    pairs = splitOn "=" s
+    pairs = Split.splitOn "=" s
 
 getLSCOLORS :: IO String
-getLSCOLORS = Maybe.fromMaybe "" <$> lookupEnv "LS_COLORS"
+getLSCOLORS = Maybe.fromMaybe "" <$> Env.lookupEnv "LS_COLORS"
 
 getEXACOLORS :: IO String
-getEXACOLORS = Maybe.fromMaybe "" <$> lookupEnv "EXA_COLORS"
+getEXACOLORS = Maybe.fromMaybe "" <$> Env.lookupEnv "EXA_COLORS"
 
 -- | Lookup ascii escape sequence. At first, lookup with a query as it is. If
 --    fails to lookup, change a query to the extension and re lookup.
 lookupFilenameEscSec :: FilenamePtnMap -> String -> String
-lookupFilenameEscSec ptnMap = f . Maybe.mapMaybe (`Map.lookup` ptnMap) . reverse . tails . toUppers
+lookupFilenameEscSec ptnMap = f . Maybe.mapMaybe (`Map.lookup` ptnMap) . reverse . Extra.tails . toUppers
   where
     f [] = ""
     f xs = head xs
 
 toUppers :: String -> String
-toUppers = map toUpper
+toUppers = map Char.toUpper

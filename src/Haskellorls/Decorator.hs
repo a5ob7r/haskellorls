@@ -25,7 +25,7 @@ import qualified Haskellorls.Size as Size
 import qualified Haskellorls.Time as Time
 import qualified Haskellorls.UserInfo as UserInfo
 import qualified Haskellorls.YetAnotherString as YAString
-import System.IO
+import qualified System.IO as SIO
 import qualified System.Posix.Time as PTime
 
 data PrinterType
@@ -98,7 +98,7 @@ buildPrinters opt = do
   shouldColorize <- case Option.color opt of
     Option.NEVER -> return False
     Option.ALWAYS -> return True
-    Option.AUTO -> hIsTerminalDevice stdout
+    Option.AUTO -> SIO.hIsTerminalDevice SIO.stdout
   let isEnableExtraColor = Option.extraColor opt
       fileInodeFieldPrinter =
         if shouldColorize && isEnableExtraColor

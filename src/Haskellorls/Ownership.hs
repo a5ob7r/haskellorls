@@ -20,22 +20,14 @@ module Haskellorls.Ownership
   )
 where
 
-import qualified Data.Map.Strict as M (Map, fromList, (!))
+import qualified Data.Map.Strict as M
 import qualified Haskellorls.Color as Color
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.UserInfo as UserInfo
-import qualified Haskellorls.YetAnotherString as YAString (WrapedString (..))
+import qualified Haskellorls.YetAnotherString as YAString
 import qualified System.Posix.Files as Files
 import qualified System.Posix.Types as Types
-  ( GroupID,
-    UserID,
-  )
 import qualified System.Posix.User as User
-  ( GroupEntry (groupID, groupName),
-    UserEntry (userID, userName),
-    getAllGroupEntries,
-    getAllUserEntries,
-  )
 
 type UserIdSubstTable = M.Map Types.UserID String
 
