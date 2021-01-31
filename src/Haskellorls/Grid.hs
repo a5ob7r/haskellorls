@@ -31,7 +31,8 @@ nest n xs
   | n > 0 = nest' m xs
   | otherwise = nest 1 xs
   where
-    m = length xs `div` n
+    (a, b) = length xs `divMod` n
+    m = a + abs (signum b)
 
 nest' :: Int -> [a] -> [[a]]
 nest' _ [] = []
