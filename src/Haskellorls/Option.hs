@@ -23,6 +23,7 @@ data Option = Option
     noGroup :: Bool,
     longWithoutGroup :: Bool,
     longWithoutOwner :: Bool,
+    width :: Maybe Int,
     targets :: [FilePath]
   }
   deriving (Show)
@@ -53,6 +54,7 @@ optionParser =
     <*> noGroupParser
     <*> longWithoutGroupParser
     <*> longWithoutOwnerParser
+    <*> widthParser
     <*> argParser
 
 colorParser :: OA.Parser ColorOpt
@@ -140,6 +142,22 @@ longWithoutGroupParser = OA.switch $ OA.short 'o'
 
 longWithoutOwnerParser :: OA.Parser Bool
 longWithoutOwnerParser = OA.switch $ OA.short 'g'
+
+widthParser :: OA.Parser (Maybe Int)
+widthParser =
+  OA.option widthReader $
+    OA.long "width"
+      <> OA.short 'w'
+      <> OA.metavar "COLS"
+      <> OA.help "Specify output width. Assumes infinity width if 0."
+      <> OA.value Nothing
+
+widthReader :: OA.ReadM (Maybe Int)
+widthReader = OA.auto >>= reader
+  where
+    reader n
+      | n >= 0 = return $ Just n
+      | otherwise = OA.readerError "COLS must be a natural number"
 
 argParser :: OA.Parser [String]
 argParser = many . OA.strArgument $ OA.metavar "[FILE]..."

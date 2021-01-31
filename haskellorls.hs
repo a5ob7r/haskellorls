@@ -31,18 +31,9 @@ run' opt printers (Entry.Entry eType path contents) = do
     Entry.FILES -> return ()
     _ -> putStrLn $ path ++ ":"
   nodes <- fmap (Sort.sorter opt) . mapM (Node.nodeInfo path) $ contents
-  colLen <- Grid.terminalColumnSize
-  let outputs =
-        if isLongStyle opt
-          then List.transpose [Decorator.buildLines nodes printers $ buildPrinterTypes opt]
-          else Grid.buildValidGrid colLen nodes'
-        where
-          printer = Decorator.fileNamePrinter printers
-          nodes' = map printer nodes
-  mapM_ putStrLn $ Grid.renderGrid outputs
-
-isLongStyle :: Option.Option -> Bool
-isLongStyle opt = any (\f -> f opt) [Option.long, Option.oneline, Option.longWithoutGroup, Option.longWithoutOwner]
+  colLen <- Grid.virtualColumnSize opt
+  let nodes' = Decorator.buildLines nodes printers $ buildPrinterTypes opt
+  mapM_ putStrLn . Grid.renderGrid $ Grid.buildValidGrid colLen nodes'
 
 buildPrinterTypes :: Option.Option -> [Decorator.PrinterType]
 buildPrinterTypes opt
@@ -51,7 +42,7 @@ buildPrinterTypes opt
   | isLongWithoutOwner = [Decorator.FILEFIELD, Decorator.FILELINK, Decorator.FILEGROUP, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
   | long = [Decorator.FILEFIELD, Decorator.FILELINK, Decorator.FILEOWNER, Decorator.FILEGROUP, Decorator.FILESIZE, Decorator.FILETIME, Decorator.FILENAME]
   | oneline = [Decorator.FILENAME]
-  | otherwise = []
+  | otherwise = [Decorator.FILENAME]
   where
     isLongWithoutOwnerAndGroup = isLongWithoutOwner && (isLongWithoutGroup || noGroup)
     isLongWithoutGroup = longWithoutGroup || long && noGroup

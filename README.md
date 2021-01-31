@@ -30,6 +30,12 @@ Build and run.
 $ cabal run haskellorls
 ```
 
+## Incompatibility
+
+### GNU ls
+
+- Outputs with the column size which is specified by -w/--width even if output fd is stdout.
+
 ## TODO
 
 - Add locale support for time style.

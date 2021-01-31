@@ -1,16 +1,32 @@
 module Haskellorls.Grid
-  ( terminalColumnSize,
+  ( virtualColumnSize,
     buildValidGrid,
     renderGrid,
   )
 where
 
 import qualified Data.List as List
+import qualified Data.Maybe as Maybe
+import qualified Haskellorls.Option as Option
 import qualified Haskellorls.YetAnotherString as YAString
 import qualified System.Console.Terminal.Size as TS
 
-terminalColumnSize :: IO Int
-terminalColumnSize = maybe 0 TS.width <$> TS.size
+virtualColumnSize :: Option.Option -> IO Int
+virtualColumnSize opt = do
+  termWidth <- Just <$> terminalWidth
+  return . head $ Maybe.catMaybes [styleWidth, optWidth, termWidth]
+    where
+      optWidth = Option.width opt
+      styleWidth =
+        if isLongStyle opt
+          then Just 1
+          else Nothing
+
+terminalWidth :: IO Int
+terminalWidth = maybe 1 TS.width <$> TS.size
+
+isLongStyle :: Option.Option -> Bool
+isLongStyle opt = any (\f -> f opt) [Option.long, Option.oneline, Option.longWithoutGroup, Option.longWithoutOwner]
 
 nest :: Int -> [a] -> [[a]]
 nest n xs
@@ -28,9 +44,13 @@ nest' n xs = h : nest' n t
 
 buildValidGrid :: Int -> [[YAString.WrapedString]] -> [[[YAString.WrapedString]]]
 buildValidGrid columnLength sss
-  | columnLength < 1 = buildGrid 1 sss
   | null sss = []
-  | otherwise = last . takeWhile (validateGrid columnLength) $ map (`buildGrid` sss) [1..columnLength]
+  | columnLength == 0 = buildGrid (length sss) sss
+  | columnLength < 0 = singleColumnGrid
+  | otherwise = last $ singleColumnGrid : validGrids
+  where
+    singleColumnGrid = buildGrid 1 sss
+    validGrids = takeWhile (validateGrid columnLength) $ map (`buildGrid` sss) [2..columnLength]
 
 renderGrid :: [[[YAString.WrapedString]]] -> [String]
 renderGrid = map renderLine
