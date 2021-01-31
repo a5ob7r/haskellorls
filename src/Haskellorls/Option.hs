@@ -25,6 +25,7 @@ data Option = Option
     longWithoutGroup :: Bool,
     longWithoutOwner :: Bool,
     width :: Maybe Int,
+    inode :: Bool,
     version :: Bool,
     targets :: [FilePath]
   }
@@ -58,6 +59,7 @@ optionParser =
     <*> longWithoutGroupParser
     <*> longWithoutOwnerParser
     <*> widthParser
+    <*> inodeParser
     <*> versionParser
     <*> argParser
 
@@ -168,6 +170,13 @@ widthReader = OA.auto >>= reader
     reader n
       | n >= 0 = return $ Just n
       | otherwise = OA.readerError "COLS must be a natural number"
+
+inodeParser :: OA.Parser Bool
+inodeParser =
+  OA.switch $
+    OA.long "inode"
+      <> OA.short 'i'
+      <> OA.help "Output inode number about each files"
 
 versionParser :: OA.Parser Bool
 versionParser =

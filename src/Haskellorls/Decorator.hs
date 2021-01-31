@@ -22,13 +22,15 @@ import qualified Haskellorls.Ownership as Ownership
 import qualified Haskellorls.Size as Size
 import qualified Haskellorls.Time as Time
 import qualified Haskellorls.Link as Link
+import qualified Haskellorls.Inode as Inode
 import qualified Haskellorls.UserInfo as UserInfo
 import qualified Haskellorls.YetAnotherString as YAString
 import qualified System.Posix.Time as PTime
 import System.IO
 
 data PrinterType
-  = FILEFIELD
+  = FILEINODE
+  | FILEFIELD
   | FILELINK
   | FILEOWNER
   | FILEGROUP
@@ -46,7 +48,8 @@ data AlighmentType
   | RIGHT
 
 data Printers = Printers
-  { fileFieldPrinter :: Printer,
+  { fileInodePrinter :: Printer,
+    fileFieldPrinter :: Printer,
     fileLinkPrinter :: Printer,
     fileOwnerPrinter :: Printer,
     fileGroupPrinter :: Printer,
@@ -57,6 +60,7 @@ data Printers = Printers
 
 alignmentTypeFor :: PrinterType -> AlighmentType
 alignmentTypeFor dType = case dType of
+  FILEINODE -> RIGHT
   FILEFIELD -> NONE
   FILELINK -> RIGHT
   FILEOWNER -> LEFT
@@ -67,6 +71,7 @@ alignmentTypeFor dType = case dType of
 
 printerSelectorFor :: PrinterType -> Printers -> Printer
 printerSelectorFor pType = case pType of
+  FILEINODE -> fileInodePrinter
   FILEFIELD -> fileFieldPrinter
   FILELINK -> fileLinkPrinter
   FILEOWNER -> fileOwnerPrinter
@@ -93,6 +98,10 @@ buildPrinters opt = do
     Option.ALWAYS -> return True
     Option.AUTO -> hIsTerminalDevice stdout
   let isEnableExtraColor = Option.extraColor opt
+      fileInodeFieldPrinter =
+        if shouldColorize && isEnableExtraColor
+          then Inode.nodeInodeNumberWithColor cConfig
+          else YAString.toWrappedStringArray . show . Inode.nodeInodeNumber
       nodePrinter =
         if shouldColorize
           then Name.colorizedNodeName cConfig
@@ -134,7 +143,8 @@ buildPrinters opt = do
           timeStyle = Time.timeStyleFrom $ Option.timeStyle opt
   return $
     Printers
-      { fileFieldPrinter = filemodeFieldPrinter . Field.filemodeField . Node.nodeInfoStatus,
+      { fileInodePrinter = fileInodeFieldPrinter,
+        fileFieldPrinter = filemodeFieldPrinter . Field.filemodeField . Node.nodeInfoStatus,
         fileLinkPrinter = fileLinkFieldPrinter,
         fileOwnerPrinter = fileOwnerFieldPrinter,
         fileGroupPrinter = fileGroupFieldPrinter,
@@ -144,12 +154,13 @@ buildPrinters opt = do
       }
 
 buildPrinterTypes :: Option.Option -> [PrinterType]
-buildPrinterTypes opt = filter (`neededBy` opt) [FILEFIELD, FILELINK, FILEOWNER, FILEGROUP, FILESIZE, FILETIME, FILENAME]
+buildPrinterTypes opt = filter (`neededBy` opt) [FILEINODE, FILEFIELD, FILELINK, FILEOWNER, FILEGROUP, FILESIZE, FILETIME, FILENAME]
 
 {-| Should the `PrinterType` value is needed by the options.
 -}
 neededBy :: PrinterType -> Option.Option -> Bool
 neededBy pType opt = case pType of
+  FILEINODE -> inode
   FILEFIELD -> long
   FILELINK -> long
   FILEOWNER -> long && owner
@@ -158,6 +169,7 @@ neededBy pType opt = case pType of
   FILETIME -> long
   FILENAME -> True
   where
+    inode = Option.inode opt
     long = isLongStyle opt
     owner = not $ Option.longWithoutOwner opt
     group = not (Option.longWithoutGroup opt || Option.noGroup opt)
