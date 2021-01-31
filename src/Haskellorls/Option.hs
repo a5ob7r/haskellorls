@@ -25,6 +25,7 @@ data Option = Option
     longWithoutGroup :: Bool,
     longWithoutOwner :: Bool,
     width :: Maybe Int,
+    version :: Bool,
     targets :: [FilePath]
   }
   deriving (Show)
@@ -57,6 +58,7 @@ optionParser =
     <*> longWithoutGroupParser
     <*> longWithoutOwnerParser
     <*> widthParser
+    <*> versionParser
     <*> argParser
 
 colorParser :: OA.Parser ColorOpt
@@ -166,6 +168,12 @@ widthReader = OA.auto >>= reader
     reader n
       | n >= 0 = return $ Just n
       | otherwise = OA.readerError "COLS must be a natural number"
+
+versionParser :: OA.Parser Bool
+versionParser =
+  OA.switch $
+    OA.long "version"
+      <> OA.help "Show version info"
 
 argParser :: OA.Parser [String]
 argParser = many . OA.strArgument $ OA.metavar "[FILE]..."

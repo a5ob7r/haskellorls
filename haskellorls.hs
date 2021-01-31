@@ -12,7 +12,9 @@ import qualified Options.Applicative as OA
 main :: IO ()
 main = do
   options <- parser Option.opts
-  run options
+  if Option.version options
+    then showVersion
+    else run options
   where
     parser = OA.customExecParser $ OA.prefs OA.helpLongEquals
 
@@ -36,3 +38,9 @@ run' opt printers (Entry.Entry eType path contents) = do
   colLen <- Grid.virtualColumnSize opt
   let nodes' = Decorator.buildLines nodes printers $ Decorator.buildPrinterTypes opt
   mapM_ putStrLn . Grid.renderGrid $ Grid.buildValidGrid colLen nodes'
+
+showVersion :: IO ()
+showVersion = putStrLn version
+
+version :: String
+version = "v0.1.0.0"
