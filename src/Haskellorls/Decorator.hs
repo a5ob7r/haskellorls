@@ -13,20 +13,20 @@ where
 
 import qualified Data.List as List
 import qualified Data.Time.Format as Format
+import qualified Haskellorls.Color as Color
 import qualified Haskellorls.Field as Field
+import qualified Haskellorls.Inode as Inode
+import qualified Haskellorls.Link as Link
+import qualified Haskellorls.Name as Name
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
-import qualified Haskellorls.Color as Color
-import qualified Haskellorls.Name as Name
 import qualified Haskellorls.Ownership as Ownership
 import qualified Haskellorls.Size as Size
 import qualified Haskellorls.Time as Time
-import qualified Haskellorls.Link as Link
-import qualified Haskellorls.Inode as Inode
 import qualified Haskellorls.UserInfo as UserInfo
 import qualified Haskellorls.YetAnotherString as YAString
-import qualified System.Posix.Time as PTime
 import System.IO
+import qualified System.Posix.Time as PTime
 
 data PrinterType
   = FILEINODE
@@ -39,7 +39,9 @@ data PrinterType
   | FILENAME
 
 type Printer = Node.NodeInfo -> [YAString.WrapedString]
+
 type Alignmenter = [YAString.WrapedString] -> [YAString.WrapedString]
+
 type AlignmenterBuilder = Char -> Int -> Alignmenter
 
 data AlighmentType
@@ -156,8 +158,7 @@ buildPrinters opt = do
 buildPrinterTypes :: Option.Option -> [PrinterType]
 buildPrinterTypes opt = filter (`neededBy` opt) [FILEINODE, FILEFIELD, FILELINK, FILEOWNER, FILEGROUP, FILESIZE, FILETIME, FILENAME]
 
-{-| Should the `PrinterType` value is needed by the options.
--}
+-- | Should the `PrinterType` value is needed by the options.
 neededBy :: PrinterType -> Option.Option -> Bool
 neededBy pType opt = case pType of
   FILEINODE -> inode
@@ -196,7 +197,7 @@ buildLines nodes printers types = map cat $ buildGrid nodes printers types
     cat = List.intercalate (YAString.toWrappedStringArray " ")
 
 leftPadding :: AlignmenterBuilder
-leftPadding c n | n > -1 = padding c (-n)
+leftPadding c n | n > -1 = padding c (- n)
 leftPadding c n = noPadding c n
 
 rightPadding :: AlignmenterBuilder

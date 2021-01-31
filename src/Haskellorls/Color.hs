@@ -7,9 +7,9 @@ module Haskellorls.Color
   )
 where
 
-import Data.List.Extra (tails)
 import Data.Char (toUpper)
 import Data.List (isPrefixOf)
+import Data.List.Extra (tails)
 import Data.List.Split (endBy, splitOn)
 import qualified Data.Map.Strict as Map (Map, empty, fromList, lookup)
 import qualified Data.Maybe as Maybe (fromMaybe, mapMaybe)

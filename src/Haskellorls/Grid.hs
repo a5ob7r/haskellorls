@@ -7,8 +7,8 @@ where
 
 import qualified Data.List as List
 import qualified Data.Maybe as Maybe
-import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Decorator as Decorator
+import qualified Haskellorls.Option as Option
 import qualified Haskellorls.YetAnotherString as YAString
 import qualified System.Console.Terminal.Size as TS
 
@@ -16,12 +16,12 @@ virtualColumnSize :: Option.Option -> IO Int
 virtualColumnSize opt = do
   termWidth <- Just <$> terminalWidth
   return . head $ Maybe.catMaybes [styleWidth, optWidth, termWidth]
-    where
-      optWidth = Option.width opt
-      styleWidth =
-        if Decorator.isLongStyle opt
-          then Just 1
-          else Nothing
+  where
+    optWidth = Option.width opt
+    styleWidth =
+      if Decorator.isLongStyle opt
+        then Just 1
+        else Nothing
 
 terminalWidth :: IO Int
 terminalWidth = maybe 1 TS.width <$> TS.size
@@ -48,7 +48,7 @@ buildValidGrid columnLength sss
   | otherwise = last $ singleColumnGrid : validGrids
   where
     singleColumnGrid = buildGrid 1 sss
-    validGrids = takeWhile (validateGrid columnLength) $ map (`buildGrid` sss) [2..columnLength]
+    validGrids = takeWhile (validateGrid columnLength) $ map (`buildGrid` sss) [2 .. columnLength]
 
 renderGrid :: [[[YAString.WrapedString]]] -> [String]
 renderGrid = map renderLine

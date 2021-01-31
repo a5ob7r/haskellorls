@@ -30,7 +30,7 @@ toEntries (Files fEntry@(Entry _ _ contents) dEntries) = fEntry' ++ dEntries'
     fEntry' = [fEntry | not $ null contents]
     dEntry = head dEntries
     dEntries'
-      | null contents && length dEntries == 1 = [dEntry { entryType = FILES }]
+      | null contents && length dEntries == 1 = [dEntry {entryType = FILES}]
       | otherwise = dEntries
 
 buildDirectoryEntries :: Option.Option -> FilePath -> IO Entry
@@ -44,10 +44,11 @@ buildFiles opt paths = do
   let fPaths = map fst $ filter (not . g) psPairs
       dPaths = map fst $ filter g psPairs
   dEntries <- mapM (buildDirectoryEntries opt) dPaths
-  return $ Files
-    { fileEntry = Entry FILES "" fPaths,
-      directoryEntries = dEntries
-    }
+  return $
+    Files
+      { fileEntry = Entry FILES "" fPaths,
+        directoryEntries = dEntries
+      }
   where
     f path = do
       status <- Files.getSymbolicLinkStatus path
