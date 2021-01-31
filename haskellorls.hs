@@ -11,8 +11,10 @@ import qualified Options.Applicative as OA
 
 main :: IO ()
 main = do
-  options <- OA.execParser Option.opts
+  options <- parser Option.opts
   run options
+  where
+    parser = OA.customExecParser $ OA.prefs OA.helpLongEquals
 
 run :: Option.Option -> IO ()
 run opt = do
