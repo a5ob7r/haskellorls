@@ -7,6 +7,7 @@ module Haskellorls.Decorator
     buildPrinters,
     buildLines,
     buildPrinterTypes,
+    isLongStyle,
   )
 where
 
@@ -143,22 +144,26 @@ buildPrinters opt = do
       }
 
 buildPrinterTypes :: Option.Option -> [PrinterType]
-buildPrinterTypes opt
-  | isLongWithoutOwnerAndGroup = [FILEFIELD, FILELINK, FILESIZE, FILETIME, FILENAME]
-  | isLongWithoutGroup = [FILEFIELD, FILELINK, FILEOWNER, FILESIZE, FILETIME, FILENAME]
-  | isLongWithoutOwner = [FILEFIELD, FILELINK, FILEGROUP, FILESIZE, FILETIME, FILENAME]
-  | long = [FILEFIELD, FILELINK, FILEOWNER, FILEGROUP, FILESIZE, FILETIME, FILENAME]
-  | oneline = [FILENAME]
-  | otherwise = [FILENAME]
+buildPrinterTypes opt = filter (`neededBy` opt) [FILEFIELD, FILELINK, FILEOWNER, FILEGROUP, FILESIZE, FILETIME, FILENAME]
+
+{-| Should the `PrinterType` value is needed by the options.
+-}
+neededBy :: PrinterType -> Option.Option -> Bool
+neededBy pType opt = case pType of
+  FILEFIELD -> long
+  FILELINK -> long
+  FILEOWNER -> long && owner
+  FILEGROUP -> long && group
+  FILESIZE -> long
+  FILETIME -> long
+  FILENAME -> True
   where
-    isLongWithoutOwnerAndGroup = isLongWithoutOwner && (isLongWithoutGroup || noGroup)
-    isLongWithoutGroup = longWithoutGroup || long && noGroup
-    isLongWithoutOwner = longWithoutOwner
-    long = Option.long opt
-    oneline = Option.oneline opt
-    noGroup = Option.noGroup opt
-    longWithoutGroup = Option.longWithoutGroup opt
-    longWithoutOwner = Option.longWithoutOwner opt
+    long = isLongStyle opt
+    owner = not $ Option.longWithoutOwner opt
+    group = not (Option.longWithoutGroup opt || Option.noGroup opt)
+
+isLongStyle :: Option.Option -> Bool
+isLongStyle opt = any (\f -> f opt) [Option.long, Option.oneline, Option.longWithoutGroup, Option.longWithoutOwner]
 
 buildColumn :: [Node.NodeInfo] -> Printers -> PrinterType -> [[YAString.WrapedString]]
 buildColumn nodes printers pType = map alignmenter nodes'

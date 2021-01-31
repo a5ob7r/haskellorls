@@ -8,6 +8,7 @@ where
 import qualified Data.List as List
 import qualified Data.Maybe as Maybe
 import qualified Haskellorls.Option as Option
+import qualified Haskellorls.Decorator as Decorator
 import qualified Haskellorls.YetAnotherString as YAString
 import qualified System.Console.Terminal.Size as TS
 
@@ -18,15 +19,12 @@ virtualColumnSize opt = do
     where
       optWidth = Option.width opt
       styleWidth =
-        if isLongStyle opt
+        if Decorator.isLongStyle opt
           then Just 1
           else Nothing
 
 terminalWidth :: IO Int
 terminalWidth = maybe 1 TS.width <$> TS.size
-
-isLongStyle :: Option.Option -> Bool
-isLongStyle opt = any (\f -> f opt) [Option.long, Option.oneline, Option.longWithoutGroup, Option.longWithoutOwner]
 
 nest :: Int -> [a] -> [[a]]
 nest n xs
