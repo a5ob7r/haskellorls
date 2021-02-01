@@ -35,7 +35,8 @@ slashIndicator = noneIndicators {indicatorsDirectory = directoryIndicator}
 fileTypeIndicator :: Indicators
 fileTypeIndicator =
   noneIndicators
-    { indicatorsLink = linkIndicator,
+    { indicatorsDirectory = directoryIndicator,
+      indicatorsLink = linkIndicator,
       indicatorsPipe = pipeIndicator,
       indicatorsSocket = socketIndicator,
       indicatorsDoor = doorIndicator
@@ -78,7 +79,7 @@ buildIndicators opt =
     long = any (\f -> f opt) [Option.long, Option.longWithoutOwner, Option.longWithoutGroup]
 
 deriveIndicatorStyle :: Option.Option -> Option.IndicatorStyle
-deriveIndicatorStyle opt = maximum [classify, directory, style]
+deriveIndicatorStyle opt = maximum [classify, directory, fileType, style]
   where
     classify =
       if Option.classify opt
@@ -87,6 +88,10 @@ deriveIndicatorStyle opt = maximum [classify, directory, style]
     directory =
       if Option.directoryIndicator opt
         then Option.IndicatorSlash
+        else Option.IndicatorNone
+    fileType =
+      if Option.fileType opt
+        then Option.IndicatorFiletype
         else Option.IndicatorNone
     style = Option.indicatorStyle opt
 

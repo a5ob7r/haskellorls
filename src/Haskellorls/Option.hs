@@ -29,6 +29,7 @@ data Option = Option
     inode :: Bool,
     classify :: Bool,
     directoryIndicator :: Bool,
+    fileType :: Bool,
     indicatorStyle :: IndicatorStyle,
     version :: Bool,
     targets :: [FilePath]
@@ -72,6 +73,7 @@ optionParser =
     <*> inodeParser
     <*> classifyParser
     <*> directoryIndicatorParser
+    <*> fileTypeParser
     <*> indicatorStyleParser
     <*> versionParser
     <*> argParser
@@ -203,6 +205,12 @@ directoryIndicatorParser =
   OA.switch $
     OA.short 'p'
       <> OA.help "Append a indicator '/' to directories"
+
+fileTypeParser :: OA.Parser Bool
+fileTypeParser =
+  OA.switch $
+    OA.long "file-type"
+      <> OA.help "Append indicators without '*'"
 
 indicatorStyleParser :: OA.Parser IndicatorStyle
 indicatorStyleParser =
