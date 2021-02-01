@@ -17,6 +17,7 @@ library
         Haskellorls.Entry
         Haskellorls.Field
         Haskellorls.Grid
+        Haskellorls.Indicator
         Haskellorls.Name
         Haskellorls.NodeInfo
         Haskellorls.Option

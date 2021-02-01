@@ -1,6 +1,7 @@
 module Haskellorls.Option
   ( Option (..),
     ColorOpt (..),
+    IndicatorStyle (..),
     opts,
   )
 where
@@ -26,13 +27,22 @@ data Option = Option
     longWithoutOwner :: Bool,
     width :: Maybe Int,
     inode :: Bool,
+    classify :: Bool,
+    directoryIndicator :: Bool,
+    indicatorStyle :: IndicatorStyle,
     version :: Bool,
     targets :: [FilePath]
   }
-  deriving (Show)
 
 data ColorOpt = NEVER | ALWAYS | AUTO
   deriving (Show)
+
+data IndicatorStyle
+  = IndicatorNone
+  | IndicatorFiletype
+  | IndicatorSlash
+  | IndicatorClassify
+  deriving (Eq, Ord)
 
 opts :: OA.ParserInfo Option
 opts =
@@ -60,6 +70,9 @@ optionParser =
     <*> longWithoutOwnerParser
     <*> widthParser
     <*> inodeParser
+    <*> classifyParser
+    <*> directoryIndicatorParser
+    <*> indicatorStyleParser
     <*> versionParser
     <*> argParser
 
@@ -177,6 +190,37 @@ inodeParser =
     OA.long "inode"
       <> OA.short 'i'
       <> OA.help "Output inode number about each files"
+
+classifyParser :: OA.Parser Bool
+classifyParser =
+  OA.switch $
+    OA.long "classify"
+      <> OA.short 'F'
+      <> OA.help "Append a indicator follows filename"
+
+directoryIndicatorParser :: OA.Parser Bool
+directoryIndicatorParser =
+  OA.switch $
+    OA.short 'p'
+      <> OA.help "Append a indicator '/' to directories"
+
+indicatorStyleParser :: OA.Parser IndicatorStyle
+indicatorStyleParser =
+  OA.option indicatorStyleReader $
+    OA.long "indicator-style"
+      <> OA.metavar "WORD"
+      <> OA.value IndicatorNone
+      <> OA.help "Specify indicator style, 'none', 'slash', 'file-tyep' and 'classify'"
+
+indicatorStyleReader :: OA.ReadM IndicatorStyle
+indicatorStyleReader = OA.auto >>= reader
+  where
+    reader s = case s of
+      "none" -> return IndicatorNone
+      "slash" -> return IndicatorSlash
+      "file-type" -> return IndicatorFiletype
+      "classify" -> return IndicatorClassify
+      _ -> OA.readerError "Avairable values are only 'none', 'slash', 'file-tyep' and 'classify'"
 
 versionParser :: OA.Parser Bool
 versionParser =

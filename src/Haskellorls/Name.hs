@@ -1,6 +1,8 @@
 module Haskellorls.Name
-  ( colorizedNodeName,
+  ( NodeType (..),
+    colorizedNodeName,
     nodeName,
+    nodeTypeOf,
   )
 where
 

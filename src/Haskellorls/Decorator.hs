@@ -15,6 +15,7 @@ import qualified Data.List as List
 import qualified Data.Time.Format as Format
 import qualified Haskellorls.Color as Color
 import qualified Haskellorls.Field as Field
+import qualified Haskellorls.Indicator as Indicator
 import qualified Haskellorls.Inode as Inode
 import qualified Haskellorls.Link as Link
 import qualified Haskellorls.Name as Name
@@ -37,6 +38,37 @@ data PrinterType
   | FILESIZE
   | FILETIME
   | FILENAME
+
+data NamePrinterType
+  = NAME
+  | INDICATOR
+  | LINK
+
+data NodeNamePrinters = NodeNamePrinters
+  { nodeNamePrinter :: Printer,
+    nodeIndicatorPrinter :: Printer,
+    nodeLinkPrinter :: Printer
+  }
+
+nodeNamePrinterSelector :: NamePrinterType -> NodeNamePrinters -> Printer
+nodeNamePrinterSelector npType = selector
+  where
+    selector = case npType of
+      NAME -> nodeNamePrinter
+      INDICATOR -> nodeIndicatorPrinter
+      LINK -> nodeLinkPrinter
+
+neededNamePrinterTypeBy :: NamePrinterType -> Option.Option -> Bool
+neededNamePrinterTypeBy npType opt = case npType of
+  NAME -> True
+  INDICATOR -> Option.IndicatorNone < Indicator.deriveIndicatorStyle opt
+  LINK -> False
+
+buildNamePrinterTypes :: Option.Option -> [NamePrinterType]
+buildNamePrinterTypes opt = filter (`neededNamePrinterTypeBy` opt) [NAME, INDICATOR, LINK]
+
+buildNodeNamePrinter :: Option.Option -> NodeNamePrinters -> Printer
+buildNodeNamePrinter opt printers node = concatMap (\npType -> nodeNamePrinterSelector npType printers node) $ buildNamePrinterTypes opt
 
 type Printer = Node.NodeInfo -> [YAString.WrapedString]
 
@@ -104,10 +136,6 @@ buildPrinters opt = do
         if shouldColorize && isEnableExtraColor
           then Inode.nodeInodeNumberWithColor cConfig
           else YAString.toWrappedStringArray . show . Inode.nodeInodeNumber
-      nodePrinter =
-        if shouldColorize
-          then Name.colorizedNodeName cConfig
-          else YAString.toWrappedStringArray . Name.nodeName
       filemodeFieldPrinter =
         if shouldColorize && isEnableExtraColor
           then Field.showFilemodeFieldWithColor cConfig
@@ -143,6 +171,18 @@ buildPrinters opt = do
           timeStyleFunc = Time.timeStyleFunc Format.defaultTimeLocale currentTime timeStyle
           fileTime = Time.fileTime . Time.timeTypeFrom $ Option.time opt
           timeStyle = Time.timeStyleFrom $ Option.timeStyle opt
+      nodePrinter =
+        if shouldColorize
+          then Name.colorizedNodeName cConfig
+          else YAString.toWrappedStringArray . Name.nodeName
+      fileIndicatorPrinter = Indicator.buildIndicatorPrinter opt
+      fileSymbolicLinkPrinter = const []
+      nodeNamePrinters =
+        NodeNamePrinters
+          { nodeNamePrinter = nodePrinter,
+            nodeIndicatorPrinter = fileIndicatorPrinter,
+            nodeLinkPrinter = fileSymbolicLinkPrinter
+          }
   return $
     Printers
       { fileInodePrinter = fileInodeFieldPrinter,
@@ -152,7 +192,7 @@ buildPrinters opt = do
         fileGroupPrinter = fileGroupFieldPrinter,
         fileSizePrinter = fileSizeFieldPrinter,
         fileTimePrinter = fileTimeFileldPrinter,
-        fileNamePrinter = nodePrinter
+        fileNamePrinter = buildNodeNamePrinter opt nodeNamePrinters
       }
 
 buildPrinterTypes :: Option.Option -> [PrinterType]
