@@ -18,8 +18,10 @@ virtualColumnSize opt = do
   return . head $ Maybe.catMaybes [styleWidth, optWidth, termWidth]
   where
     optWidth = Option.width opt
+    long = Decorator.isLongStyle opt
+    oneline = Option.oneline opt
     styleWidth =
-      if Decorator.isLongStyle opt
+      if long || oneline
         then Just 1
         else Nothing
 

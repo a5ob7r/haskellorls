@@ -220,7 +220,7 @@ neededBy pType opt = case pType of
     group = not (Option.longWithoutGroup opt || Option.noGroup opt)
 
 isLongStyle :: Option.Option -> Bool
-isLongStyle opt = any (\f -> f opt) [Option.long, Option.oneline, Option.longWithoutGroup, Option.longWithoutOwner]
+isLongStyle opt = any (\f -> f opt) [Option.long, Option.longWithoutGroup, Option.longWithoutOwner]
 
 buildColumn :: [Node.NodeInfo] -> Printers -> PrinterType -> [[YAString.WrapedString]]
 buildColumn nodes printers pType = map alignmenter nodes'
