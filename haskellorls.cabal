@@ -24,6 +24,7 @@ library
         Haskellorls.Ownership
         Haskellorls.Size
         Haskellorls.Sort
+        Haskellorls.SymbolicLink
         Haskellorls.UserInfo
         Haskellorls.YetAnotherString
         Haskellorls.Time

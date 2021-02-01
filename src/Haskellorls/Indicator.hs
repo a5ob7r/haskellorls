@@ -64,11 +64,18 @@ buildIndicatorPrinter opt node = if null indicator then [] else YAString.toWrapp
     indicator = indicatorSelector node $ buildIndicators opt
 
 buildIndicators :: Option.Option -> Indicators
-buildIndicators opt = case deriveIndicatorStyle opt of
-  Option.IndicatorNone -> noneIndicators
-  Option.IndicatorFiletype -> fileTypeIndicator
-  Option.IndicatorSlash -> slashIndicator
-  Option.IndicatorClassify -> classifyIndicators
+buildIndicators opt =
+  if long && not oneline
+    then indicators {indicatorsLink = ""}
+    else indicators
+  where
+    indicators = case deriveIndicatorStyle opt of
+      Option.IndicatorNone -> noneIndicators
+      Option.IndicatorFiletype -> fileTypeIndicator
+      Option.IndicatorSlash -> slashIndicator
+      Option.IndicatorClassify -> classifyIndicators
+    oneline = Option.oneline opt
+    long = any (\f -> f opt) [Option.long, Option.longWithoutOwner, Option.longWithoutGroup]
 
 deriveIndicatorStyle :: Option.Option -> Option.IndicatorStyle
 deriveIndicatorStyle opt = maximum [classify, directory, style]

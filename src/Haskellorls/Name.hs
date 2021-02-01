@@ -69,12 +69,23 @@ colorizedNodeName config nd =
   ]
   where
     name = nodeName nd
-    escSec = lookupEscSec config nd
+    escSec = lookupEscSeq config nd
 
-lookupEscSec :: Color.Config -> Node.NodeInfo -> String
-lookupEscSec conf nd = case nodeTypeOf $ Node.nodeInfoStatus nd of
+lookupEscSeq :: Color.Config -> Node.NodeInfo -> String
+lookupEscSeq conf nd = case nd of
+  Node.FileInfo {} -> lookupEscSeq' conf nd
+  Node.LinkInfo {} -> lookupSymlinkEscSeq
+  Node.OrphanedLinkInfo {} -> Color.orphanedSymlinkEscapeSequence conf
+  where
+    lookupSymlinkEscSeq =
+      if symlinkEscSeq' == "target"
+        then lookupEscSeq' conf $ Node.toFileInfo nd
+        else symlinkEscSeq'
+    symlinkEscSeq' = Color.symlinkEscapeSequence conf
+
+lookupEscSeq' :: Color.Config -> Node.NodeInfo -> String
+lookupEscSeq' conf nd = case nodeTypeOf $ Node.nodeInfoStatus nd of
   Directory -> Color.directoryEscapeSequence conf
-  SymbolicLink -> symlinkEscSeq
   NamedPipe -> Color.pipeEscapeSequence conf
   Socket -> Color.socketEscapeSequence conf
   BlockDevise -> Color.blockDeviceEscapeSequence conf
@@ -87,23 +98,7 @@ lookupEscSec conf nd = case nodeTypeOf $ Node.nodeInfoStatus nd of
   OtherWritable -> Color.otherWritableEscapeSequence conf
   Executable -> Color.executableEscapeSequence conf
   File -> Color.lookupFilenameEscSec (Color.fileColorIndicator conf) $ nodeName nd
-  Orphan -> orphanedSymlinkEscSeq
-  where
-    orphanedSymlinkEscSeq = Color.orphanedSymlinkEscapeSequence conf
-    symlinkEscSeq = case nd of
-      Node.FileInfo {} -> lookupSymlinkEscSeq
-      Node.LinkInfo {} -> lookupSymlinkEscSeq
-      Node.OrphanedLinkInfo {} -> orphanedSymlinkEscSeq
-    lookupSymlinkEscSeq =
-      if symlinkEscSeq' == "target"
-        then
-          lookupEscSec conf $
-            Node.FileInfo
-              { Node.getFilePath = Node.getDestPath nd,
-                Node.getFileStatus = Node.getDestStatus nd
-              }
-        else symlinkEscSeq'
-    symlinkEscSeq' = Color.symlinkEscapeSequence conf
+  _ -> Color.orphanedSymlinkEscapeSequence conf
 
 nodeName :: Node.NodeInfo -> FilePath
 nodeName = Node.nodeInfoPath

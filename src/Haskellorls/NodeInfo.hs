@@ -3,6 +3,7 @@ module Haskellorls.NodeInfo
     nodeInfo,
     nodeInfoStatus,
     nodeInfoPath,
+    toFileInfo,
   )
 where
 
@@ -52,7 +53,7 @@ nodeInfo dirname basename = do
             OrphanedLinkInfo
               { getOrphanedLinkPath = basename,
                 getOrphanedLinkStatus = status,
-                getDestPath = path
+                getDestPath = linkPath
               }
     else
       return $
@@ -62,6 +63,20 @@ nodeInfo dirname basename = do
           }
   where
     path = dirname Posix.</> basename
+
+toFileInfo :: NodeInfo -> NodeInfo
+toFileInfo node = case node of
+  FileInfo {} -> node
+  LinkInfo {} ->
+    FileInfo
+      { getFilePath = getDestPath node,
+        getFileStatus = getDestStatus node
+      }
+  OrphanedLinkInfo {} ->
+    FileInfo
+      { getFilePath = getDestPath node,
+        getFileStatus = getOrphanedLinkStatus node
+      }
 
 linkDestPath :: FilePath -> FilePath -> FilePath
 linkDestPath parPath linkPath =

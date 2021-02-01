@@ -23,6 +23,7 @@ import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Ownership as Ownership
 import qualified Haskellorls.Size as Size
+import qualified Haskellorls.SymbolicLink as SymbolicLink
 import qualified Haskellorls.Time as Time
 import qualified Haskellorls.UserInfo as UserInfo
 import qualified Haskellorls.YetAnotherString as YAString
@@ -41,13 +42,13 @@ data PrinterType
 
 data NamePrinterType
   = NAME
-  | INDICATOR
   | LINK
+  | INDICATOR
 
 data NodeNamePrinters = NodeNamePrinters
   { nodeNamePrinter :: Printer,
-    nodeIndicatorPrinter :: Printer,
-    nodeLinkPrinter :: Printer
+    nodeLinkPrinter :: Printer,
+    nodeIndicatorPrinter :: Printer
   }
 
 nodeNamePrinterSelector :: NamePrinterType -> NodeNamePrinters -> Printer
@@ -55,17 +56,17 @@ nodeNamePrinterSelector npType = selector
   where
     selector = case npType of
       NAME -> nodeNamePrinter
-      INDICATOR -> nodeIndicatorPrinter
       LINK -> nodeLinkPrinter
+      INDICATOR -> nodeIndicatorPrinter
 
 neededNamePrinterTypeBy :: NamePrinterType -> Option.Option -> Bool
 neededNamePrinterTypeBy npType opt = case npType of
   NAME -> True
+  LINK -> isLongStyle opt
   INDICATOR -> Option.IndicatorNone < Indicator.deriveIndicatorStyle opt
-  LINK -> False
 
 buildNamePrinterTypes :: Option.Option -> [NamePrinterType]
-buildNamePrinterTypes opt = filter (`neededNamePrinterTypeBy` opt) [NAME, INDICATOR, LINK]
+buildNamePrinterTypes opt = filter (`neededNamePrinterTypeBy` opt) [NAME, LINK, INDICATOR]
 
 buildNodeNamePrinter :: Option.Option -> NodeNamePrinters -> Printer
 buildNodeNamePrinter opt printers node = concatMap (\npType -> nodeNamePrinterSelector npType printers node) $ buildNamePrinterTypes opt
@@ -175,13 +176,16 @@ buildPrinters opt = do
         if shouldColorize
           then Name.colorizedNodeName cConfig
           else YAString.toWrappedStringArray . Name.nodeName
-      fileIndicatorPrinter = Indicator.buildIndicatorPrinter opt
-      fileSymbolicLinkPrinter = const []
+      fileIndicatorPrinter = Indicator.buildIndicatorPrinter opt . Node.toFileInfo
+      fileSymbolicLinkPrinter =
+        if shouldColorize
+          then SymbolicLink.coloredLinkName cConfig
+          else SymbolicLink.linkNameWrapper
       nodeNamePrinters =
         NodeNamePrinters
           { nodeNamePrinter = nodePrinter,
-            nodeIndicatorPrinter = fileIndicatorPrinter,
-            nodeLinkPrinter = fileSymbolicLinkPrinter
+            nodeLinkPrinter = fileSymbolicLinkPrinter,
+            nodeIndicatorPrinter = fileIndicatorPrinter
           }
   return $
     Printers
