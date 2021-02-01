@@ -31,6 +31,7 @@ data Option = Option
     directoryIndicator :: Bool,
     fileType :: Bool,
     indicatorStyle :: IndicatorStyle,
+    ignoreBackups :: Bool,
     version :: Bool,
     targets :: [FilePath]
   }
@@ -75,6 +76,7 @@ optionParser =
     <*> directoryIndicatorParser
     <*> fileTypeParser
     <*> indicatorStyleParser
+    <*> ignoreBackupsParser
     <*> versionParser
     <*> argParser
 
@@ -229,6 +231,13 @@ indicatorStyleReader = OA.auto >>= reader
       "file-type" -> return IndicatorFiletype
       "classify" -> return IndicatorClassify
       _ -> OA.readerError "Avairable values are only 'none', 'slash', 'file-tyep' and 'classify'"
+
+ignoreBackupsParser :: OA.Parser Bool
+ignoreBackupsParser =
+  OA.switch $
+    OA.long "ignore-backups"
+      <> OA.short 'B'
+      <> OA.help "Ignore backup files which have a suffix with '~'"
 
 versionParser :: OA.Parser Bool
 versionParser =

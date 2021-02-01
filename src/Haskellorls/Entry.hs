@@ -7,6 +7,7 @@ module Haskellorls.Entry
   )
 where
 
+import qualified Data.List as List
 import qualified Haskellorls.Option as Option
 import qualified System.Directory as Directory
 import qualified System.Posix.Files as Files
@@ -55,12 +56,16 @@ buildFiles opt paths = do
     g = Files.isDirectory . snd
 
 listContents :: Option.Option -> FilePath -> IO [FilePath]
-listContents opt = list
+listContents opt path = ignoreFilter <$> list path
   where
     list
       | Option.all opt = listAllEntries
       | Option.almostAll opt = listSemiAllEntries
       | otherwise = listEntries
+    ignoreFilter =
+      if Option.ignoreBackups opt
+        then ignoreBackupsFilter
+        else id
 
 listAllEntries :: FilePath -> IO [FilePath]
 listAllEntries = Directory.getDirectoryContents
@@ -75,3 +80,6 @@ isHiddenEntries :: FilePath -> Bool
 isHiddenEntries [] = False
 isHiddenEntries ('.' : _) = True
 isHiddenEntries _ = False
+
+ignoreBackupsFilter :: [FilePath] -> [FilePath]
+ignoreBackupsFilter = filter (\path -> not $ "~" `List.isSuffixOf` path)
