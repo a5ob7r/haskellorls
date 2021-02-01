@@ -41,7 +41,7 @@ $ cabal run haskellorls
 - Add locale support for time style.
 - Add extra sort method.
 - Fix name sort for GNU ls compatibility.
-- Fix size size printer for charactor devices.
+- Fix size printer for charactor devices.
 - Add -I or --ignore=PATTERN and --hide=PATTERN options.
 - Add an interface model for deriving command parameters from args and options.
 - Improve performances.
