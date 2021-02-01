@@ -52,6 +52,9 @@ classifyIndicators =
 indicatorSelector :: Node.NodeInfo -> Indicators -> String
 indicatorSelector node = case Name.nodeTypeOf (Node.nodeInfoStatus node) of
   Name.Directory -> indicatorsDirectory
+  Name.Sticky -> indicatorsDirectory
+  Name.OtherWritable -> indicatorsDirectory
+  Name.StickyOtherWritable -> indicatorsDirectory
   Name.SymbolicLink -> indicatorsLink
   Name.NamedPipe -> indicatorsPipe
   Name.Socket -> indicatorsSocket
