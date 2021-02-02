@@ -7,9 +7,12 @@ module Haskellorls.Entry
   )
 where
 
+import qualified Control.Monad as Monad
 import qualified Data.List as List
 import qualified Haskellorls.Option as Option
+import qualified Haskellorls.Utils as Utils
 import qualified System.Directory as Directory
+import qualified System.IO as IO
 import qualified System.Posix.Files as Files
 
 data EntryType = FILES | DIRECTORY
@@ -40,7 +43,8 @@ buildDirectoryEntries opt path = do
 
 buildFiles :: Option.Option -> [FilePath] -> IO Files
 buildFiles opt paths = do
-  psPairs <- mapM f paths
+  paths' <- existenceFilter paths
+  psPairs <- traverse f paths'
   let fPaths = map fst $ filter (not . g) psPairs
       dPaths = map fst $ filter g psPairs
   dEntries <- mapM (buildDirectoryEntries opt) dPaths
@@ -83,3 +87,14 @@ isHiddenEntries _ = False
 
 ignoreBackupsFilter :: [FilePath] -> [FilePath]
 ignoreBackupsFilter = filter (\path -> not $ "~" `List.isSuffixOf` path)
+
+existenceFilter :: [FilePath] -> IO [FilePath]
+existenceFilter = Monad.filterM exist
+
+exist :: FilePath -> IO Bool
+exist path = do
+  isExist <- Utils.exist path
+  if isExist
+    then return ()
+    else IO.hPutStrLn IO.stderr $ "haskellorls: does not exist '" <> path <> "': (No such file or directory)"
+  return isExist

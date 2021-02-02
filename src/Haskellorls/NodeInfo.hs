@@ -7,9 +7,8 @@ module Haskellorls.NodeInfo
   )
 where
 
-import qualified Control.Exception.Base as Exception
-import qualified Data.Either as Either
 import qualified Data.List as L
+import qualified Haskellorls.Utils as Utils
 import qualified System.FilePath.Posix as Posix
 import qualified System.Posix.Files as Files
 
@@ -37,7 +36,7 @@ nodeInfo dirname basename = do
     then do
       linkPath <- Files.readSymbolicLink path
       let linkAbsPath = linkDestPath path linkPath
-      isLinked <- exist linkAbsPath
+      isLinked <- Utils.exist linkAbsPath
       if isLinked
         then do
           destStatus <- linkDestStatus path linkPath
@@ -102,9 +101,3 @@ nodeInfoPath node = pathFunc node
       FileInfo {} -> getFilePath
       LinkInfo {} -> getLinkPath
       OrphanedLinkInfo {} -> getOrphanedLinkPath
-
-exist :: FilePath -> IO Bool
-exist path = Either.fromRight False <$> exist'
-  where
-    exist' :: IO (Either Exception.IOException Bool)
-    exist' = Exception.try $ Files.fileExist path
