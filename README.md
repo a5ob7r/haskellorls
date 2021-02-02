@@ -48,12 +48,12 @@ $ cabal run haskellorls
 - Add an interface model for deriving command parameters from args and options.
 - Improve performances.
 - Add tests.
-  - E2E tests with bats.
+  - Golden tests with tasty.
   - Unit tests with tasty.
 - etc.
 
 ## NOTE
 
-`Haskellorls` means Color ls with Haskell.
+`Haskellorls` means Color ls in Haskell.
 
 This is a joke software created by a beginner.
