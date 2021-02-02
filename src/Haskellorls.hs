@@ -1,8 +1,10 @@
 module Haskellorls
   ( run,
+    renderEntriesLines,
   )
 where
 
+import qualified Data.Functor as F
 import qualified Data.List as List
 import qualified Haskellorls.Decorator as Decorator
 import qualified Haskellorls.Entry as Entry
@@ -21,30 +23,34 @@ run args = do
     else runWith options
 
 runWith :: Option.Option -> IO ()
-runWith opt = do
+runWith opt = putStrLn =<< renderEntriesLines opt
+
+renderEntriesLines :: Option.Option -> IO String
+renderEntriesLines opt = generateEntriesLines opt F.<&> List.intercalate "\n\n" . map (List.intercalate "\n")
+
+generateEntriesLines :: Option.Option -> IO [[String]]
+generateEntriesLines opt = do
   let targets = Option.targets opt
       targets' = if null targets then ["."] else targets
 
   files <- Entry.buildFiles opt targets'
   printers <- Decorator.buildPrinters opt
 
-  let runner = runWith' opt printers
-      actions = map runner $ Entry.toEntries files
-      actions' = List.intersperse (putStrLn "") actions
+  let generator = generateEntryLines opt printers
 
-  sequence_ actions'
+  mapM generator $ Entry.toEntries files
 
-runWith' :: Option.Option -> Decorator.Printers -> Entry.Entry -> IO ()
-runWith' opt printers (Entry.Entry eType path contents) = do
+generateEntryLines :: Option.Option -> Decorator.Printers -> Entry.Entry -> IO [String]
+generateEntryLines opt printers (Entry.Entry eType path contents) = do
   nodes <- fmap (Sort.sorter opt) . mapM (Node.nodeInfo path) $ contents
   let nodes' = Decorator.buildLines nodes printers $ Decorator.buildPrinterTypes opt
+      addHeader = case eType of
+        Entry.FILES -> id
+        _ -> \ss -> path <> ":" : ss
 
   colLen <- Grid.virtualColumnSize opt
 
-  case eType of
-    Entry.FILES -> return ()
-    _ -> putStrLn $ path ++ ":"
-  mapM_ putStrLn . Grid.renderGrid $ Grid.buildValidGrid colLen nodes'
+  return . addHeader . Grid.renderGrid $ Grid.buildValidGrid colLen nodes'
 
 argParser :: [String] -> IO Option.Option
 argParser args = OA.handleParseResult presult
