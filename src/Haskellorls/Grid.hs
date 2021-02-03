@@ -28,18 +28,31 @@ virtualColumnSize opt = do
 terminalWidth :: IO Int
 terminalWidth = maybe 1 TS.width <$> TS.size
 
-nest :: Int -> [a] -> [[a]]
-nest n xs
-  | n > 0 = nest' m xs
-  | otherwise = nest 1 xs
+-- | 'splitInto' @n xs@ returns a list which are sliced @xs@ into @n@ elements:
+--
+-- > splitInto 2 [1..6] == [[1, 2, 3], [4, 5, 6]]
+-- > splitInto 4 [1..8] == [[1, 2], [3, 4], [5, 6], [7, 8]]
+-- > splitInto 3 [1..10] == [[1, 2, 3, 4], [5, 6, 7], [8, 9, 10]]
+splitInto :: Int -> [a] -> [[a]]
+splitInto _ [] = []
+splitInto n xs
+  | n < 1 = splitInto 1 xs
+  | otherwise = slice m xs
   where
     (a, b) = length xs `divMod` n
     m = a + abs (signum b)
 
-nest' :: Int -> [a] -> [[a]]
-nest' _ [] = []
-nest' 0 xs = nest' 1 xs
-nest' n xs = h : nest' n t
+-- | 'slice' @n xs@ returns a list which have @n@ length lists as elements:
+--
+-- > slice 2 [1..6] == [[1, 2], [3, 4], [5, 6]]
+-- > slice 2 [1..5] == [[1, 2], [3, 4], [5]]
+-- > slice 2 [] == []
+-- > slice (-1) [1..5] == []
+slice :: Int -> [a] -> [[a]]
+slice _ [] = []
+slice n xs
+  | n < 1 = []
+  | otherwise = h : slice n t
   where
     (h, t) = splitAt n xs
 
@@ -77,7 +90,7 @@ validateGrid n grid
     maxLen = maximum . map length $ renderGridAsPlain grid
 
 buildGrid :: Int -> [[YAString.WrapedString]] -> [[[YAString.WrapedString]]]
-buildGrid n = List.transpose . buildGrid' . nest n
+buildGrid n = List.transpose . buildGrid' . splitInto n
 
 buildGrid' :: [[[YAString.WrapedString]]] -> [[[YAString.WrapedString]]]
 buildGrid' [] = []
