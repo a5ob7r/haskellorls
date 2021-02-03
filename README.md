@@ -54,7 +54,6 @@ $ cabal test
 - Add an interface model for deriving command parameters from args and options.
 - Improve performances.
 - Add tests.
-  - Golden tests with tasty.
   - Unit tests with tasty.
 - etc.
 
