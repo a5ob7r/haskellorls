@@ -32,6 +32,12 @@ Build and run.
 $ cabal run haskellorls
 ```
 
+Test.
+
+```sh
+$ cabal test
+```
+
 ## Incompatibility
 
 ### GNU ls

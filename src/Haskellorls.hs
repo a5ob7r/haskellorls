@@ -1,6 +1,7 @@
 module Haskellorls
   ( run,
     renderEntriesLines,
+    argParser,
   )
 where
 

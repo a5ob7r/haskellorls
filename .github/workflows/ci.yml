@@ -18,5 +18,5 @@ jobs:
           ghc-version: ${{ matrix.ghc }}
           cabal-version: 3.2.0.0
 
-      - name: Build and Run
-        run: cabal run haskellorls -- --color=auto -lAh --time-style=iso
+      - name: Run tests
+        run: cabal test
