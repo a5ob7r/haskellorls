@@ -94,8 +94,11 @@ buildGrid n = List.transpose . buildGrid' . splitInto n
 
 buildGrid' :: [[[YAString.WrapedString]]] -> [[[YAString.WrapedString]]]
 buildGrid' [] = []
-buildGrid' [ss] = [ss]
-buildGrid' (ss : sss) = buildColumn ss : buildGrid' sss
+buildGrid' [x] = [x]
+buildGrid' xs = mapToInit buildColumn xs
+
+mapToInit :: (a -> a) -> [a] -> [a]
+mapToInit f xs = map f (init xs) <> [last xs]
 
 buildColumn :: [[YAString.WrapedString]] -> [[YAString.WrapedString]]
 buildColumn sss = map (pad paddingChar maxLen) sss
