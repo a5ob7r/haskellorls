@@ -86,6 +86,7 @@ colorParser =
     OA.long "color"
       <> OA.metavar "WHEN"
       <> OA.value NEVER
+      <> OA.help "When use output with color (default is 'never')"
 
 parseColorOpt :: OA.ReadM ColorOpt
 parseColorOpt = OA.str >>= f
@@ -103,13 +104,17 @@ extraColorParser =
       <> OA.help "Enable extra coloring which is incompatible for GNU ls."
 
 longParser :: OA.Parser Bool
-longParser = OA.switch $ OA.short 'l'
+longParser =
+  OA.switch $
+    OA.short 'l'
+      <> OA.help "Enable long layout which provides informative outputs about files"
 
 humanReadableParser :: OA.Parser Bool
 humanReadableParser =
   OA.switch $
     OA.short 'h'
       <> OA.long "human-readable"
+      <> OA.help "Enable human readable output about file size (e.g. 1K, 23M)"
 
 blockSizeParser :: OA.Parser String
 blockSizeParser =
@@ -117,6 +122,7 @@ blockSizeParser =
     OA.long "block-size"
       <> OA.metavar "SIZE"
       <> OA.value ""
+      <> OA.help "Specify size unit when output file size"
 
 timeParser :: OA.Parser String
 timeParser =
@@ -124,6 +130,7 @@ timeParser =
     OA.long "time"
       <> OA.metavar "WORD"
       <> OA.value ""
+      <> OA.help "Specify a time kind which is used as file's time attribute"
 
 timeStyleParser :: OA.Parser String
 timeStyleParser =
@@ -131,18 +138,21 @@ timeStyleParser =
     OA.long "time-style"
       <> OA.metavar "TYPE_STYLE"
       <> OA.value ""
+      <> OA.help "Specify time output format"
 
 allParser :: OA.Parser Bool
 allParser =
   OA.switch $
     OA.short 'a'
       <> OA.long "all"
+      <> OA.help "Output hidden files contain '.' and '..'"
 
 almostAllParser :: OA.Parser Bool
 almostAllParser =
   OA.switch $
     OA.short 'A'
       <> OA.long "almost-all"
+      <> OA.help "Output hidden files doesn't contain '.' and '..'"
 
 sortParser :: OA.Parser String
 sortParser =
@@ -150,27 +160,39 @@ sortParser =
     OA.long "sort"
       <> OA.metavar "WORD"
       <> OA.value "name"
+      <> OA.help "Specify an attribute to sort outputs"
 
 reverseParser :: OA.Parser Bool
 reverseParser =
   OA.switch $
     OA.short 'r'
       <> OA.long "reverse"
+      <> OA.help "Reverse outputs order"
 
 onelineParser :: OA.Parser Bool
-onelineParser = OA.switch $ OA.short '1'
+onelineParser =
+  OA.switch $
+    OA.short '1'
+      <> OA.help "Enable oneline layout which outputs one file by one line"
 
 noGroupParser :: OA.Parser Bool
 noGroupParser =
   OA.switch $
     OA.short 'G'
       <> OA.long "no-group"
+      <> OA.help "Hide file group field"
 
 longWithoutGroupParser :: OA.Parser Bool
-longWithoutGroupParser = OA.switch $ OA.short 'o'
+longWithoutGroupParser =
+  OA.switch $
+    OA.short 'o'
+      <> OA.help "Enable long layout without file group"
 
 longWithoutOwnerParser :: OA.Parser Bool
-longWithoutOwnerParser = OA.switch $ OA.short 'g'
+longWithoutOwnerParser =
+  OA.switch $
+    OA.short 'g'
+      <> OA.help "Enable long layout without file owner"
 
 widthParser :: OA.Parser (Maybe Int)
 widthParser =
