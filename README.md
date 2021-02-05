@@ -55,6 +55,8 @@ $ cabal test
 - Improve performances.
 - Add tests.
   - Unit tests with tasty.
+- Register to Hackage.
+- Release binary.
 - etc.
 
 ## NOTE
