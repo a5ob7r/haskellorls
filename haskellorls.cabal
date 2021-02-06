@@ -31,7 +31,7 @@ library
     Haskellorls.Time
     Haskellorls.UserInfo
     Haskellorls.Utils
-    Haskellorls.YetAnotherString
+    Haskellorls.WrappedText
 
   hs-source-dirs:   src
   default-language: Haskell2010

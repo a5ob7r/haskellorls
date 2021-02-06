@@ -1,21 +1,24 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Haskellorls.Indicator
   ( buildIndicatorPrinter,
     deriveIndicatorStyle,
   )
 where
 
+import qualified Data.Text as T
 import qualified Haskellorls.Name as Name
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
-import qualified Haskellorls.YetAnotherString as YAString
+import qualified Haskellorls.WrappedText as WT
 
 data Indicators = Indicators
-  { indicatorsDirectory :: String,
-    indicatorsLink :: String,
-    indicatorsPipe :: String,
-    indicatorsSocket :: String,
-    indicatorsDoor :: String,
-    indicatorsExecutable :: String
+  { indicatorsDirectory :: T.Text,
+    indicatorsLink :: T.Text,
+    indicatorsPipe :: T.Text,
+    indicatorsSocket :: T.Text,
+    indicatorsDoor :: T.Text,
+    indicatorsExecutable :: T.Text
   }
 
 noneIndicators :: Indicators
@@ -49,7 +52,7 @@ classifyIndicators =
       indicatorsExecutable = executableIndicator
     }
 
-indicatorSelector :: Node.NodeInfo -> Indicators -> String
+indicatorSelector :: Node.NodeInfo -> Indicators -> T.Text
 indicatorSelector node = case Name.nodeTypeOf (Node.nodeInfoStatus node) of
   Name.Directory -> indicatorsDirectory
   Name.Sticky -> indicatorsDirectory
@@ -62,8 +65,8 @@ indicatorSelector node = case Name.nodeTypeOf (Node.nodeInfoStatus node) of
   Name.Executable -> indicatorsExecutable
   _ -> const ""
 
-buildIndicatorPrinter :: Option.Option -> Node.NodeInfo -> [YAString.WrapedString]
-buildIndicatorPrinter opt node = if null indicator then [] else YAString.toWrappedStringArray indicator
+buildIndicatorPrinter :: Option.Option -> Node.NodeInfo -> [WT.WrappedText]
+buildIndicatorPrinter opt node = if T.null indicator then [] else WT.toWrappedTextSingleton indicator
   where
     indicator = indicatorSelector node $ buildIndicators opt
 
@@ -98,20 +101,20 @@ deriveIndicatorStyle opt = maximum [classify, directory, fileType, style]
         else Option.IndicatorNone
     style = Option.indicatorStyle opt
 
-directoryIndicator :: String
+directoryIndicator :: T.Text
 directoryIndicator = "/"
 
-linkIndicator :: String
+linkIndicator :: T.Text
 linkIndicator = "@"
 
-pipeIndicator :: String
+pipeIndicator :: T.Text
 pipeIndicator = "|"
 
-socketIndicator :: String
+socketIndicator :: T.Text
 socketIndicator = "="
 
-doorIndicator :: String
+doorIndicator :: T.Text
 doorIndicator = ">"
 
-executableIndicator :: String
+executableIndicator :: T.Text
 executableIndicator = "*"

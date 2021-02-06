@@ -12,7 +12,7 @@ import qualified Data.Maybe as Maybe
 import qualified Data.Text as T
 import qualified Haskellorls.Decorator as Decorator
 import qualified Haskellorls.Option as Option
-import qualified Haskellorls.YetAnotherString as YAString
+import qualified Haskellorls.WrappedText as WT
 import qualified System.Console.Terminal.Size as TS
 
 virtualColumnSize :: Option.Option -> IO Int
@@ -59,7 +59,7 @@ slice n xs
   where
     (h, t) = splitAt n xs
 
-buildValidGrid :: Int -> [[YAString.WrapedString]] -> [[[YAString.WrapedString]]]
+buildValidGrid :: Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
 buildValidGrid columnLength sss
   | null sss = []
   | columnLength == 0 = buildGrid (length sss) sss
@@ -69,29 +69,35 @@ buildValidGrid columnLength sss
     singleColumnGrid = buildGrid 1 sss
     validGrids = takeWhile (validateGrid columnLength) $ map (`buildGrid` sss) [2 .. columnLength]
 
-renderGrid :: [[[YAString.WrapedString]]] -> [T.Text]
+renderGrid :: [[[WT.WrappedText]]] -> [T.Text]
 renderGrid = map renderLine
 
-renderGridAsPlain :: [[[YAString.WrapedString]]] -> [T.Text]
+renderGridAsPlain :: [[[WT.WrappedText]]] -> [T.Text]
 renderGridAsPlain = map renderLineAsPlain
 
-renderLine :: [[YAString.WrapedString]] -> T.Text
-renderLine = T.intercalate gridMargin . map (T.pack . YAString.yaShow')
+renderLine :: [[WT.WrappedText]] -> T.Text
+renderLine = T.intercalate gridMargin . map renderWTList
 
-renderLineAsPlain :: [[YAString.WrapedString]] -> T.Text
-renderLineAsPlain = T.intercalate gridMargin . map (T.pack . YAString.yaShow)
+renderLineAsPlain :: [[WT.WrappedText]] -> T.Text
+renderLineAsPlain = T.intercalate gridMargin . map renderWTListAsPlain
 
-validateGrid :: Int -> [[[YAString.WrapedString]]] -> Bool
+renderWTList :: [WT.WrappedText] -> T.Text
+renderWTList = T.concat . map WT.render
+
+renderWTListAsPlain :: [WT.WrappedText] -> T.Text
+renderWTListAsPlain = T.concat . map WT.wtWord
+
+validateGrid :: Int -> [[[WT.WrappedText]]] -> Bool
 validateGrid n grid
   | n >= maxLen = True
   | otherwise = False
   where
     maxLen = maximum . map T.length $ renderGridAsPlain grid
 
-buildGrid :: Int -> [[YAString.WrapedString]] -> [[[YAString.WrapedString]]]
+buildGrid :: Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
 buildGrid n = List.transpose . buildGrid' . splitInto n
 
-buildGrid' :: [[[YAString.WrapedString]]] -> [[[YAString.WrapedString]]]
+buildGrid' :: [[[WT.WrappedText]]] -> [[[WT.WrappedText]]]
 buildGrid' [] = []
 buildGrid' [x] = [x]
 buildGrid' xs = mapToInit buildColumn xs
@@ -99,20 +105,20 @@ buildGrid' xs = mapToInit buildColumn xs
 mapToInit :: (a -> a) -> [a] -> [a]
 mapToInit f xs = map f (init xs) <> [last xs]
 
-buildColumn :: [[YAString.WrapedString]] -> [[YAString.WrapedString]]
+buildColumn :: [[WT.WrappedText]] -> [[WT.WrappedText]]
 buildColumn sss = map (pad paddingChar maxLen) sss
   where
-    maxLen = YAString.maximumLength sss
+    maxLen = maximum $ map (sum . map WT.wtLength) sss
 
-pad :: Char -> Int -> [YAString.WrapedString] -> [YAString.WrapedString]
+pad :: T.Text -> Int -> [WT.WrappedText] -> [WT.WrappedText]
 pad c n ss = ss <> padding
   where
-    len = YAString.yaLength ss
+    len = sum $ map WT.wtLength ss
     diff = n - len
-    padding = YAString.toWrappedStringArray $ replicate diff c
+    padding = WT.toWrappedTextSingleton $ T.replicate diff c
 
-paddingChar :: Char
-paddingChar = ' '
+paddingChar :: T.Text
+paddingChar = " "
 
 gridMargin :: T.Text
 gridMargin = "  "

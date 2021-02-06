@@ -4,88 +4,89 @@ module Haskellorls.Color
   ( Config (..),
     config,
     ExtensionConfig (..),
-    applyEscapeSequence,
     lookupFilenameEscSec,
+    toWrappedText,
+    wrap,
   )
 where
 
-import qualified Data.Char as Char
 import qualified Data.List.Extra as Extra
 import qualified Data.Map.Strict as Map
 import qualified Data.Maybe as Maybe
 import qualified Data.Text as T
+import qualified Haskellorls.WrappedText as WT
 import qualified System.Environment as Env
 
-type FilenamePtnMap = Map.Map String String
+type FilenamePtnMap = Map.Map T.Text T.Text
 
 data Config = Config
-  { leftEscapeSequence :: String,
-    rightEscapeSequence :: String,
-    endEscapeSequence :: String,
-    resetEscapeSequence :: String,
-    normalEscapeSequence :: String,
-    fileEscaseSequence :: String,
-    directoryEscapeSequence :: String,
-    symlinkEscapeSequence :: String,
-    pipeEscapeSequence :: String,
-    socketEscapeSequence :: String,
-    blockDeviceEscapeSequence :: String,
-    charDeviceEscapeSequence :: String,
-    missingFileEscapeSequence :: String,
-    orphanedSymlinkEscapeSequence :: String,
-    executableEscapeSequence :: String,
-    doorEscapeSequence :: String,
-    setuidEscapeSequence :: String,
-    setguiEscapeSequence :: String,
-    stickyEscapeSequence :: String,
-    otherWritableEscapeSequence :: String,
-    stickyOtherWritableEscapeSequence :: String,
-    capabilityEscapeSequence :: String,
-    multiHardlinkEscapeSequence :: String,
-    clearLineEscapeSequence :: String,
+  { leftEscapeSequence :: T.Text,
+    rightEscapeSequence :: T.Text,
+    endEscapeSequence :: T.Text,
+    resetEscapeSequence :: T.Text,
+    normalEscapeSequence :: T.Text,
+    fileEscaseSequence :: T.Text,
+    directoryEscapeSequence :: T.Text,
+    symlinkEscapeSequence :: T.Text,
+    pipeEscapeSequence :: T.Text,
+    socketEscapeSequence :: T.Text,
+    blockDeviceEscapeSequence :: T.Text,
+    charDeviceEscapeSequence :: T.Text,
+    missingFileEscapeSequence :: T.Text,
+    orphanedSymlinkEscapeSequence :: T.Text,
+    executableEscapeSequence :: T.Text,
+    doorEscapeSequence :: T.Text,
+    setuidEscapeSequence :: T.Text,
+    setguiEscapeSequence :: T.Text,
+    stickyEscapeSequence :: T.Text,
+    otherWritableEscapeSequence :: T.Text,
+    stickyOtherWritableEscapeSequence :: T.Text,
+    capabilityEscapeSequence :: T.Text,
+    multiHardlinkEscapeSequence :: T.Text,
+    clearLineEscapeSequence :: T.Text,
     fileColorIndicator :: FilenamePtnMap,
     extensionColorConfig :: ExtensionConfig
   }
 
 data ExtensionConfig = ExtensionConfig
-  { userReadPermBitEscapeSequence :: String,
-    userWritePermBitEscapeSequence :: String,
-    userExecPermBitFileEscapeSequence :: String,
-    userExecPermBitOtherEscapeSequence :: String,
-    groupReadPermBitEscapeSequence :: String,
-    groupWritePermBitEscapeSequence :: String,
-    groupExecPermBitEscapeSequence :: String,
-    otherReadPermBitEscapeSequence :: String,
-    otherWritePermBitEscapeSequence :: String,
-    otherExecPermBitEscapeSequence :: String,
-    sPermBitFileEscapeSequence :: String,
-    sPermBitOtherEscapeSequence :: String,
-    ownerYourselfEscapeSequence :: String,
-    ownerNotYourselfEscapeSequence :: String,
-    groupYouBelongsToEscapeSequence :: String,
-    groupYouNotBelongsToEscapeSequence :: String,
-    fileSizeNumberEscapeSequence :: String,
-    fileSizeNumberBypeEscapeSequence :: String,
-    fileSizeNumberKiloEscapeSequence :: String,
-    fileSizeNumberMegaEscapeSequence :: String,
-    fileSizeNumberGigaEscapeSequence :: String,
-    fileSizeNumberTeraEscapeSequence :: String,
-    fileSizeNumberPetaEscapeSequence :: String,
-    fileSizeNumberExaEscapeSequence :: String,
-    fileSizeNumberZettaEscapeSequence :: String,
-    fileSizeNumberYottaEscapeSequence :: String,
-    fileSizeUnitBypeEscapeSequence :: String,
-    fileSizeUnitKiloEscapeSequence :: String,
-    fileSizeUnitMegaEscapeSequence :: String,
-    fileSizeUnitGigaEscapeSequence :: String,
-    fileSizeUnitTeraEscapeSequence :: String,
-    fileSizeUnitPetaEscapeSequence :: String,
-    fileSizeUnitExaEscapeSequence :: String,
-    fileSizeUnitZettaEscapeSequence :: String,
-    fileSizeUnitYottaEscapeSequence :: String,
-    dateEscapeSequence :: String,
-    fileLinkEscapeSequence :: String,
-    fileInodeEscapeSequence :: String
+  { userReadPermBitEscapeSequence :: T.Text,
+    userWritePermBitEscapeSequence :: T.Text,
+    userExecPermBitFileEscapeSequence :: T.Text,
+    userExecPermBitOtherEscapeSequence :: T.Text,
+    groupReadPermBitEscapeSequence :: T.Text,
+    groupWritePermBitEscapeSequence :: T.Text,
+    groupExecPermBitEscapeSequence :: T.Text,
+    otherReadPermBitEscapeSequence :: T.Text,
+    otherWritePermBitEscapeSequence :: T.Text,
+    otherExecPermBitEscapeSequence :: T.Text,
+    sPermBitFileEscapeSequence :: T.Text,
+    sPermBitOtherEscapeSequence :: T.Text,
+    ownerYourselfEscapeSequence :: T.Text,
+    ownerNotYourselfEscapeSequence :: T.Text,
+    groupYouBelongsToEscapeSequence :: T.Text,
+    groupYouNotBelongsToEscapeSequence :: T.Text,
+    fileSizeNumberEscapeSequence :: T.Text,
+    fileSizeNumberBypeEscapeSequence :: T.Text,
+    fileSizeNumberKiloEscapeSequence :: T.Text,
+    fileSizeNumberMegaEscapeSequence :: T.Text,
+    fileSizeNumberGigaEscapeSequence :: T.Text,
+    fileSizeNumberTeraEscapeSequence :: T.Text,
+    fileSizeNumberPetaEscapeSequence :: T.Text,
+    fileSizeNumberExaEscapeSequence :: T.Text,
+    fileSizeNumberZettaEscapeSequence :: T.Text,
+    fileSizeNumberYottaEscapeSequence :: T.Text,
+    fileSizeUnitBypeEscapeSequence :: T.Text,
+    fileSizeUnitKiloEscapeSequence :: T.Text,
+    fileSizeUnitMegaEscapeSequence :: T.Text,
+    fileSizeUnitGigaEscapeSequence :: T.Text,
+    fileSizeUnitTeraEscapeSequence :: T.Text,
+    fileSizeUnitPetaEscapeSequence :: T.Text,
+    fileSizeUnitExaEscapeSequence :: T.Text,
+    fileSizeUnitZettaEscapeSequence :: T.Text,
+    fileSizeUnitYottaEscapeSequence :: T.Text,
+    dateEscapeSequence :: T.Text,
+    fileLinkEscapeSequence :: T.Text,
+    fileInodeEscapeSequence :: T.Text
   }
 
 defaultConfig :: Config
@@ -248,41 +249,38 @@ extensionConfigFrom lsColors =
     def = defaultExtensionConfig
     parametors = parametorsFrom lsColors
 
-applyEscapeSequence :: Config -> String -> String
-applyEscapeSequence conf escSeq = left ++ escSeq ++ right
-  where
-    left = leftEscapeSequence conf
-    right = rightEscapeSequence conf
-
 colorIndicatorsFrom :: [T.Text] -> FilenamePtnMap
 colorIndicatorsFrom = Map.fromList . Maybe.mapMaybe f
   where
     f s = makePatternEscapePair s >>= filenamePtnEscSec
 
-filenamePtnEscSec :: (String, String) -> Maybe (String, String)
+filenamePtnEscSec :: (T.Text, T.Text) -> Maybe (T.Text, T.Text)
 filenamePtnEscSec (ptn, esc) = filenamePattern ptn >>= (\ext -> Just (ext, esc))
 
-filenamePattern :: String -> Maybe String
-filenamePattern str = case str of
-  '*' : _ -> Just . toUppers $ drop 1 str
-  _ -> Nothing
+filenamePattern :: T.Text -> Maybe T.Text
+filenamePattern t
+  | isPrefixWild t = Just . T.toUpper $ T.drop 1 t
+  | otherwise = Nothing
 
 parametorsFrom :: [T.Text] -> FilenamePtnMap
 parametorsFrom = Map.fromList . Maybe.mapMaybe f
   where
     f s = makePatternEscapePair s >>= paramatorPtnEscSec
 
-paramatorPtnEscSec :: (String, String) -> Maybe (String, String)
-paramatorPtnEscSec (ptn, esc) = case ptn of
-  '*' : _ -> Nothing
-  _ -> Just (ptn, esc)
+paramatorPtnEscSec :: (T.Text, T.Text) -> Maybe (T.Text, T.Text)
+paramatorPtnEscSec pair@(ptn, _)
+  | isPrefixWild ptn = Nothing
+  | otherwise = Just pair
 
-makePatternEscapePair :: T.Text -> Maybe (String, String)
+isPrefixWild :: T.Text -> Bool
+isPrefixWild = Maybe.maybe False (\p -> fst p == '*') . T.uncons
+
+makePatternEscapePair :: T.Text -> Maybe (T.Text, T.Text)
 makePatternEscapePair s = case pairs of
   [k, v] -> Just (k, v)
   _ -> Nothing
   where
-    pairs = map T.unpack $ T.split (== '=') s
+    pairs = T.split (== '=') s
 
 getLSCOLORS :: IO T.Text
 getLSCOLORS = Maybe.maybe "" T.pack <$> Env.lookupEnv "LS_COLORS"
@@ -292,8 +290,22 @@ getEXACOLORS = Maybe.maybe "" T.pack <$> Env.lookupEnv "EXA_COLORS"
 
 -- | Lookup ascii escape sequence. At first, lookup with a query as it is. If
 --    fails to lookup, change a query to the extension and re lookup.
-lookupFilenameEscSec :: FilenamePtnMap -> String -> String
-lookupFilenameEscSec ptnMap = Extra.headDef "" . Maybe.mapMaybe (`Map.lookup` ptnMap) . reverse . Extra.tails . toUppers
+lookupFilenameEscSec :: FilenamePtnMap -> T.Text -> T.Text
+lookupFilenameEscSec ptnMap = Extra.headDef "" . Maybe.mapMaybe (`Map.lookup` ptnMap) . reverse . T.tails . T.toUpper
 
-toUppers :: String -> String
-toUppers = map Char.toUpper
+toWrappedText :: Config -> (Config -> T.Text) -> T.Text -> WT.WrappedText
+toWrappedText cConfig getter t =
+  WT.WrappedText
+    { WT.wtPrefix = wrap cConfig esc,
+      WT.wtWord = t,
+      WT.wtSuffix = wrap cConfig reset
+    }
+  where
+    esc = getter cConfig
+    reset = resetEscapeSequence cConfig
+
+wrap :: Config -> T.Text -> T.Text
+wrap cConfig t = left <> t <> right
+  where
+    left = leftEscapeSequence cConfig
+    right = rightEscapeSequence cConfig

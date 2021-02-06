@@ -21,107 +21,92 @@ module Haskellorls.Ownership
 where
 
 import qualified Data.Map.Strict as M
+import qualified Data.Text as T
 import qualified Haskellorls.Color as Color
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.UserInfo as UserInfo
-import qualified Haskellorls.YetAnotherString as YAString
+import qualified Haskellorls.WrappedText as WT
 import qualified System.Posix.Files as Files
 import qualified System.Posix.Types as Types
 import qualified System.Posix.User as User
 
-type UserIdSubstTable = M.Map Types.UserID String
+type UserIdSubstTable = M.Map Types.UserID T.Text
 
-type GroupIdSubstTable = M.Map Types.GroupID String
+type GroupIdSubstTable = M.Map Types.GroupID T.Text
 
 -- Utilities {{{
-lookupUserName :: Types.UserID -> UserIdSubstTable -> String
-lookupUserName uid = M.findWithDefault (show uid) uid
+lookupUserName :: Types.UserID -> UserIdSubstTable -> T.Text
+lookupUserName uid = M.findWithDefault (T.pack $ show uid) uid
 
-lookupGroupName :: Types.GroupID -> GroupIdSubstTable -> String
-lookupGroupName gid = M.findWithDefault (show gid) gid
+lookupGroupName :: Types.GroupID -> GroupIdSubstTable -> T.Text
+lookupGroupName gid = M.findWithDefault (T.pack $ show gid) gid
 
 getUserIdSubstTable :: IO UserIdSubstTable
 getUserIdSubstTable = do
   entries <- User.getAllUserEntries
-  return . M.fromList $ map (\entry -> (User.userID entry, User.userName entry)) entries
+  return . M.fromList $ map (\entry -> (User.userID entry, T.pack $ User.userName entry)) entries
 
 getGroupIdSubstTable :: IO GroupIdSubstTable
 getGroupIdSubstTable = do
   entries <- User.getAllGroupEntries
-  return . M.fromList $ map (\entry -> (User.groupID entry, User.groupName entry)) entries
+  return . M.fromList $ map (\entry -> (User.groupID entry, T.pack $ User.groupName entry)) entries
 
 -- }}}
 
 -- Owner name {{{
-ownerName :: UserIdSubstTable -> Node.NodeInfo -> String
+ownerName :: UserIdSubstTable -> Node.NodeInfo -> T.Text
 ownerName table node = ownerID `lookupUserName` table
   where
     ownerID = numericOwnerName' node
 
-numericOwnerName :: Node.NodeInfo -> String
-numericOwnerName = show . numericOwnerName'
+numericOwnerName :: Node.NodeInfo -> T.Text
+numericOwnerName = T.pack . show . numericOwnerName'
 
 numericOwnerName' :: Node.NodeInfo -> Types.UserID
 numericOwnerName' = Files.fileOwner . Node.nodeInfoStatus
 
-coloredOwnerName :: UserIdSubstTable -> Color.Config -> UserInfo.UserInfo -> Node.NodeInfo -> [YAString.WrapedString]
+coloredOwnerName :: UserIdSubstTable -> Color.Config -> UserInfo.UserInfo -> Node.NodeInfo -> [WT.WrappedText]
 coloredOwnerName table = coloredOwnerAs (ownerName table)
 
-coloredNumericOwnerName :: Color.Config -> UserInfo.UserInfo -> Node.NodeInfo -> [YAString.WrapedString]
+coloredNumericOwnerName :: Color.Config -> UserInfo.UserInfo -> Node.NodeInfo -> [WT.WrappedText]
 coloredNumericOwnerName = coloredOwnerAs numericOwnerName
 
-coloredOwnerAs :: (Node.NodeInfo -> String) -> Color.Config -> UserInfo.UserInfo -> Node.NodeInfo -> [YAString.WrapedString]
-coloredOwnerAs f config user node =
-  [ YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config escSeq,
-        YAString.wrappedStringMain = f node,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      }
-  ]
+coloredOwnerAs :: (Node.NodeInfo -> T.Text) -> Color.Config -> UserInfo.UserInfo -> Node.NodeInfo -> [WT.WrappedText]
+coloredOwnerAs f config user node = [Color.toWrappedText config getter (f node)]
   where
-    escSeq =
-      if currentUserID == nodeOwnerID
-        then Color.ownerYourselfEscapeSequence extConfig
-        else Color.ownerNotYourselfEscapeSequence extConfig
+    getter
+      | currentUserID == nodeOwnerID = Color.ownerYourselfEscapeSequence . Color.extensionColorConfig
+      | otherwise = Color.ownerNotYourselfEscapeSequence . Color.extensionColorConfig
     currentUserID = UserInfo.userInfoUserID user
     nodeOwnerID = Files.fileOwner $ Node.nodeInfoStatus node
-    extConfig = Color.extensionColorConfig config
 
 -- }}}
 
 -- Group name {{{
-groupName :: GroupIdSubstTable -> Node.NodeInfo -> String
+groupName :: GroupIdSubstTable -> Node.NodeInfo -> T.Text
 groupName table node = groupID `lookupGroupName` table
   where
     groupID = numericGroupName' node
 
-numericGroupName :: Node.NodeInfo -> String
-numericGroupName = show . numericGroupName'
+numericGroupName :: Node.NodeInfo -> T.Text
+numericGroupName = T.pack . show . numericGroupName'
 
 numericGroupName' :: Node.NodeInfo -> Types.GroupID
 numericGroupName' = Files.fileGroup . Node.nodeInfoStatus
 
-coloredGroupName :: GroupIdSubstTable -> Color.Config -> UserInfo.UserInfo -> Node.NodeInfo -> [YAString.WrapedString]
+coloredGroupName :: GroupIdSubstTable -> Color.Config -> UserInfo.UserInfo -> Node.NodeInfo -> [WT.WrappedText]
 coloredGroupName table = coloredGroupAs (groupName table)
 
-coloredNumericGroupName :: Color.Config -> UserInfo.UserInfo -> Node.NodeInfo -> [YAString.WrapedString]
+coloredNumericGroupName :: Color.Config -> UserInfo.UserInfo -> Node.NodeInfo -> [WT.WrappedText]
 coloredNumericGroupName = coloredGroupAs numericGroupName
 
-coloredGroupAs :: (Node.NodeInfo -> String) -> Color.Config -> UserInfo.UserInfo -> Node.NodeInfo -> [YAString.WrapedString]
-coloredGroupAs f config user node =
-  [ YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config escSeq,
-        YAString.wrappedStringMain = f node,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      }
-  ]
+coloredGroupAs :: (Node.NodeInfo -> T.Text) -> Color.Config -> UserInfo.UserInfo -> Node.NodeInfo -> [WT.WrappedText]
+coloredGroupAs f config user node = [Color.toWrappedText config getter (f node)]
   where
-    escSeq =
-      if nodeGroupID `elem` groupIDs
-        then Color.groupYouBelongsToEscapeSequence extConfig
-        else Color.groupYouNotBelongsToEscapeSequence extConfig
+    getter
+      | nodeGroupID `elem` groupIDs = Color.groupYouBelongsToEscapeSequence . Color.extensionColorConfig
+      | otherwise = Color.groupYouNotBelongsToEscapeSequence . Color.extensionColorConfig
     groupIDs = UserInfo.userInfoGroupIDs user
     nodeGroupID = Files.fileGroup $ Node.nodeInfoStatus node
-    extConfig = Color.extensionColorConfig config
 
 -- }}}

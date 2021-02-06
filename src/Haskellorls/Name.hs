@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Haskellorls.Name
   ( NodeType (..),
     colorizedNodeName,
@@ -6,9 +8,10 @@ module Haskellorls.Name
   )
 where
 
+import qualified Data.Text as T
 import qualified Haskellorls.Color as Color
 import qualified Haskellorls.NodeInfo as Node
-import qualified Haskellorls.YetAnotherString as YAString
+import qualified Haskellorls.WrappedText as WT
 import qualified System.Posix.Files as Files
 import qualified System.Posix.Types as Types
 
@@ -59,19 +62,13 @@ directoryNodeTypeOf status
   where
     mode = Files.fileMode status
 
-colorizedNodeName :: Color.Config -> Node.NodeInfo -> [YAString.WrapedString]
-colorizedNodeName config nd =
-  [ YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config escSec,
-        YAString.wrappedStringMain = name,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      }
-  ]
+colorizedNodeName :: Color.Config -> Node.NodeInfo -> [WT.WrappedText]
+colorizedNodeName config nd = [Color.toWrappedText config getter name]
   where
     name = nodeName nd
-    escSec = lookupEscSeq config nd
+    getter = flip lookupEscSeq nd
 
-lookupEscSeq :: Color.Config -> Node.NodeInfo -> String
+lookupEscSeq :: Color.Config -> Node.NodeInfo -> T.Text
 lookupEscSeq conf nd = case nd of
   Node.FileInfo {} -> lookupEscSeq' conf nd
   Node.LinkInfo {} -> lookupSymlinkEscSeq
@@ -83,7 +80,7 @@ lookupEscSeq conf nd = case nd of
         else symlinkEscSeq'
     symlinkEscSeq' = Color.symlinkEscapeSequence conf
 
-lookupEscSeq' :: Color.Config -> Node.NodeInfo -> String
+lookupEscSeq' :: Color.Config -> Node.NodeInfo -> T.Text
 lookupEscSeq' conf nd = case nodeTypeOf $ Node.nodeInfoStatus nd of
   Directory -> Color.directoryEscapeSequence conf
   NamedPipe -> Color.pipeEscapeSequence conf
@@ -100,8 +97,8 @@ lookupEscSeq' conf nd = case nodeTypeOf $ Node.nodeInfoStatus nd of
   File -> Color.lookupFilenameEscSec (Color.fileColorIndicator conf) $ nodeName nd
   _ -> Color.orphanedSymlinkEscapeSequence conf
 
-nodeName :: Node.NodeInfo -> FilePath
-nodeName = Node.nodeInfoPath
+nodeName :: Node.NodeInfo -> T.Text
+nodeName = T.pack . Node.nodeInfoPath
 
 hasFileMode :: Types.FileMode -> Types.FileMode -> Bool
 hasFileMode x y = x == Files.intersectFileModes x y

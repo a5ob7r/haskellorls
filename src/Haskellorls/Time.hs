@@ -21,6 +21,7 @@ module Haskellorls.Time
   , coloredTimeStyleFunc
   ) where
 
+import qualified Data.Text as T
 import qualified Foreign.C.Types as CTypes
 import qualified Data.List.Extra as Extra
 import qualified System.Posix.Files as Files
@@ -29,7 +30,7 @@ import qualified Data.Time.Clock.POSIX as POSIX
 import qualified Data.Time.Clock as Clock
 import qualified Data.Time.Format as Format
 import qualified Haskellorls.Color as Color
-import qualified Haskellorls.YetAnotherString as YAString
+import qualified Haskellorls.WrappedText as WT
 
 -- WIP: locale and Prefixed with 'posix-' is not implemented yet.
 data TimeStyle
@@ -65,27 +66,21 @@ timeTypeFrom s = case s of
   -- "creation" -> BIRTH
   _ -> MODIFICATION
 
-timeStyleFunc :: Format.TimeLocale -> Types.EpochTime -> TimeStyle -> (Types.EpochTime -> String)
+timeStyleFunc :: Format.TimeLocale -> Types.EpochTime -> TimeStyle -> (Types.EpochTime -> T.Text)
 timeStyleFunc locale time style = case style of
   FULLISO -> timeStyleFunc' ('+':fullISOFormat) locale time
   LONGISO -> timeStyleFunc' ('+':longISOFormat) locale time
   ISO -> timeStyleFunc' ('+':isoFormat) locale time
   FORMAT fmt -> timeStyleFunc' fmt locale time
 
-coloredTimeStyleFunc :: Color.Config -> Format.TimeLocale -> Types.EpochTime -> TimeStyle -> (Types.EpochTime -> [YAString.WrapedString])
-coloredTimeStyleFunc config locale time style fTime =
-  [ YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config dateEscSeq,
-        YAString.wrappedStringMain = timeFunc fTime,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      }
-  ]
+coloredTimeStyleFunc :: Color.Config -> Format.TimeLocale -> Types.EpochTime -> TimeStyle -> (Types.EpochTime -> [WT.WrappedText])
+coloredTimeStyleFunc config locale time style fTime = [Color.toWrappedText config getter timeAsT]
   where
-    timeFunc = timeStyleFunc locale time style
-    dateEscSeq = Color.dateEscapeSequence $ Color.extensionColorConfig config
+    timeAsT = timeStyleFunc locale time style fTime
+    getter = Color.dateEscapeSequence . Color.extensionColorConfig
 
-timeStyleFunc' :: String -> Format.TimeLocale -> Types.EpochTime -> Types.EpochTime -> String
-timeStyleFunc' fmt locale now fTime = Format.formatTime locale format $ epoch2UTC fTime
+timeStyleFunc' :: String -> Format.TimeLocale -> Types.EpochTime -> Types.EpochTime -> T.Text
+timeStyleFunc' fmt locale now fTime = T.pack . Format.formatTime locale format $ epoch2UTC fTime
   where
     format = if fTime `isRecentTimeFrom` now then recent else notRecent
     recent = if not (null formats) then head formats else mainISOFormat

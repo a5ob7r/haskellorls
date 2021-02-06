@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 -- NOTE: When `--block-size` option is passed, file size format are `4K`,
 -- `1111K` not `4.0K`, `1111.0K`
 
@@ -8,9 +10,10 @@ module Haskellorls.Size
   )
 where
 
+import qualified Data.Text as T
 import qualified Haskellorls.Color as Color
 import qualified Haskellorls.NodeInfo as NodeInfo
-import qualified Haskellorls.YetAnotherString as YAString
+import qualified Haskellorls.WrappedText as WT
 import qualified System.Posix.Files as Files
 import qualified System.Posix.Types as Types
 
@@ -35,7 +38,7 @@ data BlockSizeType
   | HUMAN
   | HUMANi
 
-blockSizeTypeFrom :: String -> BlockSizeType
+blockSizeTypeFrom :: T.Text -> BlockSizeType
 blockSizeTypeFrom s = case s of
   "KB" -> KILO
   "K" -> KILOi
@@ -65,7 +68,7 @@ blockSizeTypeFrom s = case s of
   "HUMANi" -> HUMANi
   _ -> BYTE
 
-fileSizeFuncFor :: BlockSizeType -> (NodeInfo.NodeInfo -> String)
+fileSizeFuncFor :: BlockSizeType -> (NodeInfo.NodeInfo -> T.Text)
 fileSizeFuncFor blockSizeType = case blockSizeType of
   BYTE -> fileSizeAsByte
   KILO -> fileSizeAsKilo
@@ -87,7 +90,7 @@ fileSizeFuncFor blockSizeType = case blockSizeType of
   HUMAN -> fileSizeAsHuman
   HUMANi -> fileSizeAsHumani
 
-coloredFileSizeFuncFor :: BlockSizeType -> (Color.Config -> NodeInfo.NodeInfo -> [YAString.WrapedString])
+coloredFileSizeFuncFor :: BlockSizeType -> (Color.Config -> NodeInfo.NodeInfo -> [WT.WrappedText])
 coloredFileSizeFuncFor blockSizeType = case blockSizeType of
   BYTE -> coloredFileSizeAsByte
   KILO -> coloredFileSizeAsKilo
@@ -136,456 +139,323 @@ detectKibiBlockSizeType offset
 fileSizeOf :: NodeInfo.NodeInfo -> Types.FileOffset
 fileSizeOf = Files.fileSize . NodeInfo.nodeInfoStatus
 
-fileSizeAsHuman :: NodeInfo.NodeInfo -> String
+fileSizeAsHuman :: NodeInfo.NodeInfo -> T.Text
 fileSizeAsHuman node = f node
   where
     f = fileSizeFuncFor . detectBlockSizeType $ fileSizeOf node
 
-coloredFileSizeAsHuman :: Color.Config -> NodeInfo.NodeInfo -> [YAString.WrapedString]
+coloredFileSizeAsHuman :: Color.Config -> NodeInfo.NodeInfo -> [WT.WrappedText]
 coloredFileSizeAsHuman config node = f config node
   where
     f = coloredFileSizeFuncFor . detectBlockSizeType $ fileSizeOf node
 
-fileSizeAsHumani :: NodeInfo.NodeInfo -> String
+fileSizeAsHumani :: NodeInfo.NodeInfo -> T.Text
 fileSizeAsHumani node = f node
   where
     f = fileSizeFuncFor . detectKibiBlockSizeType $ fileSizeOf node
 
-coloredFileSizeAsHumani :: Color.Config -> NodeInfo.NodeInfo -> [YAString.WrapedString]
+coloredFileSizeAsHumani :: Color.Config -> NodeInfo.NodeInfo -> [WT.WrappedText]
 coloredFileSizeAsHumani config node = f config node
   where
     f = coloredFileSizeFuncFor . detectKibiBlockSizeType $ fileSizeOf node
 
-fileSizeAsByte :: NodeInfo.NodeInfo -> String
+fileSizeAsByte :: NodeInfo.NodeInfo -> T.Text
 fileSizeAsByte = asB . fileSizeOf
 
-coloredFileSizeAsByte :: Color.Config -> NodeInfo.NodeInfo -> [YAString.WrapedString]
-coloredFileSizeAsByte config node =
-  [ YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config numberEscSeq,
-        YAString.wrappedStringMain = asB $ fileSizeOf node,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      }
-  ]
+coloredFileSizeAsByte :: Color.Config -> NodeInfo.NodeInfo -> [WT.WrappedText]
+coloredFileSizeAsByte config node = [Color.toWrappedText config getter size]
   where
-    numberEscSeq = Color.fileSizeNumberEscapeSequence $ Color.extensionColorConfig config
+    size = asB $ fileSizeOf node
+    getter = Color.fileSizeNumberEscapeSequence . Color.extensionColorConfig
 
-fileSizeAsKilo :: NodeInfo.NodeInfo -> String
-fileSizeAsKilo node = size ++ unitK
+fileSizeAsKilo :: NodeInfo.NodeInfo -> T.Text
+fileSizeAsKilo node = size <> unitK
   where
     size = asK $ fileSizeOf node
 
-coloredFileSizeAsKilo :: Color.Config -> NodeInfo.NodeInfo -> [YAString.WrapedString]
+coloredFileSizeAsKilo :: Color.Config -> NodeInfo.NodeInfo -> [WT.WrappedText]
 coloredFileSizeAsKilo config node =
-  [ YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config numberEscSeq,
-        YAString.wrappedStringMain = size,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      },
-    YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config unitEscSeq,
-        YAString.wrappedStringMain = unitK,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      }
+  [ Color.toWrappedText config getterNumber size,
+    Color.toWrappedText config getterUnit unitK
   ]
   where
     size = asK $ fileSizeOf node
-    numberEscSeq = Color.fileSizeNumberKiloEscapeSequence $ Color.extensionColorConfig config
-    unitEscSeq = Color.fileSizeUnitKiloEscapeSequence $ Color.extensionColorConfig config
+    getterNumber = Color.fileSizeNumberKiloEscapeSequence . Color.extensionColorConfig
+    getterUnit = Color.fileSizeUnitKiloEscapeSequence . Color.extensionColorConfig
 
-fileSizeAsKiloi :: NodeInfo.NodeInfo -> String
-fileSizeAsKiloi node = size ++ unitKi
+fileSizeAsKiloi :: NodeInfo.NodeInfo -> T.Text
+fileSizeAsKiloi node = size <> unitKi
   where
     size = asKi $ fileSizeOf node
 
-coloredFileSizeAsKiloi :: Color.Config -> NodeInfo.NodeInfo -> [YAString.WrapedString]
+coloredFileSizeAsKiloi :: Color.Config -> NodeInfo.NodeInfo -> [WT.WrappedText]
 coloredFileSizeAsKiloi config node =
-  [ YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config numberEscSeq,
-        YAString.wrappedStringMain = size,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      },
-    YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config unitEscSeq,
-        YAString.wrappedStringMain = unitKi,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      }
+  [ Color.toWrappedText config getterNumber size,
+    Color.toWrappedText config getterUnit unitKi
   ]
   where
     size = asKi $ fileSizeOf node
-    numberEscSeq = Color.fileSizeNumberKiloEscapeSequence $ Color.extensionColorConfig config
-    unitEscSeq = Color.fileSizeUnitKiloEscapeSequence $ Color.extensionColorConfig config
+    getterNumber = Color.fileSizeNumberKiloEscapeSequence . Color.extensionColorConfig
+    getterUnit = Color.fileSizeUnitKiloEscapeSequence . Color.extensionColorConfig
 
-fileSizeAsMega :: NodeInfo.NodeInfo -> String
-fileSizeAsMega node = size ++ unitM
+fileSizeAsMega :: NodeInfo.NodeInfo -> T.Text
+fileSizeAsMega node = size <> unitM
   where
     size = asM $ fileSizeOf node
 
-coloredFileSizeAsMega :: Color.Config -> NodeInfo.NodeInfo -> [YAString.WrapedString]
+coloredFileSizeAsMega :: Color.Config -> NodeInfo.NodeInfo -> [WT.WrappedText]
 coloredFileSizeAsMega config node =
-  [ YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config numberEscSeq,
-        YAString.wrappedStringMain = size,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      },
-    YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config unitEscSeq,
-        YAString.wrappedStringMain = unitM,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      }
+  [ Color.toWrappedText config getterNumber size,
+    Color.toWrappedText config getterUnit unitM
   ]
   where
     size = asM $ fileSizeOf node
-    numberEscSeq = Color.fileSizeNumberMegaEscapeSequence $ Color.extensionColorConfig config
-    unitEscSeq = Color.fileSizeUnitMegaEscapeSequence $ Color.extensionColorConfig config
+    getterNumber = Color.fileSizeNumberMegaEscapeSequence . Color.extensionColorConfig
+    getterUnit = Color.fileSizeUnitMegaEscapeSequence . Color.extensionColorConfig
 
-fileSizeAsMegai :: NodeInfo.NodeInfo -> String
-fileSizeAsMegai node = size ++ unitMi
+fileSizeAsMegai :: NodeInfo.NodeInfo -> T.Text
+fileSizeAsMegai node = size <> unitMi
   where
     size = asMi $ fileSizeOf node
 
-coloredFileSizeAsMegai :: Color.Config -> NodeInfo.NodeInfo -> [YAString.WrapedString]
+coloredFileSizeAsMegai :: Color.Config -> NodeInfo.NodeInfo -> [WT.WrappedText]
 coloredFileSizeAsMegai config node =
-  [ YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config numberEscSeq,
-        YAString.wrappedStringMain = size,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      },
-    YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config unitEscSeq,
-        YAString.wrappedStringMain = unitMi,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      }
+  [ Color.toWrappedText config getterNumber size,
+    Color.toWrappedText config getterUnit unitMi
   ]
   where
     size = asMi $ fileSizeOf node
-    numberEscSeq = Color.fileSizeNumberMegaEscapeSequence $ Color.extensionColorConfig config
-    unitEscSeq = Color.fileSizeUnitMegaEscapeSequence $ Color.extensionColorConfig config
+    getterNumber = Color.fileSizeNumberMegaEscapeSequence . Color.extensionColorConfig
+    getterUnit = Color.fileSizeUnitMegaEscapeSequence . Color.extensionColorConfig
 
-fileSizeAsGiga :: NodeInfo.NodeInfo -> String
-fileSizeAsGiga node = size ++ unitG
+fileSizeAsGiga :: NodeInfo.NodeInfo -> T.Text
+fileSizeAsGiga node = size <> unitG
   where
     size = asG $ fileSizeOf node
 
-coloredFileSizeAsGiga :: Color.Config -> NodeInfo.NodeInfo -> [YAString.WrapedString]
+coloredFileSizeAsGiga :: Color.Config -> NodeInfo.NodeInfo -> [WT.WrappedText]
 coloredFileSizeAsGiga config node =
-  [ YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config numberEscSeq,
-        YAString.wrappedStringMain = size,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      },
-    YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config unitEscSeq,
-        YAString.wrappedStringMain = unitG,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      }
+  [ Color.toWrappedText config getterNumber size,
+    Color.toWrappedText config getterUnit unitG
   ]
   where
     size = asG $ fileSizeOf node
-    numberEscSeq = Color.fileSizeNumberGigaEscapeSequence $ Color.extensionColorConfig config
-    unitEscSeq = Color.fileSizeUnitGigaEscapeSequence $ Color.extensionColorConfig config
+    getterNumber = Color.fileSizeNumberGigaEscapeSequence . Color.extensionColorConfig
+    getterUnit = Color.fileSizeUnitGigaEscapeSequence . Color.extensionColorConfig
 
-fileSizeAsGigai :: NodeInfo.NodeInfo -> String
-fileSizeAsGigai node = size ++ unitGi
+fileSizeAsGigai :: NodeInfo.NodeInfo -> T.Text
+fileSizeAsGigai node = size <> unitGi
   where
     size = asGi $ fileSizeOf node
 
-coloredFileSizeAsGigai :: Color.Config -> NodeInfo.NodeInfo -> [YAString.WrapedString]
+coloredFileSizeAsGigai :: Color.Config -> NodeInfo.NodeInfo -> [WT.WrappedText]
 coloredFileSizeAsGigai config node =
-  [ YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config numberEscSeq,
-        YAString.wrappedStringMain = size,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      },
-    YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config unitEscSeq,
-        YAString.wrappedStringMain = unitGi,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      }
+  [ Color.toWrappedText config getterNumber size,
+    Color.toWrappedText config getterUnit unitGi
   ]
   where
     size = asGi $ fileSizeOf node
-    numberEscSeq = Color.fileSizeNumberGigaEscapeSequence $ Color.extensionColorConfig config
-    unitEscSeq = Color.fileSizeUnitGigaEscapeSequence $ Color.extensionColorConfig config
+    getterNumber = Color.fileSizeNumberGigaEscapeSequence . Color.extensionColorConfig
+    getterUnit = Color.fileSizeUnitGigaEscapeSequence . Color.extensionColorConfig
 
-fileSizeAsTera :: NodeInfo.NodeInfo -> String
-fileSizeAsTera node = size ++ unitT
+fileSizeAsTera :: NodeInfo.NodeInfo -> T.Text
+fileSizeAsTera node = size <> unitT
   where
     size = asT $ fileSizeOf node
 
-coloredFileSizeAsTera :: Color.Config -> NodeInfo.NodeInfo -> [YAString.WrapedString]
+coloredFileSizeAsTera :: Color.Config -> NodeInfo.NodeInfo -> [WT.WrappedText]
 coloredFileSizeAsTera config node =
-  [ YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config numberEscSeq,
-        YAString.wrappedStringMain = size,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      },
-    YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config unitEscSeq,
-        YAString.wrappedStringMain = unitT,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      }
+  [ Color.toWrappedText config getterNumber size,
+    Color.toWrappedText config getterUnit unitT
   ]
   where
     size = asT $ fileSizeOf node
-    numberEscSeq = Color.fileSizeNumberTeraEscapeSequence $ Color.extensionColorConfig config
-    unitEscSeq = Color.fileSizeUnitTeraEscapeSequence $ Color.extensionColorConfig config
+    getterNumber = Color.fileSizeNumberTeraEscapeSequence . Color.extensionColorConfig
+    getterUnit = Color.fileSizeUnitTeraEscapeSequence . Color.extensionColorConfig
 
-fileSizeAsTerai :: NodeInfo.NodeInfo -> String
-fileSizeAsTerai node = size ++ unitTi
+fileSizeAsTerai :: NodeInfo.NodeInfo -> T.Text
+fileSizeAsTerai node = size <> unitTi
   where
     size = asTi $ fileSizeOf node
 
-coloredFileSizeAsTerai :: Color.Config -> NodeInfo.NodeInfo -> [YAString.WrapedString]
+coloredFileSizeAsTerai :: Color.Config -> NodeInfo.NodeInfo -> [WT.WrappedText]
 coloredFileSizeAsTerai config node =
-  [ YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config numberEscSeq,
-        YAString.wrappedStringMain = size,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      },
-    YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config unitEscSeq,
-        YAString.wrappedStringMain = unitTi,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      }
+  [ Color.toWrappedText config getterNumber size,
+    Color.toWrappedText config getterUnit unitTi
   ]
   where
     size = asTi $ fileSizeOf node
-    numberEscSeq = Color.fileSizeNumberTeraEscapeSequence $ Color.extensionColorConfig config
-    unitEscSeq = Color.fileSizeUnitTeraEscapeSequence $ Color.extensionColorConfig config
+    getterNumber = Color.fileSizeNumberTeraEscapeSequence . Color.extensionColorConfig
+    getterUnit = Color.fileSizeUnitTeraEscapeSequence . Color.extensionColorConfig
 
-fileSizeAsPeta :: NodeInfo.NodeInfo -> String
-fileSizeAsPeta node = size ++ unitP
+fileSizeAsPeta :: NodeInfo.NodeInfo -> T.Text
+fileSizeAsPeta node = size <> unitP
   where
     size = asP $ fileSizeOf node
 
-coloredFileSizeAsPeta :: Color.Config -> NodeInfo.NodeInfo -> [YAString.WrapedString]
+coloredFileSizeAsPeta :: Color.Config -> NodeInfo.NodeInfo -> [WT.WrappedText]
 coloredFileSizeAsPeta config node =
-  [ YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config numberEscSeq,
-        YAString.wrappedStringMain = size,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      },
-    YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config unitEscSeq,
-        YAString.wrappedStringMain = unitP,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      }
+  [ Color.toWrappedText config getterNumber size,
+    Color.toWrappedText config getterUnit unitP
   ]
   where
     size = asP $ fileSizeOf node
-    numberEscSeq = Color.fileSizeNumberPetaEscapeSequence $ Color.extensionColorConfig config
-    unitEscSeq = Color.fileSizeUnitPetaEscapeSequence $ Color.extensionColorConfig config
+    getterNumber = Color.fileSizeNumberPetaEscapeSequence . Color.extensionColorConfig
+    getterUnit = Color.fileSizeUnitPetaEscapeSequence . Color.extensionColorConfig
 
-fileSizeAsPetai :: NodeInfo.NodeInfo -> String
-fileSizeAsPetai node = size ++ unitPi
+fileSizeAsPetai :: NodeInfo.NodeInfo -> T.Text
+fileSizeAsPetai node = size <> unitPi
   where
     size = asPi $ fileSizeOf node
 
-coloredFileSizeAsPetai :: Color.Config -> NodeInfo.NodeInfo -> [YAString.WrapedString]
+coloredFileSizeAsPetai :: Color.Config -> NodeInfo.NodeInfo -> [WT.WrappedText]
 coloredFileSizeAsPetai config node =
-  [ YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config numberEscSeq,
-        YAString.wrappedStringMain = size,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      },
-    YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config unitEscSeq,
-        YAString.wrappedStringMain = unitPi,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      }
+  [ Color.toWrappedText config getterNumber size,
+    Color.toWrappedText config getterUnit unitPi
   ]
   where
     size = asPi $ fileSizeOf node
-    numberEscSeq = Color.fileSizeNumberPetaEscapeSequence $ Color.extensionColorConfig config
-    unitEscSeq = Color.fileSizeUnitPetaEscapeSequence $ Color.extensionColorConfig config
+    getterNumber = Color.fileSizeNumberPetaEscapeSequence . Color.extensionColorConfig
+    getterUnit = Color.fileSizeUnitPetaEscapeSequence . Color.extensionColorConfig
 
-fileSizeAsExa :: NodeInfo.NodeInfo -> String
-fileSizeAsExa node = size ++ unitE
+fileSizeAsExa :: NodeInfo.NodeInfo -> T.Text
+fileSizeAsExa node = size <> unitE
   where
     size = asE $ fileSizeOf node
 
-coloredFileSizeAsExa :: Color.Config -> NodeInfo.NodeInfo -> [YAString.WrapedString]
+coloredFileSizeAsExa :: Color.Config -> NodeInfo.NodeInfo -> [WT.WrappedText]
 coloredFileSizeAsExa config node =
-  [ YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config numberEscSeq,
-        YAString.wrappedStringMain = size,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      },
-    YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config unitEscSeq,
-        YAString.wrappedStringMain = unitE,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      }
+  [ Color.toWrappedText config getterNumber size,
+    Color.toWrappedText config getterUnit unitE
   ]
   where
     size = asE $ fileSizeOf node
-    numberEscSeq = Color.fileSizeNumberExaEscapeSequence $ Color.extensionColorConfig config
-    unitEscSeq = Color.fileSizeUnitExaEscapeSequence $ Color.extensionColorConfig config
+    getterNumber = Color.fileSizeNumberExaEscapeSequence . Color.extensionColorConfig
+    getterUnit = Color.fileSizeUnitExaEscapeSequence . Color.extensionColorConfig
 
-fileSizeAsExai :: NodeInfo.NodeInfo -> String
-fileSizeAsExai node = size ++ unitEi
+fileSizeAsExai :: NodeInfo.NodeInfo -> T.Text
+fileSizeAsExai node = size <> unitEi
   where
     size = asEi $ fileSizeOf node
 
-coloredFileSizeAsExai :: Color.Config -> NodeInfo.NodeInfo -> [YAString.WrapedString]
+coloredFileSizeAsExai :: Color.Config -> NodeInfo.NodeInfo -> [WT.WrappedText]
 coloredFileSizeAsExai config node =
-  [ YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config numberEscSeq,
-        YAString.wrappedStringMain = size,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      },
-    YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config unitEscSeq,
-        YAString.wrappedStringMain = unitEi,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      }
+  [ Color.toWrappedText config getterNumber size,
+    Color.toWrappedText config getterUnit unitEi
   ]
   where
     size = asEi $ fileSizeOf node
-    numberEscSeq = Color.fileSizeNumberExaEscapeSequence $ Color.extensionColorConfig config
-    unitEscSeq = Color.fileSizeUnitExaEscapeSequence $ Color.extensionColorConfig config
+    getterNumber = Color.fileSizeNumberExaEscapeSequence . Color.extensionColorConfig
+    getterUnit = Color.fileSizeUnitExaEscapeSequence . Color.extensionColorConfig
 
-fileSizeAsZetta :: NodeInfo.NodeInfo -> String
-fileSizeAsZetta node = size ++ unitZ
+fileSizeAsZetta :: NodeInfo.NodeInfo -> T.Text
+fileSizeAsZetta node = size <> unitZ
   where
     size = asZ $ fileSizeOf node
 
-coloredFileSizeAsZetta :: Color.Config -> NodeInfo.NodeInfo -> [YAString.WrapedString]
+coloredFileSizeAsZetta :: Color.Config -> NodeInfo.NodeInfo -> [WT.WrappedText]
 coloredFileSizeAsZetta config node =
-  [ YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config numberEscSeq,
-        YAString.wrappedStringMain = size,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      },
-    YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config unitEscSeq,
-        YAString.wrappedStringMain = unitZ,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      }
+  [ Color.toWrappedText config getterNumber size,
+    Color.toWrappedText config getterUnit unitZ
   ]
   where
     size = asZ $ fileSizeOf node
-    numberEscSeq = Color.fileSizeNumberZettaEscapeSequence $ Color.extensionColorConfig config
-    unitEscSeq = Color.fileSizeUnitZettaEscapeSequence $ Color.extensionColorConfig config
+    getterNumber = Color.fileSizeNumberZettaEscapeSequence . Color.extensionColorConfig
+    getterUnit = Color.fileSizeUnitZettaEscapeSequence . Color.extensionColorConfig
 
-fileSizeAsZettai :: NodeInfo.NodeInfo -> String
-fileSizeAsZettai node = size ++ unitZi
+fileSizeAsZettai :: NodeInfo.NodeInfo -> T.Text
+fileSizeAsZettai node = size <> unitZi
   where
     size = asZi $ fileSizeOf node
 
-coloredFileSizeAsZettai :: Color.Config -> NodeInfo.NodeInfo -> [YAString.WrapedString]
+coloredFileSizeAsZettai :: Color.Config -> NodeInfo.NodeInfo -> [WT.WrappedText]
 coloredFileSizeAsZettai config node =
-  [ YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config numberEscSeq,
-        YAString.wrappedStringMain = size,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      },
-    YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config unitEscSeq,
-        YAString.wrappedStringMain = unitZi,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      }
+  [ Color.toWrappedText config getterNumber size,
+    Color.toWrappedText config getterUnit unitZi
   ]
   where
     size = asZi $ fileSizeOf node
-    numberEscSeq = Color.fileSizeNumberZettaEscapeSequence $ Color.extensionColorConfig config
-    unitEscSeq = Color.fileSizeUnitZettaEscapeSequence $ Color.extensionColorConfig config
+    getterNumber = Color.fileSizeNumberZettaEscapeSequence . Color.extensionColorConfig
+    getterUnit = Color.fileSizeUnitZettaEscapeSequence . Color.extensionColorConfig
 
-fileSizeAsYotta :: NodeInfo.NodeInfo -> String
-fileSizeAsYotta node = size ++ unitY
+fileSizeAsYotta :: NodeInfo.NodeInfo -> T.Text
+fileSizeAsYotta node = size <> unitY
   where
     size = asY $ fileSizeOf node
 
-coloredFileSizeAsYotta :: Color.Config -> NodeInfo.NodeInfo -> [YAString.WrapedString]
+coloredFileSizeAsYotta :: Color.Config -> NodeInfo.NodeInfo -> [WT.WrappedText]
 coloredFileSizeAsYotta config node =
-  [ YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config numberEscSeq,
-        YAString.wrappedStringMain = size,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      },
-    YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config unitEscSeq,
-        YAString.wrappedStringMain = unitY,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      }
+  [ Color.toWrappedText config getterNumber size,
+    Color.toWrappedText config getterUnit unitY
   ]
   where
     size = asY $ fileSizeOf node
-    numberEscSeq = Color.fileSizeNumberYottaEscapeSequence $ Color.extensionColorConfig config
-    unitEscSeq = Color.fileSizeUnitYottaEscapeSequence $ Color.extensionColorConfig config
+    getterNumber = Color.fileSizeNumberYottaEscapeSequence . Color.extensionColorConfig
+    getterUnit = Color.fileSizeUnitYottaEscapeSequence . Color.extensionColorConfig
 
-fileSizeAsYottai :: NodeInfo.NodeInfo -> String
-fileSizeAsYottai node = size ++ unitYi
+fileSizeAsYottai :: NodeInfo.NodeInfo -> T.Text
+fileSizeAsYottai node = size <> unitYi
   where
     size = asYi $ fileSizeOf node
 
-coloredFileSizeAsYottai :: Color.Config -> NodeInfo.NodeInfo -> [YAString.WrapedString]
+coloredFileSizeAsYottai :: Color.Config -> NodeInfo.NodeInfo -> [WT.WrappedText]
 coloredFileSizeAsYottai config node =
-  [ YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config numberEscSeq,
-        YAString.wrappedStringMain = size,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      },
-    YAString.WrapedString
-      { YAString.wrappedStringPrefix = Color.applyEscapeSequence config unitEscSeq,
-        YAString.wrappedStringMain = unitYi,
-        YAString.wrappedStringSuffix = Color.applyEscapeSequence config ""
-      }
+  [ Color.toWrappedText config getterNumber size,
+    Color.toWrappedText config getterUnit unitYi
   ]
   where
     size = asYi $ fileSizeOf node
-    numberEscSeq = Color.fileSizeNumberYottaEscapeSequence $ Color.extensionColorConfig config
-    unitEscSeq = Color.fileSizeUnitYottaEscapeSequence $ Color.extensionColorConfig config
+    getterNumber = Color.fileSizeNumberYottaEscapeSequence . Color.extensionColorConfig
+    getterUnit = Color.fileSizeUnitYottaEscapeSequence . Color.extensionColorConfig
 
 -- Const {{{
 -- Unit {{{
-unitK :: String
+unitK :: T.Text
 unitK = "KB"
 
-unitKi :: String
+unitKi :: T.Text
 unitKi = "K"
 
-unitM :: String
+unitM :: T.Text
 unitM = "MB"
 
-unitMi :: String
+unitMi :: T.Text
 unitMi = "M"
 
-unitG :: String
+unitG :: T.Text
 unitG = "GB"
 
-unitGi :: String
+unitGi :: T.Text
 unitGi = "G"
 
-unitT :: String
+unitT :: T.Text
 unitT = "TB"
 
-unitTi :: String
+unitTi :: T.Text
 unitTi = "T"
 
-unitP :: String
+unitP :: T.Text
 unitP = "PB"
 
-unitPi :: String
+unitPi :: T.Text
 unitPi = "P"
 
-unitE :: String
+unitE :: T.Text
 unitE = "EB"
 
-unitEi :: String
+unitEi :: T.Text
 unitEi = "E"
 
-unitZ :: String
+unitZ :: T.Text
 unitZ = "ZB"
 
-unitZi :: String
+unitZi :: T.Text
 unitZi = "Z"
 
-unitY :: String
+unitY :: T.Text
 unitY = "YB"
 
-unitYi :: String
+unitYi :: T.Text
 unitYi = "Y"
 
 -- }}}
@@ -643,10 +513,12 @@ sizeYi = sizeZi * sizeKi
 -- }}}
 
 -- Format {{{
-formatSize :: Double -> String
-formatSize r
-  | r <= 9.9 = show $ ceiling' r 1
-  | otherwise = show (ceiling r :: Int)
+formatSize :: Double -> T.Text
+formatSize r = T.pack size
+  where
+    size
+      | r <= 9.9 = show $ ceiling' r 1
+      | otherwise = show (ceiling r :: Int)
 
 ceiling' :: Double -> Int -> Double
 ceiling' r digitNum = fromIntegral upScaledCeil / scale
@@ -655,55 +527,55 @@ ceiling' r digitNum = fromIntegral upScaledCeil / scale
     r' = r * scale
     scale = 10 ^ digitNum :: Double
 
-asB :: Types.FileOffset -> String
-asB = show
+asB :: Types.FileOffset -> T.Text
+asB = T.pack . show
 
-asK :: Types.FileOffset -> String
+asK :: Types.FileOffset -> T.Text
 asK offset = formatSize $ fromIntegral offset / sizeK
 
-asKi :: Types.FileOffset -> String
+asKi :: Types.FileOffset -> T.Text
 asKi offset = formatSize $ fromIntegral offset / sizeKi
 
-asM :: Types.FileOffset -> String
+asM :: Types.FileOffset -> T.Text
 asM offset = formatSize $ fromIntegral offset / sizeM
 
-asMi :: Types.FileOffset -> String
+asMi :: Types.FileOffset -> T.Text
 asMi offset = formatSize $ fromIntegral offset / sizeMi
 
-asG :: Types.FileOffset -> String
+asG :: Types.FileOffset -> T.Text
 asG offset = formatSize $ fromIntegral offset / sizeG
 
-asGi :: Types.FileOffset -> String
+asGi :: Types.FileOffset -> T.Text
 asGi offset = formatSize $ fromIntegral offset / sizeGi
 
-asT :: Types.FileOffset -> String
+asT :: Types.FileOffset -> T.Text
 asT offset = formatSize $ fromIntegral offset / sizeT
 
-asTi :: Types.FileOffset -> String
+asTi :: Types.FileOffset -> T.Text
 asTi offset = formatSize $ fromIntegral offset / sizeTi
 
-asP :: Types.FileOffset -> String
+asP :: Types.FileOffset -> T.Text
 asP offset = formatSize $ fromIntegral offset / sizeP
 
-asPi :: Types.FileOffset -> String
+asPi :: Types.FileOffset -> T.Text
 asPi offset = formatSize $ fromIntegral offset / sizePi
 
-asE :: Types.FileOffset -> String
+asE :: Types.FileOffset -> T.Text
 asE offset = formatSize $ fromIntegral offset / sizeE
 
-asEi :: Types.FileOffset -> String
+asEi :: Types.FileOffset -> T.Text
 asEi offset = formatSize $ fromIntegral offset / sizeEi
 
-asZ :: Types.FileOffset -> String
+asZ :: Types.FileOffset -> T.Text
 asZ offset = formatSize $ fromIntegral offset / sizeZ
 
-asZi :: Types.FileOffset -> String
+asZi :: Types.FileOffset -> T.Text
 asZi offset = formatSize $ fromIntegral offset / sizeZi
 
-asY :: Types.FileOffset -> String
+asY :: Types.FileOffset -> T.Text
 asY offset = formatSize $ fromIntegral offset / sizeY
 
-asYi :: Types.FileOffset -> String
+asYi :: Types.FileOffset -> T.Text
 asYi offset = formatSize $ fromIntegral offset / sizeYi
 
 -- }}}

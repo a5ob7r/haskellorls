@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Haskellorls.SymbolicLink
   ( linkName,
     linkNameWrapper,
@@ -5,28 +7,31 @@ module Haskellorls.SymbolicLink
   )
 where
 
+import qualified Data.Text as T
 import qualified Haskellorls.Color as Color
 import qualified Haskellorls.Name as Name
 import qualified Haskellorls.NodeInfo as Node
-import qualified Haskellorls.YetAnotherString as YAString
+import qualified Haskellorls.WrappedText as WT
 
-linkName :: Node.NodeInfo -> FilePath
+linkName :: Node.NodeInfo -> T.Text
 linkName node = case node of
   Node.FileInfo {} -> ""
-  _ -> prefix <> Node.getDestPath node
+  _ -> prefix <> T.pack (Node.getDestPath node)
 
-linkNameWrapper :: Node.NodeInfo -> [YAString.WrapedString]
-linkNameWrapper node = if null link then [] else YAString.toWrappedStringArray link
+linkNameWrapper :: Node.NodeInfo -> [WT.WrappedText]
+linkNameWrapper node
+  | T.null link = []
+  | otherwise = WT.toWrappedTextSingleton link
   where
     link = linkName node
 
-coloredLinkName :: Color.Config -> Node.NodeInfo -> [YAString.WrapedString]
+coloredLinkName :: Color.Config -> Node.NodeInfo -> [WT.WrappedText]
 coloredLinkName config node = case node of
   Node.FileInfo {} -> []
   _ -> prefix' <> output
   where
     output = Name.colorizedNodeName config $ Node.toFileInfo node
-    prefix' = YAString.toWrappedStringArray prefix
+    prefix' = WT.toWrappedTextSingleton prefix
 
-prefix :: String
+prefix :: T.Text
 prefix = " -> "

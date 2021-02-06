@@ -1,4 +1,4 @@
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Haskellorls.Decorator
   ( Printer,
@@ -13,6 +13,7 @@ where
 
 import qualified Data.List as List
 import qualified Data.Map.Strict as Map
+import qualified Data.Text as T
 import qualified Data.Time.Format as Format
 import qualified Haskellorls.Color as Color
 import qualified Haskellorls.Field as Field
@@ -27,7 +28,7 @@ import qualified Haskellorls.Size as Size
 import qualified Haskellorls.SymbolicLink as SymbolicLink
 import qualified Haskellorls.Time as Time
 import qualified Haskellorls.UserInfo as UserInfo
-import qualified Haskellorls.YetAnotherString as YAString
+import qualified Haskellorls.WrappedText as WT
 import qualified System.IO as SIO
 import qualified System.Posix.Time as PTime
 
@@ -72,11 +73,11 @@ buildNamePrinterTypes opt = filter (`neededNamePrinterTypeBy` opt) [NAME, LINK, 
 buildNodeNamePrinter :: Option.Option -> NodeNamePrinters -> Printer
 buildNodeNamePrinter opt printers node = concatMap (\npType -> nodeNamePrinterSelector npType printers node) $ buildNamePrinterTypes opt
 
-type Printer = Node.NodeInfo -> [YAString.WrapedString]
+type Printer = Node.NodeInfo -> [WT.WrappedText]
 
-type Alignmenter = [YAString.WrapedString] -> [YAString.WrapedString]
+type Alignmenter = [WT.WrappedText] -> [WT.WrappedText]
 
-type AlignmenterBuilder = Char -> Int -> Alignmenter
+type AlignmenterBuilder = T.Text -> Int -> Alignmenter
 
 data AlighmentType
   = NONE
@@ -139,7 +140,7 @@ buildPrinters opt = do
       fileInodeFieldPrinter =
         if shouldColorize && isEnableExtraColor
           then Inode.nodeInodeNumberWithColor cConfig
-          else YAString.toWrappedStringArray . show . Inode.nodeInodeNumber
+          else WT.toWrappedTextSingleton . T.pack . show . Inode.nodeInodeNumber
 
       filemodeFieldPrinter =
         if shouldColorize && isEnableExtraColor
@@ -149,19 +150,19 @@ buildPrinters opt = do
       fileLinkFieldPrinter =
         if shouldColorize && isEnableExtraColor
           then Link.nodeLinksNumberWithColor cConfig
-          else YAString.toWrappedStringArray . show . Link.nodeLinksNumber
+          else WT.toWrappedTextSingleton . T.pack . show . Link.nodeLinksNumber
 
       fileOwnerFieldPrinter =
         if shouldColorize && isEnableExtraColor
           then Ownership.coloredOwnerName uidSubstTable cConfig userInfo
-          else YAString.toWrappedStringArray . Ownership.ownerName uidSubstTable
+          else WT.toWrappedTextSingleton . Ownership.ownerName uidSubstTable
 
       fileGroupFieldPrinter =
         if shouldColorize && isEnableExtraColor
           then Ownership.coloredGroupName gidSubstTable cConfig userInfo
-          else YAString.toWrappedStringArray . Ownership.groupName gidSubstTable
+          else WT.toWrappedTextSingleton . Ownership.groupName gidSubstTable
 
-      fileSizeType = Size.blockSizeTypeFrom modeStr
+      fileSizeType = Size.blockSizeTypeFrom $ T.pack modeStr
         where
           modeStr
             | bSize /= "" = bSize
@@ -171,12 +172,12 @@ buildPrinters opt = do
       fileSizeFieldPrinter =
         if shouldColorize && isEnableExtraColor
           then Size.coloredFileSizeFuncFor fileSizeType cConfig
-          else YAString.toWrappedStringArray . Size.fileSizeFuncFor fileSizeType
+          else WT.toWrappedTextSingleton . Size.fileSizeFuncFor fileSizeType
 
       fileTimeFileldPrinter =
         if shouldColorize && isEnableExtraColor
           then Time.coloredTimeStyleFunc cConfig Format.defaultTimeLocale currentTime timeStyle . fileTime . Node.nodeInfoStatus
-          else YAString.toWrappedStringArray . timeStyleFunc . fileTime . Node.nodeInfoStatus
+          else WT.toWrappedTextSingleton . timeStyleFunc . fileTime . Node.nodeInfoStatus
         where
           timeStyleFunc = Time.timeStyleFunc Format.defaultTimeLocale currentTime timeStyle
           fileTime = Time.fileTime . Time.timeTypeFrom $ Option.time opt
@@ -185,7 +186,7 @@ buildPrinters opt = do
       nodePrinter =
         if shouldColorize
           then Name.colorizedNodeName cConfig
-          else YAString.toWrappedStringArray . Name.nodeName
+          else WT.toWrappedTextSingleton . Name.nodeName
       fileIndicatorPrinter = Indicator.buildIndicatorPrinter opt . Node.toFileInfo
       fileSymbolicLinkPrinter =
         if shouldColorize
@@ -233,23 +234,23 @@ neededBy pType opt = case pType of
 isLongStyle :: Option.Option -> Bool
 isLongStyle opt = any (\f -> f opt) [Option.long, Option.longWithoutGroup, Option.longWithoutOwner]
 
-buildColumn :: [Node.NodeInfo] -> Printers -> PrinterType -> [[YAString.WrapedString]]
+buildColumn :: [Node.NodeInfo] -> Printers -> PrinterType -> [[WT.WrappedText]]
 buildColumn nodes printers pType = map alignmenter nodes'
   where
     printer = printerSelectorFor pType printers
     nodes' = map printer nodes
-    maxLen = YAString.maximumLength nodes'
+    maxLen = maximum $ map (sum . map WT.wtLength) nodes'
     aType = alignmentTypeFor pType
     aBuilder = alignmenterBuilderSelectorFor aType
-    alignmenter = aBuilder ' ' maxLen
+    alignmenter = aBuilder " " maxLen
 
-buildGrid :: [Node.NodeInfo] -> Printers -> [PrinterType] -> [[[YAString.WrapedString]]]
+buildGrid :: [Node.NodeInfo] -> Printers -> [PrinterType] -> [[[WT.WrappedText]]]
 buildGrid nodes printers = List.transpose . map (buildColumn nodes printers)
 
-buildLines :: [Node.NodeInfo] -> Printers -> [PrinterType] -> [[YAString.WrapedString]]
+buildLines :: [Node.NodeInfo] -> Printers -> [PrinterType] -> [[WT.WrappedText]]
 buildLines nodes printers types = map cat $ buildGrid nodes printers types
   where
-    cat = List.intercalate (YAString.toWrappedStringArray " ")
+    cat = List.intercalate (WT.toWrappedTextSingleton " ")
 
 leftPadding :: AlignmenterBuilder
 leftPadding c n | n > -1 = padding c (- n)
@@ -268,13 +269,13 @@ padding c n ys
   | otherwise = ys
   where
     n' = abs n
-    len = YAString.yaLength ys
+    len = sum $ map WT.wtLength ys
     padSize = signum n * (n' - len)
 
 padding' :: AlignmenterBuilder
-padding' c n ys
-  | n > 0 = ys ++ pad
-  | n < 0 = pad ++ ys
-  | otherwise = ys
+padding' c n t
+  | n > 0 = t <> pad
+  | n < 0 = pad <> t
+  | otherwise = t
   where
-    pad = YAString.toWrappedStringArray $ replicate (abs n) c
+    pad = WT.toWrappedTextSingleton $ T.replicate (abs n) c
