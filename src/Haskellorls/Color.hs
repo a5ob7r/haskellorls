@@ -10,7 +10,6 @@ module Haskellorls.Color
 where
 
 import qualified Data.Char as Char
-import qualified Data.List as List
 import qualified Data.List.Extra as Extra
 import qualified Data.Map.Strict as Map
 import qualified Data.Maybe as Maybe
@@ -262,10 +261,9 @@ filenamePtnEscSec :: (String, String) -> Maybe (String, String)
 filenamePtnEscSec (ptn, esc) = filenamePattern ptn >>= (\ext -> Just (ext, esc))
 
 filenamePattern :: String -> Maybe String
-filenamePattern str =
-  if "*" `List.isPrefixOf` str
-    then Just . toUppers . drop 1 $ str
-    else Nothing
+filenamePattern str = case str of
+  '*' : _ -> Just . toUppers $ drop 1 str
+  _ -> Nothing
 
 parametorsFrom :: T.Text -> FilenamePtnMap
 parametorsFrom = Map.fromList . Maybe.mapMaybe f . T.split (== ':')
@@ -273,16 +271,14 @@ parametorsFrom = Map.fromList . Maybe.mapMaybe f . T.split (== ':')
     f s = makePatternEscapePair s >>= paramatorPtnEscSec
 
 paramatorPtnEscSec :: (String, String) -> Maybe (String, String)
-paramatorPtnEscSec (ptn, esc) =
-  if "*" `List.isPrefixOf` ptn
-    then Nothing
-    else Just (ptn, esc)
+paramatorPtnEscSec (ptn, esc) = case ptn of
+  '*' : _ -> Nothing
+  _ -> Just (ptn, esc)
 
 makePatternEscapePair :: T.Text -> Maybe (String, String)
-makePatternEscapePair s =
-  if length pairs == 2
-    then Just (head pairs, last pairs)
-    else Nothing
+makePatternEscapePair s = case pairs of
+  [k, v] -> Just (k, v)
+  _ -> Nothing
   where
     pairs = map T.unpack $ T.split (== '=') s
 
@@ -295,10 +291,7 @@ getEXACOLORS = Maybe.maybe "" T.pack <$> Env.lookupEnv "EXA_COLORS"
 -- | Lookup ascii escape sequence. At first, lookup with a query as it is. If
 --    fails to lookup, change a query to the extension and re lookup.
 lookupFilenameEscSec :: FilenamePtnMap -> String -> String
-lookupFilenameEscSec ptnMap = f . Maybe.mapMaybe (`Map.lookup` ptnMap) . reverse . Extra.tails . toUppers
-  where
-    f [] = ""
-    f xs = head xs
+lookupFilenameEscSec ptnMap = Extra.headDef "" . Maybe.mapMaybe (`Map.lookup` ptnMap) . reverse . Extra.tails . toUppers
 
 toUppers :: String -> String
 toUppers = map Char.toUpper
