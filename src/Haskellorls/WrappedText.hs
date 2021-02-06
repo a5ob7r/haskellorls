@@ -6,6 +6,7 @@ module Haskellorls.WrappedText
     render,
     toWrappedText,
     toWrappedTextSingleton,
+    toList,
   )
 where
 
@@ -28,3 +29,6 @@ toWrappedText t = WrappedText "" t ""
 
 toWrappedTextSingleton :: T.Text -> [WrappedText]
 toWrappedTextSingleton t = [toWrappedText t]
+
+toList :: WrappedText -> [T.Text]
+toList wt = map (\f -> f wt) [wtPrefix, wtWord, wtSuffix]

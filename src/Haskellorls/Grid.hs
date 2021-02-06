@@ -9,7 +9,10 @@ where
 
 import qualified Data.List as List
 import qualified Data.Maybe as Maybe
+import qualified Data.Monoid as M
 import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
+import qualified Data.Text.Lazy.Builder as TLB
 import qualified Haskellorls.Decorator as Decorator
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.WrappedText as WT
@@ -69,30 +72,30 @@ buildValidGrid columnLength sss
     singleColumnGrid = buildGrid 1 sss
     validGrids = takeWhile (validateGrid columnLength) $ map (`buildGrid` sss) [2 .. columnLength]
 
-renderGrid :: [[[WT.WrappedText]]] -> [T.Text]
+renderGrid :: [[[WT.WrappedText]]] -> [TLB.Builder]
 renderGrid = map renderLine
 
-renderGridAsPlain :: [[[WT.WrappedText]]] -> [T.Text]
+renderGridAsPlain :: [[[WT.WrappedText]]] -> [TLB.Builder]
 renderGridAsPlain = map renderLineAsPlain
 
-renderLine :: [[WT.WrappedText]] -> T.Text
-renderLine = T.intercalate gridMargin . map renderWTList
+renderLine :: [[WT.WrappedText]] -> TLB.Builder
+renderLine = M.mconcat . List.intersperse (TLB.fromText gridMargin) . map renderWTList
 
-renderLineAsPlain :: [[WT.WrappedText]] -> T.Text
-renderLineAsPlain = T.intercalate gridMargin . map renderWTListAsPlain
+renderLineAsPlain :: [[WT.WrappedText]] -> TLB.Builder
+renderLineAsPlain = M.mconcat . List.intersperse (TLB.fromText gridMargin) . map renderWTListAsPlain
 
-renderWTList :: [WT.WrappedText] -> T.Text
-renderWTList = T.concat . map WT.render
+renderWTList :: [WT.WrappedText] -> TLB.Builder
+renderWTList = M.mconcat . map (M.mconcat . map TLB.fromText . WT.toList)
 
-renderWTListAsPlain :: [WT.WrappedText] -> T.Text
-renderWTListAsPlain = T.concat . map WT.wtWord
+renderWTListAsPlain :: [WT.WrappedText] -> TLB.Builder
+renderWTListAsPlain = M.mconcat . map (TLB.fromText . WT.wtWord)
 
 validateGrid :: Int -> [[[WT.WrappedText]]] -> Bool
 validateGrid n grid
   | n >= maxLen = True
   | otherwise = False
   where
-    maxLen = maximum . map T.length $ renderGridAsPlain grid
+    maxLen = maximum . map (T.length . TL.toStrict . TLB.toLazyText) $ renderGridAsPlain grid
 
 buildGrid :: Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
 buildGrid n = List.transpose . buildGrid' . splitInto n
