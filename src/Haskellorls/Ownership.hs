@@ -35,10 +35,10 @@ type GroupIdSubstTable = M.Map Types.GroupID String
 
 -- Utilities {{{
 lookupUserName :: Types.UserID -> UserIdSubstTable -> String
-lookupUserName uid substTable = (M.!) substTable uid
+lookupUserName uid = M.findWithDefault (show uid) uid
 
 lookupGroupName :: Types.GroupID -> GroupIdSubstTable -> String
-lookupGroupName gid substTable = (M.!) substTable gid
+lookupGroupName gid = M.findWithDefault (show gid) gid
 
 getUserIdSubstTable :: IO UserIdSubstTable
 getUserIdSubstTable = do

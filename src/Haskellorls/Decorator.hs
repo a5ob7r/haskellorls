@@ -12,6 +12,7 @@ module Haskellorls.Decorator
 where
 
 import qualified Data.List as List
+import qualified Data.Map.Strict as Map
 import qualified Data.Time.Format as Format
 import qualified Haskellorls.Color as Color
 import qualified Haskellorls.Field as Field
@@ -124,8 +125,8 @@ alignmenterBuilderSelectorFor aType = case aType of
 buildPrinters :: Option.Option -> IO Printers
 buildPrinters opt = do
   cConfig <- Color.config
-  uidSubstTable <- Ownership.getUserIdSubstTable
-  gidSubstTable <- Ownership.getGroupIdSubstTable
+  uidSubstTable <- if Option.numericUidGid opt then return Map.empty else Ownership.getUserIdSubstTable
+  gidSubstTable <- if Option.numericUidGid opt then return Map.empty else Ownership.getGroupIdSubstTable
   userInfo <- UserInfo.userInfo
   currentTime <- PTime.epochTime
   shouldColorize <- case Option.color opt of

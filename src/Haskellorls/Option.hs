@@ -32,6 +32,7 @@ data Option = Option
     fileType :: Bool,
     indicatorStyle :: IndicatorStyle,
     ignoreBackups :: Bool,
+    numericUidGid :: Bool,
     version :: Bool,
     targets :: [FilePath]
   }
@@ -77,6 +78,7 @@ optionParser =
     <*> fileTypeParser
     <*> indicatorStyleParser
     <*> ignoreBackupsParser
+    <*> numericUidGidParser
     <*> versionParser
     <*> argParser
 
@@ -260,6 +262,13 @@ ignoreBackupsParser =
     OA.long "ignore-backups"
       <> OA.short 'B'
       <> OA.help "Ignore backup files which have a suffix with '~'"
+
+numericUidGidParser :: OA.Parser Bool
+numericUidGidParser =
+  OA.switch $
+    OA.long "numeric-uid-gid"
+      <> OA.short 'n'
+      <> OA.help "Output numeric uid and gid instead of alphabetical them"
 
 versionParser :: OA.Parser Bool
 versionParser =
