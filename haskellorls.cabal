@@ -45,6 +45,7 @@ library
     , optparse-applicative
     , split
     , terminal-size
+    , text
     , time
     , unix
 

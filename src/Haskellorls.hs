@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Haskellorls
   ( run,
     renderEntriesLines,
@@ -6,7 +8,8 @@ module Haskellorls
 where
 
 import qualified Data.Functor as F
-import qualified Data.List as List
+import qualified Data.Text as T
+import qualified Data.Text.IO as T
 import qualified Haskellorls.Decorator as Decorator
 import qualified Haskellorls.Entry as Entry
 import qualified Haskellorls.Grid as Grid
@@ -24,12 +27,12 @@ run args = do
     else runWith options
 
 runWith :: Option.Option -> IO ()
-runWith opt = putStrLn =<< renderEntriesLines opt
+runWith opt = T.putStrLn =<< renderEntriesLines opt
 
-renderEntriesLines :: Option.Option -> IO String
-renderEntriesLines opt = generateEntriesLines opt F.<&> List.intercalate "\n\n" . map (List.intercalate "\n")
+renderEntriesLines :: Option.Option -> IO T.Text
+renderEntriesLines opt = generateEntriesLines opt F.<&> T.intercalate "\n\n" . map (T.intercalate "\n")
 
-generateEntriesLines :: Option.Option -> IO [[String]]
+generateEntriesLines :: Option.Option -> IO [[T.Text]]
 generateEntriesLines opt = do
   let targets = Option.targets opt
       targets' = if null targets then ["."] else targets
@@ -41,13 +44,13 @@ generateEntriesLines opt = do
 
   mapM generator $ Entry.toEntries files
 
-generateEntryLines :: Option.Option -> Decorator.Printers -> Entry.Entry -> IO [String]
+generateEntryLines :: Option.Option -> Decorator.Printers -> Entry.Entry -> IO [T.Text]
 generateEntryLines opt printers (Entry.Entry eType path contents) = do
   nodes <- fmap (Sort.sorter opt) . mapM (Node.nodeInfo path) $ contents
   let nodes' = Decorator.buildLines nodes printers $ Decorator.buildPrinterTypes opt
       addHeader = case eType of
         Entry.FILES -> id
-        _ -> \ss -> path <> ":" : ss
+        _ -> \ss -> T.pack path `T.snoc` ':' : ss
 
   colLen <- Grid.virtualColumnSize opt
 
@@ -61,7 +64,7 @@ argParser args = OA.handleParseResult presult
     pinfo = Option.opts
 
 showVersion :: IO ()
-showVersion = putStrLn version
+showVersion = T.putStrLn version
 
-version :: String
+version :: T.Text
 version = "v0.1.0.0"

@@ -2,7 +2,6 @@ module GoldenTest where
 
 import qualified Data.ByteString.Lazy.Char8 as BLC
 import qualified Data.Digest.Pure.MD5 as MD5
-import qualified Data.Text as T
 import Haskellorls
 import qualified System.Environment as Env
 import Test.Tasty
@@ -32,7 +31,7 @@ buildTestPattern actions args = goldenTest desc examplePath $
   do
     sequence_ actions
     opt <- argParser args
-    T.pack <$> renderEntriesLines opt
+    renderEntriesLines opt
   where
     args' = unwords args
     desc = "With " <> args' `wrapWith` "'"

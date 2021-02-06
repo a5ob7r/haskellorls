@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Haskellorls.Grid
   ( virtualColumnSize,
     buildValidGrid,
@@ -7,6 +9,7 @@ where
 
 import qualified Data.List as List
 import qualified Data.Maybe as Maybe
+import qualified Data.Text as T
 import qualified Haskellorls.Decorator as Decorator
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.YetAnotherString as YAString
@@ -66,28 +69,24 @@ buildValidGrid columnLength sss
     singleColumnGrid = buildGrid 1 sss
     validGrids = takeWhile (validateGrid columnLength) $ map (`buildGrid` sss) [2 .. columnLength]
 
-renderGrid :: [[[YAString.WrapedString]]] -> [String]
+renderGrid :: [[[YAString.WrapedString]]] -> [T.Text]
 renderGrid = map renderLine
 
-renderGridAsPlain :: [[[YAString.WrapedString]]] -> [String]
+renderGridAsPlain :: [[[YAString.WrapedString]]] -> [T.Text]
 renderGridAsPlain = map renderLineAsPlain
 
-renderLine :: [[YAString.WrapedString]] -> String
-renderLine = concatMap YAString.yaShow' . List.intersperse padding
-  where
-    padding = YAString.toWrappedStringArray gridMargin
+renderLine :: [[YAString.WrapedString]] -> T.Text
+renderLine = T.intercalate gridMargin . map (T.pack . YAString.yaShow')
 
-renderLineAsPlain :: [[YAString.WrapedString]] -> String
-renderLineAsPlain = concatMap YAString.yaShow . List.intersperse padding
-  where
-    padding = YAString.toWrappedStringArray gridMargin
+renderLineAsPlain :: [[YAString.WrapedString]] -> T.Text
+renderLineAsPlain = T.intercalate gridMargin . map (T.pack . YAString.yaShow)
 
 validateGrid :: Int -> [[[YAString.WrapedString]]] -> Bool
 validateGrid n grid
   | n >= maxLen = True
   | otherwise = False
   where
-    maxLen = maximum . map length $ renderGridAsPlain grid
+    maxLen = maximum . map T.length $ renderGridAsPlain grid
 
 buildGrid :: Int -> [[YAString.WrapedString]] -> [[[YAString.WrapedString]]]
 buildGrid n = List.transpose . buildGrid' . splitInto n
@@ -115,5 +114,5 @@ pad c n ss = ss <> padding
 paddingChar :: Char
 paddingChar = ' '
 
-gridMargin :: String
+gridMargin :: T.Text
 gridMargin = "  "
