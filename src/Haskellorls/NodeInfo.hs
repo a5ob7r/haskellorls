@@ -78,10 +78,12 @@ toFileInfo node = case node of
       }
 
 linkDestPath :: FilePath -> FilePath -> FilePath
-linkDestPath parPath linkPath =
-  if "/" `L.isPrefixOf` linkPath
-    then linkPath
-    else Posix.takeDirectory parPath Posix.</> linkPath
+linkDestPath parPath linkPath
+  | isAbsPath linkPath = linkPath
+  | otherwise = Posix.takeDirectory parPath Posix.</> linkPath
+
+isAbsPath :: FilePath -> Bool
+isAbsPath path = "/" `L.isPrefixOf` path
 
 linkDestStatus :: FilePath -> FilePath -> IO Files.FileStatus
 linkDestStatus parPath = Files.getFileStatus . linkDestPath parPath
