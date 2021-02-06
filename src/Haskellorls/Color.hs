@@ -163,9 +163,11 @@ defaultExtensionConfig =
     }
 
 config :: IO Config
-config = configFrom <$> getLSCOLORS <> getEXACOLORS
+config = configFrom . split <$> getLSCOLORS <> getEXACOLORS
+  where
+    split = T.split (== ':')
 
-configFrom :: T.Text -> Config
+configFrom :: [T.Text] -> Config
 configFrom lsColors =
   Config
     { leftEscapeSequence = Map.findWithDefault (leftEscapeSequence def) "lc" parametors,
@@ -200,7 +202,7 @@ configFrom lsColors =
     indicator = colorIndicatorsFrom lsColors
     parametors = parametorsFrom lsColors
 
-extensionConfigFrom :: T.Text -> ExtensionConfig
+extensionConfigFrom :: [T.Text] -> ExtensionConfig
 extensionConfigFrom lsColors =
   ExtensionConfig
     { userReadPermBitEscapeSequence = Map.findWithDefault (userReadPermBitEscapeSequence def) "ur" parametors,
@@ -252,8 +254,8 @@ applyEscapeSequence conf escSeq = left ++ escSeq ++ right
     left = leftEscapeSequence conf
     right = rightEscapeSequence conf
 
-colorIndicatorsFrom :: T.Text -> FilenamePtnMap
-colorIndicatorsFrom = Map.fromList . Maybe.mapMaybe f . T.split (== ':')
+colorIndicatorsFrom :: [T.Text] -> FilenamePtnMap
+colorIndicatorsFrom = Map.fromList . Maybe.mapMaybe f
   where
     f s = makePatternEscapePair s >>= filenamePtnEscSec
 
@@ -265,8 +267,8 @@ filenamePattern str = case str of
   '*' : _ -> Just . toUppers $ drop 1 str
   _ -> Nothing
 
-parametorsFrom :: T.Text -> FilenamePtnMap
-parametorsFrom = Map.fromList . Maybe.mapMaybe f . T.split (== ':')
+parametorsFrom :: [T.Text] -> FilenamePtnMap
+parametorsFrom = Map.fromList . Maybe.mapMaybe f
   where
     f s = makePatternEscapePair s >>= paramatorPtnEscSec
 
