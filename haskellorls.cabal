@@ -43,7 +43,6 @@ library
     , extra
     , filepath
     , optparse-applicative
-    , split
     , terminal-size
     , text
     , time

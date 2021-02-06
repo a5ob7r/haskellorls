@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Haskellorls.Color
   ( Config (..),
     config,
@@ -10,9 +12,9 @@ where
 import qualified Data.Char as Char
 import qualified Data.List as List
 import qualified Data.List.Extra as Extra
-import qualified Data.List.Split as Split
 import qualified Data.Map.Strict as Map
 import qualified Data.Maybe as Maybe
+import qualified Data.Text as T
 import qualified System.Environment as Env
 
 type FilenamePtnMap = Map.Map String String
@@ -164,7 +166,7 @@ defaultExtensionConfig =
 config :: IO Config
 config = configFrom <$> getLSCOLORS <> getEXACOLORS
 
-configFrom :: String -> Config
+configFrom :: T.Text -> Config
 configFrom lsColors =
   Config
     { leftEscapeSequence = Maybe.fromMaybe (leftEscapeSequence def) $ "lc" `Map.lookup` parametors,
@@ -199,7 +201,7 @@ configFrom lsColors =
     indicator = colorIndicatorsFrom lsColors
     parametors = parametorsFrom lsColors
 
-extensionConfigFrom :: String -> ExtensionConfig
+extensionConfigFrom :: T.Text -> ExtensionConfig
 extensionConfigFrom lsColors =
   ExtensionConfig
     { userReadPermBitEscapeSequence = Maybe.fromMaybe (userReadPermBitEscapeSequence def) $ "ur" `Map.lookup` parametors,
@@ -251,8 +253,8 @@ applyEscapeSequence conf escSeq = left ++ escSeq ++ right
     left = leftEscapeSequence conf
     right = rightEscapeSequence conf
 
-colorIndicatorsFrom :: String -> FilenamePtnMap
-colorIndicatorsFrom = Map.fromList . Maybe.mapMaybe f . Split.endBy ":"
+colorIndicatorsFrom :: T.Text -> FilenamePtnMap
+colorIndicatorsFrom = Map.fromList . Maybe.mapMaybe f . T.split (== ':')
   where
     f s = makePatternEscapePair s >>= filenamePtnEscSec
 
@@ -265,8 +267,8 @@ filenamePattern str =
     then Just . toUppers . drop 1 $ str
     else Nothing
 
-parametorsFrom :: String -> FilenamePtnMap
-parametorsFrom = Map.fromList . Maybe.mapMaybe f . Split.endBy ":"
+parametorsFrom :: T.Text -> FilenamePtnMap
+parametorsFrom = Map.fromList . Maybe.mapMaybe f . T.split (== ':')
   where
     f s = makePatternEscapePair s >>= paramatorPtnEscSec
 
@@ -276,19 +278,19 @@ paramatorPtnEscSec (ptn, esc) =
     then Nothing
     else Just (ptn, esc)
 
-makePatternEscapePair :: String -> Maybe (String, String)
+makePatternEscapePair :: T.Text -> Maybe (String, String)
 makePatternEscapePair s =
   if length pairs == 2
     then Just (head pairs, last pairs)
     else Nothing
   where
-    pairs = Split.splitOn "=" s
+    pairs = map T.unpack $ T.split (== '=') s
 
-getLSCOLORS :: IO String
-getLSCOLORS = Maybe.fromMaybe "" <$> Env.lookupEnv "LS_COLORS"
+getLSCOLORS :: IO T.Text
+getLSCOLORS = Maybe.maybe "" T.pack <$> Env.lookupEnv "LS_COLORS"
 
-getEXACOLORS :: IO String
-getEXACOLORS = Maybe.fromMaybe "" <$> Env.lookupEnv "EXA_COLORS"
+getEXACOLORS :: IO T.Text
+getEXACOLORS = Maybe.maybe "" T.pack <$> Env.lookupEnv "EXA_COLORS"
 
 -- | Lookup ascii escape sequence. At first, lookup with a query as it is. If
 --    fails to lookup, change a query to the extension and re lookup.
