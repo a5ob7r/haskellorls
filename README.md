@@ -50,7 +50,6 @@ $ cabal test
 - Add extra sort method.
 - Fix name sort for GNU ls compatibility.
 - Fix size printer for charactor devices.
-- Add -I or --ignore=PATTERN and --hide=PATTERN options.
 - Add an interface model for deriving command parameters from args and options.
 - Improve performances.
 - Add tests.

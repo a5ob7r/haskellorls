@@ -7,6 +7,7 @@ module Haskellorls.Entry
   )
 where
 
+import qualified System.FilePath.Glob as Glob
 import qualified Control.Monad as Monad
 import qualified Data.List as List
 import qualified Haskellorls.Option as Option
@@ -38,8 +39,19 @@ toEntries (Files fEntry@(Entry _ _ contents) dEntries) = fEntry' ++ dEntries'
 
 buildDirectoryEntries :: Option.Option -> FilePath -> IO Entry
 buildDirectoryEntries opt path = do
-  contents <- listContents opt path
+  contents <- excluder <$> listContents opt path
   return $ Entry DIRECTORY path contents
+  where
+    excluder = ignoreExcluder . hideExcluder
+    ignorePtn = Option.ignore opt
+    hidePtn = Option.hide opt
+    isShowHiddenEntries = Option.all opt || Option.almostAll opt
+    ignoreExcluder
+      | null ignorePtn = id
+      | otherwise = exclude ignorePtn
+    hideExcluder
+      | null hidePtn || isShowHiddenEntries = id
+      | otherwise = exclude hidePtn
 
 buildFiles :: Option.Option -> [FilePath] -> IO Files
 buildFiles opt paths = do
@@ -87,6 +99,11 @@ isHiddenEntries _ = False
 
 ignoreBackupsFilter :: [FilePath] -> [FilePath]
 ignoreBackupsFilter = filter (\path -> not $ "~" `List.isSuffixOf` path)
+
+exclude :: String -> [FilePath] -> [FilePath]
+exclude ptn = filter (not . Glob.match ptn')
+  where
+    ptn' = Glob.compile ptn
 
 existenceFilter :: [FilePath] -> IO [FilePath]
 existenceFilter = Monad.filterM exist

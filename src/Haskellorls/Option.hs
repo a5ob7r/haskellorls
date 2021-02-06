@@ -33,6 +33,8 @@ data Option = Option
     indicatorStyle :: IndicatorStyle,
     ignoreBackups :: Bool,
     numericUidGid :: Bool,
+    ignore :: String,
+    hide :: String,
     version :: Bool,
     targets :: [FilePath]
   }
@@ -79,6 +81,8 @@ optionParser =
     <*> indicatorStyleParser
     <*> ignoreBackupsParser
     <*> numericUidGidParser
+    <*> ignoreParser
+    <*> hideParser
     <*> versionParser
     <*> argParser
 
@@ -269,6 +273,23 @@ numericUidGidParser =
     OA.long "numeric-uid-gid"
       <> OA.short 'n'
       <> OA.help "Output numeric uid and gid instead of alphabetical them"
+
+ignoreParser :: OA.Parser String
+ignoreParser =
+  OA.strOption $
+    OA.long "ignore"
+      <> OA.short 'I'
+      <> OA.metavar "PATTERN"
+      <> OA.value ""
+      <> OA.help "Don't output file infos if the file name matches to glob 'PATTERN'"
+
+hideParser :: OA.Parser String
+hideParser =
+  OA.strOption $
+    OA.long "hide"
+      <> OA.metavar "PATTERN"
+      <> OA.value ""
+      <> OA.help "Don't output file infos if the file name matches to glob 'PATTERN', but this option is ignored when -a or -A is passed at same time"
 
 versionParser :: OA.Parser Bool
 versionParser =
