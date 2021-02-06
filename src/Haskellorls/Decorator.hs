@@ -133,27 +133,34 @@ buildPrinters opt = do
     Option.NEVER -> return False
     Option.ALWAYS -> return True
     Option.AUTO -> SIO.hIsTerminalDevice SIO.stdout
+
   let isEnableExtraColor = Option.extraColor opt
+
       fileInodeFieldPrinter =
         if shouldColorize && isEnableExtraColor
           then Inode.nodeInodeNumberWithColor cConfig
           else YAString.toWrappedStringArray . show . Inode.nodeInodeNumber
+
       filemodeFieldPrinter =
         if shouldColorize && isEnableExtraColor
           then Field.showFilemodeFieldWithColor cConfig
           else Field.showFilemodeField
+
       fileLinkFieldPrinter =
         if shouldColorize && isEnableExtraColor
           then Link.nodeLinksNumberWithColor cConfig
           else YAString.toWrappedStringArray . show . Link.nodeLinksNumber
+
       fileOwnerFieldPrinter =
         if shouldColorize && isEnableExtraColor
           then Ownership.coloredOwnerName uidSubstTable cConfig userInfo
           else YAString.toWrappedStringArray . Ownership.ownerName uidSubstTable
+
       fileGroupFieldPrinter =
         if shouldColorize && isEnableExtraColor
           then Ownership.coloredGroupName gidSubstTable cConfig userInfo
           else YAString.toWrappedStringArray . Ownership.groupName gidSubstTable
+
       fileSizeType = Size.blockSizeTypeFrom modeStr
         where
           modeStr
@@ -165,6 +172,7 @@ buildPrinters opt = do
         if shouldColorize && isEnableExtraColor
           then Size.coloredFileSizeFuncFor fileSizeType cConfig
           else YAString.toWrappedStringArray . Size.fileSizeFuncFor fileSizeType
+
       fileTimeFileldPrinter =
         if shouldColorize && isEnableExtraColor
           then Time.coloredTimeStyleFunc cConfig Format.defaultTimeLocale currentTime timeStyle . fileTime . Node.nodeInfoStatus
@@ -173,6 +181,7 @@ buildPrinters opt = do
           timeStyleFunc = Time.timeStyleFunc Format.defaultTimeLocale currentTime timeStyle
           fileTime = Time.fileTime . Time.timeTypeFrom $ Option.time opt
           timeStyle = Time.timeStyleFrom $ Option.timeStyle opt
+
       nodePrinter =
         if shouldColorize
           then Name.colorizedNodeName cConfig
@@ -188,6 +197,7 @@ buildPrinters opt = do
             nodeLinkPrinter = fileSymbolicLinkPrinter,
             nodeIndicatorPrinter = fileIndicatorPrinter
           }
+
   return $
     Printers
       { fileInodePrinter = fileInodeFieldPrinter,
