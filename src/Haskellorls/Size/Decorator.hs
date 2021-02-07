@@ -2,9 +2,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
--- NOTE: When `--block-size` option is passed, file size format are `4K`,
--- `1111K` not `4.0K`, `1111.0K`
-
 module Haskellorls.Size.Decorator
   ( fileSize,
     coloredFileSize,
@@ -37,7 +34,6 @@ fileSize opt node =
   where
     component = fileSize' opt node
 
--- FIXME: Show file size suffix when only passed file size unit (e.g. --block-size=K)
 fileSize' :: Option.Option -> Node.NodeInfo -> FileSizeComponent
 fileSize' opt node = case Option.blockSize opt of
   HumanReadable
@@ -47,7 +43,7 @@ fileSize' opt node = case Option.blockSize opt of
     | Option.humanReadable opt -> fileSize' opt {Option.blockSize = HumanReadable} node
     | otherwise -> FileSizeComponent {..}
     where
-      fileSizeNumber = formatSize $ fromIntegral fileSizeRawNumber / fromIntegral (getUnitSize unitSize)
+      fileSizeNumber = asInt $ fromIntegral fileSizeRawNumber / fromIntegral (getUnitSize unitSize)
       fileSizeUnit = case scale of
         NoScale -> fileSizeUnitSelector scaleSuffix baseScale
         _ -> ""
@@ -219,8 +215,16 @@ siUnit bScale = case bScale of
   ZETTA -> "ZB"
   YOTTA -> "YB"
 
+normalizeLength :: T.Text -> T.Text
+normalizeLength t
+  | T.length t < 4 = t
+  | otherwise = T.takeWhile (/= '.') t
+
 kibiFileSizeAs :: BaseScale -> Types.FileOffset -> T.Text
-kibiFileSizeAs bScale = case bScale of
+kibiFileSizeAs bScale = normalizeLength . kibiFileSizeAs' bScale
+
+kibiFileSizeAs' :: BaseScale -> Types.FileOffset -> T.Text
+kibiFileSizeAs' bScale = case bScale of
   BYTE -> asB
   KILO -> asKi
   MEGA -> asMi
@@ -232,7 +236,10 @@ kibiFileSizeAs bScale = case bScale of
   YOTTA -> asYi
 
 siFileSizeAs :: BaseScale -> Types.FileOffset -> T.Text
-siFileSizeAs bScale = case bScale of
+siFileSizeAs bScale = normalizeLength . siFileSizeAs' bScale
+
+siFileSizeAs' :: BaseScale -> Types.FileOffset -> T.Text
+siFileSizeAs' bScale = case bScale of
   BYTE -> asB
   KILO -> asK
   MEGA -> asM
@@ -291,12 +298,19 @@ sizeY = sizeZ * sizeK
 sizeYi :: Num a => a
 sizeYi = sizeZi * sizeKi
 
-formatSize :: Double -> T.Text
-formatSize r = T.pack size
-  where
-    size
-      | r <= 9.9 = show $ ceiling' r 1
-      | otherwise = show (ceiling r :: Int)
+asDouble :: Double -> T.Text
+asDouble = T.pack . show . asDouble'
+
+asDouble' :: Double -> Double
+asDouble' r
+  | r <= 9.9 = ceiling' r 1
+  | otherwise = realToFrac $ ceilingAsInt r
+
+asInt :: Double -> T.Text
+asInt = T.pack . show . ceilingAsInt . asDouble'
+
+ceilingAsInt :: RealFrac a => a -> Int
+ceilingAsInt = ceiling
 
 ceiling' :: Double -> Int -> Double
 ceiling' r digitNum = fromIntegral upScaledCeil / scale
@@ -309,49 +323,49 @@ asB :: Types.FileOffset -> T.Text
 asB = T.pack . show
 
 asK :: Types.FileOffset -> T.Text
-asK offset = formatSize $ fromIntegral offset / sizeK
+asK offset = asDouble $ fromIntegral offset / sizeK
 
 asKi :: Types.FileOffset -> T.Text
-asKi offset = formatSize $ fromIntegral offset / sizeKi
+asKi offset = asDouble $ fromIntegral offset / sizeKi
 
 asM :: Types.FileOffset -> T.Text
-asM offset = formatSize $ fromIntegral offset / sizeM
+asM offset = asDouble $ fromIntegral offset / sizeM
 
 asMi :: Types.FileOffset -> T.Text
-asMi offset = formatSize $ fromIntegral offset / sizeMi
+asMi offset = asDouble $ fromIntegral offset / sizeMi
 
 asG :: Types.FileOffset -> T.Text
-asG offset = formatSize $ fromIntegral offset / sizeG
+asG offset = asDouble $ fromIntegral offset / sizeG
 
 asGi :: Types.FileOffset -> T.Text
-asGi offset = formatSize $ fromIntegral offset / sizeGi
+asGi offset = asDouble $ fromIntegral offset / sizeGi
 
 asT :: Types.FileOffset -> T.Text
-asT offset = formatSize $ fromIntegral offset / sizeT
+asT offset = asDouble $ fromIntegral offset / sizeT
 
 asTi :: Types.FileOffset -> T.Text
-asTi offset = formatSize $ fromIntegral offset / sizeTi
+asTi offset = asDouble $ fromIntegral offset / sizeTi
 
 asP :: Types.FileOffset -> T.Text
-asP offset = formatSize $ fromIntegral offset / sizeP
+asP offset = asDouble $ fromIntegral offset / sizeP
 
 asPi :: Types.FileOffset -> T.Text
-asPi offset = formatSize $ fromIntegral offset / sizePi
+asPi offset = asDouble $ fromIntegral offset / sizePi
 
 asE :: Types.FileOffset -> T.Text
-asE offset = formatSize $ fromIntegral offset / sizeE
+asE offset = asDouble $ fromIntegral offset / sizeE
 
 asEi :: Types.FileOffset -> T.Text
-asEi offset = formatSize $ fromIntegral offset / sizeEi
+asEi offset = asDouble $ fromIntegral offset / sizeEi
 
 asZ :: Types.FileOffset -> T.Text
-asZ offset = formatSize $ fromIntegral offset / sizeZ
+asZ offset = asDouble $ fromIntegral offset / sizeZ
 
 asZi :: Types.FileOffset -> T.Text
-asZi offset = formatSize $ fromIntegral offset / sizeZi
+asZi offset = asDouble $ fromIntegral offset / sizeZi
 
 asY :: Types.FileOffset -> T.Text
-asY offset = formatSize $ fromIntegral offset / sizeY
+asY offset = asDouble $ fromIntegral offset / sizeY
 
 asYi :: Types.FileOffset -> T.Text
-asYi offset = formatSize $ fromIntegral offset / sizeYi
+asYi offset = asDouble $ fromIntegral offset / sizeYi
