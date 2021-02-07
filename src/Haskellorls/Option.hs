@@ -8,13 +8,15 @@ where
 
 import qualified Control.Applicative as A
 import qualified Options.Applicative as OA
+import qualified Haskellorls.Size.Option as Size
 
 data Option = Option
   { color :: ColorOpt,
     extraColor :: Bool,
     long :: Bool,
+    si :: Bool,
     humanReadable :: Bool,
-    blockSize :: String,
+    blockSize :: Size.BlockSize,
     time :: String,
     timeStyle :: String,
     all :: Bool,
@@ -61,8 +63,9 @@ optionParser =
     <$> colorParser
     <*> extraColorParser
     <*> longParser
-    <*> humanReadableParser
-    <*> blockSizeParser
+    <*> Size.siParser
+    <*> Size.humanReadableParser
+    <*> Size.blockSizeParser
     <*> timeParser
     <*> timeStyleParser
     <*> allParser
@@ -114,21 +117,6 @@ longParser =
   OA.switch $
     OA.short 'l'
       <> OA.help "Enable long layout which provides informative outputs about files"
-
-humanReadableParser :: OA.Parser Bool
-humanReadableParser =
-  OA.switch $
-    OA.short 'h'
-      <> OA.long "human-readable"
-      <> OA.help "Enable human readable output about file size (e.g. 1K, 23M)"
-
-blockSizeParser :: OA.Parser String
-blockSizeParser =
-  OA.strOption $
-    OA.long "block-size"
-      <> OA.metavar "SIZE"
-      <> OA.value ""
-      <> OA.help "Specify size unit when output file size"
 
 timeParser :: OA.Parser String
 timeParser =

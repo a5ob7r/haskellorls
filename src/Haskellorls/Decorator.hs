@@ -24,7 +24,7 @@ import qualified Haskellorls.Name as Name
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Ownership as Ownership
-import qualified Haskellorls.Size as Size
+import qualified Haskellorls.Size.Decorator as Size
 import qualified Haskellorls.SymbolicLink as SymbolicLink
 import qualified Haskellorls.Time as Time
 import qualified Haskellorls.UserInfo as UserInfo
@@ -162,17 +162,10 @@ buildPrinters opt = do
           then Ownership.coloredGroupName gidSubstTable cConfig userInfo
           else WT.toWrappedTextSingleton . Ownership.groupName gidSubstTable
 
-      fileSizeType = Size.blockSizeTypeFrom $ T.pack modeStr
-        where
-          modeStr
-            | bSize /= "" = bSize
-            | Option.humanReadable opt = "HUMANi"
-            | otherwise = ""
-          bSize = Option.blockSize opt
       fileSizeFieldPrinter =
         if shouldColorize && isEnableExtraColor
-          then Size.coloredFileSizeFuncFor fileSizeType cConfig
-          else WT.toWrappedTextSingleton . Size.fileSizeFuncFor fileSizeType
+          then Size.coloredFileSize cConfig opt
+          else Size.fileSize opt
 
       fileTimeFileldPrinter =
         if shouldColorize && isEnableExtraColor
