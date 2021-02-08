@@ -31,10 +31,16 @@ run args = do
     else runWith options
 
 runWith :: Option.Option -> IO ()
-runWith opt = T.putStrLn =<< renderEntriesLines opt
+runWith opt = renderEntriesLinesAsList opt >>= mapM_ T.putStr >> putStrLn ""
 
 renderEntriesLines :: Option.Option -> IO T.Text
-renderEntriesLines opt = generateEntriesLines opt F.<&> TL.toStrict . TLB.toLazyText . M.mconcat . L.intersperse (TLB.fromText "\n\n") . map (M.mconcat . L.intersperse (TLB.fromText "\n"))
+renderEntriesLines opt = renderEntriesLines' opt F.<&> TL.toStrict . TLB.toLazyText . M.mconcat
+
+renderEntriesLinesAsList :: Option.Option -> IO [T.Text]
+renderEntriesLinesAsList opt = renderEntriesLines' opt F.<&> map (TL.toStrict . TLB.toLazyText)
+
+renderEntriesLines' :: Option.Option -> IO [TLB.Builder]
+renderEntriesLines' opt = generateEntriesLines opt F.<&> L.intersperse (TLB.fromText "\n\n") . map (M.mconcat . L.intersperse (TLB.fromText "\n"))
 
 generateEntriesLines :: Option.Option -> IO [[TLB.Builder]]
 generateEntriesLines opt = do
