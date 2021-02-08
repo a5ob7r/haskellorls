@@ -198,17 +198,15 @@ longWithoutOwnerParser =
 
 widthParser :: OA.Parser (Maybe Int)
 widthParser =
-  OA.option widthReader $
+  OA.option reader $
     OA.long "width"
       <> OA.short 'w'
       <> OA.metavar "COLS"
       <> OA.help "Specify output width. Assumes infinity width if 0."
       <> OA.value Nothing
-
-widthReader :: OA.ReadM (Maybe Int)
-widthReader = OA.auto >>= reader
   where
-    reader n
+    reader = OA.auto >>= reader'
+    reader' n
       | n >= 0 = return $ Just n
       | otherwise = OA.readerError "COLS must be a natural number"
 
@@ -240,16 +238,14 @@ fileTypeParser =
 
 indicatorStyleParser :: OA.Parser IndicatorStyle
 indicatorStyleParser =
-  OA.option indicatorStyleReader $
+  OA.option reader $
     OA.long "indicator-style"
       <> OA.metavar "WORD"
       <> OA.value IndicatorNone
       <> OA.help "Specify indicator style, 'none', 'slash', 'file-tyep' and 'classify'"
-
-indicatorStyleReader :: OA.ReadM IndicatorStyle
-indicatorStyleReader = OA.auto >>= reader
   where
-    reader s = case s of
+    reader = OA.auto >>= reader'
+    reader' = \case
       "none" -> return IndicatorNone
       "slash" -> return IndicatorSlash
       "file-type" -> return IndicatorFiletype
