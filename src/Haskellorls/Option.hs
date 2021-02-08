@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Haskellorls.Option
   ( Option (..),
     ColorOpt (..),
@@ -6,9 +8,11 @@ module Haskellorls.Option
   )
 where
 
+import qualified Data.Char as C
 import qualified Control.Applicative as A
 import qualified Options.Applicative as OA
 import qualified Haskellorls.Size.Option as Size
+import qualified Haskellorls.Tree as Tree
 
 data Option = Option
   { color :: ColorOpt,
@@ -37,6 +41,8 @@ data Option = Option
     numericUidGid :: Bool,
     ignore :: String,
     hide :: String,
+    recursive :: Bool,
+    level :: Tree.Depth,
     version :: Bool,
     targets :: [FilePath]
   }
@@ -86,6 +92,8 @@ optionParser =
     <*> numericUidGidParser
     <*> ignoreParser
     <*> hideParser
+    <*> recursiveParser
+    <*> levelParser
     <*> versionParser
     <*> argParser
 
@@ -278,6 +286,30 @@ hideParser =
       <> OA.metavar "PATTERN"
       <> OA.value ""
       <> OA.help "Don't output file infos if the file name matches to glob 'PATTERN', but this option is ignored when -a or -A is passed at same time"
+
+recursiveParser :: OA.Parser Bool
+recursiveParser =
+  OA.switch $
+    OA.long "recursive"
+      <> OA.short 'R'
+      <> OA.help "Output infos about files in sub directories recursively"
+
+levelParser :: OA.Parser Tree.Depth
+levelParser =
+  OA.option reader $
+    OA.long "level"
+      <> OA.short 'L'
+      <> OA.metavar "DEPTH"
+      <> OA.value Tree.makeInf
+      <> OA.help "Specify how much depth drills in directory"
+  where
+    reader = OA.str >>= reader' . toDepth
+    reader' = \case
+      Just d -> return d
+      _ -> OA.readerError "Acceptable value is only natural number"
+    toDepth s
+      | Prelude.all C.isDigit s = Tree.makeDepth $ read s
+      | otherwise = Nothing
 
 versionParser :: OA.Parser Bool
 versionParser =

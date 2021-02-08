@@ -36,7 +36,7 @@ nodeInfo dirname basename = do
     then do
       linkPath <- Files.readSymbolicLink path
       let linkAbsPath = linkDestPath path linkPath
-      isLinked <- Utils.exist linkAbsPath
+      isLinked <- Utils.linked linkAbsPath
       if isLinked
         then do
           destStatus <- linkDestStatus path linkPath

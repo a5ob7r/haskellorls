@@ -1,3 +1,6 @@
+{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE RecordWildCards #-}
+
 module Haskellorls.Entry
   ( Entry (..),
     EntryType (..),
@@ -7,12 +10,18 @@ module Haskellorls.Entry
   )
 where
 
-import qualified System.FilePath.Glob as Glob
+import qualified Data.Functor as F
 import qualified Control.Monad as Monad
+import qualified Control.Monad.Extra as Monad
 import qualified Data.List as List
+import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
+import qualified Haskellorls.Sort as Sort
+import qualified Haskellorls.Tree as Tree
 import qualified Haskellorls.Utils as Utils
 import qualified System.Directory as Directory
+import qualified System.FilePath.Glob as Glob
+import qualified System.FilePath.Posix as Posix
 import qualified System.IO as IO
 import qualified System.Posix.Files as Files
 
@@ -37,9 +46,9 @@ toEntries (Files fEntry@(Entry _ _ contents) dEntries) = fEntry' ++ dEntries'
       | null contents && length dEntries == 1 = [(head dEntries) {entryType = FILES}]
       | otherwise = dEntries
 
-buildDirectoryEntries :: Option.Option -> FilePath -> IO Entry
-buildDirectoryEntries opt path = do
-  contents <- excluder <$> listContents opt path
+buildDirectoryEntry :: Option.Option -> FilePath -> IO Entry
+buildDirectoryEntry opt path = do
+  contents <- listContents opt path >>= sortContents opt path . excluder
   return $ Entry DIRECTORY path contents
   where
     excluder = ignoreExcluder . hideExcluder
@@ -59,7 +68,7 @@ buildFiles opt paths = do
   psPairs <- traverse f paths'
   let fPaths = map fst $ filter (not . g) psPairs
       dPaths = map fst $ filter g psPairs
-  dEntries <- mapM (buildDirectoryEntries opt) dPaths
+  dEntries <- Monad.concatMapM (dirPathToDirEntriesRecursively opt) dPaths
   return $
     Files
       { fileEntry = Entry FILES "" fPaths,
@@ -70,6 +79,28 @@ buildFiles opt paths = do
       status <- Files.getSymbolicLinkStatus path
       return (path, status)
     g = Files.isDirectory . snd
+
+dirPathToDirEntriesRecursively :: Option.Option -> FilePath -> IO [Entry]
+dirPathToDirEntriesRecursively opt path = do
+  entry <- buildDirectoryEntry opt path
+  entries <- entryToDirectoryEntries opt entry
+  pure $ entry : entries
+
+entryToDirectoryEntries :: Option.Option -> Entry -> IO [Entry]
+entryToDirectoryEntries opt Entry {..}
+  | Option.recursive opt && not isDepthZero = do
+    entries <- Monad.filterM isDirectory pathes >>= mapM (buildDirectoryEntry opt)
+    recursiveEntries <- Monad.concatMapM (entryToDirectoryEntries opt') entries
+    pure $ entries <> recursiveEntries
+  | otherwise = pure []
+  where
+    opt' = opt {Option.level = Tree.decreaseDepth $ Option.level opt}
+    pathes = map (entryPath Posix.</>) entryContents
+    depth = Option.level opt
+    isDepthZero = (Just 0 ==) $ Tree.getDepth depth
+
+isDirectory :: FilePath -> IO Bool
+isDirectory path = Files.isDirectory <$> Files.getSymbolicLinkStatus path
 
 listContents :: Option.Option -> FilePath -> IO [FilePath]
 listContents opt path = ignoreFilter <$> list path
@@ -82,6 +113,9 @@ listContents opt path = ignoreFilter <$> list path
       if Option.ignoreBackups opt
         then ignoreBackupsFilter
         else id
+
+sortContents :: Option.Option -> FilePath -> [FilePath] -> IO [FilePath]
+sortContents opt path pathes = mapM (Node.nodeInfo path) pathes F.<&> map Node.nodeInfoPath . Sort.sorter opt
 
 listAllEntries :: FilePath -> IO [FilePath]
 listAllEntries = Directory.getDirectoryContents

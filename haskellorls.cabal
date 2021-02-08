@@ -31,6 +31,7 @@ library
     Haskellorls.Sort
     Haskellorls.SymbolicLink
     Haskellorls.Time
+    Haskellorls.Tree
     Haskellorls.UserInfo
     Haskellorls.Utils
     Haskellorls.WrappedText
