@@ -27,7 +27,7 @@ timeParser =
         "status" -> pure CHANGE
         -- "birth" -> BIRTH
         -- "creation" -> BIRTH
-        _ -> pure MODIFICATION
+        _ -> readerError "Available values are only 'atime', 'access', 'use', 'ctime' and 'status'"
 
 timeStyleParser :: Parser TimeStyle
 timeStyleParser =
