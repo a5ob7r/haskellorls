@@ -3,7 +3,6 @@
 module Haskellorls.Option
   ( Option (..),
     ColorOpt (..),
-    IndicatorStyle (..),
     opts,
   )
 where
@@ -11,6 +10,7 @@ where
 import qualified Control.Applicative as A
 import qualified Haskellorls.Size.Option as Size
 import qualified Haskellorls.Time.Option as Time
+import qualified Haskellorls.Indicator.Option as Indicator
 import qualified Haskellorls.Tree as Tree
 import qualified Options.Applicative as OA
 import qualified Text.Read as Read
@@ -37,7 +37,7 @@ data Option = Option
     classify :: Bool,
     directoryIndicator :: Bool,
     fileType :: Bool,
-    indicatorStyle :: IndicatorStyle,
+    indicatorStyle :: Indicator.IndicatorStyle,
     ignoreBackups :: Bool,
     numericUidGid :: Bool,
     ignore :: String,
@@ -50,13 +50,6 @@ data Option = Option
 
 data ColorOpt = NEVER | ALWAYS | AUTO
   deriving (Show)
-
-data IndicatorStyle
-  = IndicatorNone
-  | IndicatorFiletype
-  | IndicatorSlash
-  | IndicatorClassify
-  deriving (Eq, Ord)
 
 opts :: OA.ParserInfo Option
 opts =
@@ -88,7 +81,7 @@ optionParser =
     <*> classifyParser
     <*> directoryIndicatorParser
     <*> fileTypeParser
-    <*> indicatorStyleParser
+    <*> Indicator.indicatorStyleParser
     <*> ignoreBackupsParser
     <*> numericUidGidParser
     <*> ignoreParser
@@ -219,22 +212,6 @@ fileTypeParser =
   OA.switch $
     OA.long "file-type"
       <> OA.help "Append indicators without '*'"
-
-indicatorStyleParser :: OA.Parser IndicatorStyle
-indicatorStyleParser =
-  OA.option reader $
-    OA.long "indicator-style"
-      <> OA.metavar "WORD"
-      <> OA.value IndicatorNone
-      <> OA.help "Specify indicator style, 'none', 'slash', 'file-tyep' and 'classify'"
-  where
-    reader =
-      OA.auto >>= \case
-        "none" -> return IndicatorNone
-        "slash" -> return IndicatorSlash
-        "file-type" -> return IndicatorFiletype
-        "classify" -> return IndicatorClassify
-        _ -> OA.readerError "Avairable values are only 'none', 'slash', 'file-tyep' and 'classify'"
 
 ignoreBackupsParser :: OA.Parser Bool
 ignoreBackupsParser =

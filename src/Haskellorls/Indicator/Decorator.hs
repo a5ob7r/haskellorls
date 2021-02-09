@@ -1,12 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Haskellorls.Indicator
+module Haskellorls.Indicator.Decorator
   ( buildIndicatorPrinter,
     deriveIndicatorStyle,
   )
 where
 
 import qualified Data.Text as T
+import Haskellorls.Indicator.Type
 import qualified Haskellorls.Name as Name
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
@@ -77,28 +78,28 @@ buildIndicators opt =
     else indicators
   where
     indicators = case deriveIndicatorStyle opt of
-      Option.IndicatorNone -> noneIndicators
-      Option.IndicatorFiletype -> fileTypeIndicator
-      Option.IndicatorSlash -> slashIndicator
-      Option.IndicatorClassify -> classifyIndicators
+      IndicatorNone -> noneIndicators
+      IndicatorFiletype -> fileTypeIndicator
+      IndicatorSlash -> slashIndicator
+      IndicatorClassify -> classifyIndicators
     oneline = Option.oneline opt
     long = any (\f -> f opt) [Option.long, Option.longWithoutOwner, Option.longWithoutGroup]
 
-deriveIndicatorStyle :: Option.Option -> Option.IndicatorStyle
+deriveIndicatorStyle :: Option.Option -> IndicatorStyle
 deriveIndicatorStyle opt = maximum [classify, directory, fileType, style]
   where
     classify =
       if Option.classify opt
-        then Option.IndicatorClassify
-        else Option.IndicatorNone
+        then IndicatorClassify
+        else IndicatorNone
     directory =
       if Option.directoryIndicator opt
-        then Option.IndicatorSlash
-        else Option.IndicatorNone
+        then IndicatorSlash
+        else IndicatorNone
     fileType =
       if Option.fileType opt
-        then Option.IndicatorFiletype
-        else Option.IndicatorNone
+        then IndicatorFiletype
+        else IndicatorNone
     style = Option.indicatorStyle opt
 
 directoryIndicator :: T.Text

@@ -17,7 +17,8 @@ import qualified Data.Text as T
 import qualified Data.Time.Format as Format
 import qualified Haskellorls.Color as Color
 import qualified Haskellorls.Field as Field
-import qualified Haskellorls.Indicator as Indicator
+import qualified Haskellorls.Indicator.Decorator as Indicator
+import qualified Haskellorls.Indicator.Type as Indicator
 import qualified Haskellorls.Inode as Inode
 import qualified Haskellorls.Link as Link
 import qualified Haskellorls.Name as Name
@@ -65,7 +66,7 @@ neededNamePrinterTypeBy :: NamePrinterType -> Option.Option -> Bool
 neededNamePrinterTypeBy npType opt = case npType of
   NAME -> True
   LINK -> isLongStyle opt
-  INDICATOR -> Option.IndicatorNone < Indicator.deriveIndicatorStyle opt
+  INDICATOR -> Indicator.IndicatorNone < Indicator.deriveIndicatorStyle opt
 
 buildNamePrinterTypes :: Option.Option -> [NamePrinterType]
 buildNamePrinterTypes opt = filter (`neededNamePrinterTypeBy` opt) [NAME, LINK, INDICATOR]
