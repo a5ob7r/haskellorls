@@ -30,7 +30,9 @@ library
     Haskellorls.Size.Type
     Haskellorls.Sort
     Haskellorls.SymbolicLink
-    Haskellorls.Time
+    Haskellorls.Time.Decorator
+    Haskellorls.Time.Option
+    Haskellorls.Time.Type
     Haskellorls.Tree
     Haskellorls.UserInfo
     Haskellorls.Utils

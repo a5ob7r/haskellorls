@@ -6,7 +6,7 @@ where
 import qualified Data.List as L
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
-import qualified Haskellorls.Time as Time
+import qualified Haskellorls.Time.Type as Time
 import qualified System.Posix.Files as Files
 
 data SortType
@@ -38,7 +38,7 @@ sortTypeFrom opt
   | otherwise = sortTypeFrom' sort
   where
     sort = Option.sort opt
-    timeType = Time.timeTypeFrom $ Option.time opt
+    timeType = Option.time opt
 
 sortTypeFrom' :: String -> SortType
 sortTypeFrom' s = case s of

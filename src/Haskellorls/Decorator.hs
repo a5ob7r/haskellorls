@@ -26,7 +26,7 @@ import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Ownership as Ownership
 import qualified Haskellorls.Size.Decorator as Size
 import qualified Haskellorls.SymbolicLink as SymbolicLink
-import qualified Haskellorls.Time as Time
+import qualified Haskellorls.Time.Decorator as Time
 import qualified Haskellorls.UserInfo as UserInfo
 import qualified Haskellorls.WrappedText as WT
 import qualified System.IO as SIO
@@ -173,8 +173,8 @@ buildPrinters opt = do
           else WT.toWrappedTextSingleton . timeStyleFunc . fileTime . Node.nodeInfoStatus
         where
           timeStyleFunc = Time.timeStyleFunc Format.defaultTimeLocale currentTime timeStyle
-          fileTime = Time.fileTime . Time.timeTypeFrom $ Option.time opt
-          timeStyle = Time.timeStyleFrom $ Option.timeStyle opt
+          fileTime = Time.fileTime $ Option.time opt
+          timeStyle = Option.timeStyle opt
 
       nodePrinter =
         if shouldColorize

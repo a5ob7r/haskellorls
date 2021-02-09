@@ -10,6 +10,7 @@ where
 
 import qualified Control.Applicative as A
 import qualified Haskellorls.Size.Option as Size
+import qualified Haskellorls.Time.Option as Time
 import qualified Haskellorls.Tree as Tree
 import qualified Options.Applicative as OA
 import qualified Text.Read as Read
@@ -21,8 +22,8 @@ data Option = Option
     si :: Bool,
     humanReadable :: Bool,
     blockSize :: Size.BlockSize,
-    time :: String,
-    timeStyle :: String,
+    time :: Time.TimeType,
+    timeStyle :: Time.TimeStyle,
     all :: Bool,
     almostAll :: Bool,
     sort :: String,
@@ -72,8 +73,8 @@ optionParser =
     <*> Size.siParser
     <*> Size.humanReadableParser
     <*> Size.blockSizeParser
-    <*> timeParser
-    <*> timeStyleParser
+    <*> Time.timeParser
+    <*> Time.timeStyleParser
     <*> allParser
     <*> almostAllParser
     <*> sortParser
@@ -123,22 +124,6 @@ longParser =
   OA.switch $
     OA.short 'l'
       <> OA.help "Enable long layout which provides informative outputs about files"
-
-timeParser :: OA.Parser String
-timeParser =
-  OA.strOption $
-    OA.long "time"
-      <> OA.metavar "WORD"
-      <> OA.value ""
-      <> OA.help "Specify a time kind which is used as file's time attribute"
-
-timeStyleParser :: OA.Parser String
-timeStyleParser =
-  OA.strOption $
-    OA.long "time-style"
-      <> OA.metavar "TYPE_STYLE"
-      <> OA.value ""
-      <> OA.help "Specify time output format"
 
 allParser :: OA.Parser Bool
 allParser =
