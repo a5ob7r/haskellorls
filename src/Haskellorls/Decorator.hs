@@ -16,6 +16,7 @@ import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 import qualified Data.Time.Format as Format
 import qualified Haskellorls.Color as Color
+import qualified Haskellorls.Color.Type as Color
 import qualified Haskellorls.Field as Field
 import qualified Haskellorls.Indicator.Decorator as Indicator
 import qualified Haskellorls.Indicator.Type as Indicator
@@ -132,9 +133,9 @@ buildPrinters opt = do
   userInfo <- UserInfo.userInfo
   currentTime <- PTime.epochTime
   shouldColorize <- case Option.color opt of
-    Option.NEVER -> return False
-    Option.ALWAYS -> return True
-    Option.AUTO -> SIO.hIsTerminalDevice SIO.stdout
+    Color.NEVER -> return False
+    Color.ALWAYS -> return True
+    Color.AUTO -> SIO.hIsTerminalDevice SIO.stdout
 
   let isEnableExtraColor = Option.extraColor opt
 

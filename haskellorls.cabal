@@ -14,6 +14,8 @@ library
   exposed-modules:
     Haskellorls
     Haskellorls.Color
+    Haskellorls.Color.Option
+    Haskellorls.Color.Type
     Haskellorls.Decorator
     Haskellorls.Entry
     Haskellorls.Field

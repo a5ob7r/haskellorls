@@ -2,21 +2,21 @@
 
 module Haskellorls.Option
   ( Option (..),
-    ColorOpt (..),
     opts,
   )
 where
 
 import qualified Control.Applicative as A
+import qualified Haskellorls.Color.Option as Color
+import qualified Haskellorls.Indicator.Option as Indicator
 import qualified Haskellorls.Size.Option as Size
 import qualified Haskellorls.Time.Option as Time
-import qualified Haskellorls.Indicator.Option as Indicator
 import qualified Haskellorls.Tree as Tree
 import qualified Options.Applicative as OA
 import qualified Text.Read as Read
 
 data Option = Option
-  { color :: ColorOpt,
+  { color :: Color.Colorize,
     extraColor :: Bool,
     long :: Bool,
     si :: Bool,
@@ -48,9 +48,6 @@ data Option = Option
     targets :: [FilePath]
   }
 
-data ColorOpt = NEVER | ALWAYS | AUTO
-  deriving (Show)
-
 opts :: OA.ParserInfo Option
 opts =
   OA.info (optionParser OA.<**> OA.helper) $
@@ -60,8 +57,8 @@ opts =
 optionParser :: OA.Parser Option
 optionParser =
   Option
-    <$> colorParser
-    <*> extraColorParser
+    <$> Color.colorParser
+    <*> Color.extraColorParser
     <*> longParser
     <*> Size.siParser
     <*> Size.humanReadableParser
@@ -90,27 +87,6 @@ optionParser =
     <*> levelParser
     <*> versionParser
     <*> argParser
-
-colorParser :: OA.Parser ColorOpt
-colorParser =
-  OA.option reader $
-    OA.long "color"
-      <> OA.metavar "WHEN"
-      <> OA.value NEVER
-      <> OA.help "When use output with color (default is 'never')"
-  where
-    reader =
-      OA.str >>= \case
-        "never" -> return NEVER
-        "always" -> return ALWAYS
-        "auto" -> return AUTO
-        _ -> OA.readerError "Only never, always or auto"
-
-extraColorParser :: OA.Parser Bool
-extraColorParser =
-  OA.switch $
-    OA.long "extra-color"
-      <> OA.help "Enable extra coloring which is incompatible for GNU ls."
 
 longParser :: OA.Parser Bool
 longParser =
