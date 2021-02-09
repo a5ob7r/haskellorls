@@ -8,11 +8,11 @@ module Haskellorls.Option
   )
 where
 
-import qualified Data.Char as C
 import qualified Control.Applicative as A
-import qualified Options.Applicative as OA
 import qualified Haskellorls.Size.Option as Size
 import qualified Haskellorls.Tree as Tree
+import qualified Options.Applicative as OA
+import qualified Text.Read as Read
 
 data Option = Option
   { color :: ColorOpt,
@@ -99,20 +99,18 @@ optionParser =
 
 colorParser :: OA.Parser ColorOpt
 colorParser =
-  OA.option parseColorOpt $
+  OA.option reader $
     OA.long "color"
       <> OA.metavar "WHEN"
       <> OA.value NEVER
       <> OA.help "When use output with color (default is 'never')"
-
-parseColorOpt :: OA.ReadM ColorOpt
-parseColorOpt = OA.str >>= f
   where
-    f s = case s of
-      "never" -> return NEVER
-      "always" -> return ALWAYS
-      "auto" -> return AUTO
-      _ -> OA.readerError "Only never, always or auto"
+    reader =
+      OA.str >>= \case
+        "never" -> return NEVER
+        "always" -> return ALWAYS
+        "auto" -> return AUTO
+        _ -> OA.readerError "Only never, always or auto"
 
 extraColorParser :: OA.Parser Bool
 extraColorParser =
@@ -205,10 +203,11 @@ widthParser =
       <> OA.help "Specify output width. Assumes infinity width if 0."
       <> OA.value Nothing
   where
-    reader = OA.auto >>= reader'
-    reader' n
-      | n >= 0 = return $ Just n
-      | otherwise = OA.readerError "COLS must be a natural number"
+    reader =
+      OA.auto >>= \n ->
+        if n >= 0
+          then return $ Just n
+          else OA.readerError "COLS must be a natural number"
 
 inodeParser :: OA.Parser Bool
 inodeParser =
@@ -244,13 +243,13 @@ indicatorStyleParser =
       <> OA.value IndicatorNone
       <> OA.help "Specify indicator style, 'none', 'slash', 'file-tyep' and 'classify'"
   where
-    reader = OA.auto >>= reader'
-    reader' = \case
-      "none" -> return IndicatorNone
-      "slash" -> return IndicatorSlash
-      "file-type" -> return IndicatorFiletype
-      "classify" -> return IndicatorClassify
-      _ -> OA.readerError "Avairable values are only 'none', 'slash', 'file-tyep' and 'classify'"
+    reader =
+      OA.auto >>= \case
+        "none" -> return IndicatorNone
+        "slash" -> return IndicatorSlash
+        "file-type" -> return IndicatorFiletype
+        "classify" -> return IndicatorClassify
+        _ -> OA.readerError "Avairable values are only 'none', 'slash', 'file-tyep' and 'classify'"
 
 ignoreBackupsParser :: OA.Parser Bool
 ignoreBackupsParser =
@@ -299,13 +298,11 @@ levelParser =
       <> OA.value Tree.makeInf
       <> OA.help "Specify how much depth drills in directory"
   where
-    reader = OA.str >>= reader' . toDepth
-    reader' = \case
-      Just d -> return d
-      _ -> OA.readerError "Acceptable value is only natural number"
-    toDepth s
-      | Prelude.all C.isDigit s = Tree.makeDepth $ read s
-      | otherwise = Nothing
+    reader =
+      OA.str >>= \s -> do
+        case Read.readMaybe s >>= Tree.makeDepth of
+          Just d -> return d
+          _ -> OA.readerError "Acceptable value is only natural number"
 
 versionParser :: OA.Parser Bool
 versionParser =
