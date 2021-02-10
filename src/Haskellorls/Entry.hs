@@ -25,7 +25,7 @@ import qualified System.FilePath.Posix as Posix
 import qualified System.IO as IO
 import qualified System.Posix.Files as Files
 
-data EntryType = FILES | DIRECTORY
+data EntryType = FILES | SINGLEDIR | DIRECTORY
 
 data Entry = Entry
   { entryType :: EntryType,
@@ -43,7 +43,7 @@ toEntries (Files fEntry@(Entry _ _ contents) dEntries) = fEntry' ++ dEntries'
   where
     fEntry' = [fEntry | not $ null contents]
     dEntries'
-      | null contents && length dEntries == 1 = [(head dEntries) {entryType = FILES}]
+      | null contents && length dEntries == 1 = [(head dEntries) {entryType = SINGLEDIR}]
       | otherwise = dEntries
 
 buildDirectoryEntry :: Option.Option -> FilePath -> IO Entry

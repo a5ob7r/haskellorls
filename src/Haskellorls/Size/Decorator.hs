@@ -3,7 +3,8 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Haskellorls.Size.Decorator
-  ( fileBlockSize,
+  ( toTotalBlockSize,
+    fileBlockSize,
     coloredFileBlockSize,
     fileSize,
     coloredFileSize,
@@ -33,6 +34,9 @@ toWrappedText FileSizeComponent {..} =
   [ WT.toWrappedText fileSizeNumber,
     WT.toWrappedText fileSizeUnit
   ]
+
+toTotalBlockSize :: Option.Option -> [Types.FileOffset] -> [WT.WrappedText]
+toTotalBlockSize opt = toWrappedText . fileSize' opt . sum . map toFileBlockSize
 
 fileBlockSize :: Option.Option -> Node.NodeInfo -> [WT.WrappedText]
 fileBlockSize opt node = toWrappedText . fileSize' opt . toFileBlockSize $ fileSizeOf node
