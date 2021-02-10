@@ -36,6 +36,7 @@ import qualified System.Posix.Time as PTime
 
 data PrinterType
   = FILEINODE
+  | FILEBLOCK
   | FILEFIELD
   | FILELINK
   | FILEOWNER
@@ -89,6 +90,7 @@ data AlighmentType
 
 data Printers = Printers
   { fileInodePrinter :: Printer,
+    fileBlockPrinter :: Printer,
     fileFieldPrinter :: Printer,
     fileLinkPrinter :: Printer,
     fileOwnerPrinter :: Printer,
@@ -101,6 +103,7 @@ data Printers = Printers
 alignmentTypeFor :: PrinterType -> AlighmentType
 alignmentTypeFor dType = case dType of
   FILEINODE -> RIGHT
+  FILEBLOCK -> RIGHT
   FILEFIELD -> NONE
   FILELINK -> RIGHT
   FILEOWNER -> LEFT
@@ -113,6 +116,7 @@ alignmentTypeFor dType = case dType of
 printerSelectorFor :: PrinterType -> Printers -> Printer
 printerSelectorFor pType = case pType of
   FILEINODE -> fileInodePrinter
+  FILEBLOCK -> fileBlockPrinter
   FILEFIELD -> fileFieldPrinter
   FILELINK -> fileLinkPrinter
   FILEOWNER -> fileOwnerPrinter
@@ -146,6 +150,11 @@ buildPrinters opt = do
         if shouldColorize && isEnableExtraColor
           then Inode.nodeInodeNumberWithColor cConfig
           else WT.toWrappedTextSingleton . T.pack . show . Inode.nodeInodeNumber
+
+      fileBlockFieldPrinter =
+        if shouldColorize && isEnableExtraColor
+          then Size.coloredFileBlockSize cConfig opt
+          else Size.fileBlockSize opt
 
       filemodeFieldPrinter =
         if shouldColorize && isEnableExtraColor
@@ -200,6 +209,7 @@ buildPrinters opt = do
   return $
     Printers
       { fileInodePrinter = fileInodeFieldPrinter,
+        fileBlockPrinter = fileBlockFieldPrinter,
         fileFieldPrinter = filemodeFieldPrinter . Field.filemodeField . Node.nodeInfoStatus,
         fileLinkPrinter = fileLinkFieldPrinter,
         fileOwnerPrinter = fileOwnerFieldPrinter,
@@ -210,12 +220,13 @@ buildPrinters opt = do
       }
 
 buildPrinterTypes :: Option.Option -> [PrinterType]
-buildPrinterTypes opt = filter (`neededBy` opt) [FILEINODE, FILEFIELD, FILELINK, FILEOWNER, FILEGROUP, FILEAUTHOR, FILESIZE, FILETIME, FILENAME]
+buildPrinterTypes opt = filter (`neededBy` opt) [FILEINODE, FILEBLOCK, FILEFIELD, FILELINK, FILEOWNER, FILEGROUP, FILEAUTHOR, FILESIZE, FILETIME, FILENAME]
 
 -- | Should the `PrinterType` value is needed by the options.
 neededBy :: PrinterType -> Option.Option -> Bool
 neededBy pType opt = case pType of
   FILEINODE -> inode
+  FILEBLOCK -> size
   FILEFIELD -> long
   FILELINK -> long
   FILEOWNER -> long && owner
@@ -226,6 +237,7 @@ neededBy pType opt = case pType of
   FILENAME -> True
   where
     inode = Option.inode opt
+    size = Option.size opt
     long = isLongStyle opt
     owner = not $ Option.longWithoutOwner opt
     group = not (Option.longWithoutGroup opt || Option.noGroup opt)

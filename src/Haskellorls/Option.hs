@@ -45,6 +45,7 @@ data Option = Option
     recursive :: Bool,
     level :: Tree.Depth,
     author :: Bool,
+    size :: Bool,
     version :: Bool,
     targets :: [FilePath]
   }
@@ -87,6 +88,7 @@ optionParser =
     <*> recursiveParser
     <*> levelParser
     <*> authorParser
+    <*> sizeParser
     <*> versionParser
     <*> argParser
 
@@ -249,6 +251,13 @@ authorParser =
   OA.switch $
     OA.long "author"
       <> OA.help "Output file author, but this is equal to file owner (for compatibiliy to GNU ls)"
+
+sizeParser :: OA.Parser Bool
+sizeParser =
+  OA.switch $
+    OA.long "size"
+      <> OA.short 's'
+      <> OA.help "Output allocated block size of each files"
 
 versionParser :: OA.Parser Bool
 versionParser =

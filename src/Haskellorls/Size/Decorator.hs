@@ -3,7 +3,9 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Haskellorls.Size.Decorator
-  ( fileSize,
+  ( fileBlockSize,
+    coloredFileBlockSize,
+    fileSize,
     coloredFileSize,
   )
 where
@@ -26,59 +28,75 @@ data FileSizeComponent = FileSizeComponent
 
 newtype UnitSize = UnitSize {getUnitSize :: Int}
 
-fileSize :: Option.Option -> Node.NodeInfo -> [WT.WrappedText]
-fileSize opt node =
-  [ WT.toWrappedText $ fileSizeNumber component,
-    WT.toWrappedText $ fileSizeUnit component
+toWrappedText :: FileSizeComponent -> [WT.WrappedText]
+toWrappedText FileSizeComponent {..} =
+  [ WT.toWrappedText fileSizeNumber,
+    WT.toWrappedText fileSizeUnit
   ]
-  where
-    component = fileSize' opt node
 
-fileSize' :: Option.Option -> Node.NodeInfo -> FileSizeComponent
-fileSize' opt node = case Option.blockSize opt of
+fileBlockSize :: Option.Option -> Node.NodeInfo -> [WT.WrappedText]
+fileBlockSize opt node = toWrappedText . fileSize' opt . toFileBlockSize $ fileSizeOf node
+
+coloredFileBlockSize :: Color.Config -> Option.Option -> Node.NodeInfo -> [WT.WrappedText]
+coloredFileBlockSize config opt node = coloredFileSize' config . fileSize' opt . toFileBlockSize $ fileSizeOf node
+
+toFileBlockSize :: Types.FileOffset -> Types.FileOffset
+toFileBlockSize size = a' * unitBlockSize
+  where
+    (a, b) = size `divMod` unitBlockSize
+    a' = a + abs (signum b)
+    unitBlockSize = sizeKi * 4
+
+fileSize :: Option.Option -> Node.NodeInfo -> [WT.WrappedText]
+fileSize opt node = toWrappedText . fileSize' opt $ fileSizeOf node
+
+fileSize' :: Option.Option -> Types.FileOffset -> FileSizeComponent
+fileSize' opt size = case Option.blockSize opt of
   HumanReadable
-    | Option.si opt -> siHumanReadableFileSize node
-    | otherwise -> kibiHumanReadableFileSize node
+    | Option.si opt -> siHumanReadableFileSize size
+    | otherwise -> kibiHumanReadableFileSize size
   blockSize@BlockSize {..}
-    | Option.humanReadable opt -> fileSize' opt {Option.blockSize = HumanReadable} node
+    | Option.humanReadable opt -> fileSize' opt {Option.blockSize = HumanReadable} size
     | otherwise -> FileSizeComponent {..}
     where
       fileSizeNumber = asInt $ fromIntegral fileSizeRawNumber / fromIntegral (getUnitSize unitSize)
       fileSizeUnit = case scale of
         NoScale -> fileSizeUnitSelector scaleSuffix baseScale
         _ -> ""
-      fileSizeRawNumber = fileSizeOf node
+      fileSizeRawNumber = size
       unitSize = calcUnitSize blockSize
       fileSizeKibi = case scaleSuffix of
         SI -> False
         _ -> True
 
 coloredFileSize :: Color.Config -> Option.Option -> Node.NodeInfo -> [WT.WrappedText]
-coloredFileSize config opt node =
+coloredFileSize config opt node = coloredFileSize' config . fileSize' opt $ fileSizeOf node
+
+coloredFileSize' :: Color.Config -> FileSizeComponent -> [WT.WrappedText]
+coloredFileSize' config FileSizeComponent {..} =
   [ Color.toWrappedText config sizeSelector fileSizeNumber,
     Color.toWrappedText config unitSelector fileSizeUnit
   ]
   where
-    FileSizeComponent {..} = fileSize' opt node
     unitSelector = unitEscapeSequenceSelector bScale
     sizeSelector = sizeEscapeSequenceSelector bScale
     bScale
       | fileSizeKibi = detectKibiBlockSizeType fileSizeRawNumber
       | otherwise = detectSiBlockSizeType fileSizeRawNumber
 
-kibiHumanReadableFileSize :: Node.NodeInfo -> FileSizeComponent
-kibiHumanReadableFileSize node = FileSizeComponent {..}
+kibiHumanReadableFileSize :: Types.FileOffset -> FileSizeComponent
+kibiHumanReadableFileSize size = FileSizeComponent {..}
   where
-    fileSizeRawNumber = fileSizeOf node
+    fileSizeRawNumber = size
     fileSizeNumber = kibiFileSizeAs baseScale fileSizeRawNumber
     fileSizeUnit = fileSizeUnitSelector KIBI baseScale
     fileSizeKibi = True
     baseScale = detectKibiBlockSizeType fileSizeRawNumber
 
-siHumanReadableFileSize :: Node.NodeInfo -> FileSizeComponent
-siHumanReadableFileSize node = FileSizeComponent {..}
+siHumanReadableFileSize :: Types.FileOffset -> FileSizeComponent
+siHumanReadableFileSize size = FileSizeComponent {..}
   where
-    fileSizeRawNumber = fileSizeOf node
+    fileSizeRawNumber = size
     fileSizeNumber = siFileSizeAs baseScale fileSizeRawNumber
     fileSizeUnit = fileSizeUnitSelector KIBI baseScale
     fileSizeKibi = False
