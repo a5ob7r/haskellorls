@@ -40,6 +40,7 @@ data PrinterType
   | FILELINK
   | FILEOWNER
   | FILEGROUP
+  | FILEAUTHOR -- For compatibility to GNU ls
   | FILESIZE
   | FILETIME
   | FILENAME
@@ -104,6 +105,7 @@ alignmentTypeFor dType = case dType of
   FILELINK -> RIGHT
   FILEOWNER -> LEFT
   FILEGROUP -> LEFT
+  FILEAUTHOR -> LEFT
   FILESIZE -> RIGHT
   FILETIME -> LEFT
   FILENAME -> NONE
@@ -115,6 +117,7 @@ printerSelectorFor pType = case pType of
   FILELINK -> fileLinkPrinter
   FILEOWNER -> fileOwnerPrinter
   FILEGROUP -> fileGroupPrinter
+  FILEAUTHOR -> fileOwnerPrinter
   FILESIZE -> fileSizePrinter
   FILETIME -> fileTimePrinter
   FILENAME -> fileNamePrinter
@@ -207,7 +210,7 @@ buildPrinters opt = do
       }
 
 buildPrinterTypes :: Option.Option -> [PrinterType]
-buildPrinterTypes opt = filter (`neededBy` opt) [FILEINODE, FILEFIELD, FILELINK, FILEOWNER, FILEGROUP, FILESIZE, FILETIME, FILENAME]
+buildPrinterTypes opt = filter (`neededBy` opt) [FILEINODE, FILEFIELD, FILELINK, FILEOWNER, FILEGROUP, FILEAUTHOR, FILESIZE, FILETIME, FILENAME]
 
 -- | Should the `PrinterType` value is needed by the options.
 neededBy :: PrinterType -> Option.Option -> Bool
@@ -217,6 +220,7 @@ neededBy pType opt = case pType of
   FILELINK -> long
   FILEOWNER -> long && owner
   FILEGROUP -> long && group
+  FILEAUTHOR -> long && author
   FILESIZE -> long
   FILETIME -> long
   FILENAME -> True
@@ -225,6 +229,7 @@ neededBy pType opt = case pType of
     long = isLongStyle opt
     owner = not $ Option.longWithoutOwner opt
     group = not (Option.longWithoutGroup opt || Option.noGroup opt)
+    author = Option.author opt
 
 isLongStyle :: Option.Option -> Bool
 isLongStyle opt = any (\f -> f opt) [Option.long, Option.longWithoutGroup, Option.longWithoutOwner]

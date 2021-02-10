@@ -44,6 +44,7 @@ data Option = Option
     hide :: String,
     recursive :: Bool,
     level :: Tree.Depth,
+    author :: Bool,
     version :: Bool,
     targets :: [FilePath]
   }
@@ -85,6 +86,7 @@ optionParser =
     <*> hideParser
     <*> recursiveParser
     <*> levelParser
+    <*> authorParser
     <*> versionParser
     <*> argParser
 
@@ -241,6 +243,12 @@ levelParser =
         case Read.readMaybe s >>= Tree.makeDepth of
           Just d -> return d
           _ -> OA.readerError "Acceptable value is only natural number"
+
+authorParser :: OA.Parser Bool
+authorParser =
+  OA.switch $
+    OA.long "author"
+      <> OA.help "Output file author, but this is equal to file owner (for compatibiliy to GNU ls)"
 
 versionParser :: OA.Parser Bool
 versionParser =
