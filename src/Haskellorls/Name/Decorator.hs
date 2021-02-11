@@ -4,6 +4,7 @@ module Haskellorls.Name.Decorator
   ( colorizedNodeName,
     nodeName,
     nodeTypeOf,
+    lookupEscSeq,
     module Haskellorls.Name.Type
   )
 where
@@ -50,22 +51,22 @@ colorizedNodeName :: Color.Config -> Node.NodeInfo -> [WT.WrappedText]
 colorizedNodeName config nd = [Color.toWrappedText config getter name]
   where
     name = nodeName nd
-    getter = flip lookupEscSeq nd
+    getter = lookupEscSeq nd
 
-lookupEscSeq :: Color.Config -> Node.NodeInfo -> T.Text
-lookupEscSeq conf nd = case nd of
-  Node.FileInfo {} -> lookupEscSeq' conf nd
+lookupEscSeq :: Node.NodeInfo -> Color.Config -> T.Text
+lookupEscSeq nd conf = case nd of
+  Node.FileInfo {} -> nd `lookupEscSeq'` conf
   Node.LinkInfo {} -> lookupSymlinkEscSeq
   Node.OrphanedLinkInfo {} -> Color.orphanedSymlinkEscapeSequence conf
   where
     lookupSymlinkEscSeq =
       if symlinkEscSeq' == "target"
-        then lookupEscSeq' conf $ Node.toFileInfo nd
+        then Node.toFileInfo nd `lookupEscSeq'` conf
         else symlinkEscSeq'
     symlinkEscSeq' = Color.symlinkEscapeSequence conf
 
-lookupEscSeq' :: Color.Config -> Node.NodeInfo -> T.Text
-lookupEscSeq' conf nd = case nodeTypeOf $ Node.nodeInfoStatus nd of
+lookupEscSeq' :: Node.NodeInfo -> Color.Config -> T.Text
+lookupEscSeq' nd conf = case nodeTypeOf $ Node.nodeInfoStatus nd of
   Directory -> Color.directoryEscapeSequence conf
   NamedPipe -> Color.pipeEscapeSequence conf
   Socket -> Color.socketEscapeSequence conf

@@ -46,6 +46,7 @@ data Option = Option
     level :: Tree.Depth,
     author :: Bool,
     size :: Bool,
+    icon :: Bool,
     version :: Bool,
     targets :: [FilePath]
   }
@@ -89,6 +90,7 @@ optionParser =
     <*> levelParser
     <*> authorParser
     <*> sizeParser
+    <*> iconParser
     <*> versionParser
     <*> argParser
 
@@ -258,6 +260,12 @@ sizeParser =
     OA.long "size"
       <> OA.short 's'
       <> OA.help "Output allocated block size of each files"
+
+iconParser :: OA.Parser Bool
+iconParser =
+  OA.switch $
+    OA.long "icons"
+      <> OA.help "Output icon for each files"
 
 versionParser :: OA.Parser Bool
 versionParser =

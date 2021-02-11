@@ -19,6 +19,7 @@ library
     Haskellorls.Entry
     Haskellorls.Field
     Haskellorls.Grid
+    Haskellorls.Icon
     Haskellorls.Indicator.Decorator
     Haskellorls.Indicator.Option
     Haskellorls.Indicator.Type

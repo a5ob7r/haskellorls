@@ -15,13 +15,14 @@ import qualified Data.List as List
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 import qualified Data.Time.Format as Format
-import qualified Haskellorls.LsColor.Config as Color
 import qualified Haskellorls.Color.Type as Color
 import qualified Haskellorls.Field as Field
+import qualified Haskellorls.Icon as Icon
 import qualified Haskellorls.Indicator.Decorator as Indicator
 import qualified Haskellorls.Indicator.Type as Indicator
 import qualified Haskellorls.Inode as Inode
 import qualified Haskellorls.Link as Link
+import qualified Haskellorls.LsColor.Config as Color
 import qualified Haskellorls.Name.Decorator as Name
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
@@ -47,12 +48,14 @@ data PrinterType
   | FILENAME
 
 data NamePrinterType
-  = NAME
+  = ICON
+  | NAME
   | LINK
   | INDICATOR
 
 data NodeNamePrinters = NodeNamePrinters
-  { nodeNamePrinter :: Printer,
+  { nodeIconPrinter :: Printer,
+    nodeNamePrinter :: Printer,
     nodeLinkPrinter :: Printer,
     nodeIndicatorPrinter :: Printer
   }
@@ -61,18 +64,20 @@ nodeNamePrinterSelector :: NamePrinterType -> NodeNamePrinters -> Printer
 nodeNamePrinterSelector npType = selector
   where
     selector = case npType of
+      ICON -> nodeIconPrinter
       NAME -> nodeNamePrinter
       LINK -> nodeLinkPrinter
       INDICATOR -> nodeIndicatorPrinter
 
 neededNamePrinterTypeBy :: NamePrinterType -> Option.Option -> Bool
 neededNamePrinterTypeBy npType opt = case npType of
+  ICON -> Option.icon opt
   NAME -> True
   LINK -> isLongStyle opt
   INDICATOR -> Indicator.IndicatorNone < Indicator.deriveIndicatorStyle opt
 
 buildNamePrinterTypes :: Option.Option -> [NamePrinterType]
-buildNamePrinterTypes opt = filter (`neededNamePrinterTypeBy` opt) [NAME, LINK, INDICATOR]
+buildNamePrinterTypes opt = filter (`neededNamePrinterTypeBy` opt) [ICON, NAME, LINK, INDICATOR]
 
 buildNodeNamePrinter :: Option.Option -> NodeNamePrinters -> Printer
 buildNodeNamePrinter opt printers node = concatMap (\npType -> nodeNamePrinterSelector npType printers node) $ buildNamePrinterTypes opt
@@ -190,6 +195,9 @@ buildPrinters opt = do
           fileTime = Time.fileTime $ Option.time opt
           timeStyle = Option.timeStyle opt
 
+      -- TODO: Should use colored icon? But, must consider charactor size and background color.
+      -- e.g. $ echo -e '\e[48;5;196;38;5;232;1m\e[0m'
+      fileIconFieldPrinter = flip Icon.lookupIcon Icon.defaultConfig
       nodePrinter =
         if shouldColorize
           then Name.colorizedNodeName cConfig
@@ -201,7 +209,8 @@ buildPrinters opt = do
           else SymbolicLink.linkNameWrapper
       nodeNamePrinters =
         NodeNamePrinters
-          { nodeNamePrinter = nodePrinter,
+          { nodeIconPrinter = fileIconFieldPrinter,
+            nodeNamePrinter = nodePrinter,
             nodeLinkPrinter = fileSymbolicLinkPrinter,
             nodeIndicatorPrinter = fileIndicatorPrinter
           }

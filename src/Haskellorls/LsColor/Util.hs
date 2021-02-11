@@ -3,6 +3,8 @@
 
 module Haskellorls.LsColor.Util
   ( lookupLsColor,
+    findLsColorWithDefault,
+    module Haskellorls.LsColor.Type,
   )
 where
 
@@ -13,4 +15,7 @@ import qualified Data.Text as T
 import Haskellorls.LsColor.Type
 
 lookupLsColor :: T.Text -> LsColorDict -> T.Text
-lookupLsColor query LsColorDict {..} = L.headDef "" . Maybe.mapMaybe (`M.lookup` getLsColorDict) . reverse . T.tails $ T.toUpper query
+lookupLsColor = findLsColorWithDefault ""
+
+findLsColorWithDefault :: T.Text -> T.Text -> LsColorDict -> T.Text
+findLsColorWithDefault def query LsColorDict {..} = L.headDef def . Maybe.mapMaybe (`M.lookup` getLsColorDict) . reverse . T.tails $ T.toUpper query
