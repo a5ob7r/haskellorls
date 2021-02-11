@@ -1,3 +1,4 @@
+total 8
 ./          README.md          haskell-README.md     readme
 ../         README.md-haskell  haskell-README.md.en  readme.md.en
 .README.md  README.md.haskell  haskell.README.md.en
