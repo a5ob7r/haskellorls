@@ -9,7 +9,7 @@ where
 
 import qualified Data.Text as T
 import qualified Haskellorls.Color as Color
-import qualified Haskellorls.Name as Name
+import qualified Haskellorls.Name.Decorator as Name
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.WrappedText as WT
 

@@ -22,7 +22,7 @@ import qualified Haskellorls.Indicator.Decorator as Indicator
 import qualified Haskellorls.Indicator.Type as Indicator
 import qualified Haskellorls.Inode as Inode
 import qualified Haskellorls.Link as Link
-import qualified Haskellorls.Name as Name
+import qualified Haskellorls.Name.Decorator as Name
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Ownership as Ownership

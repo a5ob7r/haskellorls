@@ -8,7 +8,7 @@ where
 
 import qualified Data.Text as T
 import Haskellorls.Indicator.Type
-import qualified Haskellorls.Name as Name
+import qualified Haskellorls.Name.Decorator as Name
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.WrappedText as WT

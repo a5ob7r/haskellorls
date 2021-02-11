@@ -1,37 +1,20 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Haskellorls.Name
-  ( NodeType (..),
-    colorizedNodeName,
+module Haskellorls.Name.Decorator
+  ( colorizedNodeName,
     nodeName,
     nodeTypeOf,
+    module Haskellorls.Name.Type
   )
 where
 
 import qualified Data.Text as T
 import qualified Haskellorls.Color as Color
+import Haskellorls.Name.Type
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.WrappedText as WT
 import qualified System.Posix.Files as Files
 import qualified System.Posix.Types as Types
-
-data NodeType
-  = Directory
-  | SymbolicLink
-  | NamedPipe
-  | Socket
-  | BlockDevise
-  | CharDevise
-  | DoorsDevise -- NOTE: Doors device is not implemented on Linux
-  | Setuid
-  | Setgid
-  | Sticky
-  | StickyOtherWritable
-  | OtherWritable
-  | Executable
-  | File
-  | Orphan
-  deriving (Show)
 
 nodeTypeOf :: Files.FileStatus -> NodeType
 nodeTypeOf status

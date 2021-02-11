@@ -25,7 +25,8 @@ library
     Haskellorls.Indicator.Type
     Haskellorls.Inode
     Haskellorls.Link
-    Haskellorls.Name
+    Haskellorls.Name.Type
+    Haskellorls.Name.Decorator
     Haskellorls.NodeInfo
     Haskellorls.Option
     Haskellorls.Ownership
