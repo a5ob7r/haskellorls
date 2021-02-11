@@ -36,13 +36,22 @@ toWrappedText FileSizeComponent {..} =
   ]
 
 toTotalBlockSize :: Option.Option -> [Types.FileOffset] -> [WT.WrappedText]
-toTotalBlockSize opt = toWrappedText . fileSize' opt . sum . map toFileBlockSize
+toTotalBlockSize opt = toWrappedText . toTotalBlockSize' opt
+
+toTotalBlockSize' :: Option.Option -> [Types.FileOffset] -> FileSizeComponent
+toTotalBlockSize' opt = fileSize' opt' . sum . map toFileBlockSize
+  where
+    opt' = case Option.blockSize opt of
+      DefaultSize
+        | Option.si opt -> opt {Option.blockSize = HumanReadable}
+        | otherwise -> opt {Option.blockSize = defaultForFileBlockSize}
+      _ -> opt
 
 fileBlockSize :: Option.Option -> Node.NodeInfo -> [WT.WrappedText]
-fileBlockSize opt node = toWrappedText . fileSize' opt . toFileBlockSize $ fileSizeOf node
+fileBlockSize opt node = toTotalBlockSize opt [fileSizeOf node]
 
 coloredFileBlockSize :: Color.Config -> Option.Option -> Node.NodeInfo -> [WT.WrappedText]
-coloredFileBlockSize config opt node = coloredFileSize' config . fileSize' opt . toFileBlockSize $ fileSizeOf node
+coloredFileBlockSize config opt node = coloredFileSize' config $ toTotalBlockSize' opt [fileSizeOf node]
 
 toFileBlockSize :: Types.FileOffset -> Types.FileOffset
 toFileBlockSize size = a' * unitBlockSize
@@ -56,6 +65,9 @@ fileSize opt node = toWrappedText . fileSize' opt $ fileSizeOf node
 
 fileSize' :: Option.Option -> Types.FileOffset -> FileSizeComponent
 fileSize' opt size = case Option.blockSize opt of
+  DefaultSize
+    | Option.si opt -> siHumanReadableFileSize size
+    | otherwise -> fileSize' opt {Option.blockSize = defaultForFileSize} size
   HumanReadable
     | Option.si opt -> siHumanReadableFileSize size
     | otherwise -> kibiHumanReadableFileSize size
@@ -116,7 +128,14 @@ fileSizeUnitSelector ss = case ss of
   KIBII -> kibiiUnit
   SI -> siUnit
 
+defaultForFileBlockSize :: BlockSize
+defaultForFileBlockSize = BlockSize {scale = Scale 1, baseScale = KILO, scaleSuffix = KIBI}
+
+defaultForFileSize :: BlockSize
+defaultForFileSize = BlockSize {scale = Scale 1, baseScale = BYTE, scaleSuffix = NONE}
+
 calcUnitSize :: BlockSize -> UnitSize
+calcUnitSize DefaultSize = calcUnitSize defaultForFileSize
 calcUnitSize HumanReadable = UnitSize 1
 calcUnitSize BlockSize {..} = UnitSize $ scale' * sizeGetter baseScale
   where

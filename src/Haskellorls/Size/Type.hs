@@ -34,7 +34,8 @@ data ScaleSuffix
   | SI
 
 data BlockSize
-  = HumanReadable
+  = DefaultSize
+  | HumanReadable
   | BlockSize
       { scale :: Scale,
         baseScale :: BaseScale,

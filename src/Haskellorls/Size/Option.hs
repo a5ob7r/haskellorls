@@ -34,7 +34,7 @@ blockSizeParser =
   option blockSizeReader $
     long "block-size"
       <> metavar "SIZE"
-      <> value BlockSize {scale = Scale 1, baseScale = BYTE, scaleSuffix = NONE}
+      <> value DefaultSize
       <> help "Specify size unit when output file size"
 
 blockSizeReader :: ReadM BlockSize
