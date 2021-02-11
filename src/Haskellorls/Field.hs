@@ -11,7 +11,7 @@ module Haskellorls.Field
 where
 
 import qualified Data.Text as T
-import qualified Haskellorls.Color as Color
+import qualified Haskellorls.LsColor.Config as Color
 import qualified Haskellorls.WrappedText as WT
 import qualified System.Posix.Files as Files
 import qualified System.Posix.Types as Types

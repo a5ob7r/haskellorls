@@ -5,7 +5,7 @@ module Haskellorls.Link
 where
 
 import qualified Data.Text as T
-import qualified Haskellorls.Color as Color
+import qualified Haskellorls.LsColor.Config as Color
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.WrappedText as WT
 import qualified System.Posix.Files as Files

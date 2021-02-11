@@ -12,7 +12,7 @@ module Haskellorls.Size.Decorator
 where
 
 import qualified Data.Text as T
-import qualified Haskellorls.Color as Color
+import qualified Haskellorls.LsColor.Config as Color
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import Haskellorls.Size.Type

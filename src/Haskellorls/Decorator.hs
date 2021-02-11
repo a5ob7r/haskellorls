@@ -15,7 +15,7 @@ import qualified Data.List as List
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 import qualified Data.Time.Format as Format
-import qualified Haskellorls.Color as Color
+import qualified Haskellorls.LsColor.Config as Color
 import qualified Haskellorls.Color.Type as Color
 import qualified Haskellorls.Field as Field
 import qualified Haskellorls.Indicator.Decorator as Indicator

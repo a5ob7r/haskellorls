@@ -11,7 +11,7 @@ import qualified Data.Time.Clock as Clock
 import qualified Data.Time.Clock.POSIX as POSIX
 import qualified Data.Time.Format as Format
 import qualified Foreign.C.Types as CTypes
-import qualified Haskellorls.Color as Color
+import qualified Haskellorls.LsColor.Config as Color
 import Haskellorls.Time.Type
 import qualified Haskellorls.WrappedText as WT
 import qualified System.Posix.Files as Files

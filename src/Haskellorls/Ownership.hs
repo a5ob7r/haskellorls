@@ -22,7 +22,7 @@ where
 
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
-import qualified Haskellorls.Color as Color
+import qualified Haskellorls.LsColor.Config as Color
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.UserInfo as UserInfo
 import qualified Haskellorls.WrappedText as WT

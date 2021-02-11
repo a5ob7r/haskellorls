@@ -1,23 +1,20 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Haskellorls.Color
+module Haskellorls.LsColor.Config
   ( Config (..),
     config,
     ExtensionConfig (..),
-    lookupFilenameEscSec,
     toWrappedText,
     wrap,
   )
 where
 
-import qualified Data.List.Extra as Extra
 import qualified Data.Map.Strict as Map
 import qualified Data.Maybe as Maybe
 import qualified Data.Text as T
+import qualified Haskellorls.LsColor.Parser as LsColor
 import qualified Haskellorls.WrappedText as WT
 import qualified System.Environment as Env
-
-type FilenamePtnMap = Map.Map T.Text T.Text
 
 data Config = Config
   { leftEscapeSequence :: T.Text,
@@ -44,7 +41,7 @@ data Config = Config
     capabilityEscapeSequence :: T.Text,
     multiHardlinkEscapeSequence :: T.Text,
     clearLineEscapeSequence :: T.Text,
-    fileColorIndicator :: FilenamePtnMap,
+    fileColorIndicator :: LsColor.LsColorDict,
     extensionColorConfig :: ExtensionConfig
   }
 
@@ -116,7 +113,7 @@ defaultConfig =
       capabilityEscapeSequence = "30;41",
       multiHardlinkEscapeSequence = "",
       clearLineEscapeSequence = "\^[[K",
-      fileColorIndicator = Map.empty,
+      fileColorIndicator = LsColor.LsColorDict Map.empty,
       extensionColorConfig = defaultExtensionConfig
     }
 
@@ -200,8 +197,8 @@ configFrom lsColors =
     }
   where
     def = defaultConfig
-    indicator = colorIndicatorsFrom lsColors
-    parametors = parametorsFrom lsColors
+    indicator = LsColor.colorIndicatorsFrom lsColors
+    parametors = LsColor.getLsColorDict $ LsColor.parametorsFrom lsColors
 
 extensionConfigFrom :: [T.Text] -> ExtensionConfig
 extensionConfigFrom lsColors =
@@ -247,51 +244,13 @@ extensionConfigFrom lsColors =
     }
   where
     def = defaultExtensionConfig
-    parametors = parametorsFrom lsColors
-
-colorIndicatorsFrom :: [T.Text] -> FilenamePtnMap
-colorIndicatorsFrom = Map.fromList . Maybe.mapMaybe f
-  where
-    f s = makePatternEscapePair s >>= filenamePtnEscSec
-
-filenamePtnEscSec :: (T.Text, T.Text) -> Maybe (T.Text, T.Text)
-filenamePtnEscSec (ptn, esc) = filenamePattern ptn >>= (\ext -> Just (ext, esc))
-
-filenamePattern :: T.Text -> Maybe T.Text
-filenamePattern t
-  | isPrefixWild t = Just . T.toUpper $ T.drop 1 t
-  | otherwise = Nothing
-
-parametorsFrom :: [T.Text] -> FilenamePtnMap
-parametorsFrom = Map.fromList . Maybe.mapMaybe f
-  where
-    f s = makePatternEscapePair s >>= paramatorPtnEscSec
-
-paramatorPtnEscSec :: (T.Text, T.Text) -> Maybe (T.Text, T.Text)
-paramatorPtnEscSec pair@(ptn, _)
-  | isPrefixWild ptn = Nothing
-  | otherwise = Just pair
-
-isPrefixWild :: T.Text -> Bool
-isPrefixWild = Maybe.maybe False (\p -> fst p == '*') . T.uncons
-
-makePatternEscapePair :: T.Text -> Maybe (T.Text, T.Text)
-makePatternEscapePair s = case pairs of
-  [k, v] -> Just (k, v)
-  _ -> Nothing
-  where
-    pairs = T.split (== '=') s
+    parametors = LsColor.getLsColorDict $ LsColor.parametorsFrom lsColors
 
 getLSCOLORS :: IO T.Text
 getLSCOLORS = Maybe.maybe "" T.pack <$> Env.lookupEnv "LS_COLORS"
 
 getEXACOLORS :: IO T.Text
 getEXACOLORS = Maybe.maybe "" T.pack <$> Env.lookupEnv "EXA_COLORS"
-
--- | Lookup ascii escape sequence. At first, lookup with a query as it is. If
---    fails to lookup, change a query to the extension and re lookup.
-lookupFilenameEscSec :: FilenamePtnMap -> T.Text -> T.Text
-lookupFilenameEscSec ptnMap = Extra.headDef "" . Maybe.mapMaybe (`Map.lookup` ptnMap) . reverse . T.tails . T.toUpper
 
 toWrappedText :: Config -> (Config -> T.Text) -> T.Text -> WT.WrappedText
 toWrappedText cConfig getter t =

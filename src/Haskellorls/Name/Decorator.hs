@@ -9,7 +9,8 @@ module Haskellorls.Name.Decorator
 where
 
 import qualified Data.Text as T
-import qualified Haskellorls.Color as Color
+import qualified Haskellorls.LsColor.Config as Color
+import qualified Haskellorls.LsColor.Util as Color
 import Haskellorls.Name.Type
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.WrappedText as WT
@@ -77,7 +78,7 @@ lookupEscSeq' conf nd = case nodeTypeOf $ Node.nodeInfoStatus nd of
   StickyOtherWritable -> Color.stickyOtherWritableEscapeSequence conf
   OtherWritable -> Color.otherWritableEscapeSequence conf
   Executable -> Color.executableEscapeSequence conf
-  File -> Color.lookupFilenameEscSec (Color.fileColorIndicator conf) $ nodeName nd
+  File -> nodeName nd `Color.lookupLsColor` Color.fileColorIndicator conf
   _ -> Color.orphanedSymlinkEscapeSequence conf
 
 nodeName :: Node.NodeInfo -> T.Text

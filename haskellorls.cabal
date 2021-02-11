@@ -13,7 +13,6 @@ extra-source-files:
 library
   exposed-modules:
     Haskellorls
-    Haskellorls.Color
     Haskellorls.Color.Option
     Haskellorls.Color.Type
     Haskellorls.Decorator
@@ -25,6 +24,10 @@ library
     Haskellorls.Indicator.Type
     Haskellorls.Inode
     Haskellorls.Link
+    Haskellorls.LsColor.Config
+    Haskellorls.LsColor.Parser
+    Haskellorls.LsColor.Type
+    Haskellorls.LsColor.Util
     Haskellorls.Name.Type
     Haskellorls.Name.Decorator
     Haskellorls.NodeInfo
