@@ -3,6 +3,7 @@
 module Haskellorls.Sort.Option
   ( sortParser,
     naturalSortParser,
+    extensionSortParser,
     module Haskellorls.Sort.Type,
   )
 where
@@ -32,3 +33,9 @@ naturalSortParser =
   switch $
     short 'v'
       <> help "Natural sort"
+
+extensionSortParser :: Parser Bool
+extensionSortParser =
+  switch $
+    short 'X'
+      <> help "Alphabetical sort by file extension"

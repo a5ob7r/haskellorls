@@ -49,6 +49,7 @@ data Option = Option
     size :: Bool,
     icon :: Bool,
     naturalSort :: Bool,
+    extensionSort :: Bool,
     version :: Bool,
     targets :: [FilePath]
   }
@@ -94,6 +95,7 @@ optionParser =
     <*> sizeParser
     <*> iconParser
     <*> Sort.naturalSortParser
+    <*> Sort.extensionSortParser
     <*> versionParser
     <*> argParser
 

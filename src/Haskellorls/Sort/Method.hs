@@ -9,6 +9,7 @@ import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import Haskellorls.Sort.Type
 import qualified Haskellorls.Time.Type as Time
+import qualified System.FilePath.Posix as Posix
 import qualified System.Posix.Files as Files
 
 sorter :: Option.Option -> [Node.NodeInfo] -> [Node.NodeInfo]
@@ -19,6 +20,7 @@ sorter' opt = case sort of
   NONE -> sortWithNone
   NAME
     | natural -> sortWithVersion
+    | extension -> sortWithExtension
     | otherwise -> sortWithName
   SIZE -> sortWithSize
   TIME -> case time of
@@ -31,6 +33,7 @@ sorter' opt = case sort of
     sort = Option.sort opt
     time = Option.time opt
     natural = Option.naturalSort opt
+    extension = Option.extensionSort opt
 
 order :: Option.Option -> [a] -> [a]
 order opt
@@ -59,4 +62,4 @@ sortWithVersion :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithVersion = L.sortBy (\a b -> Node.nodeInfoPath a `NSort.compare` Node.nodeInfoPath b)
 
 sortWithExtension :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithExtension = id
+sortWithExtension = L.sortBy (\a b -> Posix.takeExtension (Node.nodeInfoPath a) `compare` Posix.takeExtension (Node.nodeInfoPath b))
