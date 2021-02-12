@@ -22,7 +22,6 @@ import qualified Haskellorls.Utils as Utils
 import qualified System.Directory as Directory
 import qualified System.FilePath.Glob as Glob
 import qualified System.FilePath.Posix as Posix
-import qualified System.IO as IO
 import qualified System.Posix.Files as Files
 
 data EntryType = FILES | SINGLEDIR | DIRECTORY
@@ -147,5 +146,5 @@ exist path = do
   isExist <- Utils.exist path
   if isExist
     then return ()
-    else IO.hPutStrLn IO.stderr $ "haskellorls: does not exist '" <> path <> "': (No such file or directory)"
+    else Utils.outputNoExistPathErr path
   return isExist

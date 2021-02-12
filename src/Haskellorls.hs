@@ -7,6 +7,7 @@ module Haskellorls
   )
 where
 
+import qualified Data.Either as E
 import qualified Data.Functor as F
 import qualified Data.List as L
 import qualified Data.Monoid as M
@@ -21,8 +22,10 @@ import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Size.Decorator as Size
 import qualified Haskellorls.Sort as Sort
+import qualified Haskellorls.Utils as Utils
 import qualified Haskellorls.WrappedText as WT
 import qualified Options.Applicative as OA
+import qualified System.Exit as Exit
 import qualified System.Posix.Files as Files
 
 run :: [String] -> IO ()
@@ -31,7 +34,20 @@ run args = do
 
   if Option.version options
     then showVersion
-    else runWith options
+    else run' options
+
+run' :: Option.Option -> IO ()
+run' opt = do
+  let targets = Option.targets opt
+  (notExists, exists) <- partitionExistOrNotPathes $ if null targets then ["."] else targets
+
+  mapM_ Utils.outputNoExistPathErr notExists
+
+  runWith opt {Option.targets = exists}
+
+  if null notExists
+    then Exit.exitSuccess
+    else Exit.exitWith $ Exit.ExitFailure 2
 
 runWith :: Option.Option -> IO ()
 runWith opt = renderEntriesLinesAsList opt >>= mapM_ T.putStr >> putStrLn ""
@@ -47,10 +63,7 @@ renderEntriesLines' opt = generateEntriesLines opt F.<&> L.intersperse (TLB.from
 
 generateEntriesLines :: Option.Option -> IO [[TLB.Builder]]
 generateEntriesLines opt = do
-  let targets = Option.targets opt
-      targets' = if null targets then ["."] else targets
-
-  files <- Entry.buildFiles opt targets'
+  files <- Entry.buildFiles opt $ Option.targets opt
   printers <- Decorator.buildPrinters opt
 
   let generator = generateEntryLines opt printers
@@ -80,6 +93,12 @@ argParser args = OA.handleParseResult presult
     presult = OA.execParserPure pprefs pinfo args
     pprefs = OA.prefs OA.helpLongEquals
     pinfo = Option.opts
+
+partitionExistOrNotPathes :: [FilePath] -> IO ([FilePath], [FilePath])
+partitionExistOrNotPathes pathes = E.partitionEithers <$> mapM validatePathExistence pathes
+
+validatePathExistence :: FilePath -> IO (Either FilePath FilePath)
+validatePathExistence path = (\b -> if b then Right path else Left path) <$> Utils.exist path
 
 showVersion :: IO ()
 showVersion = T.putStrLn version
