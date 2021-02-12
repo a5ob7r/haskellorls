@@ -5,6 +5,7 @@ where
 
 import qualified Algorithms.NaturalSort as NSort
 import qualified Data.List as L
+import qualified Data.Ord as O
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import Haskellorls.Sort.Type
@@ -50,13 +51,13 @@ sortWithSize :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithSize = L.sortOn $ Files.fileSize . Node.nodeInfoStatus
 
 sortWithModificationTime :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithModificationTime = L.sortOn $ Files.modificationTime . Node.nodeInfoStatus
+sortWithModificationTime = L.sortOn $ O.Down . Files.modificationTime . Node.nodeInfoStatus
 
 sortWithAccessTime :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithAccessTime = L.sortOn $ Files.accessTime . Node.nodeInfoStatus
+sortWithAccessTime = L.sortOn $ O.Down . Files.accessTime . Node.nodeInfoStatus
 
 sortWithChangeTime :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithChangeTime = L.sortOn $ Files.statusChangeTime . Node.nodeInfoStatus
+sortWithChangeTime = L.sortOn $ O.Down . Files.statusChangeTime . Node.nodeInfoStatus
 
 sortWithVersion :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithVersion = L.sortBy (\a b -> Node.nodeInfoPath a `NSort.compare` Node.nodeInfoPath b)
