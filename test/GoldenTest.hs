@@ -31,7 +31,8 @@ buildTestPattern actions args = goldenTest desc examplePath $
   do
     sequence_ actions
     opt <- argParser args
-    renderEntriesLines opt
+    files <- buildFiles opt
+    renderEntriesLines opt $ toEntries files
   where
     args' = unwords args
     desc = "With " <> args' `wrapWith` "'"

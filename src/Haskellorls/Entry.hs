@@ -10,9 +10,10 @@ module Haskellorls.Entry
   )
 where
 
-import qualified Data.Functor as F
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Extra as Monad
+import qualified Data.Either as E
+import qualified Data.Functor as F
 import qualified Data.List as List
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
@@ -32,18 +33,29 @@ data Entry = Entry
     entryContents :: [FilePath]
   }
 
+-- Files deriving steps
+-- 1. Get path list from arguments
+-- 2. Exclude no existence path
+-- 3. Partition files and directories
+--
+-- Entry list deriving steps
+-- 1. Get Files
+-- 2. Determine whether or not adding block size summary header
+--   - need also all arguments includeing no existence
+-- 3. List entries
 data Files = Files
-  { fileEntry :: Entry,
+  { noExistences :: [FilePath],
+    fileEntry :: Entry,
     directoryEntries :: [Entry]
   }
 
 toEntries :: Files -> [Entry]
-toEntries (Files fEntry@(Entry _ _ contents) dEntries) = fEntry' ++ dEntries'
+toEntries (Files noExists fEntry@Entry {..} dEntries) = fEntry' <> dEntries'
   where
-    fEntry' = [fEntry | not $ null contents]
-    dEntries'
-      | null contents && length dEntries == 1 = [(head dEntries) {entryType = SINGLEDIR}]
-      | otherwise = dEntries
+    fEntry' = [fEntry | not $ null entryContents]
+    dEntries' = case dEntries of
+      [d] | all null [noExists, entryContents] -> [d {entryType = SINGLEDIR}]
+      _ -> dEntries
 
 buildDirectoryEntry :: Option.Option -> FilePath -> IO Entry
 buildDirectoryEntry opt path = do
@@ -63,15 +75,15 @@ buildDirectoryEntry opt path = do
 
 buildFiles :: Option.Option -> [FilePath] -> IO Files
 buildFiles opt paths = do
-  paths' <- existenceFilter paths
-  psPairs <- traverse f paths'
+  (noExistences, exists) <- partitionExistOrNotPathes paths
+  psPairs <- traverse f exists
   let fPaths = map fst $ filter (not . g) psPairs
       dPaths = map fst $ filter g psPairs
-  dEntries <- Monad.concatMapM (dirPathToDirEntriesRecursively opt) dPaths
+  directoryEntries <- Monad.concatMapM (dirPathToDirEntriesRecursively opt) dPaths
   return $
     Files
       { fileEntry = Entry FILES "" fPaths,
-        directoryEntries = dEntries
+        ..
       }
   where
     f path = do
@@ -138,13 +150,8 @@ exclude ptn = filter (not . Glob.match ptn')
   where
     ptn' = Glob.compile ptn
 
-existenceFilter :: [FilePath] -> IO [FilePath]
-existenceFilter = Monad.filterM exist
+partitionExistOrNotPathes :: [FilePath] -> IO ([FilePath], [FilePath])
+partitionExistOrNotPathes pathes = E.partitionEithers <$> mapM validatePathExistence pathes
 
-exist :: FilePath -> IO Bool
-exist path = do
-  isExist <- Utils.exist path
-  if isExist
-    then return ()
-    else Utils.outputNoExistPathErr path
-  return isExist
+validatePathExistence :: FilePath -> IO (Either FilePath FilePath)
+validatePathExistence path = (\b -> if b then Right path else Left path) <$> Utils.exist path

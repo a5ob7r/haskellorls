@@ -1,13 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Haskellorls
   ( run,
     renderEntriesLines,
     argParser,
+    buildFiles,
+    Entry.toEntries,
   )
 where
 
-import qualified Data.Either as E
 import qualified Data.Functor as F
 import qualified Data.List as L
 import qualified Data.Monoid as M
@@ -38,37 +40,39 @@ run args = do
 
 run' :: Option.Option -> IO ()
 run' opt = do
-  let targets = Option.targets opt
-  (notExists, exists) <- partitionExistOrNotPathes $ if null targets then ["."] else targets
+  files@Entry.Files {..} <- buildFiles opt
 
-  mapM_ Utils.outputNoExistPathErr notExists
+  mapM_ Utils.outputNoExistPathErr noExistences
 
-  runWith opt {Option.targets = exists}
+  renderEntriesLinesAsList opt (Entry.toEntries files) >>= mapM_ T.putStr >> putStrLn ""
 
-  if null notExists
+  if null noExistences
     then Exit.exitSuccess
     else Exit.exitWith $ Exit.ExitFailure 2
 
-runWith :: Option.Option -> IO ()
-runWith opt = renderEntriesLinesAsList opt >>= mapM_ T.putStr >> putStrLn ""
+buildFiles :: Option.Option -> IO Entry.Files
+buildFiles opt = do
+  let targets = Option.targets opt
+      targets' = if null targets then ["."] else targets
 
-renderEntriesLines :: Option.Option -> IO T.Text
-renderEntriesLines opt = renderEntriesLines' opt F.<&> TL.toStrict . TLB.toLazyText . M.mconcat
+  Entry.buildFiles opt targets'
 
-renderEntriesLinesAsList :: Option.Option -> IO [T.Text]
-renderEntriesLinesAsList opt = renderEntriesLines' opt F.<&> map (TL.toStrict . TLB.toLazyText)
+renderEntriesLines :: Option.Option -> [Entry.Entry] -> IO T.Text
+renderEntriesLines opt entries = renderEntriesLines' opt entries F.<&> TL.toStrict . TLB.toLazyText . M.mconcat
 
-renderEntriesLines' :: Option.Option -> IO [TLB.Builder]
-renderEntriesLines' opt = generateEntriesLines opt F.<&> L.intersperse (TLB.fromText "\n\n") . map (M.mconcat . L.intersperse (TLB.fromText "\n"))
+renderEntriesLinesAsList :: Option.Option -> [Entry.Entry] -> IO [T.Text]
+renderEntriesLinesAsList opt entries = renderEntriesLines' opt entries F.<&> map (TL.toStrict . TLB.toLazyText)
 
-generateEntriesLines :: Option.Option -> IO [[TLB.Builder]]
-generateEntriesLines opt = do
-  files <- Entry.buildFiles opt $ Option.targets opt
+renderEntriesLines' :: Option.Option -> [Entry.Entry] -> IO [TLB.Builder]
+renderEntriesLines' opt entries = generateEntriesLines opt entries F.<&> L.intersperse (TLB.fromText "\n\n") . map (M.mconcat . L.intersperse (TLB.fromText "\n"))
+
+generateEntriesLines :: Option.Option -> [Entry.Entry] -> IO [[TLB.Builder]]
+generateEntriesLines opt entries = do
   printers <- Decorator.buildPrinters opt
 
   let generator = generateEntryLines opt printers
 
-  mapM generator $ Entry.toEntries files
+  mapM generator entries
 
 generateEntryLines :: Option.Option -> Decorator.Printers -> Entry.Entry -> IO [TLB.Builder]
 generateEntryLines opt printers (Entry.Entry eType path contents) = do
@@ -93,12 +97,6 @@ argParser args = OA.handleParseResult presult
     presult = OA.execParserPure pprefs pinfo args
     pprefs = OA.prefs OA.helpLongEquals
     pinfo = Option.opts
-
-partitionExistOrNotPathes :: [FilePath] -> IO ([FilePath], [FilePath])
-partitionExistOrNotPathes pathes = E.partitionEithers <$> mapM validatePathExistence pathes
-
-validatePathExistence :: FilePath -> IO (Either FilePath FilePath)
-validatePathExistence path = (\b -> if b then Right path else Left path) <$> Utils.exist path
 
 showVersion :: IO ()
 showVersion = T.putStrLn version
