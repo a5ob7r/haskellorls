@@ -33,16 +33,6 @@ data Entry = Entry
     entryContents :: [FilePath]
   }
 
--- Files deriving steps
--- 1. Get path list from arguments
--- 2. Exclude no existence path
--- 3. Partition files and directories
---
--- Entry list deriving steps
--- 1. Get Files
--- 2. Determine whether or not adding block size summary header
---   - need also all arguments includeing no existence
--- 3. List entries
 data Files = Files
   { noExistences :: [FilePath],
     fileEntry :: Entry,
