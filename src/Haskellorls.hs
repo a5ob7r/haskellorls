@@ -75,13 +75,13 @@ generateEntriesLines opt entries = do
   mapM generator entries
 
 generateEntryLines :: Option.Option -> Decorator.Printers -> Entry.Entry -> IO [TLB.Builder]
-generateEntryLines opt printers (Entry.Entry eType path contents) = do
-  nodes <- fmap (Sort.sorter opt) . mapM (Node.nodeInfo path) $ contents
+generateEntryLines opt printers Entry.Entry {..} = do
+  nodes <- fmap (Sort.sorter opt) . mapM (Node.nodeInfo entryPath) $ entryContents
   let nodes' = Decorator.buildLines nodes printers $ Decorator.buildPrinterTypes opt
-      addHeader = case eType of
-        Entry.DIRECTORY -> \ss -> TLB.fromText (T.pack path `T.snoc` ':') : ss
+      addHeader = case entryType of
+        Entry.DIRECTORY -> \ss -> TLB.fromText (T.pack entryPath `T.snoc` ':') : ss
         _ -> id
-      addTotalBlockSize = case eType of
+      addTotalBlockSize = case entryType of
         Entry.FILES -> id
         _ -> (builder :)
           where
