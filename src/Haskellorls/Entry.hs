@@ -17,7 +17,7 @@ import qualified Data.Functor as F
 import qualified Data.List as List
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
-import qualified Haskellorls.Sort as Sort
+import qualified Haskellorls.Sort.Method as Sort
 import qualified Haskellorls.Tree as Tree
 import qualified Haskellorls.Utils as Utils
 import qualified System.Directory as Directory

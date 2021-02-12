@@ -23,7 +23,7 @@ import qualified Haskellorls.Grid as Grid
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Size.Decorator as Size
-import qualified Haskellorls.Sort as Sort
+import qualified Haskellorls.Sort.Method as Sort
 import qualified Haskellorls.Utils as Utils
 import qualified Haskellorls.WrappedText as WT
 import qualified Options.Applicative as OA

@@ -1,4 +1,4 @@
-module Haskellorls.Sort
+module Haskellorls.Sort.Method
   ( sorter,
   )
 where
@@ -6,63 +6,32 @@ where
 import qualified Data.List as L
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
+import Haskellorls.Sort.Type
 import qualified Haskellorls.Time.Type as Time
 import qualified System.Posix.Files as Files
 
-data SortType
-  = NONE
-  | NAME
-  | SIZE
-  | MODIFICATIONTIME
-  | ACCESSTIME
-  | CHANGETIME
-  | VERSION
-  | EXTENSION
-
 sorter :: Option.Option -> [Node.NodeInfo] -> [Node.NodeInfo]
-sorter opt = order opt . sortWith sortType
+sorter opt = order opt . sorter' opt
+
+sorter' :: Option.Option -> [Node.NodeInfo] -> [Node.NodeInfo]
+sorter' opt = case sort of
+  NONE -> sortWithNone
+  NAME -> sortWithName
+  SIZE -> sortWithSize
+  TIME -> case time of
+    Time.MODIFICATION -> sortWithModificationTime
+    Time.ACCESS -> sortWithAccessTime
+    Time.CHANGE -> sortWithChangeTime
+  VERSION -> sortWithVersion
+  EXTENSION -> sortWithExtension
   where
-    sortType = sortTypeFrom opt
+    sort = Option.sort opt
+    time = Option.time opt
 
 order :: Option.Option -> [a] -> [a]
 order opt
   | Option.reverse opt = reverse
   | otherwise = id
-
-sortTypeFrom :: Option.Option -> SortType
-sortTypeFrom opt
-  | sort == "time" = case timeType of
-    Time.MODIFICATION -> MODIFICATIONTIME
-    Time.ACCESS -> ACCESSTIME
-    Time.CHANGE -> CHANGETIME
-  | otherwise = sortTypeFrom' sort
-  where
-    sort = Option.sort opt
-    timeType = Option.time opt
-
-sortTypeFrom' :: String -> SortType
-sortTypeFrom' s = case s of
-  "none" -> NONE
-  "name" -> NAME
-  "size" -> SIZE
-  "time" -> MODIFICATIONTIME
-  "modification_time" -> MODIFICATIONTIME
-  "access_time" -> ACCESSTIME
-  "change_time" -> CHANGETIME
-  "version" -> VERSION
-  "extension" -> EXTENSION
-  _ -> NAME
-
-sortWith :: SortType -> [Node.NodeInfo] -> [Node.NodeInfo]
-sortWith sType = case sType of
-  NONE -> sortWithNone
-  NAME -> sortWithName
-  SIZE -> sortWithSize
-  MODIFICATIONTIME -> sortWithModificationTime
-  ACCESSTIME -> sortWithAccessTime
-  CHANGETIME -> sortWithChangeTime
-  VERSION -> sortWithVersion
-  EXTENSION -> sortWithExtension
 
 sortWithNone :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithNone = id

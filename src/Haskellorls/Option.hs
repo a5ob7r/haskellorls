@@ -10,6 +10,7 @@ import qualified Control.Applicative as A
 import qualified Haskellorls.Color.Option as Color
 import qualified Haskellorls.Indicator.Option as Indicator
 import qualified Haskellorls.Size.Option as Size
+import qualified Haskellorls.Sort.Option as Sort
 import qualified Haskellorls.Time.Option as Time
 import qualified Haskellorls.Tree as Tree
 import qualified Options.Applicative as OA
@@ -26,7 +27,7 @@ data Option = Option
     timeStyle :: Time.TimeStyle,
     all :: Bool,
     almostAll :: Bool,
-    sort :: String,
+    sort :: Sort.SortType,
     reverse :: Bool,
     oneline :: Bool,
     noGroup :: Bool,
@@ -70,7 +71,7 @@ optionParser =
     <*> Time.timeStyleParser
     <*> allParser
     <*> almostAllParser
-    <*> sortParser
+    <*> Sort.sortParser
     <*> reverseParser
     <*> onelineParser
     <*> noGroupParser
@@ -113,14 +114,6 @@ almostAllParser =
     OA.short 'A'
       <> OA.long "almost-all"
       <> OA.help "Output hidden files doesn't contain '.' and '..'"
-
-sortParser :: OA.Parser String
-sortParser =
-  OA.strOption $
-    OA.long "sort"
-      <> OA.metavar "WORD"
-      <> OA.value "name"
-      <> OA.help "Specify an attribute to sort outputs"
 
 reverseParser :: OA.Parser Bool
 reverseParser =

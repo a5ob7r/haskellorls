@@ -37,7 +37,9 @@ library
     Haskellorls.Size.Decorator
     Haskellorls.Size.Option
     Haskellorls.Size.Type
-    Haskellorls.Sort
+    Haskellorls.Sort.Method
+    Haskellorls.Sort.Option
+    Haskellorls.Sort.Type
     Haskellorls.SymbolicLink
     Haskellorls.Time.Decorator
     Haskellorls.Time.Option
