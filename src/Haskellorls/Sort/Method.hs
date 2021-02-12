@@ -3,6 +3,7 @@ module Haskellorls.Sort.Method
   )
 where
 
+import qualified Algorithms.NaturalSort as NSort
 import qualified Data.List as L
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
@@ -16,7 +17,9 @@ sorter opt = order opt . sorter' opt
 sorter' :: Option.Option -> [Node.NodeInfo] -> [Node.NodeInfo]
 sorter' opt = case sort of
   NONE -> sortWithNone
-  NAME -> sortWithName
+  NAME
+    | natural -> sortWithVersion
+    | otherwise -> sortWithName
   SIZE -> sortWithSize
   TIME -> case time of
     Time.MODIFICATION -> sortWithModificationTime
@@ -27,6 +30,7 @@ sorter' opt = case sort of
   where
     sort = Option.sort opt
     time = Option.time opt
+    natural = Option.naturalSort opt
 
 order :: Option.Option -> [a] -> [a]
 order opt
@@ -52,7 +56,7 @@ sortWithChangeTime :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithChangeTime = L.sortOn $ Files.statusChangeTime . Node.nodeInfoStatus
 
 sortWithVersion :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithVersion = id
+sortWithVersion = L.sortBy (\a b -> Node.nodeInfoPath a `NSort.compare` Node.nodeInfoPath b)
 
 sortWithExtension :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithExtension = id
