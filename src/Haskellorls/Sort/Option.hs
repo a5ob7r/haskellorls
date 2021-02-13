@@ -2,6 +2,7 @@
 
 module Haskellorls.Sort.Option
   ( sortParser,
+    noneSortParser,
     timeSortParser,
     naturalSortParser,
     extensionSortParser,
@@ -28,6 +29,12 @@ sortParser =
         "version" -> pure VERSION
         "extension" -> pure EXTENSION
         _ -> readerError "Avairable values are only 'none', 'size', 'time', 'version' and 'extension'"
+
+noneSortParser :: Parser Bool
+noneSortParser =
+  switch $
+    short 'U'
+      <> help "Do not sort"
 
 timeSortParser :: Parser Bool
 timeSortParser =
