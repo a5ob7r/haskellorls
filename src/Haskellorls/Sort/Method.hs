@@ -44,9 +44,14 @@ sortWithNone :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithNone = id
 
 sortWithName :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithName = L.sortBy (\a b -> toNormPath a `compare` toNormPath b)
+sortWithName = L.sortBy (\a b -> Node.nodeInfoPath a `compareName` Node.nodeInfoPath b)
   where
-    toNormPath = norm . Node.nodeInfoPath
+    compareName a b
+      | a' == b' = a `compare` b
+      | otherwise = a' `compare` b'
+      where
+        a' = norm a
+        b' = norm b
     norm = map C.toUpper . \s -> case s of
       '.' : s' -> s'
       _ -> s
