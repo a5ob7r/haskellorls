@@ -81,9 +81,13 @@ generateEntryLines opt printers Entry.Entry {..} = do
       addHeader = case entryType of
         Entry.DIRECTORY -> \ss -> TLB.fromText (T.pack entryPath `T.snoc` ':') : ss
         _ -> id
+
+      -- Add total block size header only about directries when long style layout.
       addTotalBlockSize = case entryType of
         Entry.FILES -> id
-        _ -> (builder :)
+        _
+          | Decorator.isLongStyle opt -> (builder :)
+          | otherwise -> id
           where
             builder = TLB.fromText . T.concat . ("total " :) . map (T.concat . WT.toList) . Size.toTotalBlockSize opt $ map (Files.fileSize . Node.nodeInfoStatus) nodes
 
