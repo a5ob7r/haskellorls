@@ -30,8 +30,8 @@ library
     Haskellorls.LsColor.Parser
     Haskellorls.LsColor.Type
     Haskellorls.LsColor.Util
-    Haskellorls.Name.Type
     Haskellorls.Name.Decorator
+    Haskellorls.Name.Type
     Haskellorls.NodeInfo
     Haskellorls.Option
     Haskellorls.Ownership
@@ -54,12 +54,12 @@ library
   default-language: Haskell2010
   ghc-options:      -Wall
   build-depends:
-    , Glob
     , base                  >=4.12 && <4.15
     , containers
     , directory
     , extra
     , filepath
+    , Glob
     , natural-sort
     , optparse-applicative
     , terminal-size
