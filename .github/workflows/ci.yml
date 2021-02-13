@@ -17,6 +17,9 @@ jobs:
           ghc-version: ${{ matrix.ghc }}
           cabal-version: 3.2.0.0
 
+      - name: Update cabal index state
+        run: cabal update
+
       - name: Add path
         run: echo "$HOME/.cabal/bin" >> $GITHUB_PATH
 
