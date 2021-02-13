@@ -38,7 +38,7 @@ Test.
 $ cabal test
 ```
 
-## Incompatibility
+## Incompatibilities
 
 ### GNU ls
 
