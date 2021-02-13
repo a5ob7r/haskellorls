@@ -1,10 +1,11 @@
-module Haskellorls.Tree (
-  Depth,
-  makeDepth,
-  makeInf,
-  getDepth,
-  decreaseDepth,
-) where
+module Haskellorls.Tree
+  ( Depth,
+    makeDepth,
+    makeInf,
+    getDepth,
+    decreaseDepth,
+  )
+where
 
 data Depth
   = Depth Int

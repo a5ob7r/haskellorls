@@ -33,18 +33,19 @@ data Config = Config
   }
 
 defaultConfig :: Config
-defaultConfig = Config
-  { fileIcon = defaultIcon,
-    directoryIcon = "\xf115",
-    symlinkIcon = "\xf481",
-    symlinkDirIcon = "\xf482",
-    pipeIcon = "\xfce3",
-    socketIcon = "\xf6a7",
-    blockDeviceIcon = "\xfc29",
-    charDeviceIcon = "\xe601",
-    orphanedIcon = "\xf127",
-    iconDirectory = defaultIconMap
-  }
+defaultConfig =
+  Config
+    { fileIcon = defaultIcon,
+      directoryIcon = "\xf115",
+      symlinkIcon = "\xf481",
+      symlinkDirIcon = "\xf482",
+      pipeIcon = "\xfce3",
+      socketIcon = "\xf6a7",
+      blockDeviceIcon = "\xfc29",
+      charDeviceIcon = "\xe601",
+      orphanedIcon = "\xf127",
+      iconDirectory = defaultIconMap
+    }
 
 defaultIcon :: T.Text
 defaultIcon = "\xf016"

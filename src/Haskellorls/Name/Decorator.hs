@@ -5,7 +5,7 @@ module Haskellorls.Name.Decorator
     nodeName,
     nodeTypeOf,
     lookupEscSeq,
-    module Haskellorls.Name.Type
+    module Haskellorls.Name.Type,
   )
 where
 
