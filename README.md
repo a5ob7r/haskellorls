@@ -42,6 +42,9 @@ $ cabal test
 
 ### GNU ls
 
+- Options are parsed as no ordering.
+  - `Haskellorls -t -v` and `Haskellorls -v -t` are cause same result.
+  - It may not be useful to override same category option (e.g. sort options).
 - Outputs with the column size which is specified by -w/--width even if output fd is stdout.
 
 ## TODO
