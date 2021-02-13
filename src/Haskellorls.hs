@@ -3,7 +3,6 @@
 
 module Haskellorls
   ( run,
-    renderEntriesLines,
     argParser,
     buildFiles,
     Entry.toEntries,
@@ -56,9 +55,6 @@ buildFiles opt = do
       targets' = if null targets then ["."] else targets
 
   Entry.buildFiles opt targets'
-
-renderEntriesLines :: Option.Option -> [Entry.Entry] -> IO T.Text
-renderEntriesLines opt entries = renderEntriesLines' opt entries F.<&> TL.toStrict . TLB.toLazyText . M.mconcat
 
 renderEntriesLinesAsList :: Option.Option -> [Entry.Entry] -> IO [T.Text]
 renderEntriesLinesAsList opt entries = renderEntriesLines' opt entries F.<&> map (TL.toStrict . TLB.toLazyText)
