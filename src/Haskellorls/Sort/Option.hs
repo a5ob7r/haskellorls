@@ -3,6 +3,7 @@
 module Haskellorls.Sort.Option
   ( sortParser,
     noneSortParser,
+    sizeSortParser,
     timeSortParser,
     naturalSortParser,
     extensionSortParser,
@@ -35,6 +36,12 @@ noneSortParser =
   switch $
     short 'U'
       <> help "Do not sort"
+
+sizeSortParser :: Parser Bool
+sizeSortParser =
+  switch $
+    short 'S'
+      <> help "Size sort, largest first"
 
 timeSortParser :: Parser Bool
 timeSortParser =

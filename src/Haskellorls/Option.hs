@@ -49,6 +49,7 @@ data Option = Option
     size :: Bool,
     icon :: Bool,
     noneSort :: Bool,
+    sizeSort :: Bool,
     timeSort :: Bool,
     naturalSort :: Bool,
     extensionSort :: Bool,
@@ -97,6 +98,7 @@ optionParser =
     <*> sizeParser
     <*> iconParser
     <*> Sort.noneSortParser
+    <*> Sort.sizeSortParser
     <*> Sort.timeSortParser
     <*> Sort.naturalSortParser
     <*> Sort.extensionSortParser

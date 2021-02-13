@@ -21,6 +21,7 @@ sorter' opt = case sort of
   NONE -> sortWithNone
   NAME
     | noneSort -> sortWithNone
+    | sizeSort -> sortWithSize
     | timeSort -> sorter' opt {Option.sort = TIME}
     | natural -> sortWithVersion
     | extension -> sortWithExtension
@@ -34,6 +35,7 @@ sorter' opt = case sort of
   EXTENSION -> sortWithExtension
   where
     sort = Option.sort opt
+    sizeSort = Option.sizeSort opt
     time = Option.time opt
     noneSort = Option.noneSort opt
     timeSort = Option.timeSort opt
