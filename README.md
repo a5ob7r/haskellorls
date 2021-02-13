@@ -46,9 +46,32 @@ $ cabal test
 
 ## TODO
 
+- Add options for compatibility to GNU ls
+  - -b, --escape
+  - -c
+  - -C
+  - -d, --directory
+  - -D, --dired
+  - -f
+  - --format=WORD
+  - --full-time
+  - --group-directories-first
+  - -H, --dereference-command-line
+  - --dereference-command-line-symlink-to-dir
+  - --hyperlink[=WHEN]
+  - -k, --kibibytes
+  - -L, --dereference
+  - -m
+  - -N
+  - -q
+  - --show-control-chars
+  - -Q, --quote-name
+  - --quoting-style=WORD
+  - -T, --tabsize=COLS
+  - -u
+  - -x
+  - -Z, --context
 - Add locale support for time style.
-- Add extra sort method.
-- Fix name sort for GNU ls compatibility.
 - Fix size printer for charactor devices.
 - Add an interface model for deriving command parameters from args and options.
 - Improve performances.
