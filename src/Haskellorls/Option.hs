@@ -48,6 +48,7 @@ data Option = Option
     author :: Bool,
     size :: Bool,
     icon :: Bool,
+    timeSort :: Bool,
     naturalSort :: Bool,
     extensionSort :: Bool,
     version :: Bool,
@@ -94,6 +95,7 @@ optionParser =
     <*> authorParser
     <*> sizeParser
     <*> iconParser
+    <*> Sort.timeSortParser
     <*> Sort.naturalSortParser
     <*> Sort.extensionSortParser
     <*> versionParser

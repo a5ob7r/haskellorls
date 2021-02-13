@@ -20,6 +20,7 @@ sorter' :: Option.Option -> [Node.NodeInfo] -> [Node.NodeInfo]
 sorter' opt = case sort of
   NONE -> sortWithNone
   NAME
+    | timeSort -> sorter' opt {Option.sort = TIME}
     | natural -> sortWithVersion
     | extension -> sortWithExtension
     | otherwise -> sortWithName
@@ -33,6 +34,7 @@ sorter' opt = case sort of
   where
     sort = Option.sort opt
     time = Option.time opt
+    timeSort = Option.timeSort opt
     natural = Option.naturalSort opt
     extension = Option.extensionSort opt
 
