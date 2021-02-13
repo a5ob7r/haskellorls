@@ -54,7 +54,7 @@ sortWithName :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithName = L.sortOn Node.nodeInfoPath
 
 sortWithSize :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithSize = L.sortOn $ Files.fileSize . Node.nodeInfoStatus
+sortWithSize = L.sortOn $ O.Down . Files.fileSize . Node.nodeInfoStatus
 
 sortWithModificationTime :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithModificationTime = L.sortOn $ O.Down . Files.modificationTime . Node.nodeInfoStatus
