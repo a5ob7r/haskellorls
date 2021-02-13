@@ -54,7 +54,7 @@ library
   ghc-options:      -Wall
   build-depends:
     , Glob
-    , base                  >=4.13 && <4.15
+    , base                  >=4.12 && <4.15
     , containers
     , directory
     , extra
@@ -72,5 +72,5 @@ executable haskellorls
   default-language: Haskell2010
   ghc-options:      -Wall
   build-depends:
-    , base         >=4.13 && <4.15
+    , base         >=4.12 && <4.15
     , haskellorls
