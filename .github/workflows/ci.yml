@@ -17,6 +17,14 @@ jobs:
           ghc-version: ${{ matrix.ghc }}
           cabal-version: 3.2.0.0
 
+      - uses: actions/cache@v2
+        with:
+          path: ${{ steps.setup-haskell.outputs.cabal-store }}
+          key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project') }}
+            ${{ runner.os }}-${{ matrix.ghc }}-
+
       - name: Update cabal index state
         run: cabal update
 
@@ -30,14 +38,6 @@ jobs:
 
       - name: Build
         run: cabal install --overwrite-policy=always --installdir=bin
-
-      - uses: actions/cache@v2
-        with:
-          path: ${{ steps.setup-haskell.outputs.cabal-store }}
-          key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project') }}
-            ${{ runner.os }}-${{ matrix.ghc }}-
 
         # NOTE: Always failure to run test on macOS if run it on project root.
         # So need to change working directory to `golden-test` to pass test.
