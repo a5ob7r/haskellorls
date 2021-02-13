@@ -17,30 +17,22 @@ sorter :: Option.Option -> [Node.NodeInfo] -> [Node.NodeInfo]
 sorter opt = order opt . sorter' opt
 
 sorter' :: Option.Option -> [Node.NodeInfo] -> [Node.NodeInfo]
-sorter' opt = case sort of
+sorter' opt = case Option.sort opt of
   NONE -> sortWithNone
   NAME
-    | noneSort -> sortWithNone
-    | sizeSort -> sortWithSize
-    | timeSort -> sorter' opt {Option.sort = TIME}
-    | natural -> sortWithVersion
-    | extension -> sortWithExtension
+    | Option.noneSort opt -> sortWithNone
+    | Option.sizeSort opt -> sortWithSize
+    | Option.timeSort opt -> sorter' opt {Option.sort = TIME}
+    | Option.naturalSort opt -> sortWithVersion
+    | Option.extensionSort opt -> sortWithExtension
     | otherwise -> sortWithName
   SIZE -> sortWithSize
-  TIME -> case time of
+  TIME -> case Option.time opt of
     Time.MODIFICATION -> sortWithModificationTime
     Time.ACCESS -> sortWithAccessTime
     Time.CHANGE -> sortWithChangeTime
   VERSION -> sortWithVersion
   EXTENSION -> sortWithExtension
-  where
-    sort = Option.sort opt
-    sizeSort = Option.sizeSort opt
-    time = Option.time opt
-    noneSort = Option.noneSort opt
-    timeSort = Option.timeSort opt
-    natural = Option.naturalSort opt
-    extension = Option.extensionSort opt
 
 order :: Option.Option -> [a] -> [a]
 order opt
