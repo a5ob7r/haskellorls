@@ -3,6 +3,7 @@ module Haskellorls.Sort.Method
   )
 where
 
+import qualified Data.Char as C
 import qualified Algorithms.NaturalSort as NSort
 import qualified Data.List as L
 import qualified Data.Ord as O
@@ -43,7 +44,12 @@ sortWithNone :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithNone = id
 
 sortWithName :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithName = L.sortOn Node.nodeInfoPath
+sortWithName = L.sortBy (\a b -> toNormPath a `compare` toNormPath b)
+  where
+    toNormPath = norm . Node.nodeInfoPath
+    norm = map C.toUpper . \s -> case s of
+      '.' : s' -> s'
+      _ -> s
 
 sortWithSize :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithSize = L.sortOn $ O.Down . Files.fileSize . Node.nodeInfoStatus

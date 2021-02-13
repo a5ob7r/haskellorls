@@ -1,4 +1,4 @@
 total 0
-README.md          README.rst            haskell.README.md.en  readme.md.en
-README.md-haskell  haskell-README.md     haskell.readme.md   
-README.md.haskell  haskell-README.md.en  readme              
+haskell-README.md     haskell.README.md.en  README.md-haskell  README.rst
+haskell-README.md.en  readme                readme.md.en     
+haskell.readme.md     README.md             README.md.haskell
