@@ -84,6 +84,8 @@ $ goldplate golden-test --pretty-diff
   - Unit tests with tasty.
 - Register to Hackage.
 - Release binary.
+- Add --head=N/--tail=N option to restrict max output file numbers.
+  - This is useful with --recursive/-R
 - etc.
 
 ## NOTE
