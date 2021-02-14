@@ -101,8 +101,9 @@ generateEntryLines opt printers Entry.Entry {..} = do
   nodes <- fmap (Sort.sorter opt) . mapM (Node.nodeInfo entryPath) $ entryContents
   let nodes' = Decorator.buildLines nodes printers $ Decorator.buildPrinterTypes opt
       addHeader = case entryType of
-        Entry.DIRECTORY -> \ss -> TLB.fromText (T.pack entryPath `T.snoc` ':') : ss
-        _ -> id
+        Entry.FILES -> id
+        Entry.SINGLEDIR | not (Option.recursive opt) -> id
+        _ -> \ss -> TLB.fromText (T.pack entryPath `T.snoc` ':') : ss
 
       -- Add total block size header only about directries when long style layout.
       addTotalBlockSize = case entryType of
