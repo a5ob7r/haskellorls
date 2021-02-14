@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macOS-latest]
-        ghc: ['8.10.3', '8.8.4', '8.6.5']
+        ghc: ['8.10.4', '8.8.4', '8.6.5']
 
     steps:
       - uses: haskell/actions/setup@v1
