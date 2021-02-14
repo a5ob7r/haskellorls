@@ -39,39 +39,6 @@ data Files = Files
     directoryEntries :: [Entry]
   }
 
-toEntries :: Files -> [Entry]
-toEntries (Files noExists fEntry@Entry {..} dEntries) = fEntry' <> dEntries'
-  where
-    fEntry' = [fEntry | not $ null entryContents]
-    dEntries' = case dEntries of
-      [d] | all null [noExists, entryContents] -> [d {entryType = SINGLEDIR}]
-      _ -> dEntries
-
-buildDirectoryEntry :: Option.Option -> FilePath -> IO Entry
-buildDirectoryEntry opt path = do
-  contents <- listContents opt path >>= sortContents opt path . excluder
-  return $ Entry DIRECTORY path contents
-  where
-    excluder = ignoreExcluder . hideExcluder
-    ignorePtn = Option.ignore opt
-    hidePtn = Option.hide opt
-    isShowHiddenEntries = Option.all opt || Option.almostAll opt
-    ignoreExcluder
-      | null ignorePtn = id
-      | otherwise = exclude ignorePtn
-    hideExcluder
-      | null hidePtn || isShowHiddenEntries = id
-      | otherwise = exclude hidePtn
-
-entryToDirectoryEntries :: Option.Option -> Entry -> IO [Entry]
-entryToDirectoryEntries opt Entry {..}
-  | Option.recursive opt && not isDepthZero = Monad.filterM isDirectory pathes >>= mapM (buildDirectoryEntry opt)
-  | otherwise = pure []
-  where
-    pathes = map (entryPath Posix.</>) entryContents
-    depth = Option.level opt
-    isDepthZero = (Just 0 ==) $ Tree.getDepth depth
-
 buildFiles :: Option.Option -> [FilePath] -> IO Files
 buildFiles opt paths = do
   (noExistences, exists) <- partitionExistOrNotPathes paths
@@ -89,6 +56,39 @@ buildFiles opt paths = do
       status <- Files.getSymbolicLinkStatus path
       return (path, status)
     g = Files.isDirectory . snd
+
+toEntries :: Files -> [Entry]
+toEntries (Files noExists fEntry@Entry {..} dEntries) = fEntry' <> dEntries'
+  where
+    fEntry' = [fEntry | not $ null entryContents]
+    dEntries' = case dEntries of
+      [d] | all null [noExists, entryContents] -> [d {entryType = SINGLEDIR}]
+      _ -> dEntries
+
+entryToDirectoryEntries :: Option.Option -> Entry -> IO [Entry]
+entryToDirectoryEntries opt Entry {..}
+  | Option.recursive opt && not isDepthZero = Monad.filterM isDirectory pathes >>= mapM (buildDirectoryEntry opt)
+  | otherwise = pure []
+  where
+    pathes = map (entryPath Posix.</>) entryContents
+    depth = Option.level opt
+    isDepthZero = (Just 0 ==) $ Tree.getDepth depth
+
+buildDirectoryEntry :: Option.Option -> FilePath -> IO Entry
+buildDirectoryEntry opt path = do
+  contents <- listContents opt path >>= sortContents opt path . excluder
+  return $ Entry DIRECTORY path contents
+  where
+    excluder = ignoreExcluder . hideExcluder
+    ignorePtn = Option.ignore opt
+    hidePtn = Option.hide opt
+    isShowHiddenEntries = Option.all opt || Option.almostAll opt
+    ignoreExcluder
+      | null ignorePtn = id
+      | otherwise = exclude ignorePtn
+    hideExcluder
+      | null hidePtn || isShowHiddenEntries = id
+      | otherwise = exclude hidePtn
 
 isDirectory :: FilePath -> IO Bool
 isDirectory path = Files.isDirectory <$> Files.getSymbolicLinkStatus path
