@@ -9,7 +9,6 @@ module Haskellorls
   )
 where
 
-import qualified Data.Functor as F
 import qualified Data.List as L
 import qualified Data.Monoid as M
 import qualified Data.Text as T
@@ -23,11 +22,21 @@ import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Size.Decorator as Size
 import qualified Haskellorls.Sort.Method as Sort
+import qualified Haskellorls.Tree as Tree
 import qualified Haskellorls.Utils as Utils
 import qualified Haskellorls.WrappedText as WT
 import qualified Options.Applicative as OA
 import qualified System.Exit as Exit
 import qualified System.Posix.Files as Files
+
+data Operation
+  = Newline
+  | PrintEntry
+      { execEntry :: Entry.Entry,
+        execOption :: Option.Option
+      }
+
+newtype EntryPrinter = EntryPrinter {getEntryPrinter :: Entry.Entry -> IO T.Text}
 
 run :: [String] -> IO ()
 run args = do
@@ -43,11 +52,42 @@ run' opt = do
 
   mapM_ Utils.outputNoExistPathErr noExistences
 
-  renderEntriesLinesAsList opt (Entry.toEntries files) >>= mapM_ T.putStr >> putStrLn ""
+  printers <- Decorator.buildPrinters opt
+  let entryPrinter = EntryPrinter $ fmap (TL.toStrict . TLB.toLazyText . M.mconcat . L.intersperse (TLB.fromText "\n")) . generateEntryLines opt printers
+
+  exec entryPrinter $ L.intersperse Newline $ map (`PrintEntry` opt) (Entry.toEntries files)
 
   if null noExistences
     then Exit.exitSuccess
     else Exit.exitWith $ Exit.ExitFailure 2
+
+-- | NOTE: Execute output operation with stack data structure. This way may
+-- cause performance down about total execution time. But user can see output
+-- to stdout immediately. It leads to good user experiences. This focuses large
+-- output situation like --recursive/-R option.
+--
+-- Another way is concatenating many text using builder aa long as possible. It
+-- reduces text building cost maximally. But can not output until get all text
+-- and concatenate them. So it causes output delay. This is bad user
+-- experiences.
+exec :: EntryPrinter -> [Operation] -> IO ()
+exec _ [] = pure ()
+exec printer (op : stack) = do
+  entries <- L.intersperse Newline <$> eval printer op
+  let entries' = if null entries then entries else Newline : entries
+
+  exec printer (entries' <> stack)
+
+eval :: EntryPrinter -> Operation -> IO [Operation]
+eval printer op = case op of
+  Newline -> do
+    T.putStrLn ""
+    pure []
+  PrintEntry {..} -> do
+    T.putStrLn =<< getEntryPrinter printer execEntry
+    map (`PrintEntry` opt) <$> Entry.entryToDirectoryEntries execOption execEntry
+    where
+      opt = execOption {Option.level = Tree.decreaseDepth $ Option.level execOption}
 
 buildFiles :: Option.Option -> IO Entry.Files
 buildFiles opt = do
@@ -55,20 +95,6 @@ buildFiles opt = do
       targets' = if null targets then ["."] else targets
 
   Entry.buildFiles opt targets'
-
-renderEntriesLinesAsList :: Option.Option -> [Entry.Entry] -> IO [T.Text]
-renderEntriesLinesAsList opt entries = renderEntriesLines' opt entries F.<&> map (TL.toStrict . TLB.toLazyText)
-
-renderEntriesLines' :: Option.Option -> [Entry.Entry] -> IO [TLB.Builder]
-renderEntriesLines' opt entries = generateEntriesLines opt entries F.<&> L.intersperse (TLB.fromText "\n\n") . map (M.mconcat . L.intersperse (TLB.fromText "\n"))
-
-generateEntriesLines :: Option.Option -> [Entry.Entry] -> IO [[TLB.Builder]]
-generateEntriesLines opt entries = do
-  printers <- Decorator.buildPrinters opt
-
-  let generator = generateEntryLines opt printers
-
-  mapM generator entries
 
 generateEntryLines :: Option.Option -> Decorator.Printers -> Entry.Entry -> IO [TLB.Builder]
 generateEntryLines opt printers Entry.Entry {..} = do

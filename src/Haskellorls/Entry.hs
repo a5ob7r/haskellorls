@@ -7,11 +7,11 @@ module Haskellorls.Entry
     Files (..),
     buildFiles,
     toEntries,
+    entryToDirectoryEntries,
   )
 where
 
 import qualified Control.Monad as Monad
-import qualified Control.Monad.Extra as Monad
 import qualified Data.Either as E
 import qualified Data.Functor as F
 import qualified Data.List as List
@@ -63,13 +63,22 @@ buildDirectoryEntry opt path = do
       | null hidePtn || isShowHiddenEntries = id
       | otherwise = exclude hidePtn
 
+entryToDirectoryEntries :: Option.Option -> Entry -> IO [Entry]
+entryToDirectoryEntries opt Entry {..}
+  | Option.recursive opt && not isDepthZero = Monad.filterM isDirectory pathes >>= mapM (buildDirectoryEntry opt)
+  | otherwise = pure []
+  where
+    pathes = map (entryPath Posix.</>) entryContents
+    depth = Option.level opt
+    isDepthZero = (Just 0 ==) $ Tree.getDepth depth
+
 buildFiles :: Option.Option -> [FilePath] -> IO Files
 buildFiles opt paths = do
   (noExistences, exists) <- partitionExistOrNotPathes paths
   psPairs <- traverse f exists
   let fPaths = map fst $ filter (not . g) psPairs
       dPaths = map fst $ filter g psPairs
-  directoryEntries <- Monad.concatMapM (dirPathToDirEntriesRecursively opt) dPaths
+  directoryEntries <- mapM (buildDirectoryEntry opt) dPaths
   return $
     Files
       { fileEntry = Entry FILES "" fPaths,
@@ -80,25 +89,6 @@ buildFiles opt paths = do
       status <- Files.getSymbolicLinkStatus path
       return (path, status)
     g = Files.isDirectory . snd
-
-dirPathToDirEntriesRecursively :: Option.Option -> FilePath -> IO [Entry]
-dirPathToDirEntriesRecursively opt path = do
-  entry <- buildDirectoryEntry opt path
-  entries <- entryToDirectoryEntries opt entry
-  pure $ entry : entries
-
-entryToDirectoryEntries :: Option.Option -> Entry -> IO [Entry]
-entryToDirectoryEntries opt Entry {..}
-  | Option.recursive opt && not isDepthZero = do
-    entries <- Monad.filterM isDirectory pathes >>= mapM (buildDirectoryEntry opt)
-    recursiveEntries <- Monad.concatMapM (entryToDirectoryEntries opt') entries
-    pure $ entries <> recursiveEntries
-  | otherwise = pure []
-  where
-    opt' = opt {Option.level = Tree.decreaseDepth $ Option.level opt}
-    pathes = map (entryPath Posix.</>) entryContents
-    depth = Option.level opt
-    isDepthZero = (Just 0 ==) $ Tree.getDepth depth
 
 isDirectory :: FilePath -> IO Bool
 isDirectory path = Files.isDirectory <$> Files.getSymbolicLinkStatus path
