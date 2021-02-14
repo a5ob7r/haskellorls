@@ -38,6 +38,14 @@ data Operation
 
 newtype EntryPrinter = EntryPrinter {getEntryPrinter :: Entry.Entry -> IO T.Text}
 
+-- | Haskellorls's process flow
+-- 1. Gets all arguments passed to itself as string list.
+-- 2. Parses the arguments and converts them into an 'option' record.
+-- 3. Gets 'files' record from the 'option' record's 'target' attribute.
+-- 4. Converts the 'files' record into 'entry' record list.
+-- 5. Build file status 'printers' from the 'option' record.
+-- 6. Build 'entry' printer form the 'option' record and 'printers'.
+-- 7. Print all 'entries' using the 'entry' printer.
 run :: [String] -> IO ()
 run args = do
   options <- argParser args
