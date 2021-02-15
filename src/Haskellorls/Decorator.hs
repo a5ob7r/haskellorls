@@ -1,4 +1,6 @@
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Haskellorls.Decorator
   ( Printer,
@@ -151,12 +153,12 @@ buildPrinters opt = do
 
   let isEnableExtraColor = Option.extraColor opt
 
-      fileInodeFieldPrinter =
+      fileInodePrinter =
         if shouldColorize && isEnableExtraColor
           then Inode.nodeInodeNumberWithColor cConfig
           else WT.toWrappedTextSingleton . T.pack . show . Inode.nodeInodeNumber
 
-      fileBlockFieldPrinter =
+      fileBlockPrinter =
         if shouldColorize && isEnableExtraColor
           then Size.coloredFileBlockSize cConfig opt
           else Size.fileBlockSize opt
@@ -166,27 +168,27 @@ buildPrinters opt = do
           then Field.showFilemodeFieldWithColor cConfig
           else Field.showFilemodeField
 
-      fileLinkFieldPrinter =
+      fileLinkPrinter =
         if shouldColorize && isEnableExtraColor
           then Link.nodeLinksNumberWithColor cConfig
           else WT.toWrappedTextSingleton . T.pack . show . Link.nodeLinksNumber
 
-      fileOwnerFieldPrinter =
+      fileOwnerPrinter =
         if shouldColorize && isEnableExtraColor
           then Ownership.coloredOwnerName uidSubstTable cConfig userInfo
           else WT.toWrappedTextSingleton . Ownership.ownerName uidSubstTable
 
-      fileGroupFieldPrinter =
+      fileGroupPrinter =
         if shouldColorize && isEnableExtraColor
           then Ownership.coloredGroupName gidSubstTable cConfig userInfo
           else WT.toWrappedTextSingleton . Ownership.groupName gidSubstTable
 
-      fileSizeFieldPrinter =
+      fileSizePrinter =
         if shouldColorize && isEnableExtraColor
           then Size.coloredFileSize cConfig opt
           else Size.fileSize opt
 
-      fileTimeFileldPrinter =
+      fileTimePrinter =
         if shouldColorize && isEnableExtraColor
           then Time.coloredTimeStyleFunc cConfig Format.defaultTimeLocale currentTime timeStyle . fileTime . Node.nodeInfoStatus
           else WT.toWrappedTextSingleton . timeStyleFunc . fileTime . Node.nodeInfoStatus
@@ -217,15 +219,9 @@ buildPrinters opt = do
 
   return $
     Printers
-      { fileInodePrinter = fileInodeFieldPrinter,
-        fileBlockPrinter = fileBlockFieldPrinter,
-        fileFieldPrinter = filemodeFieldPrinter . Field.filemodeField . Node.nodeInfoStatus,
-        fileLinkPrinter = fileLinkFieldPrinter,
-        fileOwnerPrinter = fileOwnerFieldPrinter,
-        fileGroupPrinter = fileGroupFieldPrinter,
-        fileSizePrinter = fileSizeFieldPrinter,
-        fileTimePrinter = fileTimeFileldPrinter,
-        fileNamePrinter = buildNodeNamePrinter opt nodeNamePrinters
+      { fileFieldPrinter = filemodeFieldPrinter . Field.filemodeField . Node.nodeInfoStatus,
+        fileNamePrinter = buildNodeNamePrinter opt nodeNamePrinters,
+        ..
       }
 
 buildPrinterTypes :: Option.Option -> [PrinterType]
