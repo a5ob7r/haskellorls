@@ -12,7 +12,7 @@ import qualified Haskellorls.Indicator.Option as Indicator
 import qualified Haskellorls.Size.Option as Size
 import qualified Haskellorls.Sort.Option as Sort
 import qualified Haskellorls.Time.Option as Time
-import qualified Haskellorls.Tree as Tree
+import qualified Haskellorls.Depth as Depth
 import qualified Options.Applicative as OA
 import qualified Text.Read as Read
 
@@ -44,7 +44,7 @@ data Option = Option
     ignore :: String,
     hide :: String,
     recursive :: Bool,
-    level :: Tree.Depth,
+    level :: Depth.Depth,
     author :: Bool,
     size :: Bool,
     icon :: Bool,
@@ -236,18 +236,18 @@ recursiveParser =
       <> OA.short 'R'
       <> OA.help "Output infos about files in sub directories recursively"
 
-levelParser :: OA.Parser Tree.Depth
+levelParser :: OA.Parser Depth.Depth
 levelParser =
   OA.option reader $
     OA.long "level"
       <> OA.short 'L'
       <> OA.metavar "DEPTH"
-      <> OA.value Tree.makeInf
+      <> OA.value Depth.makeInf
       <> OA.help "Specify how much depth drills in directory"
   where
     reader =
       OA.str >>= \s -> do
-        case Read.readMaybe s >>= Tree.makeDepth of
+        case Read.readMaybe s >>= Depth.makeDepth of
           Just d -> return d
           _ -> OA.readerError "Acceptable value is only natural number"
 

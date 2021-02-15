@@ -1,4 +1,4 @@
-module Haskellorls.Tree
+module Haskellorls.Depth
   ( Depth,
     makeDepth,
     makeInf,

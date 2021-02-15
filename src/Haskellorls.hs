@@ -22,7 +22,7 @@ import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Size.Decorator as Size
 import qualified Haskellorls.Sort.Method as Sort
-import qualified Haskellorls.Tree as Tree
+import qualified Haskellorls.Depth as Depth
 import qualified Haskellorls.Utils as Utils
 import qualified Haskellorls.WrappedText as WT
 import qualified Options.Applicative as OA
@@ -95,7 +95,7 @@ eval printer op = case op of
     T.putStrLn =<< getEntryPrinter printer execEntry
     map (`PrintEntry` opt) <$> Entry.entryToDirectoryEntries execOption execEntry
     where
-      opt = execOption {Option.level = Tree.decreaseDepth $ Option.level execOption}
+      opt = execOption {Option.level = Depth.decreaseDepth $ Option.level execOption}
 
 buildFiles :: Option.Option -> IO Entry.Files
 buildFiles opt = do

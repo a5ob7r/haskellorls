@@ -18,7 +18,7 @@ import qualified Data.List as List
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Sort.Method as Sort
-import qualified Haskellorls.Tree as Tree
+import qualified Haskellorls.Depth as Depth
 import qualified Haskellorls.Utils as Utils
 import qualified System.Directory as Directory
 import qualified System.FilePath.Glob as Glob
@@ -72,7 +72,7 @@ entryToDirectoryEntries opt Entry {..}
   where
     pathes = map (entryPath Posix.</>) entryContents
     depth = Option.level opt
-    isDepthZero = (Just 0 ==) $ Tree.getDepth depth
+    isDepthZero = (Just 0 ==) $ Depth.getDepth depth
 
 buildDirectoryEntry :: Option.Option -> FilePath -> IO Entry
 buildDirectoryEntry opt path = do

@@ -17,6 +17,7 @@ library
     Haskellorls.Color.Option
     Haskellorls.Color.Type
     Haskellorls.Decorator
+    Haskellorls.Depth
     Haskellorls.Entry
     Haskellorls.Field
     Haskellorls.Grid
@@ -45,7 +46,6 @@ library
     Haskellorls.Time.Decorator
     Haskellorls.Time.Option
     Haskellorls.Time.Type
-    Haskellorls.Tree
     Haskellorls.UserInfo
     Haskellorls.Utils
     Haskellorls.WrappedText
