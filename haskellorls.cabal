@@ -18,7 +18,6 @@ library
     Haskellorls.Color.Type
     Haskellorls.Decorator
     Haskellorls.Depth
-    Haskellorls.Entry
     Haskellorls.Field
     Haskellorls.Grid
     Haskellorls.Icon
@@ -36,6 +35,7 @@ library
     Haskellorls.NodeInfo
     Haskellorls.Option
     Haskellorls.Ownership
+    Haskellorls.Recursive
     Haskellorls.Size.Decorator
     Haskellorls.Size.Option
     Haskellorls.Size.Type
