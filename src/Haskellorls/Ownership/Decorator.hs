@@ -6,7 +6,7 @@
 --
 -- NOTE: owner also be called as user.
 
-module Haskellorls.Ownership
+module Haskellorls.Ownership.Decorator
   ( ownerName,
     numericOwnerName,
     coloredOwnerName,
@@ -17,6 +17,7 @@ module Haskellorls.Ownership
     coloredNumericGroupName,
     getGroupIdSubstTable,
     getUserIdSubstTable,
+    module Haskellorls.Ownership.Type,
   )
 where
 
@@ -24,7 +25,7 @@ import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import qualified Haskellorls.LsColor.Config as Color
 import qualified Haskellorls.NodeInfo as Node
-import qualified Haskellorls.UserInfo as UserInfo
+import Haskellorls.Ownership.Type
 import qualified Haskellorls.WrappedText as WT
 import qualified System.Posix.Files as Files
 import qualified System.Posix.Types as Types
@@ -65,19 +66,19 @@ numericOwnerName = T.pack . show . numericOwnerName'
 numericOwnerName' :: Node.NodeInfo -> Types.UserID
 numericOwnerName' = Files.fileOwner . Node.nodeInfoStatus
 
-coloredOwnerName :: UserIdSubstTable -> Color.Config -> UserInfo.UserInfo -> Node.NodeInfo -> [WT.WrappedText]
+coloredOwnerName :: UserIdSubstTable -> Color.Config -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
 coloredOwnerName table = coloredOwnerAs (ownerName table)
 
-coloredNumericOwnerName :: Color.Config -> UserInfo.UserInfo -> Node.NodeInfo -> [WT.WrappedText]
+coloredNumericOwnerName :: Color.Config -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
 coloredNumericOwnerName = coloredOwnerAs numericOwnerName
 
-coloredOwnerAs :: (Node.NodeInfo -> T.Text) -> Color.Config -> UserInfo.UserInfo -> Node.NodeInfo -> [WT.WrappedText]
+coloredOwnerAs :: (Node.NodeInfo -> T.Text) -> Color.Config -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
 coloredOwnerAs f config user node = [Color.toWrappedText config getter (f node)]
   where
     getter
       | currentUserID == nodeOwnerID = Color.ownerYourselfEscapeSequence . Color.extensionColorConfig
       | otherwise = Color.ownerNotYourselfEscapeSequence . Color.extensionColorConfig
-    currentUserID = UserInfo.userInfoUserID user
+    currentUserID = userInfoUserID user
     nodeOwnerID = Files.fileOwner $ Node.nodeInfoStatus node
 
 -- }}}
@@ -94,19 +95,19 @@ numericGroupName = T.pack . show . numericGroupName'
 numericGroupName' :: Node.NodeInfo -> Types.GroupID
 numericGroupName' = Files.fileGroup . Node.nodeInfoStatus
 
-coloredGroupName :: GroupIdSubstTable -> Color.Config -> UserInfo.UserInfo -> Node.NodeInfo -> [WT.WrappedText]
+coloredGroupName :: GroupIdSubstTable -> Color.Config -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
 coloredGroupName table = coloredGroupAs (groupName table)
 
-coloredNumericGroupName :: Color.Config -> UserInfo.UserInfo -> Node.NodeInfo -> [WT.WrappedText]
+coloredNumericGroupName :: Color.Config -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
 coloredNumericGroupName = coloredGroupAs numericGroupName
 
-coloredGroupAs :: (Node.NodeInfo -> T.Text) -> Color.Config -> UserInfo.UserInfo -> Node.NodeInfo -> [WT.WrappedText]
+coloredGroupAs :: (Node.NodeInfo -> T.Text) -> Color.Config -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
 coloredGroupAs f config user node = [Color.toWrappedText config getter (f node)]
   where
     getter
       | nodeGroupID `elem` groupIDs = Color.groupYouBelongsToEscapeSequence . Color.extensionColorConfig
       | otherwise = Color.groupYouNotBelongsToEscapeSequence . Color.extensionColorConfig
-    groupIDs = UserInfo.userInfoGroupIDs user
+    groupIDs = userInfoGroupIDs user
     nodeGroupID = Files.fileGroup $ Node.nodeInfoStatus node
 
 -- }}}

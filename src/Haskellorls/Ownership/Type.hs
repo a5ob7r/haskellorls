@@ -1,4 +1,4 @@
-module Haskellorls.UserInfo
+module Haskellorls.Ownership.Type
   ( UserInfo (..),
     userInfo,
   )

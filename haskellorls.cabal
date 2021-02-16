@@ -34,7 +34,8 @@ library
     Haskellorls.Name.Type
     Haskellorls.NodeInfo
     Haskellorls.Option
-    Haskellorls.Ownership
+    Haskellorls.Ownership.Decorator
+    Haskellorls.Ownership.Type
     Haskellorls.Recursive
     Haskellorls.Size.Decorator
     Haskellorls.Size.Option
@@ -49,7 +50,6 @@ library
     Haskellorls.Tree.Decorator
     Haskellorls.Tree.Type
     Haskellorls.Tree.Util
-    Haskellorls.UserInfo
     Haskellorls.Utils
     Haskellorls.WrappedText
 

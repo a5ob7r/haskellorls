@@ -28,12 +28,11 @@ import qualified Haskellorls.LsColor.Config as Color
 import qualified Haskellorls.Name.Decorator as Name
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
-import qualified Haskellorls.Ownership as Ownership
+import qualified Haskellorls.Ownership.Decorator as Ownership
 import qualified Haskellorls.Size.Decorator as Size
 import qualified Haskellorls.SymbolicLink as SymbolicLink
 import qualified Haskellorls.Time.Decorator as Time
 import qualified Haskellorls.Tree.Decorator as Tree
-import qualified Haskellorls.UserInfo as UserInfo
 import qualified Haskellorls.WrappedText as WT
 import qualified System.IO as SIO
 import qualified System.Posix.Time as PTime
@@ -149,7 +148,7 @@ buildPrinters opt = do
   cConfig <- Color.config
   uidSubstTable <- if Option.numericUidGid opt then return Map.empty else Ownership.getUserIdSubstTable
   gidSubstTable <- if Option.numericUidGid opt then return Map.empty else Ownership.getGroupIdSubstTable
-  userInfo <- UserInfo.userInfo
+  userInfo <- Ownership.userInfo
   currentTime <- PTime.epochTime
   shouldColorize <- case Option.color opt of
     Color.NEVER -> return False
