@@ -46,6 +46,9 @@ library
     Haskellorls.Time.Decorator
     Haskellorls.Time.Option
     Haskellorls.Time.Type
+    Haskellorls.Tree.Decorator
+    Haskellorls.Tree.Type
+    Haskellorls.Tree.Util
     Haskellorls.UserInfo
     Haskellorls.Utils
     Haskellorls.WrappedText

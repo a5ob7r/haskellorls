@@ -32,6 +32,7 @@ import qualified Haskellorls.Ownership as Ownership
 import qualified Haskellorls.Size.Decorator as Size
 import qualified Haskellorls.SymbolicLink as SymbolicLink
 import qualified Haskellorls.Time.Decorator as Time
+import qualified Haskellorls.Tree.Decorator as Tree
 import qualified Haskellorls.UserInfo as UserInfo
 import qualified Haskellorls.WrappedText as WT
 import qualified System.IO as SIO
@@ -50,13 +51,15 @@ data PrinterType
   | FILENAME
 
 data NamePrinterType
-  = ICON
+  = TREE
+  | ICON
   | NAME
   | LINK
   | INDICATOR
 
 data NodeNamePrinters = NodeNamePrinters
-  { nodeIconPrinter :: Printer,
+  { nodeTreePrinter :: Printer,
+    nodeIconPrinter :: Printer,
     nodeNamePrinter :: Printer,
     nodeLinkPrinter :: Printer,
     nodeIndicatorPrinter :: Printer
@@ -66,6 +69,7 @@ nodeNamePrinterSelector :: NamePrinterType -> NodeNamePrinters -> Printer
 nodeNamePrinterSelector npType = selector
   where
     selector = case npType of
+      TREE -> nodeTreePrinter
       ICON -> nodeIconPrinter
       NAME -> nodeNamePrinter
       LINK -> nodeLinkPrinter
@@ -73,13 +77,14 @@ nodeNamePrinterSelector npType = selector
 
 neededNamePrinterTypeBy :: NamePrinterType -> Option.Option -> Bool
 neededNamePrinterTypeBy npType opt = case npType of
+  TREE -> Option.tree opt
   ICON -> Option.icon opt
   NAME -> True
   LINK -> isLongStyle opt
   INDICATOR -> Indicator.IndicatorNone < Indicator.deriveIndicatorStyle opt
 
 buildNamePrinterTypes :: Option.Option -> [NamePrinterType]
-buildNamePrinterTypes opt = filter (`neededNamePrinterTypeBy` opt) [ICON, NAME, LINK, INDICATOR]
+buildNamePrinterTypes opt = filter (`neededNamePrinterTypeBy` opt) [TREE, ICON, NAME, LINK, INDICATOR]
 
 buildNodeNamePrinter :: Option.Option -> NodeNamePrinters -> Printer
 buildNodeNamePrinter opt printers node = concatMap (\npType -> nodeNamePrinterSelector npType printers node) $ buildNamePrinterTypes opt
@@ -199,6 +204,10 @@ buildPrinters opt = do
 
       -- TODO: Should use colored icon? But, must consider charactor size and background color.
       -- e.g. $ echo -e '\e[48;5;196;38;5;232;1m\e[0m'
+      nodeTreePrinter =
+        if shouldColorize
+          then Tree.treeBranchWithColor cConfig . Node.getTreeNodePositions
+          else WT.toWrappedTextSingleton . Tree.treeBranch . Node.getTreeNodePositions
       fileIconFieldPrinter = flip Icon.lookupIcon Icon.defaultConfig
       nodePrinter =
         if shouldColorize
@@ -214,7 +223,8 @@ buildPrinters opt = do
           { nodeIconPrinter = fileIconFieldPrinter,
             nodeNamePrinter = nodePrinter,
             nodeLinkPrinter = fileSymbolicLinkPrinter,
-            nodeIndicatorPrinter = fileIndicatorPrinter
+            nodeIndicatorPrinter = fileIndicatorPrinter,
+            ..
           }
 
   return $

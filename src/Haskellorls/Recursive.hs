@@ -1,3 +1,4 @@
+{-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -9,6 +10,7 @@ module Haskellorls.Recursive
   )
 where
 
+import qualified Data.Foldable as Fold
 import qualified Data.Functor as F
 import qualified Data.List as L
 import qualified Data.Monoid as M
@@ -23,6 +25,7 @@ import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Size.Decorator as Size
 import qualified Haskellorls.Sort.Method as Sort
+import qualified Haskellorls.Tree.Util as Tree
 import qualified Haskellorls.Utils as Utils
 import qualified Haskellorls.WrappedText as WT
 import qualified System.FilePath.Posix as Posix
@@ -36,6 +39,10 @@ data Operation
       { entryType :: EntryType,
         entryPath :: FilePath,
         entryNodes :: [Node.NodeInfo],
+        entryOption :: Option.Option
+      }
+  | PrintTree
+      { entryPath :: FilePath,
         entryOption :: Option.Option
       }
 
@@ -68,16 +75,21 @@ eval (Printer printer) op = case op of
     opToOps opt op
     where
       opt = entryOption {Option.level = Depth.decreaseDepth $ Option.level entryOption}
+  PrintTree {..} -> do
+    T.putStrLn =<< printer op
+    opToOps opt op
+    where
+      opt = entryOption {Option.level = Depth.decreaseDepth $ Option.level entryOption}
 
 opToOps :: Option.Option -> Operation -> IO [Operation]
 opToOps opt op = case op of
-  Newline -> pure []
   PrintEntry {..}
     | Option.recursive opt && not isDepthZero -> mapM (pathToOp opt) paths
     | otherwise -> pure []
     where
       isDepthZero = (Just 0 ==) . Depth.getDepth $ Option.level opt
       paths = map (\node -> entryPath Posix.</> Node.nodeInfoPath node) $ filter (Files.isDirectory . Node.nodeInfoStatus) entryNodes
+  _ -> pure []
 
 pathToOp :: Option.Option -> FilePath -> IO Operation
 pathToOp opt path = do
@@ -106,9 +118,12 @@ buildInitialOperations opt paths = do
   let (dirs, files) = L.partition (Files.isDirectory . Node.nodeInfoStatus) nodes
       fileOp = [PrintEntry FILES "" files opt | not (null files)]
   dirOps <- mapM (pathToOp opt . Node.nodeInfoPath) dirs
-  let dirOps' = case dirOps of
-        [d] | null files && length (Option.targets opt) == 1 -> [d {entryType = SINGLEDIR}]
-        _ -> dirOps
+  let dirOps' =
+        if Option.tree opt
+          then map (\PrintEntry {..} -> PrintTree entryPath entryOption) dirOps
+          else case dirOps of
+            [d] | null files && length (Option.targets opt) == 1 -> [d {entryType = SINGLEDIR}]
+            _ -> dirOps
   pure $ fileOp <> dirOps'
 
 buildPrinter :: Option.Option -> Decorator.Printers -> Printer
@@ -136,3 +151,8 @@ generateEntryLines opt printers op = case op of
     colLen <- Grid.virtualColumnSize opt
 
     return . addHeader . addTotalBlockSize . Grid.renderGrid $ Grid.buildValidGrid colLen nodes'
+  PrintTree {..} -> do
+    nodes <- Fold.toList <$> Tree.makeTreeNodeInfos opt entryPath
+    pure . map (M.mconcat . map wtToBuilder) . Decorator.buildLines nodes printers $ Decorator.buildPrinterTypes opt
+    where
+      wtToBuilder wt = M.mconcat . map TLB.fromText $ WT.toList wt

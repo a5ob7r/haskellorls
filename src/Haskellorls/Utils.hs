@@ -36,7 +36,7 @@ outputNoExistPathErr :: FilePath -> IO ()
 outputNoExistPathErr path = IO.hPutStrLn IO.stderr $ "haskellorls: does not exist '" <> path <> "': (No such file or directory)"
 
 listContents :: Option.Option -> FilePath -> IO [FilePath]
-listContents opt path = ignoreFilter <$> list path
+listContents opt path = ignoreExcluder . hideExcluder . ignoreFilter <$> list path
   where
     list
       | Option.all opt = listAllEntries
@@ -46,6 +46,14 @@ listContents opt path = ignoreFilter <$> list path
       if Option.ignoreBackups opt
         then ignoreBackupsFilter
         else id
+    ignoreExcluder = case Option.ignore opt of
+      "" -> id
+      ptn -> exclude ptn
+    hideExcluder = case Option.hide opt of
+      "" -> id
+      _ | isShowHiddenEntries -> id
+      ptn -> exclude ptn
+    isShowHiddenEntries = Option.all opt || Option.almostAll opt
 
 listAllEntries :: FilePath -> IO [FilePath]
 listAllEntries = Directory.getDirectoryContents

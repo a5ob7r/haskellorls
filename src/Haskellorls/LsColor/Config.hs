@@ -83,7 +83,8 @@ data ExtensionConfig = ExtensionConfig
     fileSizeUnitYottaEscapeSequence :: T.Text,
     dateEscapeSequence :: T.Text,
     fileLinkEscapeSequence :: T.Text,
-    fileInodeEscapeSequence :: T.Text
+    fileInodeEscapeSequence :: T.Text,
+    treeBranchEscapeSequence :: T.Text
   }
 
 defaultConfig :: Config
@@ -157,7 +158,8 @@ defaultExtensionConfig =
       fileSizeUnitYottaEscapeSequence = "32",
       dateEscapeSequence = "34",
       fileLinkEscapeSequence = "36",
-      fileInodeEscapeSequence = "36"
+      fileInodeEscapeSequence = "36",
+      treeBranchEscapeSequence = "90"
     }
 
 config :: IO Config
@@ -240,7 +242,8 @@ extensionConfigFrom lsColors =
       fileSizeUnitYottaEscapeSequence = Map.findWithDefault (fileSizeUnitYottaEscapeSequence def) "uy" parametors,
       dateEscapeSequence = Map.findWithDefault (dateEscapeSequence def) "da" parametors,
       fileLinkEscapeSequence = Map.findWithDefault (fileLinkEscapeSequence def) "lc'" parametors,
-      fileInodeEscapeSequence = Map.findWithDefault (fileInodeEscapeSequence def) "in" parametors
+      fileInodeEscapeSequence = Map.findWithDefault (fileInodeEscapeSequence def) "in" parametors,
+      treeBranchEscapeSequence = treeBranchEscapeSequence def
     }
   where
     def = defaultExtensionConfig

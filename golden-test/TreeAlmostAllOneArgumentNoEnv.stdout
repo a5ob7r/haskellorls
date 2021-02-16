@@ -1,0 +1,6 @@
+files/examples02
+├── dir01
+│  └── files01.txt
+├── dir02
+│  └── .gitignore
+└── file01.txt

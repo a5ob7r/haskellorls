@@ -9,24 +9,28 @@ where
 
 import qualified Data.List as L
 import qualified Haskellorls.Utils as Utils
+import qualified Haskellorls.Tree.Type as Tree
 import qualified System.FilePath.Posix as Posix
 import qualified System.Posix.Files as Files
 
 data NodeInfo
   = FileInfo
       { getFilePath :: FilePath,
-        getFileStatus :: Files.FileStatus
+        getFileStatus :: Files.FileStatus,
+        getTreeNodePositions :: [Tree.TreeNodePosition]
       }
   | LinkInfo
       { getLinkPath :: FilePath,
         getLinkStatus :: Files.FileStatus,
         getDestPath :: FilePath,
-        getDestStatus :: Files.FileStatus
+        getDestStatus :: Files.FileStatus,
+        getTreeNodePositions :: [Tree.TreeNodePosition]
       }
   | OrphanedLinkInfo
       { getOrphanedLinkPath :: FilePath,
         getOrphanedLinkStatus :: Files.FileStatus,
-        getDestPath :: FilePath
+        getDestPath :: FilePath,
+        getTreeNodePositions :: [Tree.TreeNodePosition]
       }
 
 nodeInfo :: FilePath -> FilePath -> IO NodeInfo
@@ -45,20 +49,23 @@ nodeInfo dirname basename = do
               { getLinkPath = basename,
                 getLinkStatus = status,
                 getDestPath = linkPath,
-                getDestStatus = destStatus
+                getDestStatus = destStatus,
+                getTreeNodePositions = []
               }
         else
           return $
             OrphanedLinkInfo
               { getOrphanedLinkPath = basename,
                 getOrphanedLinkStatus = status,
-                getDestPath = linkPath
+                getDestPath = linkPath,
+                getTreeNodePositions = []
               }
     else
       return $
         FileInfo
           { getFilePath = basename,
-            getFileStatus = status
+            getFileStatus = status,
+            getTreeNodePositions = []
           }
   where
     path = dirname Posix.</> basename
@@ -69,12 +76,14 @@ toFileInfo node = case node of
   LinkInfo {} ->
     FileInfo
       { getFilePath = getDestPath node,
-        getFileStatus = getDestStatus node
+        getFileStatus = getDestStatus node,
+        getTreeNodePositions = getTreeNodePositions node
       }
   OrphanedLinkInfo {} ->
     FileInfo
       { getFilePath = getDestPath node,
-        getFileStatus = getOrphanedLinkStatus node
+        getFileStatus = getOrphanedLinkStatus node,
+        getTreeNodePositions = getTreeNodePositions node
       }
 
 linkDestPath :: FilePath -> FilePath -> FilePath

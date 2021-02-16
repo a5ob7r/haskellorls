@@ -53,6 +53,7 @@ data Option = Option
     timeSort :: Bool,
     naturalSort :: Bool,
     extensionSort :: Bool,
+    tree :: Bool,
     version :: Bool,
     targets :: [FilePath]
   }
@@ -102,6 +103,7 @@ optionParser =
     <*> Sort.timeSortParser
     <*> Sort.naturalSortParser
     <*> Sort.extensionSortParser
+    <*> treeParser
     <*> versionParser
     <*> argParser
 
@@ -269,6 +271,12 @@ iconParser =
   OA.switch $
     OA.long "icons"
       <> OA.help "Output icon for each files"
+
+treeParser :: OA.Parser Bool
+treeParser =
+  OA.switch $
+    OA.long "tree"
+      <> OA.help "Output each files with tree style layout. If combines with '-a/--all', the option is disabled forcefully and '-A/--almost-all' is enabled instead."
 
 versionParser :: OA.Parser Bool
 versionParser =
