@@ -208,24 +208,17 @@ buildPrinters opt = do
         if shouldColorize
           then Tree.treeBranchWithColor cConfig . Node.getTreeNodePositions
           else WT.toWrappedTextSingleton . Tree.treeBranch . Node.getTreeNodePositions
-      fileIconFieldPrinter = flip Icon.lookupIcon Icon.defaultConfig
-      nodePrinter =
+      nodeIconPrinter = flip Icon.lookupIcon Icon.defaultConfig
+      nodeNamePrinter =
         if shouldColorize
           then Name.colorizedNodeName cConfig
           else WT.toWrappedTextSingleton . Name.nodeName
-      fileIndicatorPrinter = Indicator.buildIndicatorPrinter opt . Node.toFileInfo
-      fileSymbolicLinkPrinter =
+      nodeIndicatorPrinter = Indicator.buildIndicatorPrinter opt . Node.toFileInfo
+      nodeLinkPrinter =
         if shouldColorize
           then SymbolicLink.coloredLinkName cConfig
           else SymbolicLink.linkNameWrapper
-      nodeNamePrinters =
-        NodeNamePrinters
-          { nodeIconPrinter = fileIconFieldPrinter,
-            nodeNamePrinter = nodePrinter,
-            nodeLinkPrinter = fileSymbolicLinkPrinter,
-            nodeIndicatorPrinter = fileIndicatorPrinter,
-            ..
-          }
+      nodeNamePrinters = NodeNamePrinters {..}
 
   return $
     Printers
