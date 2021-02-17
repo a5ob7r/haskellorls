@@ -8,8 +8,8 @@ module Haskellorls.NodeInfo
 where
 
 import qualified Data.List as L
-import qualified Haskellorls.Utils as Utils
 import qualified Haskellorls.Tree.Type as Tree
+import qualified Haskellorls.Utils as Utils
 import qualified System.FilePath.Posix as Posix
 import qualified System.Posix.Files as Files
 

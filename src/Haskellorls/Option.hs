@@ -8,11 +8,11 @@ where
 
 import qualified Control.Applicative as A
 import qualified Haskellorls.Color.Option as Color
+import qualified Haskellorls.Depth as Depth
 import qualified Haskellorls.Indicator.Option as Indicator
 import qualified Haskellorls.Size.Option as Size
 import qualified Haskellorls.Sort.Option as Sort
 import qualified Haskellorls.Time.Option as Time
-import qualified Haskellorls.Depth as Depth
 import qualified Options.Applicative as OA
 import qualified Text.Read as Read
 
