@@ -1,6 +1,7 @@
 # Haskellorls
 
 ![CI](https://github.com/a5ob7r/haskellorls/workflows/CI/badge.svg)
+![Format](https://github.com/a5ob7r/haskellorls/workflows/Format/badge.svg)
 
 Haskell implementation of [exa](https://github.com/ogham/exa) flavored GNU ls.
 
