@@ -125,7 +125,7 @@ buildInitialOperations opt paths = do
             -- Considers no argument to be also a single directory.
             [d] | null files && length (Option.targets opt) < 2 -> [d {entryType = SINGLEDIR}]
             _ -> dirOps
-  pure $ fileOp <> dirOps'
+  pure . L.intersperse Newline $ fileOp <> dirOps'
 
 buildPrinter :: Option.Option -> Decorator.Printers -> Printer
 buildPrinter opt printers = Printer $ fmap (TL.toStrict . TLB.toLazyText . M.mconcat . L.intersperse (TLB.fromText "\n")) . generateEntryLines opt printers
