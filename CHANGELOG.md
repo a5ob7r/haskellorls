@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0.0 -- 2021-02-17
+
 ### Added
 
 - Add help messages to some options.
