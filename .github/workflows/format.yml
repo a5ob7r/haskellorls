@@ -20,10 +20,10 @@ jobs:
       - uses: actions/cache@v2
         with:
           path: ${{ steps.setup-haskell.outputs.cabal-store }}
-          key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project') }}
+          key: format-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project') }}
           restore-keys: |
-            ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project') }}
-            ${{ runner.os }}-${{ matrix.ghc }}-
+            format-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project') }}
+            format-${{ runner.os }}-${{ matrix.ghc }}-
 
       - name: Update cabal index state
         run: cabal update
