@@ -84,10 +84,9 @@ eval (Printer printer) op = case op of
 opToOps :: Option.Option -> Operation -> IO [Operation]
 opToOps opt op = case op of
   PrintEntry {..}
-    | Option.recursive opt && not isDepthZero -> mapM (pathToOp opt) paths
+    | Option.recursive opt && (not . Depth.isDepthZero . Option.level) opt -> mapM (pathToOp opt) paths
     | otherwise -> pure []
     where
-      isDepthZero = (Just 0 ==) . Depth.getDepth $ Option.level opt
       paths = map (\node -> entryPath Posix.</> Node.nodeInfoPath node) $ filter (Files.isDirectory . Node.nodeInfoStatus) entryNodes
   _ -> pure []
 

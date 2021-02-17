@@ -2,7 +2,7 @@ module Haskellorls.Depth
   ( Depth,
     makeDepth,
     makeInf,
-    getDepth,
+    isDepthZero,
     decreaseDepth,
   )
 where
@@ -10,6 +10,11 @@ where
 data Depth
   = Depth Int
   | INF
+
+instance Eq Depth where
+  INF == INF = True
+  Depth a == Depth b = a == b
+  _ == _ = False
 
 makeDepth :: Int -> Maybe Depth
 makeDepth n
@@ -19,10 +24,8 @@ makeDepth n
 makeInf :: Depth
 makeInf = INF
 
-getDepth :: Depth -> Maybe Int
-getDepth d = case d of
-  INF -> Nothing
-  Depth n -> Just n
+isDepthZero :: Depth -> Bool
+isDepthZero d = d == Depth 0
 
 decreaseDepth :: Depth -> Depth
 decreaseDepth d = case d of

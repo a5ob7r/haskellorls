@@ -40,7 +40,7 @@ makeTreeNodeInfos' :: Option.Option -> FilePath -> Node.NodeInfo -> IO (S.Seq No
 makeTreeNodeInfos' opt path node = do
   contents <-
     if
-        | isDepthZero || not (Files.isDirectory $ Node.nodeInfoStatus node) -> pure []
+        | Depth.isDepthZero depth || not (Files.isDirectory $ Node.nodeInfoStatus node) -> pure []
         -- Force hide '.' and '..' to avoid infinite loop.
         | Option.all opt -> Utils.listContents opt {Option.all = False, Option.almostAll = True} path
         | otherwise -> Utils.listContents opt path
@@ -51,4 +51,3 @@ makeTreeNodeInfos' opt path node = do
   where
     opt' = opt {Option.level = Depth.decreaseDepth depth}
     depth = Option.level opt
-    isDepthZero = (Just 0 ==) $ Depth.getDepth depth
