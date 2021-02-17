@@ -1,5 +1,5 @@
 {
-  "command": "../bin/haskellorls",
+  "command": "haskellorls",
   "arguments": ["--tree", "files/examples02"],
   "environment": {"LS_COLORS": ""},
   "asserts": [

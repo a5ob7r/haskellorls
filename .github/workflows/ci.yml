@@ -37,12 +37,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Build
-        run: cabal install --overwrite-policy=always --installdir=bin
+        run: cabal install --overwrite-policy=always
 
-        # NOTE: Always failure to run test on macOS if run it on project root.
-        # So need to change working directory to `golden-test` to pass test.
-        # But on Linux, can pass tests on both working directories. This is
-        # work arround.
       - name: Run tests
-        run: goldplate . --pretty-diff
-        working-directory: ./golden-test
+        run: goldplate goldplate --pretty-diff

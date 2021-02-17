@@ -38,7 +38,7 @@ Run golden tests using [goldplate](https://github.com/fugue/goldplate).
 ```sh
 # On project root
 $ cabal install --overwrite-policy=always --installdir=bin
-$ goldplate golden-test --pretty-diff
+$ PATH="$PWD/bin:$PATH" goldplate golden-test --pretty-diff
 ```
 
 ## Incompatibilities
