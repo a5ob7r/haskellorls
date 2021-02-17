@@ -63,11 +63,11 @@ slice n xs
     (h, t) = splitAt n xs
 
 buildValidGrid :: Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
-buildValidGrid columnLength sss
-  | null sss = []
-  | columnLength == 0 = buildGrid (length sss) sss
-  | columnLength < 0 = singleColumnGrid
-  | otherwise = last $ singleColumnGrid : validGrids
+buildValidGrid _ [] = []
+buildValidGrid columnLength sss = case columnLength `compare` 0 of
+  EQ -> buildGrid (length sss) sss
+  LT -> singleColumnGrid
+  GT ->  last $ singleColumnGrid : validGrids
   where
     singleColumnGrid = buildGrid 1 sss
     validGrids = takeWhile (validateGrid columnLength) $ map (`buildGrid` sss) [2 .. columnLength]
