@@ -292,9 +292,9 @@ padding c n ys
     padSize = signum n * (n' - len)
 
 padding' :: AlignmenterBuilder
-padding' c n t
-  | n > 0 = t <> pad
-  | n < 0 = pad <> t
-  | otherwise = t
+padding' c n t = case n `compare` 0 of
+  GT -> t <> pad
+  LT -> pad <> t
+  EQ -> t
   where
     pad = WT.toWrappedTextSingleton $ T.replicate (abs n) c
