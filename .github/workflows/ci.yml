@@ -40,4 +40,4 @@ jobs:
         run: cabal install --overwrite-policy=always
 
       - name: Run tests
-        run: goldplate goldplate --pretty-diff
+        run: goldplate golden-test --pretty-diff
