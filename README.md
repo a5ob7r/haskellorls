@@ -41,6 +41,29 @@ $ cabal install --overwrite-policy=always --installdir=bin
 $ PATH="$PWD/bin:$PATH" goldplate golden-test --pretty-diff
 ```
 
+## Extra Options
+
+Haskellorls has some extra options which are not implemented on GNU ls.
+
+### --extra-color
+
+Enable extra coloring contains file permission, file owner and group and so on.
+
+### --icons
+
+Show file icon before fine name.
+Matching algolithm between icons and filenames is same to `LS_COLORS`.
+
+### --tree
+
+Output all files using tree style layout.
+See `--level=N`.
+
+### -L / --level=N
+
+Restrict max searching depth when output with tree style layout.
+Also this can restrict max depth of directory searching using --recursive/-R option.
+
 ## Incompatibilities
 
 ### GNU ls
