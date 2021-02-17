@@ -122,7 +122,8 @@ buildInitialOperations opt paths = do
         if Option.tree opt
           then map (\PrintEntry {..} -> PrintTree entryPath entryOption) dirOps
           else case dirOps of
-            [d] | null files && length (Option.targets opt) == 1 -> [d {entryType = SINGLEDIR}]
+            -- Considers no argument to be also a single directory.
+            [d] | null files && length (Option.targets opt) < 2 -> [d {entryType = SINGLEDIR}]
             _ -> dirOps
   pure $ fileOp <> dirOps'
 
