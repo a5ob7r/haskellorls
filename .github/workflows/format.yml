@@ -37,6 +37,9 @@ jobs:
       - name: Install cabal-fmt
         run: cabal install --overwrite-policy=always cabal-fmt
 
+      - name: Install hlint
+        run: cabal install --overwrite-policy=always hlint
+
       - uses: actions/checkout@v2
 
       - name: Run ormolu
@@ -44,3 +47,6 @@ jobs:
 
       - name: Run cabal-fmt
         run: cabal-fmt --check --Werror haskellorls.cabal
+
+      - name: Run hlint
+        run: hlint .
