@@ -59,7 +59,7 @@ Matching algolithm between icons and filenames is same to `LS_COLORS`.
 Output all files using tree style layout.
 See `--level=N`.
 
-### -L / --level=N
+### --level=N
 
 Restrict max searching depth when output with tree style layout.
 Also this can restrict max depth of directory searching using --recursive/-R option.

@@ -246,7 +246,6 @@ levelParser :: OA.Parser Depth.Depth
 levelParser =
   OA.option reader $
     OA.long "level"
-      <> OA.short 'L'
       <> OA.metavar "DEPTH"
       <> OA.value Depth.makeInf
       <> OA.help "Specify how much depth drills in directory"

@@ -10,6 +10,10 @@
 
 - Change lisence to BSD 3-Clause to release binary
 
+### Removed
+
+- `-L` option which is short version of `--level`.
+
 ## 0.2.0.0 -- 2021-02-17
 
 ### Added
