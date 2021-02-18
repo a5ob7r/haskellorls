@@ -1,7 +1,7 @@
 cabal-version:      2.2
 name:               haskellorls
 version:            0.2.0.0
-license:            MIT
+license:            BSD 3-Clause
 license-file:       LICENSE
 maintainer:         12132068+a5ob7r@users.noreply.github.com
 author:             a5ob7r

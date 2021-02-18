@@ -2,7 +2,13 @@
 
 ## Unreleased
 
+### Added
+
 - Add a ascii art to help header
+
+### Changed
+
+- Change lisence to BSD 3-Clause to release binary
 
 ## 0.2.0.0 -- 2021-02-17
 
