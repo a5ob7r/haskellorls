@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Haskellorls.Option
   ( Option (..),
@@ -7,6 +8,7 @@ module Haskellorls.Option
 where
 
 import qualified Control.Applicative as A
+import qualified Data.Text as T
 import qualified Haskellorls.Color.Option as Color
 import qualified Haskellorls.Depth as Depth
 import qualified Haskellorls.Indicator.Option as Indicator
@@ -14,6 +16,7 @@ import qualified Haskellorls.Size.Option as Size
 import qualified Haskellorls.Sort.Option as Sort
 import qualified Haskellorls.Time.Option as Time
 import qualified Options.Applicative as OA
+import qualified Options.Applicative.Help.Pretty as OA
 import qualified Text.Read as Read
 
 data Option = Option
@@ -62,6 +65,7 @@ opts :: OA.ParserInfo Option
 opts =
   OA.info (optionParser OA.<**> OA.helper) $
     OA.fullDesc
+      <> (OA.headerDoc . Just . OA.text . T.unpack) header
       <> OA.progDesc "Haskellorls = Haskell color ls"
 
 optionParser :: OA.Parser Option
@@ -286,3 +290,14 @@ versionParser =
 
 argParser :: OA.Parser [String]
 argParser = A.many . OA.strArgument $ OA.metavar "[FILE]..."
+
+header :: T.Text
+header =
+  T.unlines
+    [ " _   _           _        _ _            _     ",
+      "| | | |         | |      | | |          | |    ",
+      "| |_| | __ _ ___| | _____| | | ___  _ __| |___ ",
+      "|  _  |/ _` / __| |/ / _ \\ | |/ _ \\| '__| / __|",
+      "| | | | (_| \\__ \\   <  __/ | | (_) | |  | \\__ \\",
+      "\\_| |_/\\__,_|___/_|\\_\\___|_|_|\\___/|_|  |_|___/"
+    ]
