@@ -67,7 +67,7 @@ buildValidGrid _ [] = []
 buildValidGrid columnLength sss = case columnLength `compare` 0 of
   EQ -> buildGrid (length sss) sss
   LT -> singleColumnGrid
-  GT ->  last $ singleColumnGrid : validGrids
+  GT -> last $ singleColumnGrid : validGrids
   where
     singleColumnGrid = buildGrid 1 sss
     validGrids = takeWhile (validateGrid columnLength) $ map (`buildGrid` sss) [2 .. columnLength]
