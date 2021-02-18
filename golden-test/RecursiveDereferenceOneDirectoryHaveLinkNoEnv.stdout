@@ -1,0 +1,12 @@
+files/examples03:
+dir01
+dir01
+file01.txt
+file01.txt
+file04.txt
+
+files/examples03/dir01:
+file03.txt
+
+files/examples03/dir01:
+file03.txt

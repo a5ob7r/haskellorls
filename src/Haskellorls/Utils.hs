@@ -1,6 +1,7 @@
 module Haskellorls.Utils
   ( exist,
     linked,
+    destFileStatus,
     outputNoExistPathErr,
     listContents,
     exclude,
@@ -31,6 +32,13 @@ linked path = Either.isRight <$> exist'
   where
     exist' :: IO (Either Exception.IOException Files.FileStatus)
     exist' = Exception.try $ Files.getFileStatus path
+
+destFileStatus :: FilePath -> IO (Maybe Files.FileStatus)
+destFileStatus path = do
+  isLinked <- linked path
+  if isLinked
+    then Just <$> Files.getFileStatus path
+    else return Nothing
 
 outputNoExistPathErr :: FilePath -> IO ()
 outputNoExistPathErr path = IO.hPutStrLn IO.stderr $ "haskellorls: does not exist '" <> path <> "': (No such file or directory)"

@@ -97,7 +97,7 @@ pathToOp opt path = do
 
 buildDirectoryNodes :: Option.Option -> FilePath -> IO [Node.NodeInfo]
 buildDirectoryNodes opt path = do
-  Utils.listContents opt path >>= mapM (Node.nodeInfo path) . excluder F.<&> Sort.sorter opt
+  Utils.listContents opt path >>= mapM (Node.nodeInfo opt path) . excluder F.<&> Sort.sorter opt
   where
     excluder = ignoreExcluder . hideExcluder
     ignorePtn = Option.ignore opt
@@ -113,7 +113,7 @@ buildDirectoryNodes opt path = do
 -- | Assumes all paths exist.
 buildInitialOperations :: Option.Option -> [FilePath] -> IO [Operation]
 buildInitialOperations opt paths = do
-  nodes <- Sort.sorter opt <$> mapM (Node.nodeInfo "") paths
+  nodes <- Sort.sorter opt <$> mapM (Node.nodeInfo opt "") paths
   let (dirs, files) = L.partition (Files.isDirectory . Node.nodeInfoStatus) nodes
       fileOp = [PrintEntry FILES "" files opt | not (null files)]
   dirOps <- mapM (pathToOp opt . Node.nodeInfoPath) dirs

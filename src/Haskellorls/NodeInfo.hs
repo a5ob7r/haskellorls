@@ -8,6 +8,7 @@ module Haskellorls.NodeInfo
 where
 
 import qualified Data.List as L
+import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Tree.Type as Tree
 import qualified Haskellorls.Utils as Utils
 import qualified System.FilePath.Posix as Posix
@@ -33,31 +34,35 @@ data NodeInfo
         getTreeNodePositions :: [Tree.TreeNodePosition]
       }
 
-nodeInfo :: FilePath -> FilePath -> IO NodeInfo
-nodeInfo dirname basename = do
+nodeInfo :: Option.Option -> FilePath -> FilePath -> IO NodeInfo
+nodeInfo opt dirname basename = do
   status <- Files.getSymbolicLinkStatus path
   if Files.isSymbolicLink status
     then do
       linkPath <- Files.readSymbolicLink path
       let linkAbsPath = linkDestPath path linkPath
-      isLinked <- Utils.linked linkAbsPath
-      if isLinked
-        then do
-          destStatus <- linkDestStatus path linkPath
-          return $
+      destStatus <- Utils.destFileStatus linkAbsPath
+      return $ case destStatus of
+        Nothing ->
+          OrphanedLinkInfo
+            { getOrphanedLinkPath = basename,
+              getOrphanedLinkStatus = status,
+              getDestPath = linkPath,
+              getTreeNodePositions = []
+            }
+        Just s
+          | Option.dereference opt ->
+            FileInfo
+              { getFilePath = linkPath,
+                getFileStatus = s,
+                getTreeNodePositions = []
+              }
+          | otherwise ->
             LinkInfo
               { getLinkPath = basename,
                 getLinkStatus = status,
                 getDestPath = linkPath,
-                getDestStatus = destStatus,
-                getTreeNodePositions = []
-              }
-        else
-          return $
-            OrphanedLinkInfo
-              { getOrphanedLinkPath = basename,
-                getOrphanedLinkStatus = status,
-                getDestPath = linkPath,
+                getDestStatus = s,
                 getTreeNodePositions = []
               }
     else
@@ -93,9 +98,6 @@ linkDestPath parPath linkPath
 
 isAbsPath :: FilePath -> Bool
 isAbsPath path = "/" `L.isPrefixOf` path
-
-linkDestStatus :: FilePath -> FilePath -> IO Files.FileStatus
-linkDestStatus parPath = Files.getFileStatus . linkDestPath parPath
 
 nodeInfoStatus :: NodeInfo -> Files.FileStatus
 nodeInfoStatus node = nodeStatus node

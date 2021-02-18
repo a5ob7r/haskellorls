@@ -89,7 +89,6 @@ Also this can restrict max depth of directory searching using --recursive/-R opt
   - --dereference-command-line-symlink-to-dir
   - --hyperlink[=WHEN]
   - -k, --kibibytes
-  - -L, --dereference
   - -m
   - -N
   - -q

@@ -57,6 +57,7 @@ data Option = Option
     naturalSort :: Bool,
     extensionSort :: Bool,
     tree :: Bool,
+    dereference :: Bool,
     version :: Bool,
     targets :: [FilePath]
   }
@@ -108,6 +109,7 @@ optionParser =
     <*> Sort.naturalSortParser
     <*> Sort.extensionSortParser
     <*> treeParser
+    <*> dereferenceParser
     <*> versionParser
     <*> argParser
 
@@ -280,6 +282,13 @@ treeParser =
   OA.switch $
     OA.long "tree"
       <> OA.help "Output each files with tree style layout. If combines with '-a/--all', the option is disabled forcefully and '-A/--almost-all' is enabled instead."
+
+dereferenceParser :: OA.Parser Bool
+dereferenceParser =
+  OA.switch $
+    OA.long "dereference"
+      <> OA.short 'L'
+      <> OA.help "Use symbolic link destination file instead of link itself"
 
 versionParser :: OA.Parser Bool
 versionParser =

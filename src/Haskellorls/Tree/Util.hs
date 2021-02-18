@@ -33,7 +33,7 @@ makeSomeNewPositionsList' (x : xs) = L.snoc x MID : makeSomeNewPositionsList' xs
 
 makeTreeNodeInfos :: Option.Option -> FilePath -> IO (S.Seq Node.NodeInfo)
 makeTreeNodeInfos opt path = do
-  node <- Node.nodeInfo "" path
+  node <- Node.nodeInfo opt "" path
   makeTreeNodeInfos' opt path node
 
 makeTreeNodeInfos' :: Option.Option -> FilePath -> Node.NodeInfo -> IO (S.Seq Node.NodeInfo)
@@ -45,7 +45,7 @@ makeTreeNodeInfos' opt path node = do
         | Option.all opt -> Utils.listContents opt {Option.all = False, Option.almostAll = True} path
         | otherwise -> Utils.listContents opt path
   let pList = makeSomeNewPositionsList (length contents) $ Node.getTreeNodePositions node
-  nodes <- Sort.sorter opt <$> mapM (Node.nodeInfo path) contents
+  nodes <- Sort.sorter opt <$> mapM (Node.nodeInfo opt path) contents
   let nodes' = zipWith (\nd p -> nd {Node.getTreeNodePositions = p}) nodes pList
   (node S.<|) <$> M.mconcatMapM (\nd -> makeTreeNodeInfos' opt' (path Posix.</> Node.nodeInfoPath nd) nd) nodes'
   where

@@ -4,7 +4,8 @@
 
 ### Added
 
-- Add a ascii art to help header
+- Add a ascii art to help header.
+- Add `-L / --dereference` option.
 
 ### Changed
 
