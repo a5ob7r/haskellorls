@@ -61,7 +61,7 @@ subISOFormat :: String
 subISOFormat = "%F"
 
 fullISOFormat :: String
-fullISOFormat = "%F %T %z"
+fullISOFormat = "%F %T.%q %z"
 
 longISOFormat :: String
 longISOFormat = "%F %R"

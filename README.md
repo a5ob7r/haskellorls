@@ -72,6 +72,9 @@ Also this can restrict max depth of directory searching using --recursive/-R opt
   - `Haskellorls -t -v` and `Haskellorls -v -t` causes same results.
   - It may not be useful to override same category option (e.g. sort options).
 - Outputs with the column size which is specified by -w/--width even if output fd is stdout.
+- Outputs pico seconds instead of nano seconds after decimal point when uses full-iso as time style format.
+  - (nano) 2021-02-19 13:09:58.575236532 +0000
+  - (pico) 2021-02-19 13:09:58.575236532000 +0000
 
 ## TODO
 

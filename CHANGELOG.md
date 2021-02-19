@@ -17,6 +17,10 @@
 
 - `-L` option which is short version of `--level`.
 
+### Fixed
+
+- Missing numbers output after decimal point when uses `full-iso` time style format.
+
 ## 0.2.0.0 -- 2021-02-17
 
 ### Added
