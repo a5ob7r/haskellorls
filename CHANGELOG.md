@@ -20,6 +20,7 @@
 ### Fixed
 
 - Missing numbers output after decimal point when uses `full-iso` time style format.
+- Ignoring current time zone.
 
 ## 0.2.0.0 -- 2021-02-17
 

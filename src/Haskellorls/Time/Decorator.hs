@@ -13,27 +13,29 @@ import qualified Data.Text as T
 import qualified Data.Time.Clock as Clock
 import qualified Data.Time.Clock.POSIX as POSIX
 import qualified Data.Time.Format as Format
+import qualified Data.Time.LocalTime as LClock
 import qualified Haskellorls.LsColor.Config as Color
 import qualified Haskellorls.Option as Option
 import Haskellorls.Time.Type
 import qualified Haskellorls.WrappedText as WT
 import qualified System.Posix.Files as Files
 
-timeStyleFunc :: Format.TimeLocale -> Clock.UTCTime -> TimeStyle -> (Clock.UTCTime -> T.Text)
-timeStyleFunc locale time = \case
-  FULLISO -> timeStyleFunc' ('+' : fullISOFormat) locale time
-  LONGISO -> timeStyleFunc' ('+' : longISOFormat) locale time
-  ISO -> timeStyleFunc' ('+' : isoFormat) locale time
-  FORMAT fmt -> timeStyleFunc' fmt locale time
+-- TODO: Reduce argument numbers
+timeStyleFunc :: LClock.TimeZone -> Format.TimeLocale -> Clock.UTCTime -> TimeStyle -> (Clock.UTCTime -> T.Text)
+timeStyleFunc zone locale time = \case
+  FULLISO -> timeStyleFunc' ('+' : fullISOFormat) zone locale time
+  LONGISO -> timeStyleFunc' ('+' : longISOFormat) zone locale time
+  ISO -> timeStyleFunc' ('+' : isoFormat) zone locale time
+  FORMAT fmt -> timeStyleFunc' fmt zone locale time
 
-coloredTimeStyleFunc :: Color.Config -> Format.TimeLocale -> Clock.UTCTime -> TimeStyle -> (Clock.UTCTime -> [WT.WrappedText])
-coloredTimeStyleFunc config locale time style fTime = [Color.toWrappedText config getter timeAsT]
+coloredTimeStyleFunc :: Color.Config -> LClock.TimeZone -> Format.TimeLocale -> Clock.UTCTime -> TimeStyle -> (Clock.UTCTime -> [WT.WrappedText])
+coloredTimeStyleFunc config zone locale time style fTime = [Color.toWrappedText config getter timeAsT]
   where
-    timeAsT = timeStyleFunc locale time style fTime
+    timeAsT = timeStyleFunc zone locale time style fTime
     getter = Color.dateEscapeSequence . Color.extensionColorConfig
 
-timeStyleFunc' :: String -> Format.TimeLocale -> Clock.UTCTime -> Clock.UTCTime -> T.Text
-timeStyleFunc' fmt locale now fTime = T.pack $ Format.formatTime locale format fTime
+timeStyleFunc' :: String -> LClock.TimeZone -> Format.TimeLocale -> Clock.UTCTime -> Clock.UTCTime -> T.Text
+timeStyleFunc' fmt zone locale now fTime = T.pack . Format.formatTime locale format $ LClock.utcToZonedTime zone fTime
   where
     format = if fTime `isRecentTimeFrom` now then recent else notRecent
     recent = if not (null formats) then head formats else mainISOFormat

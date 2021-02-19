@@ -17,6 +17,7 @@ import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 import qualified Data.Time.Clock.POSIX as Clock
 import qualified Data.Time.Format as Format
+import qualified Data.Time.LocalTime as LClock
 import qualified Haskellorls.Color.Type as Color
 import qualified Haskellorls.Field as Field
 import qualified Haskellorls.Icon as Icon
@@ -149,6 +150,7 @@ buildPrinters opt = do
   gidSubstTable <- if Option.numericUidGid opt then return Map.empty else Ownership.getGroupIdSubstTable
   userInfo <- Ownership.userInfo
   currentTime <- Clock.getCurrentTime
+  timeZone <- LClock.getCurrentTimeZone
   shouldColorize <- case Option.color opt of
     Color.NEVER -> return False
     Color.ALWAYS -> return True
@@ -193,10 +195,10 @@ buildPrinters opt = do
 
       fileTimePrinter =
         if shouldColorize && isEnableExtraColor
-          then Time.coloredTimeStyleFunc cConfig Format.defaultTimeLocale currentTime timeStyle . fileTime
+          then Time.coloredTimeStyleFunc cConfig timeZone Format.defaultTimeLocale currentTime timeStyle . fileTime
           else WT.toWrappedTextSingleton . timeStyleFunc . fileTime
         where
-          timeStyleFunc = Time.timeStyleFunc Format.defaultTimeLocale currentTime timeStyle
+          timeStyleFunc = Time.timeStyleFunc timeZone Format.defaultTimeLocale currentTime timeStyle
           fileTime = Clock.posixSecondsToUTCTime . Time.fileTime (Option.time opt) . Node.nodeInfoStatus
           timeStyle = Time.timeStyle opt
 
