@@ -53,7 +53,7 @@ nodeInfo opt dirname basename = do
         Just s
           | Option.dereference opt ->
             FileInfo
-              { getFilePath = linkPath,
+              { getFilePath = basename,
                 getFileStatus = s,
                 getTreeNodePositions = []
               }
