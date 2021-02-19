@@ -1,5 +1,6 @@
 module Haskellorls.Time.Decorator
-  ( fileTime,
+  ( timeStyle,
+    fileTime,
     timeStyleFunc,
     coloredTimeStyleFunc,
   )
@@ -12,6 +13,7 @@ import qualified Data.Time.Clock.POSIX as POSIX
 import qualified Data.Time.Format as Format
 import qualified Foreign.C.Types as CTypes
 import qualified Haskellorls.LsColor.Config as Color
+import qualified Haskellorls.Option as Option
 import Haskellorls.Time.Type
 import qualified Haskellorls.WrappedText as WT
 import qualified System.Posix.Files as Files
@@ -43,6 +45,11 @@ fileTime tType = case tType of
   MODIFICATION -> Files.modificationTime
   ACCESS -> Files.accessTime
   CHANGE -> Files.statusChangeTime
+
+timeStyle :: Option.Option -> TimeStyle
+timeStyle opt
+  | Option.fullTime opt = FULLISO
+  | otherwise = Option.timeStyle opt
 
 epoch2UTC :: Types.EpochTime -> Clock.UTCTime
 epoch2UTC = POSIX.posixSecondsToUTCTime . realToFrac

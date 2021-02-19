@@ -198,7 +198,7 @@ buildPrinters opt = do
         where
           timeStyleFunc = Time.timeStyleFunc Format.defaultTimeLocale currentTime timeStyle
           fileTime = Time.fileTime $ Option.time opt
-          timeStyle = Option.timeStyle opt
+          timeStyle = Time.timeStyle opt
 
       -- TODO: Should use colored icon? But, must consider charactor size and background color.
       -- e.g. $ echo -e '\e[48;5;196;38;5;232;1m\e[0m'
@@ -250,7 +250,7 @@ neededBy pType opt = case pType of
     author = Option.author opt
 
 isLongStyle :: Option.Option -> Bool
-isLongStyle opt = any (\f -> f opt) [Option.long, Option.longWithoutGroup, Option.longWithoutOwner]
+isLongStyle opt = any (\f -> f opt) [Option.long, Option.longWithoutGroup, Option.longWithoutOwner, Option.fullTime]
 
 buildColumn :: [Node.NodeInfo] -> Printers -> PrinterType -> [[WT.WrappedText]]
 buildColumn nodes printers pType = map alignmenter nodes'

@@ -59,6 +59,7 @@ data Option = Option
     dereference :: Bool,
     dereferenceCommandLine :: Bool,
     dereferenceCommandLineSymlinkToDir :: Bool,
+    fullTime :: Bool,
     version :: Bool,
     targets :: [FilePath]
   }
@@ -113,6 +114,7 @@ optionParser =
     <*> dereferenceParser
     <*> dereferenceCommandLineParser
     <*> dereferenceCommandLineSymlinkToDirParser
+    <*> fullTimeParser
     <*> versionParser
     <*> argParser
 
@@ -305,6 +307,12 @@ dereferenceCommandLineSymlinkToDirParser =
   OA.switch $
     OA.long "dereference-command-line-symlink-to-dir"
       <> OA.help "Use symbolic link destination file instead of link itself on command line arguments when destination is directory"
+
+fullTimeParser :: OA.Parser Bool
+fullTimeParser =
+  OA.switch $
+    OA.long "full-time"
+      <> OA.help "Equals to specify '-l' and '--time-style=full-iso'"
 
 versionParser :: OA.Parser Bool
 versionParser =
