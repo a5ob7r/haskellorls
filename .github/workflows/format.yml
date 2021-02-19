@@ -11,6 +11,8 @@ jobs:
         ghc: ['8.10.4']
 
     steps:
+      - uses: actions/checkout@v2
+
       - uses: haskell/actions/setup@v1
         id: setup-haskell
         with:
@@ -39,8 +41,6 @@ jobs:
 
       - name: Install hlint
         run: cabal install --overwrite-policy=always hlint
-
-      - uses: actions/checkout@v2
 
       - name: Run ormolu
         run: ormolu --mode check $(find app src -name '*.hs')
