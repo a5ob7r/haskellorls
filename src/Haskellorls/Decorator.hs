@@ -15,6 +15,7 @@ where
 import qualified Data.List as List
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
+import qualified Data.Time.Clock.POSIX as Clock
 import qualified Data.Time.Format as Format
 import qualified Haskellorls.Color.Type as Color
 import qualified Haskellorls.Field as Field
@@ -34,7 +35,6 @@ import qualified Haskellorls.Time.Decorator as Time
 import qualified Haskellorls.Tree.Decorator as Tree
 import qualified Haskellorls.WrappedText as WT
 import qualified System.IO as SIO
-import qualified System.Posix.Time as PTime
 
 data PrinterType
   = FILEINODE
@@ -148,7 +148,7 @@ buildPrinters opt = do
   uidSubstTable <- if Option.numericUidGid opt then return Map.empty else Ownership.getUserIdSubstTable
   gidSubstTable <- if Option.numericUidGid opt then return Map.empty else Ownership.getGroupIdSubstTable
   userInfo <- Ownership.userInfo
-  currentTime <- PTime.epochTime
+  currentTime <- Clock.getCurrentTime
   shouldColorize <- case Option.color opt of
     Color.NEVER -> return False
     Color.ALWAYS -> return True
@@ -193,11 +193,11 @@ buildPrinters opt = do
 
       fileTimePrinter =
         if shouldColorize && isEnableExtraColor
-          then Time.coloredTimeStyleFunc cConfig Format.defaultTimeLocale currentTime timeStyle . fileTime . Node.nodeInfoStatus
-          else WT.toWrappedTextSingleton . timeStyleFunc . fileTime . Node.nodeInfoStatus
+          then Time.coloredTimeStyleFunc cConfig Format.defaultTimeLocale currentTime timeStyle . fileTime
+          else WT.toWrappedTextSingleton . timeStyleFunc . fileTime
         where
           timeStyleFunc = Time.timeStyleFunc Format.defaultTimeLocale currentTime timeStyle
-          fileTime = Time.fileTime $ Option.time opt
+          fileTime = Clock.posixSecondsToUTCTime . Time.fileTime (Option.time opt) . Node.nodeInfoStatus
           timeStyle = Time.timeStyle opt
 
       -- TODO: Should use colored icon? But, must consider charactor size and background color.
