@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Haskellorls.Time.Decorator
   ( timeStyle,
     fileTime,
@@ -20,7 +22,7 @@ import qualified System.Posix.Files as Files
 import qualified System.Posix.Types as Types
 
 timeStyleFunc :: Format.TimeLocale -> Types.EpochTime -> TimeStyle -> (Types.EpochTime -> T.Text)
-timeStyleFunc locale time style = case style of
+timeStyleFunc locale time = \case
   FULLISO -> timeStyleFunc' ('+' : fullISOFormat) locale time
   LONGISO -> timeStyleFunc' ('+' : longISOFormat) locale time
   ISO -> timeStyleFunc' ('+' : isoFormat) locale time
