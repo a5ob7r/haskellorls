@@ -6,6 +6,7 @@
 
 - Add a ascii art to help header.
 - Add `-L / --dereference` option.
+- Add `-H / --dereference-command-line` and `--dereference-command-line-symlink-to-dir` options.
 
 ### Changed
 

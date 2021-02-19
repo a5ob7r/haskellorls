@@ -57,6 +57,8 @@ data Option = Option
     extensionSort :: Bool,
     tree :: Bool,
     dereference :: Bool,
+    dereferenceCommandLine :: Bool,
+    dereferenceCommandLineSymlinkToDir :: Bool,
     version :: Bool,
     targets :: [FilePath]
   }
@@ -109,6 +111,8 @@ optionParser =
     <*> Sort.extensionSortParser
     <*> treeParser
     <*> dereferenceParser
+    <*> dereferenceCommandLineParser
+    <*> dereferenceCommandLineSymlinkToDirParser
     <*> versionParser
     <*> argParser
 
@@ -288,6 +292,19 @@ dereferenceParser =
     OA.long "dereference"
       <> OA.short 'L'
       <> OA.help "Use symbolic link destination file instead of link itself"
+
+dereferenceCommandLineParser :: OA.Parser Bool
+dereferenceCommandLineParser =
+  OA.switch $
+    OA.long "dereference-command-line"
+      <> OA.short 'H'
+      <> OA.help "Use symbolic link destination file instead of link itself on command line arguments"
+
+dereferenceCommandLineSymlinkToDirParser :: OA.Parser Bool
+dereferenceCommandLineSymlinkToDirParser =
+  OA.switch $
+    OA.long "dereference-command-line-symlink-to-dir"
+      <> OA.help "Use symbolic link destination file instead of link itself on command line arguments when destination is directory"
 
 versionParser :: OA.Parser Bool
 versionParser =

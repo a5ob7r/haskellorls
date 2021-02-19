@@ -51,7 +51,9 @@ nodeInfo opt dirname basename = do
               getTreeNodePositions = []
             }
         Just s
-          | Option.dereference opt ->
+          | Option.dereference opt
+              || Option.dereferenceCommandLine opt
+              || (Option.dereferenceCommandLineSymlinkToDir opt && Files.isDirectory s) ->
             FileInfo
               { getFilePath = basename,
                 getFileStatus = s,

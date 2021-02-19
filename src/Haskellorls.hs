@@ -36,12 +36,15 @@ run' opt = do
   let targets = Option.targets opt
       targets' = if null targets then ["."] else targets
 
+      -- Only dereferences on command line arguments.
+      opt' = opt {Option.dereferenceCommandLine = False, Option.dereferenceCommandLineSymlinkToDir = False}
+
   (noExistences, exists) <- Utils.partitionExistOrNotPathes targets'
 
   mapM_ Utils.outputNoExistPathErr noExistences
 
-  printers <- Decorator.buildPrinters opt
-  let printer = Recursive.buildPrinter opt printers
+  printers <- Decorator.buildPrinters opt'
+  let printer = Recursive.buildPrinter opt' printers
 
   ops <- Recursive.buildInitialOperations opt exists
 
