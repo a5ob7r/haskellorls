@@ -18,6 +18,15 @@ $ cabal install
 
 ## Config
 
+`Haskellorls` is so long name to type keys.
+So recommends to define some aliases to reduce types.
+
+```sh
+# In your ~/.bashrc, ~/.zshrc and so on.
+alias hl='haskellorls --color=auto --extra-color'
+alias l='hl -ABFhvo --icons'
+```
+
 If want to use color parameters like exa default,
 
 ```sh
