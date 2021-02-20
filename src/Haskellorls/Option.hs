@@ -19,48 +19,48 @@ import qualified Options.Applicative.Help.Pretty as OA
 import qualified Text.Read as Read
 
 data Option = Option
-  { color :: Color.Colorize,
-    extraColor :: Bool,
-    long :: Bool,
-    si :: Bool,
-    humanReadable :: Bool,
-    blockSize :: Size.BlockSize,
-    time :: Time.TimeType,
-    timeStyle :: Time.TimeStyle,
-    all :: Bool,
+  { all :: Bool,
     almostAll :: Bool,
-    sort :: Sort.SortType,
-    reverse :: Bool,
-    oneline :: Bool,
-    noGroup :: Bool,
-    longWithoutGroup :: Bool,
-    longWithoutOwner :: Bool,
-    width :: Maybe Int,
-    inode :: Bool,
-    classify :: Bool,
-    directoryIndicator :: Bool,
-    fileType :: Bool,
-    indicatorStyle :: Indicator.IndicatorStyle,
-    ignoreBackups :: Bool,
-    numericUidGid :: Bool,
-    ignore :: String,
-    hide :: String,
-    recursive :: Bool,
-    level :: Depth.Depth,
     author :: Bool,
-    size :: Bool,
-    icon :: Bool,
-    noneSort :: Bool,
-    sizeSort :: Bool,
-    timeSort :: Bool,
-    naturalSort :: Bool,
-    extensionSort :: Bool,
-    tree :: Bool,
-    dereference :: Bool,
+    blockSize :: Size.BlockSize,
+    ignoreBackups :: Bool,
+    color :: Color.Colorize,
+    classify :: Bool,
+    extraColor :: Bool,
+    fileType :: Bool,
+    fullTime :: Bool,
+    longWithoutOwner :: Bool,
+    groupDirectoriesFirst :: Bool,
+    noGroup :: Bool,
+    humanReadable :: Bool,
+    si :: Bool,
     dereferenceCommandLine :: Bool,
     dereferenceCommandLineSymlinkToDir :: Bool,
-    fullTime :: Bool,
-    groupDirectoriesFirst :: Bool,
+    hide :: String,
+    icon :: Bool,
+    indicatorStyle :: Indicator.IndicatorStyle,
+    inode :: Bool,
+    ignore :: String,
+    level :: Depth.Depth,
+    long :: Bool,
+    dereference :: Bool,
+    numericUidGid :: Bool,
+    longWithoutGroup :: Bool,
+    directoryIndicator :: Bool,
+    reverse :: Bool,
+    recursive :: Bool,
+    size :: Bool,
+    sizeSort :: Bool,
+    sort :: Sort.SortType,
+    time :: Time.TimeType,
+    timeStyle :: Time.TimeStyle,
+    timeSort :: Bool,
+    tree :: Bool,
+    noneSort :: Bool,
+    naturalSort :: Bool,
+    width :: Maybe Int,
+    extensionSort :: Bool,
+    oneline :: Bool,
     version :: Bool,
     targets :: [FilePath]
   }
@@ -75,48 +75,48 @@ opts =
 optionParser :: OA.Parser Option
 optionParser =
   Option
-    <$> Color.colorParser
-    <*> Color.extraColorParser
-    <*> longParser
-    <*> Size.siParser
-    <*> Size.humanReadableParser
-    <*> Size.blockSizeParser
-    <*> Time.timeParser
-    <*> Time.timeStyleParser
-    <*> allParser
+    <$> allParser
     <*> almostAllParser
-    <*> Sort.sortParser
-    <*> reverseParser
-    <*> onelineParser
-    <*> noGroupParser
-    <*> longWithoutGroupParser
-    <*> longWithoutOwnerParser
-    <*> widthParser
-    <*> inodeParser
-    <*> classifyParser
-    <*> directoryIndicatorParser
-    <*> fileTypeParser
-    <*> Indicator.indicatorStyleParser
-    <*> ignoreBackupsParser
-    <*> numericUidGidParser
-    <*> ignoreParser
-    <*> hideParser
-    <*> recursiveParser
-    <*> levelParser
     <*> authorParser
-    <*> sizeParser
-    <*> iconParser
-    <*> Sort.noneSortParser
-    <*> Sort.sizeSortParser
-    <*> Sort.timeSortParser
-    <*> Sort.naturalSortParser
-    <*> Sort.extensionSortParser
-    <*> treeParser
-    <*> dereferenceParser
+    <*> Size.blockSizeParser
+    <*> ignoreBackupsParser
+    <*> Color.colorParser
+    <*> classifyParser
+    <*> Color.extraColorParser
+    <*> fileTypeParser
+    <*> fullTimeParser
+    <*> longWithoutOwnerParser
+    <*> groupDirectoriesFirstParser
+    <*> noGroupParser
+    <*> Size.humanReadableParser
+    <*> Size.siParser
     <*> dereferenceCommandLineParser
     <*> dereferenceCommandLineSymlinkToDirParser
-    <*> fullTimeParser
-    <*> groupDirectoriesFirstParser
+    <*> hideParser
+    <*> iconParser
+    <*> Indicator.indicatorStyleParser
+    <*> inodeParser
+    <*> ignoreParser
+    <*> levelParser
+    <*> longParser
+    <*> dereferenceParser
+    <*> numericUidGidParser
+    <*> longWithoutGroupParser
+    <*> directoryIndicatorParser
+    <*> reverseParser
+    <*> recursiveParser
+    <*> sizeParser
+    <*> Sort.sizeSortParser
+    <*> Sort.sortParser
+    <*> Time.timeParser
+    <*> Time.timeStyleParser
+    <*> Sort.timeSortParser
+    <*> treeParser
+    <*> Sort.noneSortParser
+    <*> Sort.naturalSortParser
+    <*> widthParser
+    <*> Sort.extensionSortParser
+    <*> onelineParser
     <*> versionParser
     <*> argParser
 
