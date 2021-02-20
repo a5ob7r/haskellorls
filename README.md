@@ -10,46 +10,6 @@ In addition, maybe have some options and colored output which exa has as long as
 
 ![screenshort01](etc/screenshots/screenshot01.png)
 
-## Install
-
-```sh
-$ cabal install
-```
-
-## Config
-
-`Haskellorls` is so long name to type keys.
-So recommends to define some aliases to reduce types.
-
-```sh
-# In your ~/.bashrc, ~/.zshrc and so on.
-alias hl='haskellorls --color=auto --extra-color'
-alias l='hl -ABFhvo --icons'
-```
-
-If want to use color parameters like exa default,
-
-```sh
-$ export EXA_COLORS='ur=1;33:uw=1;31:ux=1;32:ue=1;92:gr=32:gw=31:gx=33:tr=32:tw=31:tx=33:su=96:sf=96:uu=1;33:gu=1;33:'
-$ haskellorls --color=auto -l
-```
-
-## Development
-
-Build and run.
-
-```sh
-$ cabal run haskellorls
-```
-
-Run golden tests using [goldplate](https://github.com/fugue/goldplate).
-
-```sh
-# On project root
-$ cabal install --overwrite-policy=always --installdir=bin
-$ PATH="$PWD/bin:$PATH" goldplate golden-test --pretty-diff
-```
-
 ## Extra Options
 
 Haskellorls has some extra options which are not implemented on GNU ls.
@@ -84,6 +44,48 @@ Also this can restrict max depth of directory searching using --recursive/-R opt
 - Outputs pico seconds instead of nano seconds after decimal point when uses full-iso as time style format.
   - (nano) 2021-02-19 13:09:58.575236532 +0000
   - (pico) 2021-02-19 13:09:58.575236532000 +0000
+
+## Config
+
+`Haskellorls` is so long name to type keys.
+So recommends to define some aliases to reduce types.
+
+```sh
+# In your ~/.bashrc, ~/.zshrc and so on.
+alias hl='haskellorls --color=auto --extra-color'
+alias l='hl -ABFhvo --icons'
+```
+
+If want to use color parameters like exa default,
+
+```sh
+$ export EXA_COLORS='ur=1;33:uw=1;31:ux=1;32:ue=1;92:gr=32:gw=31:gx=33:tr=32:tw=31:tx=33:su=96:sf=96:uu=1;33:gu=1;33:'
+$ haskellorls --color=auto -l
+```
+
+## Install from source
+
+```sh
+$ git clone https://github.com/a5ob7r/haskellorls.git
+$ cd haskellorls
+$ cabal install
+```
+
+## Development
+
+Build and run.
+
+```sh
+$ cabal run haskellorls
+```
+
+Run golden tests using [goldplate](https://github.com/fugue/goldplate).
+
+```sh
+# On project root
+$ cabal install --overwrite-policy=always --installdir=bin
+$ PATH="$PWD/bin:$PATH" goldplate golden-test --pretty-diff
+```
 
 ## TODO
 
