@@ -86,7 +86,6 @@ Also this can restrict max depth of directory searching using --recursive/-R opt
   - -D, --dired
   - -f
   - --format=WORD
-  - --group-directories-first
   - --hyperlink[=WHEN]
   - -k, --kibibytes
   - -m

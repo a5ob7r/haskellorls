@@ -60,6 +60,7 @@ data Option = Option
     dereferenceCommandLine :: Bool,
     dereferenceCommandLineSymlinkToDir :: Bool,
     fullTime :: Bool,
+    groupDirectoriesFirst :: Bool,
     version :: Bool,
     targets :: [FilePath]
   }
@@ -115,6 +116,7 @@ optionParser =
     <*> dereferenceCommandLineParser
     <*> dereferenceCommandLineSymlinkToDirParser
     <*> fullTimeParser
+    <*> groupDirectoriesFirstParser
     <*> versionParser
     <*> argParser
 
@@ -313,6 +315,12 @@ fullTimeParser =
   OA.switch $
     OA.long "full-time"
       <> OA.help "Equals to specify '-l' and '--time-style=full-iso'"
+
+groupDirectoriesFirstParser :: OA.Parser Bool
+groupDirectoriesFirstParser =
+  OA.switch $
+    OA.long "group-directories-first"
+      <> OA.help "Outputs directories firstly than files; can use with '--sort=WORD' option, but this is disabled when with '--sort=none or -U'"
 
 versionParser :: OA.Parser Bool
 versionParser =

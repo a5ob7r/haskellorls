@@ -1,3 +1,6 @@
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TupleSections #-}
+
 module Haskellorls.Sort.Method
   ( sorter,
   )
@@ -15,7 +18,13 @@ import qualified System.FilePath.Posix as Posix
 import qualified System.Posix.Files as Files
 
 sorter :: Option.Option -> [Node.NodeInfo] -> [Node.NodeInfo]
-sorter opt = order opt . sorter' opt
+sorter opt = merger . separater . sorter' opt
+  where
+    merger (dirs, files) = order opt dirs <> order opt files
+    separater =
+      if Option.groupDirectoriesFirst opt && not (Option.noneSort opt)
+        then partitionDirectoriesAndFiles
+        else ([],)
 
 sorter' :: Option.Option -> [Node.NodeInfo] -> [Node.NodeInfo]
 sorter' opt = case Option.sort opt of
@@ -74,3 +83,14 @@ sortWithVersion = L.sortBy (\a b -> Node.nodeInfoPath a `NSort.compare` Node.nod
 
 sortWithExtension :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithExtension = L.sortBy (\a b -> Posix.takeExtension (Node.nodeInfoPath a) `compare` Posix.takeExtension (Node.nodeInfoPath b))
+
+partitionDirectoriesAndFiles :: [Node.NodeInfo] -> ([Node.NodeInfo], [Node.NodeInfo])
+partitionDirectoriesAndFiles = L.partition isDirectory
+
+-- For GNU ls compatibility about `--group-directories-first` option.
+isDirectory :: Node.NodeInfo -> Bool
+isDirectory node = Files.isDirectory status
+  where
+    status = case node of
+      Node.LinkInfo {..} -> getDestStatus
+      _ -> Node.nodeInfoStatus node
