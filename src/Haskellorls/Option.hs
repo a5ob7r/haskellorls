@@ -28,6 +28,7 @@ data Option = Option
     ctime :: Bool,
     vertical :: Bool,
     color :: Color.Colorize,
+    directory :: Bool,
     classify :: Bool,
     extraColor :: Bool,
     fileType :: Bool,
@@ -85,6 +86,7 @@ optionParser =
     <*> ctimeParser
     <*> verticalParser
     <*> Color.colorParser
+    <*> directoryParser
     <*> classifyParser
     <*> Color.extraColorParser
     <*> fileTypeParser
@@ -352,6 +354,13 @@ ctimeParser =
   OA.switch $
     OA.short 'c'
       <> OA.help "Sort by ctime and show it when '-t' and long style (e.g. '-l', '-o' and so on) options are passed; sort by name and show ctime when long style option is passed; sort by ctime otherwise"
+
+directoryParser :: OA.Parser Bool
+directoryParser =
+  OA.switch $
+    OA.long "directory"
+      <> OA.short 'd'
+      <> OA.help "Treats directory as normal file, does not lookup contents in it"
 
 versionParser :: OA.Parser Bool
 versionParser =

@@ -1,0 +1,9 @@
+{
+  "command": "haskellorls",
+  "arguments": ["--directory", "files/examples01"],
+  "environment": {"LS_COLORS": ""},
+  "asserts": [
+    {"exit_code": 0},
+    {"stdout": "${GOLDPLATE_NAME}.stdout"}
+  ]
+}

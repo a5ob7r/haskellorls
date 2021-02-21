@@ -114,7 +114,7 @@ buildDirectoryNodes opt path = do
 buildInitialOperations :: Option.Option -> [FilePath] -> IO [Operation]
 buildInitialOperations opt paths = do
   nodes <- Sort.sorter opt <$> mapM (Node.nodeInfo opt "") paths
-  let (dirs, files) = L.partition (Files.isDirectory . Node.nodeInfoStatus) nodes
+  let (dirs, files) = L.partition isDirectory nodes
       fileOp = [PrintEntry FILES "" files opt | not (null files)]
   dirOps <- mapM (pathToOp opt . Node.nodeInfoPath) dirs
   let dirOps' =
@@ -125,6 +125,10 @@ buildInitialOperations opt paths = do
             [d] | null files && length (Option.targets opt) < 2 -> [d {entryType = SINGLEDIR}]
             _ -> dirOps
   pure . L.intersperse Newline $ fileOp <> dirOps'
+  where
+    isDirectory
+      | Option.directory opt = const False
+      | otherwise = Files.isDirectory . Node.nodeInfoStatus
 
 buildPrinter :: Option.Option -> Decorator.Printers -> Printer
 buildPrinter opt printers = Printer $ fmap (TL.toStrict . TLB.toLazyText . M.mconcat . L.intersperse (TLB.fromText "\n")) . generateEntryLines opt printers

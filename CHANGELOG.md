@@ -13,6 +13,7 @@
 - Add `-m` option.
 - Add `--format=WORD` option.
 - Add `-c` option.
+- Add `-d / --directory` option.
 
 ### Changed
 
