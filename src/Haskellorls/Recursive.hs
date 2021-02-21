@@ -150,7 +150,7 @@ generateEntryLines opt printers op = case op of
 
     colLen <- Grid.virtualColumnSize opt
 
-    return . addHeader . addTotalBlockSize . Grid.renderGrid $ Grid.buildValidGrid colLen nodes'
+    return . addHeader . addTotalBlockSize . Grid.renderGrid $ Grid.buildValidGrid opt colLen nodes'
   PrintTree {..} -> do
     nodes <- Fold.toList <$> Tree.makeTreeNodeInfos opt entryPath
     pure . map (M.mconcat . map wtToBuilder) . Decorator.buildLines nodes printers $ Decorator.buildPrinterTypes opt

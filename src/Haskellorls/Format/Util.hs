@@ -11,8 +11,8 @@ import qualified Haskellorls.Option as Option
 -- WIP: Some format type is not implemented.
 formatStyle :: Option.Option -> Format
 formatStyle opt
-  | False = VERTICAL
-  | False = HORIZONTAL
+  | Option.vertical opt = VERTICAL
+  | Option.horihontal opt = HORIZONTAL
   | False = COMMAS
   | Option.oneline opt = SINGLECOLUMN
   | isLongStyle opt = LONG

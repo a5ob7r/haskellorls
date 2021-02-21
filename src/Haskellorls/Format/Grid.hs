@@ -32,6 +32,16 @@ virtualColumnSize opt = do
 terminalWidth :: IO Int
 terminalWidth = maybe 1 TS.width <$> TS.size
 
+-- | 'horizontalSplitInto' @n xs@ returns a list which are sliced @xs@ into @n@ elements vertically.
+--
+-- > horizontalSplitInto 2 [1 .. 6] == [[1, 3, 5], [2, 4, 6]]
+-- > horizontalSplitInto 3 [1 .. 10] == [[1, 4, 7, 10], [2, 5, 8], [3, 6, 9]]
+verticalSplitInto :: Int -> [a] -> [[a]]
+verticalSplitInto n = List.transpose . slice n
+
+horizontalSplitInto :: Int -> [a] -> [[a]]
+horizontalSplitInto = splitInto
+
 -- | 'splitInto' @n xs@ returns a list which are sliced @xs@ into @n@ elements:
 --
 -- > splitInto 2 [1..6] == [[1, 2, 3], [4, 5, 6]]
@@ -60,15 +70,15 @@ slice n xs
   where
     (h, t) = splitAt n xs
 
-buildValidGrid :: Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
-buildValidGrid _ [] = []
-buildValidGrid columnLength sss = case columnLength `compare` 0 of
-  EQ -> buildGrid (length sss) sss
+buildValidGrid :: Option.Option -> Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
+buildValidGrid _ _ [] = []
+buildValidGrid opt columnLength sss = case columnLength `compare` 0 of
+  EQ -> buildGrid opt (length sss) sss
   LT -> singleColumnGrid
   GT -> last $ singleColumnGrid : validGrids
   where
-    singleColumnGrid = buildGrid 1 sss
-    validGrids = takeWhile (validateGrid columnLength) $ map (`buildGrid` sss) [2 .. columnLength]
+    singleColumnGrid = buildGrid opt 1 sss
+    validGrids = takeWhile (validateGrid columnLength) $ map (\n -> buildGrid opt n sss) [2 .. columnLength]
 
 renderGrid :: [[[WT.WrappedText]]] -> [TLB.Builder]
 renderGrid = map renderLine
@@ -95,8 +105,12 @@ validateGrid n grid
   where
     maxLen = maximum . map (T.length . TL.toStrict . TLB.toLazyText) $ renderGridAsPlain grid
 
-buildGrid :: Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
-buildGrid n = List.transpose . buildGrid' . splitInto n
+buildGrid :: Option.Option -> Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
+buildGrid opt n = List.transpose . buildGrid' . splitter n
+  where
+    splitter = case Format.formatStyle opt of
+      Format.HORIZONTAL -> verticalSplitInto
+      _ -> horizontalSplitInto
 
 buildGrid' :: [[[WT.WrappedText]]] -> [[[WT.WrappedText]]]
 buildGrid' [] = []

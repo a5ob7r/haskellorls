@@ -24,6 +24,7 @@ data Option = Option
     author :: Bool,
     blockSize :: Size.BlockSize,
     ignoreBackups :: Bool,
+    vertical :: Bool,
     color :: Color.Colorize,
     classify :: Bool,
     extraColor :: Bool,
@@ -59,6 +60,7 @@ data Option = Option
     noneSort :: Bool,
     naturalSort :: Bool,
     width :: Maybe Int,
+    horihontal :: Bool,
     extensionSort :: Bool,
     oneline :: Bool,
     version :: Bool,
@@ -80,6 +82,7 @@ optionParser =
     <*> authorParser
     <*> Size.blockSizeParser
     <*> ignoreBackupsParser
+    <*> verticalParser
     <*> Color.colorParser
     <*> classifyParser
     <*> Color.extraColorParser
@@ -115,6 +118,7 @@ optionParser =
     <*> Sort.noneSortParser
     <*> Sort.naturalSortParser
     <*> widthParser
+    <*> horihontalParser
     <*> Sort.extensionSortParser
     <*> onelineParser
     <*> versionParser
@@ -321,6 +325,18 @@ groupDirectoriesFirstParser =
   OA.switch $
     OA.long "group-directories-first"
       <> OA.help "Outputs directories firstly than files; can use with '--sort=WORD' option, but this is disabled when with '--sort=none or -U'"
+
+verticalParser :: OA.Parser Bool
+verticalParser =
+  OA.switch $
+    OA.short 'C'
+      <> OA.help "Outputs files by columns"
+
+horihontalParser :: OA.Parser Bool
+horihontalParser =
+  OA.switch $
+    OA.short 'x'
+      <> OA.help "Outputs files by rows instead of columns"
 
 versionParser :: OA.Parser Bool
 versionParser =

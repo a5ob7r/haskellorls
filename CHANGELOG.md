@@ -9,6 +9,7 @@
 - Add `-H / --dereference-command-line` and `--dereference-command-line-symlink-to-dir` options.
 - Add `--full-time` option.
 - Add `--group-directories-first`.
+- Add `-C` and `-x` options.
 
 ### Changed
 
