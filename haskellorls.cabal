@@ -12,6 +12,7 @@ extra-source-files:
   README.md
 
 library
+  -- cabal-fmt: expand src
   exposed-modules:
     Haskellorls
     Haskellorls.Color.Option
