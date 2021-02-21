@@ -7,6 +7,7 @@ module Haskellorls.Indicator.Decorator
 where
 
 import qualified Data.Text as T
+import qualified Haskellorls.Format.Util as Format
 import Haskellorls.Indicator.Type
 import qualified Haskellorls.Name.Decorator as Name
 import qualified Haskellorls.NodeInfo as Node
@@ -72,18 +73,15 @@ buildIndicatorPrinter opt node = if T.null indicator then [] else WT.toWrappedTe
     indicator = indicatorSelector node $ buildIndicators opt
 
 buildIndicators :: Option.Option -> Indicators
-buildIndicators opt =
-  if long && not oneline
-    then indicators {indicatorsLink = ""}
-    else indicators
+buildIndicators opt = case Format.formatStyle opt of
+  Format.LONG -> indicators {indicatorsLink = ""}
+  _ -> indicators
   where
     indicators = case deriveIndicatorStyle opt of
       IndicatorNone -> noneIndicators
       IndicatorFiletype -> fileTypeIndicator
       IndicatorSlash -> slashIndicator
       IndicatorClassify -> classifyIndicators
-    oneline = Option.oneline opt
-    long = any (\f -> f opt) [Option.long, Option.longWithoutOwner, Option.longWithoutGroup]
 
 deriveIndicatorStyle :: Option.Option -> IndicatorStyle
 deriveIndicatorStyle opt = maximum [classify, directory, fileType, style]

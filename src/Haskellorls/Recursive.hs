@@ -20,6 +20,7 @@ import qualified Data.Text.Lazy.Builder as TLB
 import qualified Haskellorls.Decorator as Decorator
 import qualified Haskellorls.Depth as Depth
 import qualified Haskellorls.Format.Grid as Grid
+import qualified Haskellorls.Format.Util as Format
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Size.Decorator as Size
@@ -142,7 +143,7 @@ generateEntryLines opt printers op = case op of
         addTotalBlockSize = case entryType of
           FILES -> id
           _
-            | Decorator.isLongStyle opt -> (builder :)
+            | Format.isLongStyle opt -> (builder :)
             | otherwise -> id
             where
               builder = TLB.fromText . T.concat . ("total " :) . map (T.concat . WT.toList) . Size.toTotalBlockSize opt $ map (Files.fileSize . Node.nodeInfoStatus) entryNodes

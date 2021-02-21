@@ -13,7 +13,7 @@ import qualified Data.Monoid as M
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as TLB
-import qualified Haskellorls.Decorator as Decorator
+import qualified Haskellorls.Format.Util as Format
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.WrappedText as WT
 import qualified System.Console.Terminal.Size as TS
@@ -24,12 +24,10 @@ virtualColumnSize opt = do
   return . head $ Maybe.catMaybes [styleWidth, optWidth, termWidth]
   where
     optWidth = Option.width opt
-    long = Decorator.isLongStyle opt
-    oneline = Option.oneline opt
-    styleWidth =
-      if long || oneline
-        then Just 1
-        else Nothing
+    styleWidth = case Format.formatStyle opt of
+      Format.SINGLECOLUMN -> Just 1
+      Format.LONG -> Just 1
+      _ -> Nothing
 
 terminalWidth :: IO Int
 terminalWidth = maybe 1 TS.width <$> TS.size

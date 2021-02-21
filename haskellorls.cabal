@@ -21,6 +21,8 @@ library
     Haskellorls.Depth
     Haskellorls.Field
     Haskellorls.Format.Grid
+    Haskellorls.Format.Type
+    Haskellorls.Format.Util
     Haskellorls.Icon
     Haskellorls.Indicator.Decorator
     Haskellorls.Indicator.Option

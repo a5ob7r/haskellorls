@@ -8,7 +8,6 @@ module Haskellorls.Decorator
     buildPrinters,
     buildLines,
     buildPrinterTypes,
-    isLongStyle,
   )
 where
 
@@ -16,10 +15,11 @@ import qualified Data.List as List
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 import qualified Data.Time.Clock.POSIX as Clock
-import qualified Data.Time.Format as Format
+import qualified Data.Time.Format as TFormat
 import qualified Data.Time.LocalTime as LClock
 import qualified Haskellorls.Color.Type as Color
 import qualified Haskellorls.Field as Field
+import qualified Haskellorls.Format.Util as Format
 import qualified Haskellorls.Icon as Icon
 import qualified Haskellorls.Indicator.Decorator as Indicator
 import qualified Haskellorls.Indicator.Type as Indicator
@@ -79,7 +79,7 @@ neededNamePrinterTypeBy npType opt = case npType of
   TREE -> Option.tree opt
   ICON -> Option.icon opt
   NAME -> True
-  LINK -> isLongStyle opt
+  LINK -> Format.isLongStyle opt
   INDICATOR -> Indicator.IndicatorNone < Indicator.deriveIndicatorStyle opt
 
 buildNamePrinterTypes :: Option.Option -> [NamePrinterType]
@@ -195,10 +195,10 @@ buildPrinters opt = do
 
       fileTimePrinter =
         if shouldColorize && isEnableExtraColor
-          then Time.coloredTimeStyleFunc cConfig timeZone Format.defaultTimeLocale currentTime timeStyle . fileTime
+          then Time.coloredTimeStyleFunc cConfig timeZone TFormat.defaultTimeLocale currentTime timeStyle . fileTime
           else WT.toWrappedTextSingleton . timeStyleFunc . fileTime
         where
-          timeStyleFunc = Time.timeStyleFunc timeZone Format.defaultTimeLocale currentTime timeStyle
+          timeStyleFunc = Time.timeStyleFunc timeZone TFormat.defaultTimeLocale currentTime timeStyle
           fileTime = Clock.posixSecondsToUTCTime . Time.fileTime (Option.time opt) . Node.nodeInfoStatus
           timeStyle = Time.timeStyle opt
 
@@ -246,13 +246,10 @@ neededBy pType opt = case pType of
   where
     inode = Option.inode opt
     size = Option.size opt
-    long = isLongStyle opt
+    long = Format.isLongStyle opt
     owner = not $ Option.longWithoutOwner opt
     group = not (Option.longWithoutGroup opt || Option.noGroup opt)
     author = Option.author opt
-
-isLongStyle :: Option.Option -> Bool
-isLongStyle opt = any (\f -> f opt) [Option.long, Option.longWithoutGroup, Option.longWithoutOwner, Option.fullTime]
 
 buildColumn :: [Node.NodeInfo] -> Printers -> PrinterType -> [[WT.WrappedText]]
 buildColumn nodes printers pType = map alignmenter nodes'
