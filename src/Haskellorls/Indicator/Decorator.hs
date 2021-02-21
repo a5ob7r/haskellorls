@@ -73,9 +73,10 @@ buildIndicatorPrinter opt node = if T.null indicator then [] else WT.toWrappedTe
     indicator = indicatorSelector node $ buildIndicators opt
 
 buildIndicators :: Option.Option -> Indicators
-buildIndicators opt = case Format.formatStyle opt of
-  Format.LONG -> indicators {indicatorsLink = ""}
-  _ -> indicators
+buildIndicators opt =
+  if Format.isLongStyle opt
+    then indicators {indicatorsLink = ""}
+    else indicators
   where
     indicators = case deriveIndicatorStyle opt of
       IndicatorNone -> noneIndicators
