@@ -3,10 +3,10 @@
 ![CI](https://github.com/a5ob7r/haskellorls/workflows/CI/badge.svg)
 ![Format](https://github.com/a5ob7r/haskellorls/workflows/Format/badge.svg)
 
-Haskell implementation of [exa](https://github.com/ogham/exa) flavored GNU ls.
+Haskell implementation of ls which is compatible with GNU ls.
 
 The goal of this project is to create a software which has GNU ls compatiblities about options and output.
-In addition, maybe have some options and colored output which exa has as long as keeping above compatiblities.
+In addition, has some extra options like some ls alternatives or replacements have as long as having above compatiblities.
 
 ![screenshort01](etc/screenshots/screenshot01.png)
 
@@ -33,9 +33,10 @@ See `--level=N`.
 Restrict max searching depth when output with tree style layout.
 Also this can restrict max depth of directory searching using --recursive/-R option.
 
-## Incompatibilities
+## Incompatibilities with GNU ls
 
-### GNU ls
+This has some imcompatibilities with GNU ls.
+To fix them is also the goal of this project.
 
 - Options are parsed as no ordering.
   - `Haskellorls -t -v` and `Haskellorls -v -t` causes same results.
