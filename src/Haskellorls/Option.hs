@@ -10,6 +10,7 @@ import qualified Control.Applicative as A
 import qualified Data.Text as T
 import qualified Haskellorls.Color.Option as Color
 import qualified Haskellorls.Depth as Depth
+import qualified Haskellorls.Format.Option as Format
 import qualified Haskellorls.Indicator.Option as Indicator
 import qualified Haskellorls.Size.Option as Size
 import qualified Haskellorls.Sort.Option as Sort
@@ -29,6 +30,7 @@ data Option = Option
     classify :: Bool,
     extraColor :: Bool,
     fileType :: Bool,
+    format :: Format.Format,
     fullTime :: Bool,
     longWithoutOwner :: Bool,
     groupDirectoriesFirst :: Bool,
@@ -88,6 +90,7 @@ optionParser =
     <*> classifyParser
     <*> Color.extraColorParser
     <*> fileTypeParser
+    <*> Format.formatParser
     <*> fullTimeParser
     <*> longWithoutOwnerParser
     <*> groupDirectoriesFirstParser

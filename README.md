@@ -44,6 +44,8 @@ Also this can restrict max depth of directory searching using --recursive/-R opt
 - Outputs pico seconds instead of nano seconds after decimal point when uses full-iso as time style format.
   - (nano) 2021-02-19 13:09:58.575236532 +0000
   - (pico) 2021-02-19 13:09:58.575236532000 +0000
+- some options which takes string can not recognize shorten string which can be identified using completion.
+  - e.g. `--format=WORD`
 
 ## Config
 
@@ -95,7 +97,6 @@ $ PATH="$PWD/bin:$PATH" goldplate golden-test --pretty-diff
   - -d, --directory
   - -D, --dired
   - -f
-  - --format=WORD
   - --hyperlink[=WHEN]
   - -k, --kibibytes
   - -N

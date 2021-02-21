@@ -15,7 +15,7 @@ formatStyle opt
   | Option.fillWidth opt = COMMAS
   | Option.oneline opt = SINGLECOLUMN
   | any (\f -> f opt) [Option.long, Option.longWithoutGroup, Option.longWithoutOwner, Option.fullTime] = LONG
-  | otherwise = VERTICAL
+  | otherwise = Option.format opt
 
 isLongStyle :: Option.Option -> Bool
 isLongStyle opt = case formatStyle opt of

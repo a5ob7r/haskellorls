@@ -11,6 +11,7 @@
 - Add `--group-directories-first`.
 - Add `-C` and `-x` options.
 - Add `-m` option.
+- Add `--format=WORD` option.
 
 ### Changed
 

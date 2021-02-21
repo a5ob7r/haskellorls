@@ -21,6 +21,7 @@ library
     Haskellorls.Depth
     Haskellorls.Field
     Haskellorls.Format.Grid
+    Haskellorls.Format.Option
     Haskellorls.Format.Type
     Haskellorls.Format.Util
     Haskellorls.Icon
