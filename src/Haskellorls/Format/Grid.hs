@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Haskellorls.Grid
+module Haskellorls.Format.Grid
   ( virtualColumnSize,
     buildValidGrid,
     renderGrid,

@@ -20,7 +20,7 @@ library
     Haskellorls.Decorator
     Haskellorls.Depth
     Haskellorls.Field
-    Haskellorls.Grid
+    Haskellorls.Format.Grid
     Haskellorls.Icon
     Haskellorls.Indicator.Decorator
     Haskellorls.Indicator.Option

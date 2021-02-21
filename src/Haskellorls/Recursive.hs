@@ -19,7 +19,7 @@ import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as TLB
 import qualified Haskellorls.Decorator as Decorator
 import qualified Haskellorls.Depth as Depth
-import qualified Haskellorls.Grid as Grid
+import qualified Haskellorls.Format.Grid as Grid
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Size.Decorator as Size
