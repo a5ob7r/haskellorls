@@ -52,6 +52,7 @@ fileTime tType = case tType of
 timeType :: Option.Option -> TimeType
 timeType opt
   | Option.ctime opt = CHANGE
+  | Option.atime opt = ACCESS
   | otherwise = Option.time opt
 
 timeStyle :: Option.Option -> TimeStyle

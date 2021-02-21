@@ -14,6 +14,7 @@ import qualified Haskellorls.Format.Util as Format
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import Haskellorls.Sort.Type
+import qualified Haskellorls.Time.Decorator as Time
 import qualified Haskellorls.Time.Type as Time
 import qualified System.FilePath.Posix as Posix
 import qualified System.Posix.Files as Files
@@ -34,12 +35,12 @@ sorter' opt = case Option.sort opt of
   NAME
     | Option.noneSort opt -> sortWithNone
     | Option.sizeSort opt -> sortWithSize
-    | Option.timeSort opt || (Option.ctime opt && not (Format.isLongStyle opt)) -> sorter' opt {Option.sort = TIME}
+    | Option.timeSort opt || ((Option.ctime opt || Option.atime opt) && not (Format.isLongStyle opt)) -> sorter' opt {Option.sort = TIME}
     | Option.naturalSort opt -> sortWithVersion
     | Option.extensionSort opt -> sortWithExtension
     | otherwise -> sortWithName
   SIZE -> sortWithSize
-  TIME -> case Option.time opt of
+  TIME -> case Time.timeType opt of
     Time.MODIFICATION -> sortWithModificationTime
     Time.ACCESS -> sortWithAccessTime
     Time.CHANGE -> sortWithChangeTime

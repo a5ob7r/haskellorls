@@ -15,6 +15,7 @@
 - Add `-c` option.
 - Add `-d / --directory` option.
 - Add `-f` option.
+- Add `-u` option.
 
 ### Changed
 

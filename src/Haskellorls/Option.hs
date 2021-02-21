@@ -63,6 +63,7 @@ data Option = Option
     timeStyle :: Time.TimeStyle,
     timeSort :: Bool,
     tree :: Bool,
+    atime :: Bool,
     noneSort :: Bool,
     naturalSort :: Bool,
     width :: Maybe Int,
@@ -122,6 +123,7 @@ optionParser =
     <*> Time.timeStyleParser
     <*> Sort.timeSortParser
     <*> treeParser
+    <*> atimeParser
     <*> Sort.noneSortParser
     <*> Sort.naturalSortParser
     <*> widthParser
@@ -369,6 +371,12 @@ noneSortExtraParser =
   OA.switch $
     OA.short 'f'
       <> OA.help "Do not sort and enable '-a' and '--color=disable' options"
+
+atimeParser :: OA.Parser Bool
+atimeParser =
+  OA.switch $
+    OA.short 'u'
+      <> OA.help "Sort by access time and show it when '-t' and long style (e.g. '-l', '-o' and so on) options are passed; sort by name and show access time when long style option is passed; sort by access time otherwise"
 
 versionParser :: OA.Parser Bool
 versionParser =
