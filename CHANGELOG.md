@@ -15,7 +15,8 @@
 
 ### Changed
 
-- Change lisence to BSD 3-Clause to release binary
+- Change lisence to BSD 3-Clause to release binary.
+- Combine program header and program descriptions on help.
 
 ### Removed
 

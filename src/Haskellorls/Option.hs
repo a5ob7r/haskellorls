@@ -71,11 +71,7 @@ data Option = Option
   }
 
 opts :: OA.ParserInfo Option
-opts =
-  OA.info (optionParser OA.<**> OA.helper) $
-    OA.fullDesc
-      <> (OA.headerDoc . Just . OA.text . T.unpack) header
-      <> OA.progDesc "Haskellorls = Haskell color ls"
+opts = OA.info (optionParser OA.<**> OA.helper) $ OA.fullDesc <> (OA.headerDoc . Just . OA.text . T.unpack) header
 
 optionParser :: OA.Parser Option
 optionParser =
@@ -366,5 +362,7 @@ header =
       "| |_| | __ _ ___| | _____| | | ___  _ __| |___ ",
       "|  _  |/ _` / __| |/ / _ \\ | |/ _ \\| '__| / __|",
       "| | | | (_| \\__ \\   <  __/ | | (_) | |  | \\__ \\",
-      "\\_| |_/\\__,_|___/_|\\_\\___|_|_|\\___/|_|  |_|___/"
+      "\\_| |_/\\__,_|___/_|\\_\\___|_|_|\\___/|_|  |_|___/",
+      "",
+      "Haskellorls = Haskell color ls"
     ]
