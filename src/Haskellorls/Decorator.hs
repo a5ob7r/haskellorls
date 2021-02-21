@@ -213,7 +213,7 @@ buildPrinters opt = do
         if shouldColorize
           then Name.colorizedNodeName cConfig
           else WT.toWrappedTextSingleton . Name.nodeName
-      nodeIndicatorPrinter = Indicator.buildIndicatorPrinter opt . Node.toFileInfo
+      nodeIndicatorPrinter = Indicator.buildIndicatorPrinter opt
       nodeLinkPrinter =
         if shouldColorize
           then SymbolicLink.coloredLinkName cConfig

@@ -70,7 +70,10 @@ indicatorSelector node = case Name.nodeTypeOf (Node.nodeInfoStatus node) of
 buildIndicatorPrinter :: Option.Option -> Node.NodeInfo -> [WT.WrappedText]
 buildIndicatorPrinter opt node = if T.null indicator then [] else WT.toWrappedTextSingleton indicator
   where
-    indicator = indicatorSelector node $ buildIndicators opt
+    indicator = indicatorSelector node' $ buildIndicators opt
+    node' = case node of
+      Node.LinkInfo {} | Format.isLongStyle opt -> Node.toFileInfo node
+      _ -> node
 
 buildIndicators :: Option.Option -> Indicators
 buildIndicators opt =
