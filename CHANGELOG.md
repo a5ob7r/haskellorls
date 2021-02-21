@@ -10,6 +10,7 @@
 - Add `--full-time` option.
 - Add `--group-directories-first`.
 - Add `-C` and `-x` options.
+- Add `-m` option.
 
 ### Changed
 

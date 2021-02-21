@@ -98,7 +98,6 @@ $ PATH="$PWD/bin:$PATH" goldplate golden-test --pretty-diff
   - --format=WORD
   - --hyperlink[=WHEN]
   - -k, --kibibytes
-  - -m
   - -N
   - -q
   - --show-control-chars

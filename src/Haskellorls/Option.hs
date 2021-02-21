@@ -45,6 +45,7 @@ data Option = Option
     level :: Depth.Depth,
     long :: Bool,
     dereference :: Bool,
+    fillWidth :: Bool,
     numericUidGid :: Bool,
     longWithoutGroup :: Bool,
     directoryIndicator :: Bool,
@@ -103,6 +104,7 @@ optionParser =
     <*> levelParser
     <*> longParser
     <*> dereferenceParser
+    <*> fillWidthParser
     <*> numericUidGidParser
     <*> longWithoutGroupParser
     <*> directoryIndicatorParser
@@ -337,6 +339,12 @@ horihontalParser =
   OA.switch $
     OA.short 'x'
       <> OA.help "Outputs files by rows instead of columns"
+
+fillWidthParser :: OA.Parser Bool
+fillWidthParser =
+  OA.switch $
+    OA.short 'm'
+      <> OA.help "Output grid style layout which are filled with comma as possible"
 
 versionParser :: OA.Parser Bool
 versionParser =

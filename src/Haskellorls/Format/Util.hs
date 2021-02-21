@@ -8,16 +8,16 @@ where
 import Haskellorls.Format.Type
 import qualified Haskellorls.Option as Option
 
--- WIP: Some format type is not implemented.
 formatStyle :: Option.Option -> Format
 formatStyle opt
   | Option.vertical opt = VERTICAL
   | Option.horihontal opt = HORIZONTAL
-  | False = COMMAS
+  | Option.fillWidth opt = COMMAS
   | Option.oneline opt = SINGLECOLUMN
-  | isLongStyle opt = LONG
+  | any (\f -> f opt) [Option.long, Option.longWithoutGroup, Option.longWithoutOwner, Option.fullTime] = LONG
   | otherwise = VERTICAL
 
--- TODO: Should export this?
 isLongStyle :: Option.Option -> Bool
-isLongStyle opt = any (\f -> f opt) [Option.long, Option.longWithoutGroup, Option.longWithoutOwner, Option.fullTime]
+isLongStyle opt = case formatStyle opt of
+  LONG -> True
+  _ -> False

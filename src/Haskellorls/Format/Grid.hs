@@ -70,12 +70,53 @@ slice n xs
   where
     (h, t) = splitAt n xs
 
+splitIntoMaxSum :: Int -> [Int] -> [[Int]]
+splitIntoMaxSum _ [] = []
+splitIntoMaxSum n xs = ys : splitIntoMaxSum n xs'
+  where
+    ys = takeWhileWithAccum (\a b -> a + b <= n) (+) 0 xs
+    xs' = drop (length ys) xs
+
+-- | 'takeWhileWithAccum' @predicate accumulator a0 xs@ is similar 'takeWhile'.
+-- But this has accumulator and the accumulated value can be used in predicate
+-- statement.
+--
+-- > takeWhileWithAccum (\a b -> a + b <= n) (+) 10 [1 .. 10] == [1, 2, 3, 4]
+takeWhileWithAccum :: (a -> b -> Bool) -> (a -> b -> a) -> a -> [b] -> [b]
+takeWhileWithAccum _ _ _ [] = []
+takeWhileWithAccum p accumulator a0 (x : xs) =
+  if p a0 x
+    then x : takeWhileWithAccum p accumulator (accumulator a0 x) xs
+    else []
+
+buildValidCommaSeparatedGrid :: Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
+buildValidCommaSeparatedGrid n sss = splitsAt validLengths sss'
+  where
+    sss' = mapToInit (<> WT.toWrappedTextSingleton commaSuffix) sss
+    lengths = map (sum . map WT.wtLength) sss'
+    validLengths = map length $ splitIntoMaxSum n lengths
+
+-- | 'splitsAt' @ns xs@ returns splited list which has lists as elements. The
+-- element's length may be not same.
+--
+-- > splitsAt [1 .. 3] [1 .. 6] = [[1], [2, 3], [4, 5, 6]]
+-- > splitsAt [3, 3 ..] [1 .. 6] = [[1, 2, 3], [4, 5, 6]]
+splitsAt :: [Int] -> [a] -> [[a]]
+splitsAt [] _ = []
+splitsAt _ [] = []
+splitsAt (n : nx) xs = ys : splitsAt nx xs'
+  where
+    (ys, xs') = List.splitAt n xs
+
 buildValidGrid :: Option.Option -> Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
 buildValidGrid _ _ [] = []
-buildValidGrid opt columnLength sss = case columnLength `compare` 0 of
-  EQ -> buildGrid opt (length sss) sss
-  LT -> singleColumnGrid
-  GT -> last $ singleColumnGrid : validGrids
+buildValidGrid opt columnLength sss =
+  if Option.fillWidth opt
+    then buildValidCommaSeparatedGrid columnLength sss
+    else case columnLength `compare` 0 of
+      EQ -> buildGrid opt (length sss) sss
+      LT -> singleColumnGrid
+      GT -> last $ singleColumnGrid : validGrids
   where
     singleColumnGrid = buildGrid opt 1 sss
     validGrids = takeWhile (validateGrid columnLength) $ map (\n -> buildGrid opt n sss) [2 .. columnLength]
@@ -87,10 +128,10 @@ renderGridAsPlain :: [[[WT.WrappedText]]] -> [TLB.Builder]
 renderGridAsPlain = map renderLineAsPlain
 
 renderLine :: [[WT.WrappedText]] -> TLB.Builder
-renderLine = M.mconcat . List.intersperse (TLB.fromText gridMargin) . map renderWTList
+renderLine = M.mconcat . map renderWTList
 
 renderLineAsPlain :: [[WT.WrappedText]] -> TLB.Builder
-renderLineAsPlain = M.mconcat . List.intersperse (TLB.fromText gridMargin) . map renderWTListAsPlain
+renderLineAsPlain = M.mconcat . map renderWTListAsPlain
 
 renderWTList :: [WT.WrappedText] -> TLB.Builder
 renderWTList = M.mconcat . map (M.mconcat . map TLB.fromText . WT.toList)
@@ -106,7 +147,7 @@ validateGrid n grid
     maxLen = maximum . map (T.length . TL.toStrict . TLB.toLazyText) $ renderGridAsPlain grid
 
 buildGrid :: Option.Option -> Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
-buildGrid opt n = List.transpose . buildGrid' . splitter n
+buildGrid opt n = map (List.intersperse (WT.toWrappedTextSingleton gridMargin)) . List.transpose . buildGrid' . splitter n
   where
     splitter = case Format.formatStyle opt of
       Format.HORIZONTAL -> verticalSplitInto
@@ -137,3 +178,6 @@ paddingChar = " "
 
 gridMargin :: T.Text
 gridMargin = "  "
+
+commaSuffix :: T.Text
+commaSuffix = ", "
