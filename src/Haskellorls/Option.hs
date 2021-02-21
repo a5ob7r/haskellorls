@@ -29,6 +29,7 @@ data Option = Option
     vertical :: Bool,
     color :: Color.Colorize,
     directory :: Bool,
+    noneSortExtra :: Bool,
     classify :: Bool,
     extraColor :: Bool,
     fileType :: Bool,
@@ -87,6 +88,7 @@ optionParser =
     <*> verticalParser
     <*> Color.colorParser
     <*> directoryParser
+    <*> noneSortExtraParser
     <*> classifyParser
     <*> Color.extraColorParser
     <*> fileTypeParser
@@ -361,6 +363,12 @@ directoryParser =
     OA.long "directory"
       <> OA.short 'd'
       <> OA.help "Treats directory as normal file, does not lookup contents in it"
+
+noneSortExtraParser :: OA.Parser Bool
+noneSortExtraParser =
+  OA.switch $
+    OA.short 'f'
+      <> OA.help "Do not sort and enable '-a' and '--color=disable' options"
 
 versionParser :: OA.Parser Bool
 versionParser =

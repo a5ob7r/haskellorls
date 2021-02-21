@@ -152,6 +152,7 @@ buildPrinters opt = do
   currentTime <- Clock.getCurrentTime
   timeZone <- LClock.getCurrentTimeZone
   shouldColorize <- case Option.color opt of
+    _ | Option.noneSortExtra opt -> return False
     Color.NEVER -> return False
     Color.ALWAYS -> return True
     Color.AUTO -> SIO.hIsTerminalDevice SIO.stdout

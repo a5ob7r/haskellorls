@@ -14,6 +14,7 @@
 - Add `--format=WORD` option.
 - Add `-c` option.
 - Add `-d / --directory` option.
+- Add `-f` option.
 
 ### Changed
 

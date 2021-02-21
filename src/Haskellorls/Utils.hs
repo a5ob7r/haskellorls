@@ -47,7 +47,7 @@ listContents :: Option.Option -> FilePath -> IO [FilePath]
 listContents opt path = ignoreExcluder . hideExcluder . ignoreFilter <$> list path
   where
     list
-      | Option.all opt = listAllEntries
+      | Option.all opt || Option.noneSortExtra opt = listAllEntries
       | Option.almostAll opt = listSemiAllEntries
       | otherwise = listEntries
     ignoreFilter =

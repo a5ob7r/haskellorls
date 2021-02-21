@@ -29,6 +29,7 @@ sorter opt = merger . separater . sorter' opt
 
 sorter' :: Option.Option -> [Node.NodeInfo] -> [Node.NodeInfo]
 sorter' opt = case Option.sort opt of
+  _ | Option.noneSortExtra opt -> sortWithNone
   NONE -> sortWithNone
   NAME
     | Option.noneSort opt -> sortWithNone
