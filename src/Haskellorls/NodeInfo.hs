@@ -1,3 +1,6 @@
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RecordWildCards #-}
+
 module Haskellorls.NodeInfo
   ( NodeInfo (..),
     nodeInfo,
@@ -78,19 +81,19 @@ nodeInfo opt dirname basename = do
     path = dirname Posix.</> basename
 
 toFileInfo :: NodeInfo -> NodeInfo
-toFileInfo node = case node of
-  FileInfo {} -> node
-  LinkInfo {} ->
+toFileInfo = \case
+  node@FileInfo {} -> node
+  LinkInfo {..} ->
     FileInfo
-      { getFilePath = getDestPath node,
-        getFileStatus = getDestStatus node,
-        getTreeNodePositions = getTreeNodePositions node
+      { getFilePath = getDestPath,
+        getFileStatus = getDestStatus,
+        ..
       }
-  OrphanedLinkInfo {} ->
+  OrphanedLinkInfo {..} ->
     FileInfo
-      { getFilePath = getDestPath node,
-        getFileStatus = getOrphanedLinkStatus node,
-        getTreeNodePositions = getTreeNodePositions node
+      { getFilePath = getDestPath,
+        getFileStatus = getOrphanedLinkStatus,
+        ..
       }
 
 linkDestPath :: FilePath -> FilePath -> FilePath
@@ -102,17 +105,13 @@ isAbsPath :: FilePath -> Bool
 isAbsPath path = "/" `L.isPrefixOf` path
 
 nodeInfoStatus :: NodeInfo -> Files.FileStatus
-nodeInfoStatus node = nodeStatus node
-  where
-    nodeStatus = case node of
-      FileInfo {} -> getFileStatus
-      LinkInfo {} -> getLinkStatus
-      OrphanedLinkInfo {} -> getOrphanedLinkStatus
+nodeInfoStatus = \case
+  FileInfo {..} -> getFileStatus
+  LinkInfo {..} -> getLinkStatus
+  OrphanedLinkInfo {..} -> getOrphanedLinkStatus
 
 nodeInfoPath :: NodeInfo -> FilePath
-nodeInfoPath node = pathFunc node
-  where
-    pathFunc = case node of
-      FileInfo {} -> getFilePath
-      LinkInfo {} -> getLinkPath
-      OrphanedLinkInfo {} -> getOrphanedLinkPath
+nodeInfoPath = \case
+  FileInfo {..} -> getFilePath
+  LinkInfo {..} -> getLinkPath
+  OrphanedLinkInfo {..} -> getOrphanedLinkPath
