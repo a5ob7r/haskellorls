@@ -2,6 +2,7 @@
 
 ![CI](https://github.com/a5ob7r/haskellorls/workflows/CI/badge.svg)
 ![Format](https://github.com/a5ob7r/haskellorls/workflows/Format/badge.svg)
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
 Haskell implementation of ls which is compatible with GNU ls.
 
