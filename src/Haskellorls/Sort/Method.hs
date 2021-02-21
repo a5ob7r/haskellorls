@@ -10,6 +10,7 @@ import qualified Algorithms.NaturalSort as NSort
 import qualified Data.Char as C
 import qualified Data.List as L
 import qualified Data.Ord as O
+import qualified Haskellorls.Format.Util as Format
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import Haskellorls.Sort.Type
@@ -32,7 +33,7 @@ sorter' opt = case Option.sort opt of
   NAME
     | Option.noneSort opt -> sortWithNone
     | Option.sizeSort opt -> sortWithSize
-    | Option.timeSort opt -> sorter' opt {Option.sort = TIME}
+    | Option.timeSort opt || (Option.ctime opt && not (Format.isLongStyle opt)) -> sorter' opt {Option.sort = TIME}
     | Option.naturalSort opt -> sortWithVersion
     | Option.extensionSort opt -> sortWithExtension
     | otherwise -> sortWithName

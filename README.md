@@ -95,7 +95,6 @@ $ PATH="$PWD/bin:$PATH" goldplate golden-test --pretty-diff
 
 - Add options for compatibility to GNU ls
   - -b, --escape
-  - -c
   - -d, --directory
   - -D, --dired
   - -f

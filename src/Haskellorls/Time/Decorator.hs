@@ -2,6 +2,7 @@
 
 module Haskellorls.Time.Decorator
   ( timeStyle,
+    timeType,
     fileTime,
     timeStyleFunc,
     coloredTimeStyleFunc,
@@ -47,6 +48,11 @@ fileTime tType = case tType of
   MODIFICATION -> Files.modificationTimeHiRes
   ACCESS -> Files.accessTimeHiRes
   CHANGE -> Files.statusChangeTimeHiRes
+
+timeType :: Option.Option -> TimeType
+timeType opt
+  | Option.ctime opt = CHANGE
+  | otherwise = Option.time opt
 
 timeStyle :: Option.Option -> TimeStyle
 timeStyle opt

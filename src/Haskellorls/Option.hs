@@ -25,6 +25,7 @@ data Option = Option
     author :: Bool,
     blockSize :: Size.BlockSize,
     ignoreBackups :: Bool,
+    ctime :: Bool,
     vertical :: Bool,
     color :: Color.Colorize,
     classify :: Bool,
@@ -81,6 +82,7 @@ optionParser =
     <*> authorParser
     <*> Size.blockSizeParser
     <*> ignoreBackupsParser
+    <*> ctimeParser
     <*> verticalParser
     <*> Color.colorParser
     <*> classifyParser
@@ -344,6 +346,12 @@ fillWidthParser =
   OA.switch $
     OA.short 'm'
       <> OA.help "Output grid style layout which are filled with comma as possible"
+
+ctimeParser :: OA.Parser Bool
+ctimeParser =
+  OA.switch $
+    OA.short 'c'
+      <> OA.help "Sort by ctime and show it when '-t' and long style (e.g. '-l', '-o' and so on) options are passed; sort by name and show ctime when long style option is passed; sort by ctime otherwise"
 
 versionParser :: OA.Parser Bool
 versionParser =

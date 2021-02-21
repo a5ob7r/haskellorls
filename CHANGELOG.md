@@ -12,6 +12,7 @@
 - Add `-C` and `-x` options.
 - Add `-m` option.
 - Add `--format=WORD` option.
+- Add `-c` option.
 
 ### Changed
 
