@@ -65,4 +65,4 @@ showVersion :: IO ()
 showVersion = T.putStrLn version
 
 version :: T.Text
-version = "v0.3.0.0"
+version = "v0.3.0.1"
