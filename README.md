@@ -67,7 +67,13 @@ $ export EXA_COLORS='ur=1;33:uw=1;31:ux=1;32:ue=1;92:gr=32:gw=31:gx=33:tr=32:tw=
 $ haskellorls --color=auto -l
 ```
 
-## Install from source
+## Install
+
+### Prebuild binary
+
+See [release](https://github.com/a5ob7r/haskellorls/releases) page and download a suitable binary for OS which you use.
+
+### From source
 
 ```sh
 $ git clone https://github.com/a5ob7r/haskellorls.git
