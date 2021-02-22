@@ -1,7 +1,5 @@
 module Haskellorls.Utils
-  ( exist,
-    linked,
-    destFileStatus,
+  ( destFileStatus,
     outputNoExistPathErr,
     listContents,
     exclude,
@@ -13,7 +11,6 @@ where
 
 import qualified Control.Exception.Base as Exception
 import qualified Data.Either as E
-import qualified Data.Either as Either
 import qualified Data.List as L
 import qualified Haskellorls.Option as Option
 import qualified System.Directory as Directory
@@ -21,24 +18,14 @@ import qualified System.FilePath.Glob as Glob
 import qualified System.IO as IO
 import qualified System.Posix.Files as Files
 
-exist :: FilePath -> IO Bool
-exist path = Either.isRight <$> exist'
-  where
-    exist' :: IO (Either Exception.IOException Files.FileStatus)
-    exist' = Exception.try $ Files.getSymbolicLinkStatus path
+getSymbolicLinkStatus :: FilePath -> IO (Either Exception.IOException Files.FileStatus)
+getSymbolicLinkStatus path = Exception.try $ Files.getSymbolicLinkStatus path
 
-linked :: FilePath -> IO Bool
-linked path = Either.isRight <$> exist'
-  where
-    exist' :: IO (Either Exception.IOException Files.FileStatus)
-    exist' = Exception.try $ Files.getFileStatus path
+getFileStatus :: FilePath -> IO (Either Exception.IOException Files.FileStatus)
+getFileStatus path = Exception.try $ Files.getSymbolicLinkStatus path
 
 destFileStatus :: FilePath -> IO (Maybe Files.FileStatus)
-destFileStatus path = do
-  isLinked <- linked path
-  if isLinked
-    then Just <$> Files.getFileStatus path
-    else return Nothing
+destFileStatus path = E.either (const Nothing) Just <$> getFileStatus path
 
 outputNoExistPathErr :: FilePath -> IO ()
 outputNoExistPathErr path = IO.hPutStrLn IO.stderr $ "haskellorls: does not exist '" <> path <> "': (No such file or directory)"
@@ -89,7 +76,7 @@ partitionExistOrNotPathes :: [FilePath] -> IO ([FilePath], [FilePath])
 partitionExistOrNotPathes pathes = E.partitionEithers <$> mapM validatePathExistence pathes
 
 validatePathExistence :: FilePath -> IO (Either FilePath FilePath)
-validatePathExistence path = (\b -> if b then Right path else Left path) <$> exist path
+validatePathExistence path = E.either (const $ Left path) (const $ Right path) <$> getSymbolicLinkStatus path
 
 isDirectory :: FilePath -> IO Bool
 isDirectory path = Files.isDirectory <$> Files.getSymbolicLinkStatus path
