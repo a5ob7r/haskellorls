@@ -26,7 +26,7 @@ getFileStatus :: FilePath -> IO (Either Exception.IOException Files.FileStatus)
 getFileStatus path = Exception.try $ Files.getSymbolicLinkStatus path
 
 destFileStatus :: FilePath -> IO (Maybe Files.FileStatus)
-destFileStatus path = E.either (const Nothing) Just <$> getFileStatus path
+destFileStatus path = E.eitherToMaybe <$> getFileStatus path
 
 listContents :: Option.Option -> FilePath -> IO (Either Exception.IOException [FilePath])
 listContents opt path = E.mapRight (ignoreExcluder . hideExcluder . ignoreFilter) <$> list path
