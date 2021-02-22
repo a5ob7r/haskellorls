@@ -6,6 +6,7 @@ module Haskellorls
   )
 where
 
+import qualified Data.Either as E
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Haskellorls.Decorator as Decorator
@@ -14,6 +15,7 @@ import qualified Haskellorls.Recursive as Recursive
 import qualified Haskellorls.Utils as Utils
 import qualified Options.Applicative as OA
 import qualified System.Exit as Exit
+import qualified System.IO as IO
 
 -- | Haskellorls's process flow
 -- 1. Gets all arguments passed to itself as string list.
@@ -39,9 +41,10 @@ run' opt = do
       -- Only dereferences on command line arguments.
       opt' = opt {Option.dereferenceCommandLine = False, Option.dereferenceCommandLineSymlinkToDir = False}
 
-  (noExistences, exists) <- Utils.partitionExistOrNotPathes targets'
+  statuses <- mapM Utils.getSymbolicLinkStatus targets'
+  let (errs, exists) = E.partitionEithers $ zipWith (\s p -> E.either Left (const $ Right p) s) statuses targets'
 
-  mapM_ Utils.outputNoExistPathErr noExistences
+  mapM_ (IO.hPrint IO.stderr) errs
 
   printers <- Decorator.buildPrinters opt'
   let printer = Recursive.buildPrinter opt' printers
@@ -50,7 +53,7 @@ run' opt = do
 
   Recursive.exec printer ops
 
-  if null noExistences
+  if null errs
     then Exit.exitSuccess
     else Exit.exitWith $ Exit.ExitFailure 2
 

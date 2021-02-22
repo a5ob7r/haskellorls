@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiWayIf #-}
 
 module Haskellorls.Tree.Util
@@ -16,6 +17,7 @@ import qualified Haskellorls.Sort.Method as Sort
 import Haskellorls.Tree.Type
 import qualified Haskellorls.Utils as Utils
 import qualified System.FilePath.Posix as Posix
+import qualified System.IO as IO
 import qualified System.Posix.Files as Files
 
 makeSomeNewPositionsList :: Int -> [TreeNodePosition] -> [[TreeNodePosition]]
@@ -36,14 +38,21 @@ makeTreeNodeInfos opt path = do
   node <- Node.nodeInfo opt "" path
   makeTreeNodeInfos' opt path node
 
+-- | With error message output.
 makeTreeNodeInfos' :: Option.Option -> FilePath -> Node.NodeInfo -> IO (S.Seq Node.NodeInfo)
 makeTreeNodeInfos' opt path node = do
   contents <-
     if
         | Depth.isDepthZero depth || not (Files.isDirectory $ Node.nodeInfoStatus node) -> pure []
         -- Force hide '.' and '..' to avoid infinite loop.
-        | Option.all opt -> Utils.listContents opt {Option.all = False, Option.almostAll = True} path
-        | otherwise -> Utils.listContents opt path
+        | Option.all opt -> do
+          Utils.listContents opt {Option.all = False, Option.almostAll = True} path >>= \case
+            Left errMsg -> IO.hPrint IO.stderr errMsg >> pure []
+            Right contents' -> pure contents'
+        | otherwise ->
+          Utils.listContents opt path >>= \case
+            Left errMsg -> IO.hPrint IO.stderr errMsg >> pure []
+            Right contents' -> pure contents'
   let pList = makeSomeNewPositionsList (length contents) $ Node.getTreeNodePositions node
   nodes <- Sort.sorter opt <$> mapM (Node.nodeInfo opt path) contents
   let nodes' = zipWith (\nd p -> nd {Node.getTreeNodePositions = p}) nodes pList

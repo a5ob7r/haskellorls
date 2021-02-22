@@ -1,6 +1,7 @@
 module Haskellorls.Utils
-  ( destFileStatus,
-    outputNoExistPathErr,
+  ( getSymbolicLinkStatus,
+    getFileStatus,
+    destFileStatus,
     listContents,
     exclude,
     partitionExistOrNotPathes,
@@ -11,11 +12,11 @@ where
 
 import qualified Control.Exception.Base as Exception
 import qualified Data.Either as E
+import qualified Data.Either.Extra as E
 import qualified Data.List as L
 import qualified Haskellorls.Option as Option
 import qualified System.Directory as Directory
 import qualified System.FilePath.Glob as Glob
-import qualified System.IO as IO
 import qualified System.Posix.Files as Files
 
 getSymbolicLinkStatus :: FilePath -> IO (Either Exception.IOException Files.FileStatus)
@@ -27,11 +28,8 @@ getFileStatus path = Exception.try $ Files.getSymbolicLinkStatus path
 destFileStatus :: FilePath -> IO (Maybe Files.FileStatus)
 destFileStatus path = E.either (const Nothing) Just <$> getFileStatus path
 
-outputNoExistPathErr :: FilePath -> IO ()
-outputNoExistPathErr path = IO.hPutStrLn IO.stderr $ "haskellorls: does not exist '" <> path <> "': (No such file or directory)"
-
-listContents :: Option.Option -> FilePath -> IO [FilePath]
-listContents opt path = ignoreExcluder . hideExcluder . ignoreFilter <$> list path
+listContents :: Option.Option -> FilePath -> IO (Either Exception.IOException [FilePath])
+listContents opt path = E.mapRight (ignoreExcluder . hideExcluder . ignoreFilter) <$> list path
   where
     list
       | Option.all opt || Option.noneSortExtra opt = listAllEntries
@@ -50,14 +48,14 @@ listContents opt path = ignoreExcluder . hideExcluder . ignoreFilter <$> list pa
       ptn -> exclude ptn
     isShowHiddenEntries = Option.all opt || Option.almostAll opt
 
-listAllEntries :: FilePath -> IO [FilePath]
-listAllEntries = Directory.getDirectoryContents
+listAllEntries :: FilePath -> IO (Either Exception.IOException [FilePath])
+listAllEntries path = Exception.try $ Directory.getDirectoryContents path
 
-listSemiAllEntries :: FilePath -> IO [FilePath]
-listSemiAllEntries = Directory.listDirectory
+listSemiAllEntries :: FilePath -> IO (Either Exception.IOException [FilePath])
+listSemiAllEntries path = Exception.try $ Directory.listDirectory path
 
-listEntries :: FilePath -> IO [FilePath]
-listEntries = fmap (filter $ not . isHiddenEntries) . listSemiAllEntries
+listEntries :: FilePath -> IO (Either Exception.IOException [FilePath])
+listEntries path = E.mapRight (filter $ not . isHiddenEntries) <$> listSemiAllEntries path
 
 isHiddenEntries :: FilePath -> Bool
 isHiddenEntries [] = False

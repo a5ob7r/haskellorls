@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixed
+
+- Crash when lookups no permission directory.
+
 ## 0.3.0.0 -- 2021-02-22
 
 ### Added

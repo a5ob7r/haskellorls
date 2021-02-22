@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -10,7 +11,6 @@ module Haskellorls.Recursive
 where
 
 import qualified Data.Foldable as Fold
-import qualified Data.Functor as F
 import qualified Data.List as L
 import qualified Data.Monoid as M
 import qualified Data.Text as T
@@ -29,6 +29,7 @@ import qualified Haskellorls.Tree.Util as Tree
 import qualified Haskellorls.Utils as Utils
 import qualified Haskellorls.WrappedText as WT
 import qualified System.FilePath.Posix as Posix
+import qualified System.IO as IO
 import qualified System.Posix.Files as Files
 
 data EntryType = FILES | SINGLEDIR | DIRECTORY
@@ -95,9 +96,12 @@ pathToOp opt path = do
   nodes <- buildDirectoryNodes opt path
   pure $ PrintEntry DIRECTORY path nodes opt
 
+-- | With error message output.
 buildDirectoryNodes :: Option.Option -> FilePath -> IO [Node.NodeInfo]
-buildDirectoryNodes opt path = do
-  Utils.listContents opt path >>= mapM (Node.nodeInfo opt path) . excluder F.<&> Sort.sorter opt
+buildDirectoryNodes opt path =
+  Utils.listContents opt path >>= \case
+    Left errMsg -> IO.hPrint IO.stderr errMsg >> pure []
+    Right contents -> Sort.sorter opt <$> (mapM (Node.nodeInfo opt path) . excluder) contents
   where
     excluder = ignoreExcluder . hideExcluder
     ignorePtn = Option.ignore opt
