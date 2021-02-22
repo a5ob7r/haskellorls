@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.0.0 -- 2021-02-22
+
 ### Added
 
 - Add a ascii art to help header.
