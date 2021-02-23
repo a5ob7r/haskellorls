@@ -10,11 +10,7 @@ where
 data Depth
   = Depth Int
   | INF
-
-instance Eq Depth where
-  INF == INF = True
-  Depth a == Depth b = a == b
-  _ == _ = False
+  deriving (Eq)
 
 makeDepth :: Int -> Maybe Depth
 makeDepth n
