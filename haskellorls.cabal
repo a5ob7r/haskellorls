@@ -70,6 +70,7 @@ library
     , Glob
     , natural-sort
     , optparse-applicative
+    , terminal-size
     , text
     , time                  >=1.9.1
     , unix

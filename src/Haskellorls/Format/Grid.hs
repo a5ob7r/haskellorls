@@ -16,23 +16,18 @@ import qualified Data.Text.Lazy.Builder as TLB
 import qualified Haskellorls.Format.Util as Format
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.WrappedText as WT
-import qualified System.Environment as Env
-import qualified Text.Read as Read
+import qualified System.Console.Terminal.Size as TS
 
 virtualColumnSize :: Option.Option -> IO Int
 virtualColumnSize opt = do
-  termWidth <- terminalWidth
-  return . head $ Maybe.catMaybes [styleWidth, optWidth, termWidth]
+  fdWidth <- fmap TS.width <$> TS.size
+  return . head $ Maybe.catMaybes [styleWidth, optWidth, fdWidth, Just 1]
   where
     optWidth = Option.width opt
     styleWidth = case Format.formatStyle opt of
       Format.SINGLECOLUMN -> Just 1
       Format.LONG -> Just 1
       _ -> Nothing
-
--- | Default terminal size is '1'.
-terminalWidth :: IO (Maybe Int)
-terminalWidth = maybe (Just 1) Read.readMaybe <$> Env.lookupEnv "COLUMNS"
 
 -- | 'horizontalSplitInto' @n xs@ returns a list which are sliced @xs@ into @n@ elements vertically.
 --
