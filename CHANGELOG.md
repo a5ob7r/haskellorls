@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- Separators of grid style layout from only space to tab char and space for GNU ls compatibilities.
+
 ## 0.3.1.0 -- 2021-02-22
 
 ### Fixed

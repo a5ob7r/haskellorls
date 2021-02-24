@@ -121,7 +121,8 @@ buildValidGrid opt columnLength sss =
       GT -> last $ singleColumnGrid : validGrids
   where
     singleColumnGrid = buildGrid opt 1 sss
-    validGrids = takeWhile (validateGrid columnLength) $ map (\n -> buildGrid opt n sss) [2 .. columnLength]
+    validColNum = takeWhile (\n -> validateGrid columnLength $ buildGrid opt n sss) [2 .. columnLength]
+    validGrids = map (\n -> buildGridWithTab opt n sss) validColNum
 
 renderGrid :: [[[WT.WrappedText]]] -> [TLB.Builder]
 renderGrid = map renderLine
@@ -148,6 +149,48 @@ validateGrid n grid
   where
     maxLen = maximum . map (T.length . TL.toStrict . TLB.toLazyText) $ renderGridAsPlain grid
 
+buildGridWithTab :: Option.Option -> Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
+buildGridWithTab opt n wtss = map (buildRow 8 maxLengths) $ List.transpose grid
+  where
+    grid = splitter n wtss
+    maxLengths = mapToInit (+ 2) $ calcEachRowMaxWTLength grid
+    splitter = case Format.formatStyle opt of
+      Format.HORIZONTAL -> verticalSplitInto
+      _ -> horizontalSplitInto
+
+buildRow :: Int -> [Int] -> [[WT.WrappedText]] -> [[WT.WrappedText]]
+buildRow _ [] _ = []
+buildRow _ _ [] = []
+buildRow tabSize ns wtss = interpolate wtss $ map WT.toWrappedTextSingleton paddings
+  where
+    lengths = map (sum . map WT.wtLength) wtss
+    paddings = buildPaddings tabSize ns lengths
+
+interpolate :: [a] -> [a] -> [a]
+interpolate [] _ = []
+interpolate [x] _ = [x]
+interpolate _ [] = []
+interpolate (x : xs) (y : ys) = x : y : interpolate xs ys
+
+buildPaddings :: Int -> [Int] -> [Int] -> [T.Text]
+buildPaddings _ [] _ = []
+buildPaddings _ _ [] = []
+buildPaddings _ [_] _ = []
+buildPaddings _ _ [_] = []
+buildPaddings tabSize ns ms = buildPaddings' tabSize 0 ns ms
+
+buildPaddings' :: Int -> Int -> [Int] -> [Int] -> [T.Text]
+buildPaddings' _ _ _ [] = []
+buildPaddings' _ _ [] _ = []
+buildPaddings' tabSize len (n : ns) (m : ms) = T.replicate nTabs "\t" <> T.replicate nSps " " : buildPaddings' tabSize nLen ns ms
+  where
+    nLen = len + n
+    mLen = len + m
+    (a, b) = nLen `divMod` tabSize
+    (a', b') = mLen `divMod` tabSize
+    nTabs = a - a'
+    nSps = if a == a' then b - b' else b
+
 buildGrid :: Option.Option -> Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
 buildGrid opt n = map (List.intersperse (WT.toWrappedTextSingleton gridMargin)) . List.transpose . buildGrid' . splitter n
   where
@@ -162,6 +205,9 @@ buildGrid' xs = mapToInit buildColumn xs
 
 mapToInit :: (a -> a) -> [a] -> [a]
 mapToInit f xs = map f (init xs) <> [last xs]
+
+calcEachRowMaxWTLength :: [[[WT.WrappedText]]] -> [Int]
+calcEachRowMaxWTLength = map $ maximum . map (sum . map WT.wtLength)
 
 buildColumn :: [[WT.WrappedText]] -> [[WT.WrappedText]]
 buildColumn sss = map (pad paddingChar maxLen) sss
