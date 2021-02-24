@@ -150,7 +150,7 @@ validateGrid n grid
     maxLen = maximum . map (T.length . TL.toStrict . TLB.toLazyText) $ renderGridAsPlain grid
 
 buildGridWithTab :: Option.Option -> Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
-buildGridWithTab opt n wtss = map (buildRow 8 maxLengths) $ List.transpose grid
+buildGridWithTab opt n wtss = map (buildRow (Option.tabSize opt) maxLengths) $ List.transpose grid
   where
     grid = splitter n wtss
     maxLengths = mapToInit (+ 2) $ calcEachRowMaxWTLength grid

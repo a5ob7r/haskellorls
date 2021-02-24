@@ -62,6 +62,7 @@ data Option = Option
     time :: Time.TimeType,
     timeStyle :: Time.TimeStyle,
     timeSort :: Bool,
+    tabSize :: Int,
     tree :: Bool,
     atime :: Bool,
     noneSort :: Bool,
@@ -122,6 +123,7 @@ optionParser =
     <*> Time.timeParser
     <*> Time.timeStyleParser
     <*> Sort.timeSortParser
+    <*> tabSizeParser
     <*> treeParser
     <*> atimeParser
     <*> Sort.noneSortParser
@@ -377,6 +379,21 @@ atimeParser =
   OA.switch $
     OA.short 'u'
       <> OA.help "Sort by access time and show it when '-t' and long style (e.g. '-l', '-o' and so on) options are passed; sort by name and show access time when long style option is passed; sort by access time otherwise"
+
+tabSizeParser :: OA.Parser Int
+tabSizeParser =
+  OA.option reader $
+    OA.long "tabsize"
+      <> OA.short 'T'
+      <> OA.metavar "COLS"
+      <> OA.value 8
+      <> OA.help "Specify tab stop size; default is 8"
+  where
+    reader =
+      OA.str >>= \cols ->
+        case Read.readMaybe cols of
+          Just n -> pure n
+          Nothing -> OA.readerError "COLS must be a natural number"
 
 versionParser :: OA.Parser Bool
 versionParser =

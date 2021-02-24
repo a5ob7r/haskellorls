@@ -109,7 +109,6 @@ $ PATH="$PWD/bin:$PATH" goldplate golden-test --pretty-diff
   - --show-control-chars
   - -Q, --quote-name
   - --quoting-style=WORD
-  - -T, --tabsize=COLS
   - -Z, --context
 - Add locale support for time style.
 - Fix size printer for charactor devices.
