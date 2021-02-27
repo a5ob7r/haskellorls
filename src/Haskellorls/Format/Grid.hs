@@ -111,13 +111,17 @@ buildValidGrid opt columnLength sss =
   if Option.fillWidth opt
     then buildValidCommaSeparatedGrid columnLength sss
     else case columnLength `compare` 0 of
-      EQ -> buildGrid opt (length sss) sss
+      EQ -> gridBuilder opt (length sss) sss
       LT -> singleColumnGrid
       GT -> last $ singleColumnGrid : validGrids
   where
-    singleColumnGrid = buildGrid opt 1 sss
-    validColNum = takeWhile (\n -> validateGrid columnLength $ buildGrid opt n sss) [2 .. columnLength]
-    validGrids = map (\n -> buildGridWithTab opt n sss) validColNum
+    singleColumnGrid = gridBuilder opt 1 sss
+    validColNum = takeWhile (\n -> validateGrid columnLength $ buildGridWithSpace opt n sss) [2 .. columnLength]
+    validGrids = map (\n -> gridBuilder opt n sss) validColNum
+    gridBuilder =
+      if Option.tabSeparator opt
+        then buildGridWithTab
+        else buildGridWithSpace
 
 renderGrid :: [[[WT.WrappedText]]] -> [TLB.Builder]
 renderGrid = map renderLine
@@ -186,41 +190,36 @@ buildPaddings' tabSize len (n : ns) (m : ms) = T.replicate nTabs "\t" <> T.repli
     nTabs = a - a'
     nSps = if a == a' then b - b' else b
 
-buildGrid :: Option.Option -> Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
-buildGrid opt n = map (List.intersperse (WT.toWrappedTextSingleton gridMargin)) . List.transpose . buildGrid' . splitter n
+buildRowWithSpace :: [Int] -> [[WT.WrappedText]] -> [[WT.WrappedText]]
+buildRowWithSpace [] _ = []
+buildRowWithSpace _ [] = []
+buildRowWithSpace ns wtss = interpolate wtss $ map WT.toWrappedTextSingleton paddings
   where
+    lengths = map (sum . map WT.wtLength) wtss
+    paddings = buildPaddingsWithSpace 0 ns lengths
+
+buildPaddingsWithSpace :: Int -> [Int] -> [Int] -> [T.Text]
+buildPaddingsWithSpace _ [] _ = []
+buildPaddingsWithSpace _ _ [] = []
+buildPaddingsWithSpace len (n : ns) (m : ms) = T.replicate (nLen - mLen) " " : buildPaddingsWithSpace nLen ns ms
+  where
+    nLen = len + n
+    mLen = len + m
+
+buildGridWithSpace :: Option.Option -> Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
+buildGridWithSpace opt n wtss = map (buildRowWithSpace maxLengths) $ List.transpose grid
+  where
+    grid = splitter n wtss
+    maxLengths = mapToInit (+ 2) $ calcEachRowMaxWTLength grid
     splitter = case Format.formatStyle opt of
       Format.HORIZONTAL -> verticalSplitInto
       _ -> horizontalSplitInto
-
-buildGrid' :: [[[WT.WrappedText]]] -> [[[WT.WrappedText]]]
-buildGrid' [] = []
-buildGrid' [x] = [x]
-buildGrid' xs = mapToInit buildColumn xs
 
 mapToInit :: (a -> a) -> [a] -> [a]
 mapToInit f xs = map f (init xs) <> [last xs]
 
 calcEachRowMaxWTLength :: [[[WT.WrappedText]]] -> [Int]
 calcEachRowMaxWTLength = map $ maximum . map (sum . map WT.wtLength)
-
-buildColumn :: [[WT.WrappedText]] -> [[WT.WrappedText]]
-buildColumn sss = map (pad paddingChar maxLen) sss
-  where
-    maxLen = maximum $ map (sum . map WT.wtLength) sss
-
-pad :: T.Text -> Int -> [WT.WrappedText] -> [WT.WrappedText]
-pad c n ss = ss <> padding
-  where
-    len = sum $ map WT.wtLength ss
-    diff = n - len
-    padding = WT.toWrappedTextSingleton $ T.replicate diff c
-
-paddingChar :: T.Text
-paddingChar = " "
-
-gridMargin :: T.Text
-gridMargin = "  "
 
 commaSuffix :: T.Text
 commaSuffix = ", "

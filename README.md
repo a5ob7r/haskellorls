@@ -34,6 +34,10 @@ See `--level=N`.
 Restrict max searching depth when output with tree style layout.
 Also this can restrict max depth of directory searching using --recursive/-R option.
 
+### --tab-separator
+
+Use tab charactors and some spaces to separate grid divisions when grid layout style; like dir.
+
 ## Incompatibilities with GNU ls
 
 This has some imcompatibilities with GNU ls.

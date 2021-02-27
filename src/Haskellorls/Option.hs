@@ -62,6 +62,7 @@ data Option = Option
     time :: Time.TimeType,
     timeStyle :: Time.TimeStyle,
     timeSort :: Bool,
+    tabSeparator :: Bool,
     tabSize :: Int,
     tree :: Bool,
     atime :: Bool,
@@ -123,6 +124,7 @@ optionParser =
     <*> Time.timeParser
     <*> Time.timeStyleParser
     <*> Sort.timeSortParser
+    <*> tabSeparatorParser
     <*> tabSizeParser
     <*> treeParser
     <*> atimeParser
@@ -394,6 +396,12 @@ tabSizeParser =
         case Read.readMaybe cols of
           Just n -> pure n
           Nothing -> OA.readerError "COLS must be a natural number"
+
+tabSeparatorParser :: OA.Parser Bool
+tabSeparatorParser =
+  OA.switch $
+    OA.long "tab-separator"
+      <> OA.help "Use tab charactors and some spaces to separate grid divisions when grid layout style; like dir"
 
 versionParser :: OA.Parser Bool
 versionParser =
