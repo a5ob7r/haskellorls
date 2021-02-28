@@ -7,6 +7,10 @@
 - `-T / --tabsize=COLS` option.
 - `--tab-separator` option.
 
+### Fixed
+
+- Crash when reads no permission link.
+
 ## 0.3.1.0 -- 2021-02-22
 
 ### Fixed

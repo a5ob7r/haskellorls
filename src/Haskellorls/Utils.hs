@@ -1,6 +1,7 @@
 module Haskellorls.Utils
   ( getSymbolicLinkStatus,
     getFileStatus,
+    readSymbolicLink,
     destFileStatus,
     listContents,
     exclude,
@@ -24,6 +25,9 @@ getSymbolicLinkStatus path = Exception.try $ Files.getSymbolicLinkStatus path
 
 getFileStatus :: FilePath -> IO (Either Exception.IOException Files.FileStatus)
 getFileStatus path = Exception.try $ Files.getSymbolicLinkStatus path
+
+readSymbolicLink :: FilePath -> IO (Either Exception.IOException FilePath)
+readSymbolicLink path = Exception.try $ Files.readSymbolicLink path
 
 destFileStatus :: FilePath -> IO (Maybe Files.FileStatus)
 destFileStatus path = E.eitherToMaybe <$> getFileStatus path

@@ -15,6 +15,7 @@ import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Tree.Type as Tree
 import qualified Haskellorls.Utils as Utils
 import qualified System.FilePath.Posix as Posix
+import qualified System.IO as IO
 import qualified System.Posix.Files as Files
 
 data NodeInfo
@@ -42,18 +43,25 @@ nodeInfo opt dirname basename = do
   status <- Files.getSymbolicLinkStatus path
   if Files.isSymbolicLink status
     then do
-      linkPath <- Files.readSymbolicLink path
-      let linkAbsPath = linkDestPath path linkPath
-      destStatus <- Utils.destFileStatus linkAbsPath
-      return $ case destStatus of
-        Nothing ->
+      linkPath <- Utils.readSymbolicLink path
+      case linkPath of
+        Left e -> IO.hPrint IO.stderr e
+        _ -> pure ()
+
+      destStatus <- do
+        case linkPath of
+          Right p -> Utils.destFileStatus $ linkDestPath path p
+          _ -> pure Nothing
+
+      return $ case (linkPath, destStatus) of
+        (Right p, Nothing) ->
           OrphanedLinkInfo
             { getOrphanedLinkPath = basename,
               getOrphanedLinkStatus = status,
-              getDestPath = linkPath,
+              getDestPath = p,
               getTreeNodePositions = []
             }
-        Just s
+        (Right p, Just s)
           | Option.dereference opt
               || Option.dereferenceCommandLine opt
               || (Option.dereferenceCommandLineSymlinkToDir opt && Files.isDirectory s) ->
@@ -66,10 +74,16 @@ nodeInfo opt dirname basename = do
             LinkInfo
               { getLinkPath = basename,
                 getLinkStatus = status,
-                getDestPath = linkPath,
+                getDestPath = p,
                 getDestStatus = s,
                 getTreeNodePositions = []
               }
+        _ ->
+          FileInfo
+            { getFilePath = basename,
+              getFileStatus = status,
+              getTreeNodePositions = []
+            }
     else
       return $
         FileInfo
