@@ -7,6 +7,10 @@
 - `-T / --tabsize=COLS` option.
 - `--tab-separator` option.
 
+### Changed
+
+- Symblolic link block size is 0.
+
 ### Fixed
 
 - Crash when reads no permission link.

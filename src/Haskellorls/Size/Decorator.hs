@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -47,10 +48,10 @@ toTotalBlockSize' opt = fileSize' opt' . sum . map toFileBlockSize
       _ -> opt
 
 fileBlockSize :: Option.Option -> Node.NodeInfo -> [WT.WrappedText]
-fileBlockSize opt node = toTotalBlockSize opt [fileSizeOf node]
+fileBlockSize opt node = toTotalBlockSize opt [fileBlockSizeOf node]
 
 coloredFileBlockSize :: Color.Config -> Option.Option -> Node.NodeInfo -> [WT.WrappedText]
-coloredFileBlockSize config opt node = coloredFileSize' config $ toTotalBlockSize' opt [fileSizeOf node]
+coloredFileBlockSize config opt node = coloredFileSize' config $ toTotalBlockSize' opt [fileBlockSizeOf node]
 
 toFileBlockSize :: Types.FileOffset -> Types.FileOffset
 toFileBlockSize size = a' * unitBlockSize
@@ -116,6 +117,12 @@ siHumanReadableFileSize size = FileSizeComponent {..}
     fileSizeUnit = fileSizeUnitSelector KIBI baseScale
     fileSizeKibi = False
     baseScale = detectSiBlockSizeType fileSizeRawNumber
+
+-- | Treat symbolic link block size as zero.
+fileBlockSizeOf :: Node.NodeInfo -> Types.FileOffset
+fileBlockSizeOf = \case
+  node@Node.FileInfo {} -> fileSizeOf node
+  _ -> Types.COff 0
 
 fileSizeOf :: Node.NodeInfo -> Types.FileOffset
 fileSizeOf = Files.fileSize . Node.nodeInfoStatus
