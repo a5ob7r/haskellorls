@@ -40,6 +40,8 @@ library
     Haskellorls.Option
     Haskellorls.Ownership.Decorator
     Haskellorls.Ownership.Type
+    Haskellorls.Quote.Type
+    Haskellorls.Quote.Utils
     Haskellorls.Recursive
     Haskellorls.Size.Decorator
     Haskellorls.Size.Option

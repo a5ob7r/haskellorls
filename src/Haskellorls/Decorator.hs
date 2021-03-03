@@ -48,6 +48,7 @@ data PrinterType
   | FILESIZE
   | FILETIME
   | FILENAME
+  | FILENAMEWITHDQUOTE
 
 data NamePrinterType
   = TREE
@@ -108,7 +109,8 @@ data Printers = Printers
     fileGroupPrinter :: Printer,
     fileSizePrinter :: Printer,
     fileTimePrinter :: Printer,
-    fileNamePrinter :: Printer
+    fileNamePrinter :: Printer,
+    fileNameWithDQuotePrinter :: Printer
   }
 
 alignmentTypeFor :: PrinterType -> AlighmentType
@@ -123,6 +125,7 @@ alignmentTypeFor dType = case dType of
   FILESIZE -> RIGHT
   FILETIME -> LEFT
   FILENAME -> NONE
+  FILENAMEWITHDQUOTE -> NONE
 
 printerSelectorFor :: PrinterType -> Printers -> Printer
 printerSelectorFor pType = case pType of
@@ -136,6 +139,7 @@ printerSelectorFor pType = case pType of
   FILESIZE -> fileSizePrinter
   FILETIME -> fileTimePrinter
   FILENAME -> fileNamePrinter
+  FILENAMEWITHDQUOTE -> fileNameWithDQuotePrinter
 
 alignmenterBuilderSelectorFor :: AlighmentType -> AlignmenterBuilder
 alignmenterBuilderSelectorFor aType = case aType of
@@ -210,26 +214,30 @@ buildPrinters opt = do
           then Tree.treeBranchWithColor cConfig . Node.getTreeNodePositions
           else WT.toWrappedTextSingleton . Tree.treeBranch . Node.getTreeNodePositions
       nodeIconPrinter = flip Icon.lookupIcon Icon.defaultConfig
-      nodeNamePrinter =
+      buildNamePrinter option =
         if shouldColorize
-          then Name.colorizedNodeName cConfig
-          else WT.toWrappedTextSingleton . Name.nodeName
+          then Name.colorizedNodeNameWrapper option cConfig
+          else Name.nodeNameWrapper option
+      nodeNamePrinter = buildNamePrinter opt {Option.noQuote = True}
+      nodeNameWithDQuotePrinter = buildNamePrinter opt
       nodeIndicatorPrinter = Indicator.buildIndicatorPrinter opt
       nodeLinkPrinter =
         if shouldColorize
-          then SymbolicLink.coloredLinkName cConfig
-          else SymbolicLink.linkNameWrapper
+          then SymbolicLink.coloredLinkName opt cConfig
+          else SymbolicLink.linkName opt
       nodeNamePrinters = NodeNamePrinters {..}
+      nodeNameWithDQuotePrinters = NodeNamePrinters {nodeNamePrinter = nodeNameWithDQuotePrinter, ..}
 
   return $
     Printers
       { fileFieldPrinter = filemodeFieldPrinter . Field.filemodeField . Node.nodeInfoStatus,
         fileNamePrinter = buildNodeNamePrinter opt nodeNamePrinters,
+        fileNameWithDQuotePrinter = buildNodeNamePrinter opt nodeNameWithDQuotePrinters,
         ..
       }
 
 buildPrinterTypes :: Option.Option -> [PrinterType]
-buildPrinterTypes opt = filter (`neededBy` opt) [FILEINODE, FILEBLOCK, FILEFIELD, FILELINK, FILEOWNER, FILEGROUP, FILEAUTHOR, FILESIZE, FILETIME, FILENAME]
+buildPrinterTypes opt = filter (`neededBy` opt) [FILEINODE, FILEBLOCK, FILEFIELD, FILELINK, FILEOWNER, FILEGROUP, FILEAUTHOR, FILESIZE, FILETIME, FILENAME, FILENAMEWITHDQUOTE]
 
 -- | Should the `PrinterType` value is needed by the options.
 neededBy :: PrinterType -> Option.Option -> Bool
@@ -243,7 +251,8 @@ neededBy pType opt = case pType of
   FILEAUTHOR -> long && author
   FILESIZE -> long
   FILETIME -> long
-  FILENAME -> True
+  FILENAME -> noQuote
+  FILENAMEWITHDQUOTE -> not noQuote
   where
     inode = Option.inode opt
     size = Option.size opt
@@ -251,6 +260,7 @@ neededBy pType opt = case pType of
     owner = not $ Option.longWithoutOwner opt
     group = not (Option.longWithoutGroup opt || Option.noGroup opt)
     author = Option.author opt
+    noQuote = Option.noQuote opt
 
 buildColumn :: [Node.NodeInfo] -> Printers -> PrinterType -> [[WT.WrappedText]]
 buildColumn nodes printers pType = map alignmenter nodes'

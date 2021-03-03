@@ -111,7 +111,6 @@ $ PATH="$PWD/bin:$PATH" goldplate golden-test --pretty-diff
   - -N
   - -q
   - --show-control-chars
-  - -Q, --quote-name
   - --quoting-style=WORD
   - -Z, --context
 - Add locale support for time style.

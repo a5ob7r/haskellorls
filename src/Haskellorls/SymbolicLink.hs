@@ -2,7 +2,6 @@
 
 module Haskellorls.SymbolicLink
   ( linkName,
-    linkNameWrapper,
     coloredLinkName,
   )
 where
@@ -11,26 +10,26 @@ import qualified Data.Text as T
 import qualified Haskellorls.LsColor.Config as Color
 import qualified Haskellorls.Name.Decorator as Name
 import qualified Haskellorls.NodeInfo as Node
+import qualified Haskellorls.Option as Option
+import qualified Haskellorls.Quote.Utils as Quote
 import qualified Haskellorls.WrappedText as WT
 
-linkName :: Node.NodeInfo -> T.Text
-linkName node = case node of
-  Node.FileInfo {} -> ""
-  _ -> prefix <> T.pack (Node.getDestPath node)
-
-linkNameWrapper :: Node.NodeInfo -> [WT.WrappedText]
-linkNameWrapper node
-  | T.null link = []
-  | otherwise = WT.toWrappedTextSingleton link
-  where
-    link = linkName node
-
-coloredLinkName :: Color.Config -> Node.NodeInfo -> [WT.WrappedText]
-coloredLinkName config node = case node of
+linkName :: Option.Option -> Node.NodeInfo -> [WT.WrappedText]
+linkName opt node = case node of
   Node.FileInfo {} -> []
-  _ -> prefix' <> output
+  _ -> prefix' <> Quote.quote style (WT.toWrappedText link)
   where
-    output = Name.colorizedNodeName config $ Node.toFileInfo node
+    style = Quote.quoteStyleForLink opt
+    link = Name.nodeName $ Node.toFileInfo node
+    prefix' = WT.toWrappedTextSingleton prefix
+
+coloredLinkName :: Option.Option -> Color.Config -> Node.NodeInfo -> [WT.WrappedText]
+coloredLinkName opt config node = case node of
+  Node.FileInfo {} -> []
+  _ -> prefix' <> Quote.quote style link
+  where
+    style = Quote.quoteStyleForLink opt
+    link = Name.colorizedNodeName config $ Node.toFileInfo node
     prefix' = WT.toWrappedTextSingleton prefix
 
 prefix :: T.Text

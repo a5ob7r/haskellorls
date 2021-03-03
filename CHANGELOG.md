@@ -6,10 +6,12 @@
 
 - `-T / --tabsize=COLS` option.
 - `--tab-separator` option.
+- `-Q / --quote-name` option.
 
 ### Changed
 
 - Symblolic link block size is 0.
+- Quote file name and link name dynamically by default.
 
 ### Fixed
 

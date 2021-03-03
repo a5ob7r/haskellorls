@@ -2,6 +2,8 @@
 
 module Haskellorls.Name.Decorator
   ( colorizedNodeName,
+    colorizedNodeNameWrapper,
+    nodeNameWrapper,
     nodeName,
     nodeTypeOf,
     lookupEscSeq,
@@ -14,6 +16,8 @@ import qualified Haskellorls.LsColor.Config as Color
 import qualified Haskellorls.LsColor.Util as Color
 import Haskellorls.Name.Type
 import qualified Haskellorls.NodeInfo as Node
+import qualified Haskellorls.Option as Option
+import qualified Haskellorls.Quote.Utils as Quote
 import qualified Haskellorls.WrappedText as WT
 import qualified System.Posix.Files as Files
 import qualified System.Posix.Types as Types
@@ -47,8 +51,11 @@ directoryNodeTypeOf status
   where
     mode = Files.fileMode status
 
-colorizedNodeName :: Color.Config -> Node.NodeInfo -> [WT.WrappedText]
-colorizedNodeName config nd = [Color.toWrappedText config getter name]
+colorizedNodeNameWrapper :: Option.Option -> Color.Config -> Node.NodeInfo -> [WT.WrappedText]
+colorizedNodeNameWrapper opt config nd = Quote.quote (Quote.quoteStyle opt) $ colorizedNodeName config nd
+
+colorizedNodeName :: Color.Config -> Node.NodeInfo -> WT.WrappedText
+colorizedNodeName config nd = Color.toWrappedText config getter name
   where
     name = nodeName nd
     getter = lookupEscSeq nd
@@ -81,6 +88,12 @@ lookupEscSeq' nd conf = case nodeTypeOf $ Node.nodeInfoStatus nd of
   Executable -> Color.executableEscapeSequence conf
   File -> nodeName nd `Color.lookupLsColor` Color.fileColorIndicator conf
   _ -> Color.orphanedSymlinkEscapeSequence conf
+
+nodeNameWrapper :: Option.Option -> Node.NodeInfo -> [WT.WrappedText]
+nodeNameWrapper opt node = Quote.quote style $ WT.toWrappedText name
+  where
+    name = nodeName node
+    style = Quote.quoteStyle opt
 
 nodeName :: Node.NodeInfo -> T.Text
 nodeName = T.pack . Node.nodeInfoPath

@@ -13,6 +13,7 @@ where
 import qualified Data.Foldable as Fold
 import qualified Data.List as L
 import qualified Data.Monoid as M
+import qualified Data.Set as Set
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.Text.Lazy as TL
@@ -23,6 +24,7 @@ import qualified Haskellorls.Format.Grid as Grid
 import qualified Haskellorls.Format.Util as Format
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
+import qualified Haskellorls.Quote.Utils as Quote
 import qualified Haskellorls.Size.Decorator as Size
 import qualified Haskellorls.Sort.Method as Sort
 import qualified Haskellorls.Tree.Util as Tree
@@ -141,7 +143,8 @@ generateEntryLines :: Option.Option -> Decorator.Printers -> Operation -> IO [TL
 generateEntryLines opt printers op = case op of
   Newline -> pure []
   PrintEntry {..} -> do
-    let nodes' = Decorator.buildLines entryNodes printers $ Decorator.buildPrinterTypes opt
+    let opt' = if shouldQuote entryNodes then opt else opt {Option.noQuote = True}
+        nodes' = Decorator.buildLines entryNodes printers $ Decorator.buildPrinterTypes opt'
         addHeader = case entryType of
           FILES -> id
           SINGLEDIR | not (Option.recursive opt) -> id
@@ -161,6 +164,12 @@ generateEntryLines opt printers op = case op of
     return . addHeader . addTotalBlockSize . Grid.renderGrid $ Grid.buildValidGrid opt colLen nodes'
   PrintTree {..} -> do
     nodes <- Fold.toList <$> Tree.makeTreeNodeInfos opt entryPath
-    pure . map (M.mconcat . map wtToBuilder) . Decorator.buildLines nodes printers $ Decorator.buildPrinterTypes opt
+    let opt' = if shouldQuote nodes then opt else opt {Option.noQuote = True}
+    pure . map (M.mconcat . map wtToBuilder) $ Decorator.buildLines nodes printers $ Decorator.buildPrinterTypes opt'
     where
       wtToBuilder wt = M.mconcat . map TLB.fromText $ WT.toList wt
+
+shouldQuote :: [Node.NodeInfo] -> Bool
+shouldQuote = not . all (Set.null . Set.intersection setNeedQuotes . Set.fromList . Node.nodeInfoPath)
+  where
+    setNeedQuotes = Set.fromList Quote.charactorsNeedQuote

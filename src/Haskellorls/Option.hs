@@ -54,6 +54,7 @@ data Option = Option
     numericUidGid :: Bool,
     longWithoutGroup :: Bool,
     directoryIndicator :: Bool,
+    quoteName :: Bool,
     reverse :: Bool,
     recursive :: Bool,
     size :: Bool,
@@ -72,6 +73,7 @@ data Option = Option
     horihontal :: Bool,
     extensionSort :: Bool,
     oneline :: Bool,
+    noQuote :: Bool,
     version :: Bool,
     targets :: [FilePath]
   }
@@ -116,6 +118,7 @@ optionParser =
     <*> numericUidGidParser
     <*> longWithoutGroupParser
     <*> directoryIndicatorParser
+    <*> quoteNameParser
     <*> reverseParser
     <*> recursiveParser
     <*> sizeParser
@@ -134,6 +137,7 @@ optionParser =
     <*> horihontalParser
     <*> Sort.extensionSortParser
     <*> onelineParser
+    <*> noQuoteParser
     <*> versionParser
     <*> argParser
 
@@ -402,6 +406,19 @@ tabSeparatorParser =
   OA.switch $
     OA.long "tab-separator"
       <> OA.help "Use tab charactors and some spaces to separate grid divisions when grid layout style; like dir"
+
+quoteNameParser :: OA.Parser Bool
+quoteNameParser =
+  OA.switch $
+    OA.long "quote-name"
+      <> OA.short 'Q'
+      <> OA.help "Quote file name and link name with double quote (\")"
+
+noQuoteParser :: OA.Parser Bool
+noQuoteParser =
+  OA.switch $
+    OA.long "no-quote"
+      <> OA.internal
 
 versionParser :: OA.Parser Bool
 versionParser =
