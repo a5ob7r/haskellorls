@@ -9,6 +9,7 @@
 - `-Q / --quote-name` option.
 - `-Z / --context` option.
 - `-N / --literal` option.
+- `-q / --hide-control-chars` and `--show-control-chars` options.
 
 ### Changed
 

@@ -109,4 +109,5 @@ escapeFormatter :: Option.Option -> T.Text -> T.Text
 escapeFormatter opt
   | Option.literal opt = replaceControlCharsToQuestion
   | Option.toStdout opt = escapeCharsForStdout
+  | Option.hideControlChars opt && not (Option.showControlChars opt) = replaceControlCharsToQuestion
   | otherwise = id

@@ -55,6 +55,8 @@ data Option = Option
     literal :: Bool,
     longWithoutGroup :: Bool,
     directoryIndicator :: Bool,
+    hideControlChars :: Bool,
+    showControlChars :: Bool,
     quoteName :: Bool,
     reverse :: Bool,
     recursive :: Bool,
@@ -122,6 +124,8 @@ optionParser =
     <*> literalParser
     <*> longWithoutGroupParser
     <*> directoryIndicatorParser
+    <*> hideControlCharsParser
+    <*> showControlCharsParser
     <*> quoteNameParser
     <*> reverseParser
     <*> recursiveParser
@@ -445,6 +449,19 @@ toStdoutParser =
   OA.switch $
     OA.long "to-stdout"
       <> OA.internal
+
+hideControlCharsParser :: OA.Parser Bool
+hideControlCharsParser =
+  OA.switch $
+    OA.long "hide-control-chars"
+      <> OA.short 'q'
+      <> OA.help "Output '?' instead of control characters"
+
+showControlCharsParser :: OA.Parser Bool
+showControlCharsParser =
+  OA.switch $
+    OA.long "show-control-chars"
+      <> OA.help "Output control characters 'as is'"
 
 versionParser :: OA.Parser Bool
 versionParser =
