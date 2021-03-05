@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Haskellorls.Utils
   ( getSymbolicLinkStatus,
     getFileStatus,
@@ -9,6 +11,8 @@ module Haskellorls.Utils
     validatePathExistence,
     isDirectory,
     textLengthForDisplay,
+    replaceControlCharsToQuestion,
+    escapeFormatter,
   )
 where
 
@@ -89,3 +93,11 @@ isDirectory path = Files.isDirectory <$> Files.getSymbolicLinkStatus path
 -- | Assumes not Latin1 charactor has double width of Latin1 charactor for display.
 textLengthForDisplay :: T.Text -> Int
 textLengthForDisplay = sum . map (\c -> if C.isLatin1 c then 1 else 2) . T.unpack
+
+replaceControlCharsToQuestion :: T.Text -> T.Text
+replaceControlCharsToQuestion = T.map (\c -> if C.isPrint c then c else '?')
+
+escapeFormatter :: Option.Option -> T.Text -> T.Text
+escapeFormatter opt
+  | Option.literal opt = replaceControlCharsToQuestion
+  | otherwise = id

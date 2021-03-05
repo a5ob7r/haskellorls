@@ -51,6 +51,7 @@ quote style wt@WT.WrappedText {..} = case style of
 -- architecture.
 quoteStyle :: Option.Option -> QuoteStyle
 quoteStyle opt
+  | Option.literal opt = NoQuote
   | Option.quoteName opt = DoubleQuote
   | Option.noQuote opt = NoQuote
   | otherwise = DynamicQuote

@@ -18,6 +18,7 @@ import Haskellorls.Name.Type
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Quote.Utils as Quote
+import qualified Haskellorls.Utils as Utils
 import qualified Haskellorls.WrappedText as WT
 import qualified System.Posix.Files as Files
 import qualified System.Posix.Types as Types
@@ -52,10 +53,10 @@ directoryNodeTypeOf status
     mode = Files.fileMode status
 
 colorizedNodeNameWrapper :: Option.Option -> Color.Config -> Node.NodeInfo -> [WT.WrappedText]
-colorizedNodeNameWrapper opt config nd = Quote.quote (Quote.quoteStyle opt) $ colorizedNodeName config nd
+colorizedNodeNameWrapper opt config nd = Quote.quote (Quote.quoteStyle opt) $ colorizedNodeName opt config nd
 
-colorizedNodeName :: Color.Config -> Node.NodeInfo -> WT.WrappedText
-colorizedNodeName config nd = Color.toWrappedText config getter name
+colorizedNodeName :: Option.Option -> Color.Config -> Node.NodeInfo -> WT.WrappedText
+colorizedNodeName opt config nd = Color.toWrappedText config getter $ Utils.escapeFormatter opt name
   where
     name = nodeName nd
     getter = lookupEscSeq nd
@@ -90,7 +91,7 @@ lookupEscSeq' nd conf = case nodeTypeOf $ Node.nodeInfoStatus nd of
   _ -> Color.orphanedSymlinkEscapeSequence conf
 
 nodeNameWrapper :: Option.Option -> Node.NodeInfo -> [WT.WrappedText]
-nodeNameWrapper opt node = Quote.quote style $ WT.toWrappedText name
+nodeNameWrapper opt node = Quote.quote style . WT.toWrappedText $ Utils.escapeFormatter opt name
   where
     name = nodeName node
     style = Quote.quoteStyle opt

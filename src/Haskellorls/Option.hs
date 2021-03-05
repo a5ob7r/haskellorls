@@ -52,6 +52,7 @@ data Option = Option
     dereference :: Bool,
     fillWidth :: Bool,
     numericUidGid :: Bool,
+    literal :: Bool,
     longWithoutGroup :: Bool,
     directoryIndicator :: Bool,
     quoteName :: Bool,
@@ -117,6 +118,7 @@ optionParser =
     <*> dereferenceParser
     <*> fillWidthParser
     <*> numericUidGidParser
+    <*> literalParser
     <*> longWithoutGroupParser
     <*> directoryIndicatorParser
     <*> quoteNameParser
@@ -428,6 +430,13 @@ contextParser =
     OA.long "context"
       <> OA.short 'Z'
       <> OA.help "Output security context information of each files"
+
+literalParser :: OA.Parser Bool
+literalParser =
+  OA.switch $
+    OA.long "literal"
+      <> OA.short 'N'
+      <> OA.help "Output file name and link name without quoting; and replace all non printable characters to '?'"
 
 versionParser :: OA.Parser Bool
 versionParser =

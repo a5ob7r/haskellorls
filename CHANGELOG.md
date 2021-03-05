@@ -8,6 +8,7 @@
 - `--tab-separator` option.
 - `-Q / --quote-name` option.
 - `-Z / --context` option.
+- `-N / --literal` option.
 
 ### Changed
 

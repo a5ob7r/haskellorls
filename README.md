@@ -112,7 +112,6 @@ $ PATH="$PWD/bin:$PATH" goldplate golden-test --pretty-diff
   - -D, --dired
   - --hyperlink[=WHEN]
   - -k, --kibibytes
-  - -N
   - -q
   - --show-control-chars
   - --quoting-style=WORD
