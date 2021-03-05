@@ -37,14 +37,14 @@ run args = do
 
 run' :: Option.Option -> IO ()
 run' opt = do
-  let targets = Option.targets opt
-      targets' = if null targets then ["."] else targets
+  -- Assumes that current directory path is passed as argument implicitly if no argument.
+  let targets = (\ss -> if null ss then ["."] else ss) $ Option.targets opt
 
       -- Only dereferences on command line arguments.
       opt' = opt {Option.dereferenceCommandLine = False, Option.dereferenceCommandLineSymlinkToDir = False}
 
-  statuses <- mapM Utils.getSymbolicLinkStatus targets'
-  let (errs, exists) = E.partitionEithers $ zipWith (\s p -> E.either Left (const $ Right p) s) statuses targets'
+  statuses <- mapM Utils.getSymbolicLinkStatus targets
+  let (errs, exists) = E.partitionEithers $ zipWith (\s p -> E.either Left (const $ Right p) s) statuses targets
 
   mapM_ (IO.hPrint IO.stderr) errs
 
