@@ -52,6 +52,7 @@ To fix them is also the goal of this project.
   - (pico) 2021-02-19 13:09:58.575236532000 +0000
 - some options which takes string can not recognize shorten string which can be identified using completion.
   - e.g. `--format=WORD`
+- Quote a file name or a link name by double quote when the name have tab or newline.
 
 ## Config
 

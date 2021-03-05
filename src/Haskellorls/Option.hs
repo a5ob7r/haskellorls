@@ -75,6 +75,7 @@ data Option = Option
     extensionSort :: Bool,
     context :: Bool,
     oneline :: Bool,
+    toStdout :: Bool,
     noQuote :: Bool,
     version :: Bool,
     targets :: [FilePath]
@@ -141,6 +142,7 @@ optionParser =
     <*> Sort.extensionSortParser
     <*> contextParser
     <*> onelineParser
+    <*> toStdoutParser
     <*> noQuoteParser
     <*> versionParser
     <*> argParser
@@ -437,6 +439,12 @@ literalParser =
     OA.long "literal"
       <> OA.short 'N'
       <> OA.help "Output file name and link name without quoting; and replace all non printable characters to '?'"
+
+toStdoutParser :: OA.Parser Bool
+toStdoutParser =
+  OA.switch $
+    OA.long "to-stdout"
+      <> OA.internal
 
 versionParser :: OA.Parser Bool
 versionParser =

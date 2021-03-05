@@ -29,9 +29,11 @@ run :: [String] -> IO ()
 run args = do
   options <- argParser args
 
+  isConnectedToTerminal <- IO.hIsTerminalDevice IO.stdout
+
   if Option.version options
     then showVersion
-    else run' options
+    else run' options {Option.toStdout = isConnectedToTerminal}
 
 run' :: Option.Option -> IO ()
 run' opt = do

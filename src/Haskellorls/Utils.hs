@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Haskellorls.Utils
   ( getSymbolicLinkStatus,
@@ -13,6 +14,7 @@ module Haskellorls.Utils
     textLengthForDisplay,
     replaceControlCharsToQuestion,
     escapeFormatter,
+    escapeCharsForStdout,
   )
 where
 
@@ -97,7 +99,14 @@ textLengthForDisplay = sum . map (\c -> if C.isLatin1 c then 1 else 2) . T.unpac
 replaceControlCharsToQuestion :: T.Text -> T.Text
 replaceControlCharsToQuestion = T.map (\c -> if C.isPrint c then c else '?')
 
+escapeCharsForStdout :: T.Text -> T.Text
+escapeCharsForStdout = T.concatMap $ \case
+  '\r' -> "'$'\\r''"
+  '\t' -> "'$'\\t''"
+  c -> T.singleton c
+
 escapeFormatter :: Option.Option -> T.Text -> T.Text
 escapeFormatter opt
   | Option.literal opt = replaceControlCharsToQuestion
+  | Option.toStdout opt = escapeCharsForStdout
   | otherwise = id
