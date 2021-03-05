@@ -17,7 +17,7 @@ import qualified Data.Text as T
 import qualified Data.Time.Clock.POSIX as Clock
 import qualified Data.Time.Format as TFormat
 import qualified Data.Time.LocalTime as LClock
-import qualified Haskellorls.Color.Type as Color
+import qualified Haskellorls.Color.Utils as Color
 import qualified Haskellorls.Context as Context
 import qualified Haskellorls.Field as Field
 import qualified Haskellorls.Format.Util as Format
@@ -36,7 +36,6 @@ import qualified Haskellorls.SymbolicLink as SymbolicLink
 import qualified Haskellorls.Time.Decorator as Time
 import qualified Haskellorls.Tree.Decorator as Tree
 import qualified Haskellorls.WrappedText as WT
-import qualified System.IO as SIO
 
 data PrinterType
   = FILEINODE
@@ -160,13 +159,9 @@ buildPrinters opt = do
   userInfo <- Ownership.userInfo
   currentTime <- Clock.getCurrentTime
   timeZone <- LClock.getCurrentTimeZone
-  shouldColorize <- case Option.color opt of
-    _ | Option.noneSortExtra opt -> return False
-    Color.NEVER -> return False
-    Color.ALWAYS -> return True
-    Color.AUTO -> SIO.hIsTerminalDevice SIO.stdout
 
-  let isEnableExtraColor = Option.extraColor opt
+  let shouldColorize = Color.shouldColorize opt
+      isEnableExtraColor = Option.extraColor opt
 
       fileInodePrinter =
         if shouldColorize && isEnableExtraColor

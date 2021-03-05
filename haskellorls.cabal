@@ -27,6 +27,7 @@ library
     Haskellorls
     Haskellorls.Color.Option
     Haskellorls.Color.Type
+    Haskellorls.Color.Utils
     Haskellorls.Context
     Haskellorls.Decorator
     Haskellorls.Depth
