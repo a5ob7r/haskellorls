@@ -15,6 +15,7 @@ import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as TLB
 import qualified Haskellorls.Format.Util as Format
 import qualified Haskellorls.Option as Option
+import qualified Haskellorls.Utils as Utils
 import qualified Haskellorls.WrappedText as WT
 import qualified System.Console.Terminal.Size as TS
 
@@ -90,7 +91,7 @@ buildValidCommaSeparatedGrid :: Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]
 buildValidCommaSeparatedGrid n sss = splitsAt validLengths sss'
   where
     sss' = mapToInit (<> WT.toWrappedTextSingleton commaSuffix) sss
-    lengths = map (sum . map WT.wtLength) sss'
+    lengths = map (sum . map WT.wtLengthForDisplay) sss'
     validLengths = map length $ splitIntoMaxSum n lengths
 
 -- | 'splitsAt' @ns xs@ returns splited list which has lists as elements. The
@@ -146,7 +147,7 @@ validateGrid n grid
   | n >= maxLen = True
   | otherwise = False
   where
-    maxLen = maximum . map (T.length . TL.toStrict . TLB.toLazyText) $ renderGridAsPlain grid
+    maxLen = maximum . map (Utils.textLengthForDisplay . TL.toStrict . TLB.toLazyText) $ renderGridAsPlain grid
 
 buildGridWithTab :: Option.Option -> Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
 buildGridWithTab opt n wtss = map (buildRow (Option.tabSize opt) maxLengths) $ List.transpose grid
@@ -162,7 +163,7 @@ buildRow _ [] _ = []
 buildRow _ _ [] = []
 buildRow tabSize ns wtss = interpolate wtss $ map WT.toWrappedTextSingleton paddings
   where
-    lengths = map (sum . map WT.wtLength) wtss
+    lengths = map (sum . map WT.wtLengthForDisplay) wtss
     paddings = buildPaddings tabSize ns lengths
 
 interpolate :: [a] -> [a] -> [a]
@@ -195,7 +196,7 @@ buildRowWithSpace [] _ = []
 buildRowWithSpace _ [] = []
 buildRowWithSpace ns wtss = interpolate wtss $ map WT.toWrappedTextSingleton paddings
   where
-    lengths = map (sum . map WT.wtLength) wtss
+    lengths = map (sum . map WT.wtLengthForDisplay) wtss
     paddings = buildPaddingsWithSpace 0 ns lengths
 
 buildPaddingsWithSpace :: Int -> [Int] -> [Int] -> [T.Text]
@@ -219,7 +220,7 @@ mapToInit :: (a -> a) -> [a] -> [a]
 mapToInit f xs = map f (init xs) <> [last xs]
 
 calcEachRowMaxWTLength :: [[[WT.WrappedText]]] -> [Int]
-calcEachRowMaxWTLength = map $ maximum . map (sum . map WT.wtLength)
+calcEachRowMaxWTLength = map $ maximum . map (sum . map WT.wtLengthForDisplay)
 
 commaSuffix :: T.Text
 commaSuffix = ", "

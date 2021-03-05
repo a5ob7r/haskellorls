@@ -8,13 +8,16 @@ module Haskellorls.Utils
     partitionExistOrNotPathes,
     validatePathExistence,
     isDirectory,
+    textLengthForDisplay,
   )
 where
 
 import qualified Control.Exception.Base as Exception
+import qualified Data.Char as C
 import qualified Data.Either as E
 import qualified Data.Either.Extra as E
 import qualified Data.List as L
+import qualified Data.Text as T
 import qualified Haskellorls.Option as Option
 import qualified System.Directory as Directory
 import qualified System.FilePath.Glob as Glob
@@ -82,3 +85,7 @@ validatePathExistence path = E.either (const $ Left path) (const $ Right path) <
 
 isDirectory :: FilePath -> IO Bool
 isDirectory path = Files.isDirectory <$> Files.getSymbolicLinkStatus path
+
+-- | Assumes not Latin1 charactor has double width of Latin1 charactor for display.
+textLengthForDisplay :: T.Text -> Int
+textLengthForDisplay = sum . map (\c -> if C.isLatin1 c then 1 else 2) . T.unpack

@@ -16,6 +16,7 @@
 ### Fixed
 
 - Crash when reads no permission link.
+- Out of grid alignment because of no considering full width character has double width of Latin1 character.
 
 ## 0.3.1.0 -- 2021-02-22
 
