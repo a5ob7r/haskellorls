@@ -7,6 +7,7 @@
 - `-T / --tabsize=COLS` option.
 - `--tab-separator` option.
 - `-Q / --quote-name` option.
+- `-Z / --context` option.
 
 ### Changed
 

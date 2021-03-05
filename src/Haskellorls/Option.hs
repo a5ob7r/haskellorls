@@ -72,6 +72,7 @@ data Option = Option
     width :: Maybe Int,
     horihontal :: Bool,
     extensionSort :: Bool,
+    context :: Bool,
     oneline :: Bool,
     noQuote :: Bool,
     version :: Bool,
@@ -136,6 +137,7 @@ optionParser =
     <*> widthParser
     <*> horihontalParser
     <*> Sort.extensionSortParser
+    <*> contextParser
     <*> onelineParser
     <*> noQuoteParser
     <*> versionParser
@@ -419,6 +421,13 @@ noQuoteParser =
   OA.switch $
     OA.long "no-quote"
       <> OA.internal
+
+contextParser :: OA.Parser Bool
+contextParser =
+  OA.switch $
+    OA.long "context"
+      <> OA.short 'Z'
+      <> OA.help "Output security context information of each files"
 
 versionParser :: OA.Parser Bool
 versionParser =

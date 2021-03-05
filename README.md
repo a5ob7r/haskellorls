@@ -83,6 +83,10 @@ See [release](https://github.com/a5ob7r/haskellorls/releases) page and download 
 $ git clone https://github.com/a5ob7r/haskellorls.git
 $ cd haskellorls
 $ cabal install
+
+# Enable SELinux support
+$ cabal configure --flags='selinux'
+$ cabal install
 ```
 
 ## Development
@@ -112,7 +116,6 @@ $ PATH="$PWD/bin:$PATH" goldplate golden-test --pretty-diff
   - -q
   - --show-control-chars
   - --quoting-style=WORD
-  - -Z, --context
 - Add locale support for time style.
 - Fix size printer for charactor devices.
 - Add an interface model for deriving command parameters from args and options.

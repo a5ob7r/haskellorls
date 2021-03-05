@@ -84,7 +84,8 @@ data ExtensionConfig = ExtensionConfig
     dateEscapeSequence :: T.Text,
     fileLinkEscapeSequence :: T.Text,
     fileInodeEscapeSequence :: T.Text,
-    treeBranchEscapeSequence :: T.Text
+    treeBranchEscapeSequence :: T.Text,
+    fileContextEscapeSequence :: T.Text
   }
 
 defaultConfig :: Config
@@ -159,7 +160,8 @@ defaultExtensionConfig =
       dateEscapeSequence = "34",
       fileLinkEscapeSequence = "36",
       fileInodeEscapeSequence = "36",
-      treeBranchEscapeSequence = "90"
+      treeBranchEscapeSequence = "90",
+      fileContextEscapeSequence = "36"
     }
 
 config :: IO Config
@@ -243,7 +245,8 @@ extensionConfigFrom lsColors =
       dateEscapeSequence = Map.findWithDefault (dateEscapeSequence def) "da" parametors,
       fileLinkEscapeSequence = Map.findWithDefault (fileLinkEscapeSequence def) "lc'" parametors,
       fileInodeEscapeSequence = Map.findWithDefault (fileInodeEscapeSequence def) "in" parametors,
-      treeBranchEscapeSequence = treeBranchEscapeSequence def
+      treeBranchEscapeSequence = treeBranchEscapeSequence def,
+      fileContextEscapeSequence = fileContextEscapeSequence def
     }
   where
     def = defaultExtensionConfig

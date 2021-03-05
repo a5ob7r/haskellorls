@@ -18,6 +18,7 @@ import qualified Data.Time.Clock.POSIX as Clock
 import qualified Data.Time.Format as TFormat
 import qualified Data.Time.LocalTime as LClock
 import qualified Haskellorls.Color.Type as Color
+import qualified Haskellorls.Context as Context
 import qualified Haskellorls.Field as Field
 import qualified Haskellorls.Format.Util as Format
 import qualified Haskellorls.Icon as Icon
@@ -45,6 +46,7 @@ data PrinterType
   | FILEOWNER
   | FILEGROUP
   | FILEAUTHOR -- For compatibility to GNU ls
+  | FILECONTEXT
   | FILESIZE
   | FILETIME
   | FILENAME
@@ -107,6 +109,7 @@ data Printers = Printers
     fileLinkPrinter :: Printer,
     fileOwnerPrinter :: Printer,
     fileGroupPrinter :: Printer,
+    fileContextPrinter :: Printer,
     fileSizePrinter :: Printer,
     fileTimePrinter :: Printer,
     fileNamePrinter :: Printer,
@@ -122,6 +125,7 @@ alignmentTypeFor dType = case dType of
   FILEOWNER -> LEFT
   FILEGROUP -> LEFT
   FILEAUTHOR -> LEFT
+  FILECONTEXT -> LEFT
   FILESIZE -> RIGHT
   FILETIME -> LEFT
   FILENAME -> NONE
@@ -136,6 +140,7 @@ printerSelectorFor pType = case pType of
   FILEOWNER -> fileOwnerPrinter
   FILEGROUP -> fileGroupPrinter
   FILEAUTHOR -> fileOwnerPrinter
+  FILECONTEXT -> fileContextPrinter
   FILESIZE -> fileSizePrinter
   FILETIME -> fileTimePrinter
   FILENAME -> fileNamePrinter
@@ -193,6 +198,11 @@ buildPrinters opt = do
           then Ownership.coloredGroupName gidSubstTable cConfig userInfo
           else WT.toWrappedTextSingleton . Ownership.groupName gidSubstTable
 
+      fileContextPrinter =
+        if shouldColorize && isEnableExtraColor
+          then Context.colorizedContext cConfig
+          else WT.toWrappedTextSingleton . Context.context
+
       fileSizePrinter =
         if shouldColorize && isEnableExtraColor
           then Size.coloredFileSize cConfig opt
@@ -237,7 +247,7 @@ buildPrinters opt = do
       }
 
 buildPrinterTypes :: Option.Option -> [PrinterType]
-buildPrinterTypes opt = filter (`neededBy` opt) [FILEINODE, FILEBLOCK, FILEFIELD, FILELINK, FILEOWNER, FILEGROUP, FILEAUTHOR, FILESIZE, FILETIME, FILENAME, FILENAMEWITHDQUOTE]
+buildPrinterTypes opt = filter (`neededBy` opt) [FILEINODE, FILEBLOCK, FILEFIELD, FILELINK, FILEOWNER, FILEGROUP, FILEAUTHOR, FILECONTEXT, FILESIZE, FILETIME, FILENAME, FILENAMEWITHDQUOTE]
 
 -- | Should the `PrinterType` value is needed by the options.
 neededBy :: PrinterType -> Option.Option -> Bool
@@ -249,6 +259,7 @@ neededBy pType opt = case pType of
   FILEOWNER -> long && owner
   FILEGROUP -> long && group
   FILEAUTHOR -> long && author
+  FILECONTEXT -> context
   FILESIZE -> long
   FILETIME -> long
   FILENAME -> noQuote
@@ -260,6 +271,7 @@ neededBy pType opt = case pType of
     owner = not $ Option.longWithoutOwner opt
     group = not (Option.longWithoutGroup opt || Option.noGroup opt)
     author = Option.author opt
+    context = Option.context opt
     noQuote = Option.noQuote opt
 
 buildColumn :: [Node.NodeInfo] -> Printers -> PrinterType -> [[WT.WrappedText]]
