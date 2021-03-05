@@ -120,7 +120,6 @@ $ PATH="$PWD/bin:$PATH" goldplate golden-test --pretty-diff
 - Add tests.
   - Unit tests with tasty.
 - Register to Hackage.
-- Release binary.
 - Add --head=N/--tail=N option to restrict max output file numbers.
   - This is useful with --recursive/-R
 - etc.
