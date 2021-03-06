@@ -116,7 +116,6 @@ $ PATH="$PWD/bin:$PATH" goldplate golden-test --pretty-diff
   - --quoting-style=WORD
 - Add locale support for time style.
 - Fix size printer for charactor devices.
-- Add an interface model for deriving command parameters from args and options.
 - Improve performances.
 - Add tests.
   - Unit tests with tasty.
@@ -124,6 +123,8 @@ $ PATH="$PWD/bin:$PATH" goldplate golden-test --pretty-diff
 - Add --head=N/--tail=N option to restrict max output file numbers.
   - This is useful with --recursive/-R
 - Fix infinite loop with recursive option and dereference option when a node has a symlink which the destination is the ancestor node.
+- Output total block size as header if `-s / --size` is passed.
+- Fix invalid coloring as orphan link when a symbolic link's destination is also a symbolic link.
 - etc.
 
 ## NOTE
