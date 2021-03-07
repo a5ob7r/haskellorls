@@ -6,6 +6,8 @@ module Haskellorls.Utils
     getFileStatus,
     readSymbolicLink,
     destFileStatus,
+    destFileStatusRecursive,
+    linkDestPath,
     listContents,
     exclude,
     partitionExistOrNotPathes,
@@ -27,19 +29,39 @@ import qualified Data.Text as T
 import qualified Haskellorls.Option as Option
 import qualified System.Directory as Directory
 import qualified System.FilePath.Glob as Glob
+import qualified System.FilePath.Posix as Posix
 import qualified System.Posix.Files as Files
 
 getSymbolicLinkStatus :: FilePath -> IO (Either Exception.IOException Files.FileStatus)
 getSymbolicLinkStatus path = Exception.try $ Files.getSymbolicLinkStatus path
 
 getFileStatus :: FilePath -> IO (Either Exception.IOException Files.FileStatus)
-getFileStatus path = Exception.try $ Files.getSymbolicLinkStatus path
+getFileStatus path = Exception.try $ Files.getFileStatus path
 
 readSymbolicLink :: FilePath -> IO (Either Exception.IOException FilePath)
 readSymbolicLink path = Exception.try $ Files.readSymbolicLink path
 
 destFileStatus :: FilePath -> IO (Maybe Files.FileStatus)
 destFileStatus path = E.eitherToMaybe <$> getFileStatus path
+
+destFileStatusRecursive :: FilePath -> FilePath -> IO (Maybe Files.FileStatus)
+destFileStatusRecursive dirPath basePath = do
+  destFileStatus (linkDestPath dirPath basePath) >>= \case
+    Nothing -> pure Nothing
+    Just status
+      | Files.isSymbolicLink status ->
+        readSymbolicLink (linkDestPath dirPath basePath) >>= \case
+          Left _ -> pure Nothing
+          Right link -> destFileStatusRecursive dirPath link
+      | otherwise -> pure $ Just status
+
+linkDestPath :: FilePath -> FilePath -> FilePath
+linkDestPath parPath linkPath
+  | isAbsPath linkPath = linkPath
+  | otherwise = Posix.takeDirectory parPath Posix.</> linkPath
+
+isAbsPath :: FilePath -> Bool
+isAbsPath path = "/" `L.isPrefixOf` path
 
 listContents :: Option.Option -> FilePath -> IO (Either Exception.IOException [FilePath])
 listContents opt path = E.mapRight (ignoreExcluder . hideExcluder . ignoreFilter) <$> list path

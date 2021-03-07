@@ -63,7 +63,8 @@ nodeInfo opt dirname basename = do
 
       destStatus <- do
         case linkPath of
-          Right p -> Utils.destFileStatus $ linkDestPath path p
+          -- Dereference file status if a status presents symbolic link.
+          Right p -> Utils.destFileStatusRecursive path p
           _ -> pure Nothing
 
       destContext <- do
@@ -135,14 +136,6 @@ toFileInfo = \case
         getFileContext = getOrphanedLinkContext,
         ..
       }
-
-linkDestPath :: FilePath -> FilePath -> FilePath
-linkDestPath parPath linkPath
-  | isAbsPath linkPath = linkPath
-  | otherwise = Posix.takeDirectory parPath Posix.</> linkPath
-
-isAbsPath :: FilePath -> Bool
-isAbsPath path = "/" `L.isPrefixOf` path
 
 nodeInfoStatus :: NodeInfo -> Files.FileStatus
 nodeInfoStatus = \case

@@ -20,11 +20,13 @@
 - Quote a file name or a link name by double quote when the name have tab or newline.
 - Escape tab and newline characters especially when output is connected to stdout.
 - Output total block size as header if `-s / --size` is passed.
+- Dereference symbolic link's destination file status recursively.
 
 ### Fixed
 
 - Crash when reads no permission link.
 - Out of grid alignment because of no considering full width character has double width of Latin1 character.
+- Fix invalid coloring as orphan link when a symbolic link's destination is also a symbolic link.
 
 ## 0.3.1.0 -- 2021-02-22
 
