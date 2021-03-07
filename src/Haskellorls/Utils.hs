@@ -127,9 +127,21 @@ escapeCharsForStdout = T.concatMap $ \case
   '\t' -> "'$'\\t''"
   c -> T.singleton c
 
+-- | NOTE: There may be some missing targets.
+escapeCharsForStdoutByCStyle :: T.Text -> T.Text
+escapeCharsForStdoutByCStyle = T.concatMap $ \case
+  '\t' -> "\\t"
+  '\r' -> "\\r"
+  '\n' -> "\\n"
+  ' ' -> "\\ "
+  '|' -> "\\|"
+  '\\' -> "\\\\"
+  c -> T.singleton c
+
 escapeFormatter :: Option.Option -> T.Text -> T.Text
 escapeFormatter opt
   | Option.literal opt = replaceControlCharsToQuestion
+  | Option.escape opt = escapeCharsForStdoutByCStyle
   | Option.toStdout opt = escapeCharsForStdout
   | Option.hideControlChars opt && not (Option.showControlChars opt) = replaceControlCharsToQuestion
   | otherwise = id

@@ -23,6 +23,7 @@ data Option = Option
   { all :: Bool,
     almostAll :: Bool,
     author :: Bool,
+    escape :: Bool,
     blockSize :: Size.BlockSize,
     ignoreBackups :: Bool,
     ctime :: Bool,
@@ -93,6 +94,7 @@ optionParser =
     <$> allParser
     <*> almostAllParser
     <*> authorParser
+    <*> escapeParser
     <*> Size.blockSizeParser
     <*> ignoreBackupsParser
     <*> ctimeParser
@@ -471,6 +473,13 @@ kibibytesParser =
     OA.long "kibibytes"
       <> OA.short 'k'
       <> OA.help "Use 1024 byte as one block size; This overrides values of some environment variables such as 'LS_BLOCK_SIZE' and 'BLOCK_SIZE'"
+
+escapeParser :: OA.Parser Bool
+escapeParser =
+  OA.switch $
+    OA.long "escape"
+      <> OA.short 'b'
+      <> OA.help "Escape file name and link name by C lang style"
 
 versionParser :: OA.Parser Bool
 versionParser =

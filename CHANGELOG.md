@@ -12,6 +12,7 @@
 - `-q / --hide-control-chars` and `--show-control-chars` options.
 - `-k / --kibibytes` option
 - Lookup `LS_BLOCK_SIZE` and `BLOCK_SIZE` environment variables to derive file block size.
+- `-b / --escape` option.
 
 ### Changed
 
