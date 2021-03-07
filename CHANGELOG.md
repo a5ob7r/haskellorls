@@ -19,6 +19,7 @@
 - Quote file name and link name dynamically by default.
 - Quote a file name or a link name by double quote when the name have tab or newline.
 - Escape tab and newline characters especially when output is connected to stdout.
+- Output total block size as header if `-s / --size` is passed.
 
 ### Fixed
 

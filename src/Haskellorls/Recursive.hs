@@ -150,14 +150,16 @@ generateEntryLines opt printers op = case op of
           SINGLEDIR | not (Option.recursive opt) -> id
           _ -> \ss -> TLB.fromText (T.pack entryPath `T.snoc` ':') : ss
 
-        -- Add total block size header only about directries when long style layout.
+        -- Add total block size header only about directries when long style
+        -- layout or `-s / --size` is passed.
         addTotalBlockSize = case entryType of
+          _ | Option.size opt -> (builder :)
           FILES -> id
           _
             | Format.isLongStyle opt -> (builder :)
             | otherwise -> id
-            where
-              builder = TLB.fromText . T.concat . ("total " :) . map (T.concat . WT.toList) . Size.toTotalBlockSize opt $ map (Files.fileSize . Node.nodeInfoStatus) entryNodes
+          where
+            builder = TLB.fromText . T.concat . ("total " :) . map (T.concat . WT.toList) . Size.toTotalBlockSize opt $ map (Files.fileSize . Node.nodeInfoStatus) entryNodes
 
     colLen <- Grid.virtualColumnSize opt
 
