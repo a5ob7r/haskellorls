@@ -47,6 +47,7 @@ data Option = Option
     indicatorStyle :: Indicator.IndicatorStyle,
     inode :: Bool,
     ignore :: String,
+    kibibyte :: Bool,
     level :: Depth.Depth,
     long :: Bool,
     dereference :: Bool,
@@ -116,6 +117,7 @@ optionParser =
     <*> Indicator.indicatorStyleParser
     <*> inodeParser
     <*> ignoreParser
+    <*> kibibytesParser
     <*> levelParser
     <*> longParser
     <*> dereferenceParser
@@ -462,6 +464,13 @@ showControlCharsParser =
   OA.switch $
     OA.long "show-control-chars"
       <> OA.help "Output control characters 'as is'"
+
+kibibytesParser :: OA.Parser Bool
+kibibytesParser =
+  OA.switch $
+    OA.long "kibibytes"
+      <> OA.short 'k'
+      <> OA.help "Use 1024 byte as one block size; This overrides values of some environment variables such as 'LS_BLOCK_SIZE' and 'BLOCK_SIZE'"
 
 versionParser :: OA.Parser Bool
 versionParser =

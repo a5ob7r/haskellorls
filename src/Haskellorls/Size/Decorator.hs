@@ -2,6 +2,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
+-- |
+-- Derive block size parameter
+-- 1. Use '--block-size=SIZE' option value if it is passed.
+-- 2. Use 1024 as block size if '-k / --kibibyte' is passed.
+-- 3. Use 'LS_BLOCK_SIZE' environment variables as block size if it is defined.
+-- 4. Use 'BLOCK_SIZE' environment variables as block size if it is defined.
+-- 5. Use default value if does not match above any condition.
 module Haskellorls.Size.Decorator
   ( toTotalBlockSize,
     fileBlockSize,

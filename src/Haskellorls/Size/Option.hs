@@ -3,6 +3,7 @@
 
 module Haskellorls.Size.Option
   ( blockSizeParser,
+    parseBlockSize,
     siParser,
     humanReadableParser,
     module Haskellorls.Size.Type,
@@ -30,20 +31,24 @@ siParser =
 
 blockSizeParser :: Parser BlockSize
 blockSizeParser =
-  option blockSizeReader $
+  option reader $
     long "block-size"
       <> metavar "SIZE"
       <> value DefaultSize
       <> help "Specify size unit when output file size"
+  where
+    reader = str >>= blockSizeReader
 
-blockSizeReader :: ReadM BlockSize
-blockSizeReader = str >>= blockSizeReader'
+blockSizeReader :: T.Text -> ReadM BlockSize
+blockSizeReader s = case parseBlockSize s of
+  Just size -> return size
+  Nothing -> readerError "Invalid unit"
 
-blockSizeReader' :: T.Text -> ReadM BlockSize
-blockSizeReader' s | s `L.elem` T.inits "human" = return HumanReadable
-blockSizeReader' s = case parseLabel $ normalizeUnit unit of
-  Just (baseScale, scaleSuffix) -> return $ BlockSize {..}
-  _ -> readerError "Invalid unit"
+parseBlockSize :: T.Text -> Maybe BlockSize
+parseBlockSize s | s `L.elem` T.inits "human" = Just HumanReadable
+parseBlockSize s = case parseLabel $ normalizeUnit unit of
+  Just (baseScale, scaleSuffix) -> Just $ BlockSize {..}
+  _ -> Nothing
   where
     scale = toScale sVal
     (sVal, unit) = T.span C.isDigit s

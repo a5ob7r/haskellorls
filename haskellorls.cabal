@@ -58,6 +58,7 @@ library
     Haskellorls.Size.Decorator
     Haskellorls.Size.Option
     Haskellorls.Size.Type
+    Haskellorls.Size.Utils
     Haskellorls.Sort.Method
     Haskellorls.Sort.Option
     Haskellorls.Sort.Type
