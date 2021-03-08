@@ -8,6 +8,7 @@ module Haskellorls.NodeInfo
     nodeInfoStatus,
     nodeInfoPath,
     nodeInfoContext,
+    nodeInfoDirName,
     toFileInfo,
   )
 where
@@ -31,12 +32,14 @@ data NodeInfo
       { getFilePath :: FilePath,
         getFileStatus :: Files.FileStatus,
         getFileContext :: T.Text,
+        getFileDirName :: FilePath,
         getTreeNodePositions :: [Tree.TreeNodePosition]
       }
   | LinkInfo
       { getLinkPath :: FilePath,
         getLinkStatus :: Files.FileStatus,
         getLinkContext :: T.Text,
+        getLinkDirName :: FilePath,
         getDestPath :: FilePath,
         getDestStatus :: Files.FileStatus,
         getDestContext :: T.Text,
@@ -46,6 +49,7 @@ data NodeInfo
       { getOrphanedLinkPath :: FilePath,
         getOrphanedLinkStatus :: Files.FileStatus,
         getOrphanedLinkContext :: T.Text,
+        getOrphanedLinkDirName :: FilePath,
         getDestPath :: FilePath,
         getTreeNodePositions :: [Tree.TreeNodePosition]
       }
@@ -78,6 +82,7 @@ nodeInfo opt dirname basename = do
             { getOrphanedLinkPath = basename,
               getOrphanedLinkStatus = status,
               getOrphanedLinkContext = T.pack context,
+              getOrphanedLinkDirName = dirname,
               getDestPath = p,
               getTreeNodePositions = []
             }
@@ -89,6 +94,7 @@ nodeInfo opt dirname basename = do
               { getFilePath = basename,
                 getFileStatus = s,
                 getFileContext = T.pack context,
+                getFileDirName = dirname,
                 getTreeNodePositions = []
               }
           | otherwise ->
@@ -96,6 +102,7 @@ nodeInfo opt dirname basename = do
               { getLinkPath = basename,
                 getLinkStatus = status,
                 getLinkContext = T.pack context,
+                getLinkDirName = dirname,
                 getDestPath = p,
                 getDestStatus = s,
                 getDestContext = T.pack destContext,
@@ -106,6 +113,7 @@ nodeInfo opt dirname basename = do
             { getFilePath = basename,
               getFileStatus = status,
               getFileContext = T.pack context,
+              getFileDirName = dirname,
               getTreeNodePositions = []
             }
     else
@@ -114,6 +122,7 @@ nodeInfo opt dirname basename = do
           { getFilePath = basename,
             getFileStatus = status,
             getFileContext = T.pack context,
+            getFileDirName = dirname,
             getTreeNodePositions = []
           }
   where
@@ -127,6 +136,7 @@ toFileInfo = \case
       { getFilePath = getDestPath,
         getFileStatus = getDestStatus,
         getFileContext = getDestContext,
+        getFileDirName = getLinkDirName,
         ..
       }
   OrphanedLinkInfo {..} ->
@@ -134,6 +144,7 @@ toFileInfo = \case
       { getFilePath = getDestPath,
         getFileStatus = getOrphanedLinkStatus,
         getFileContext = getOrphanedLinkContext,
+        getFileDirName = getOrphanedLinkDirName,
         ..
       }
 
@@ -154,6 +165,12 @@ nodeInfoContext = \case
   FileInfo {..} -> getFileContext
   LinkInfo {..} -> getLinkContext
   OrphanedLinkInfo {..} -> getOrphanedLinkContext
+
+nodeInfoDirName :: NodeInfo -> FilePath
+nodeInfoDirName = \case
+  FileInfo {..} -> getFileDirName
+  LinkInfo {..} -> getLinkDirName
+  OrphanedLinkInfo {..} -> getOrphanedLinkDirName
 
 -- | NOTE: This is not tested on SELinux enabled environment so maybe break.
 fileContext :: FilePath -> IO String

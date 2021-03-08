@@ -55,9 +55,9 @@ run' opt = do
   printers <- Decorator.buildPrinters opt'
   let printer = Recursive.buildPrinter opt' printers
 
-  ops <- Recursive.buildInitialOperations opt exists
+  (inodeSet, ops) <- Recursive.buildInitialOperations opt exists
 
-  Recursive.exec printer ops
+  Recursive.exec inodeSet printer ops
 
   if null errs
     then Exit.exitSuccess

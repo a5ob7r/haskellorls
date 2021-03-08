@@ -56,6 +56,7 @@ library
     Haskellorls.Quote.Type
     Haskellorls.Quote.Utils
     Haskellorls.Recursive
+    Haskellorls.Recursive.Utils
     Haskellorls.Size.Decorator
     Haskellorls.Size.Option
     Haskellorls.Size.Type

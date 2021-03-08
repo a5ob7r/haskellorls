@@ -30,6 +30,7 @@
 - Out of grid alignment because of no considering full width character has double width of Latin1 character.
 - Fix invalid coloring as orphan link when a symbolic link's destination is also a symbolic link.
 - Escape double quote (") when quotes by double quote.
+- Fix infinite loop with recursive option and dereference option when a node has a symlink which the destination is the ancestor node.
 
 ## 0.3.1.0 -- 2021-02-22
 

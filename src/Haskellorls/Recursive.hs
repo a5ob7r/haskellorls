@@ -1,6 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TupleSections #-}
 
 module Haskellorls.Recursive
   ( buildPrinter,
@@ -11,8 +12,10 @@ module Haskellorls.Recursive
 where
 
 import qualified Data.Foldable as Fold
+import Data.Functor
 import qualified Data.List as L
 import qualified Data.Monoid as M
+import qualified Data.Set as S
 import qualified Data.Set as Set
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
@@ -25,6 +28,7 @@ import qualified Haskellorls.Format.Util as Format
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Quote.Utils as Quote
+import qualified Haskellorls.Recursive.Utils as Recursive
 import qualified Haskellorls.Size.Decorator as Size
 import qualified Haskellorls.Sort.Method as Sort
 import qualified Haskellorls.Tree.Util as Tree
@@ -60,38 +64,39 @@ newtype Printer = Printer (Operation -> IO T.Text)
 -- reduces text building cost maximally. But can not output until get all text
 -- and concatenate them. So it causes output delay. This is bad user
 -- experiences.
-exec :: Printer -> [Operation] -> IO ()
-exec _ [] = pure ()
-exec printer (op : stack) = do
-  entries <- L.intersperse Newline <$> eval printer op
-  let entries' = if null entries then entries else Newline : entries
+exec :: Recursive.InodeSet -> Printer -> [Operation] -> IO ()
+exec _ _ [] = pure ()
+exec inodeSet printer (op : stack) = do
+  (newInodeSet, ops) <- eval inodeSet printer op
+  let entries = (\es -> if null es then es else Newline : es) $ L.intersperse Newline ops
 
-  exec printer (entries' <> stack)
+  exec newInodeSet printer (entries <> stack)
 
-eval :: Printer -> Operation -> IO [Operation]
-eval (Printer printer) op = case op of
+eval :: Recursive.InodeSet -> Printer -> Operation -> IO (Recursive.InodeSet, [Operation])
+eval inodeSet (Printer printer) op = case op of
   Newline -> do
     T.putStrLn ""
-    pure []
+    pure (inodeSet, [])
   PrintEntry {..} -> do
     T.putStrLn =<< printer op
-    opToOps opt op
+    opToOps inodeSet opt op
     where
       opt = entryOption {Option.level = Depth.decreaseDepth $ Option.level entryOption}
   PrintTree {..} -> do
     T.putStrLn =<< printer op
-    opToOps opt op
+    opToOps inodeSet opt op
     where
       opt = entryOption {Option.level = Depth.decreaseDepth $ Option.level entryOption}
 
-opToOps :: Option.Option -> Operation -> IO [Operation]
-opToOps opt op = case op of
+opToOps :: Recursive.InodeSet -> Option.Option -> Operation -> IO (Recursive.InodeSet, [Operation])
+opToOps inodeSet opt op = case op of
   PrintEntry {..}
-    | Option.recursive opt && (not . Depth.isDepthZero . Option.level) opt -> mapM (pathToOp opt) paths
-    | otherwise -> pure []
+    | Option.recursive opt && (not . Depth.isDepthZero . Option.level) opt -> mapM (pathToOp opt) paths <&> (newInodeSet,)
+    | otherwise -> pure (Recursive.InodeSet S.empty, [])
     where
-      paths = map (\node -> entryPath Posix.</> Node.nodeInfoPath node) $ filter (Files.isDirectory . Node.nodeInfoStatus) entryNodes
-  _ -> pure []
+      (newInodeSet, nodes) = Recursive.excludeAlreadySeenInode inodeSet $ filter (Files.isDirectory . Node.nodeInfoStatus) entryNodes
+      paths = map (\node -> entryPath Posix.</> Node.nodeInfoPath node) nodes
+  _ -> pure (Recursive.InodeSet S.empty, [])
 
 pathToOp :: Option.Option -> FilePath -> IO Operation
 pathToOp opt path = do
@@ -117,9 +122,9 @@ buildDirectoryNodes opt path =
       | otherwise = Utils.exclude hidePtn
 
 -- | Assumes all paths exist.
-buildInitialOperations :: Option.Option -> [FilePath] -> IO [Operation]
+buildInitialOperations :: Option.Option -> [FilePath] -> IO (Recursive.InodeSet, [Operation])
 buildInitialOperations opt paths = do
-  nodes <- Sort.sorter opt <$> mapM (Node.nodeInfo opt "") paths
+  (inodeSet, nodes) <- Recursive.excludeAlreadySeenInode (Recursive.InodeSet S.empty) . Sort.sorter opt <$> mapM (Node.nodeInfo opt "") paths
   let (dirs, files) = L.partition isDirectory nodes
       fileOp = [PrintEntry FILES "" files opt | not (null files)]
   dirOps <- mapM (pathToOp opt . Node.nodeInfoPath) dirs
@@ -130,7 +135,7 @@ buildInitialOperations opt paths = do
             -- Considers no argument to be also a single directory.
             [d] | null files && length (Option.targets opt) < 2 -> [d {entryType = SINGLEDIR}]
             _ -> dirOps
-  pure . L.intersperse Newline $ fileOp <> dirOps'
+  pure (inodeSet, L.intersperse Newline $ fileOp <> dirOps')
   where
     isDirectory
       | Option.directory opt = const False
