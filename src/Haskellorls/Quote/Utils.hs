@@ -40,7 +40,7 @@ quote style wt@WT.WrappedText {..} = case style of
   NoQuote -> [wt]
   SpacePadding -> [WT.toWrappedText " ", wt]
   SingleQuote -> [wt {WT.wtWord = "'" <> wtWord <> "'"}]
-  DoubleQuote -> [wt {WT.wtWord = "\"" <> wtWord <> "\""}]
+  DoubleQuote -> [wt {WT.wtWord = "\"" <> escapeDoubleQuote wtWord <> "\""}]
   _
     | '\'' `Set.member` setA -> quote DoubleQuote wt
     | Set.size (Set.intersection setA setB) > 0 -> quote SingleQuote wt
@@ -81,6 +81,11 @@ textToSet = Set.fromList . T.unpack
 
 charactorsNeedQuote :: String
 charactorsNeedQuote = " !\"$&()*;<=>[^`|"
+
+escapeDoubleQuote :: T.Text -> T.Text
+escapeDoubleQuote = T.concatMap $ \case
+  '"' -> "\\\""
+  c -> T.singleton c
 
 lookupQuotingStyle :: Option.Option -> IO QuotingStyle
 lookupQuotingStyle opt = case Option.quotingStyle opt of

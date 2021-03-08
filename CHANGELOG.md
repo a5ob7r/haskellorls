@@ -29,6 +29,7 @@
 - Crash when reads no permission link.
 - Out of grid alignment because of no considering full width character has double width of Latin1 character.
 - Fix invalid coloring as orphan link when a symbolic link's destination is also a symbolic link.
+- Escape double quote (") when quotes by double quote.
 
 ## 0.3.1.0 -- 2021-02-22
 
