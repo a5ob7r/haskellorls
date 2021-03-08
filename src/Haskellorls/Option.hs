@@ -12,6 +12,7 @@ import qualified Haskellorls.Color.Option as Color
 import qualified Haskellorls.Depth as Depth
 import qualified Haskellorls.Format.Option as Format
 import qualified Haskellorls.Indicator.Option as Indicator
+import qualified Haskellorls.Quote.Option as Quote
 import qualified Haskellorls.Size.Option as Size
 import qualified Haskellorls.Sort.Option as Sort
 import qualified Haskellorls.Time.Option as Time
@@ -60,6 +61,7 @@ data Option = Option
     hideControlChars :: Bool,
     showControlChars :: Bool,
     quoteName :: Bool,
+    quotingStyle :: Quote.QuotingStyle,
     reverse :: Bool,
     recursive :: Bool,
     size :: Bool,
@@ -131,6 +133,7 @@ optionParser =
     <*> hideControlCharsParser
     <*> showControlCharsParser
     <*> quoteNameParser
+    <*> Quote.quotingStyleParser
     <*> reverseParser
     <*> recursiveParser
     <*> sizeParser

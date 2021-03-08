@@ -111,7 +111,6 @@ $ PATH="$PWD/bin:$PATH" goldplate golden-test --pretty-diff
 - Add options for compatibility to GNU ls
   - -D, --dired
   - --hyperlink[=WHEN]
-  - --quoting-style=WORD
 - Add locale support for time style.
 - Fix size printer for charactor devices.
 - Improve performances.

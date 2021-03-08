@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -6,6 +7,7 @@ module Haskellorls.Quote.Utils
     quoteStyle,
     quoteStyleForLink,
     charactorsNeedQuote,
+    lookupQuotingStyle,
     module Haskellorls.Quote.Type,
   )
 where
@@ -13,8 +15,10 @@ where
 import qualified Data.Set as Set
 import qualified Data.Text as T
 import qualified Haskellorls.Option as Option
+import Haskellorls.Quote.Option
 import Haskellorls.Quote.Type
 import qualified Haskellorls.WrappedText as WT
+import qualified System.Environment as Env
 
 -- filename:
 --   - double quote (-Q / --quote-name)
@@ -50,11 +54,20 @@ quote style wt@WT.WrappedText {..} = case style of
 -- WIP: Should implement singole quote version. Also need to change printer
 -- architecture.
 quoteStyle :: Option.Option -> QuoteStyle
-quoteStyle opt
-  | Option.literal opt = NoQuote
-  | Option.quoteName opt = DoubleQuote
-  | Option.noQuote opt = NoQuote
-  | otherwise = DynamicQuote
+quoteStyle opt = case Option.quotingStyle opt of
+  _
+    | Option.literal opt -> NoQuote
+    | Option.quoteName opt -> DoubleQuote
+  Literal -> NoQuote
+  Shell -> DynamicQuote
+  ShellAlways -> SingleQuote
+  ShellEscape -> DynamicQuote
+  ShellEscapeAlways -> SingleQuote
+  C -> DoubleQuote
+  Escape -> NoQuote
+  _
+    | Option.noQuote opt -> NoQuote
+    | otherwise -> DynamicQuote
 
 quoteStyleForLink :: Option.Option -> QuoteStyle
 quoteStyleForLink opt = case style of
@@ -68,3 +81,14 @@ textToSet = Set.fromList . T.unpack
 
 charactorsNeedQuote :: String
 charactorsNeedQuote = " !\"$&()*;<=>[^`|"
+
+lookupQuotingStyle :: Option.Option -> IO QuotingStyle
+lookupQuotingStyle opt = case Option.quotingStyle opt of
+  NoStyle -> do
+    Env.lookupEnv "QUOTING_STYLE" >>= \case
+      Just styleFromEnv ->
+        case parseQuotingStyle (T.pack styleFromEnv) of
+          Nothing -> pure NoStyle
+          Just style -> pure style
+      Nothing -> pure NoStyle
+  style -> pure style

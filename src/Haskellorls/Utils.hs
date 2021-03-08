@@ -27,6 +27,7 @@ import qualified Data.Either.Extra as E
 import qualified Data.List as L
 import qualified Data.Text as T
 import qualified Haskellorls.Option as Option
+import qualified Haskellorls.Quote.Type as Quote
 import qualified System.Directory as Directory
 import qualified System.FilePath.Glob as Glob
 import qualified System.FilePath.Posix as Posix
@@ -139,9 +140,17 @@ escapeCharsForStdoutByCStyle = T.concatMap $ \case
   c -> T.singleton c
 
 escapeFormatter :: Option.Option -> T.Text -> T.Text
-escapeFormatter opt
-  | Option.literal opt = replaceControlCharsToQuestion
-  | Option.escape opt = escapeCharsForStdoutByCStyle
-  | Option.toStdout opt = escapeCharsForStdout
-  | Option.hideControlChars opt && not (Option.showControlChars opt) = replaceControlCharsToQuestion
-  | otherwise = id
+escapeFormatter opt = case Option.quotingStyle opt of
+  _
+    | Option.literal opt -> replaceControlCharsToQuestion
+    | Option.escape opt -> escapeCharsForStdoutByCStyle
+    | Option.hideControlChars opt && not (Option.showControlChars opt) -> replaceControlCharsToQuestion
+  Quote.Literal -> replaceControlCharsToQuestion
+  Quote.Shell -> replaceControlCharsToQuestion
+  Quote.ShellAlways -> replaceControlCharsToQuestion
+  Quote.ShellEscape -> escapeCharsForStdout
+  Quote.ShellEscapeAlways -> escapeCharsForStdout
+  Quote.C -> escapeCharsForStdoutByCStyle
+  Quote.Escape -> escapeCharsForStdoutByCStyle
+  _ | Option.toStdout opt -> escapeCharsForStdout
+  _ -> id

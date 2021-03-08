@@ -52,6 +52,7 @@ library
     Haskellorls.Option
     Haskellorls.Ownership.Decorator
     Haskellorls.Ownership.Type
+    Haskellorls.Quote.Option
     Haskellorls.Quote.Type
     Haskellorls.Quote.Utils
     Haskellorls.Recursive

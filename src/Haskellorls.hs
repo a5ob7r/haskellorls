@@ -11,6 +11,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Haskellorls.Decorator as Decorator
 import qualified Haskellorls.Option as Option
+import qualified Haskellorls.Quote.Utils as Quote
 import qualified Haskellorls.Recursive as Recursive
 import qualified Haskellorls.Size.Utils as Size
 import qualified Haskellorls.Utils as Utils
@@ -32,10 +33,11 @@ run args = do
 
   isConnectedToTerminal <- IO.hIsTerminalDevice IO.stdout
   blockSize <- Size.lookupBlockSize options
+  quotingStyle <- Quote.lookupQuotingStyle options
 
   if Option.version options
     then showVersion
-    else run' options {Option.blockSize = blockSize, Option.toStdout = isConnectedToTerminal}
+    else run' options {Option.blockSize = blockSize, Option.quotingStyle = quotingStyle, Option.toStdout = isConnectedToTerminal}
 
 run' :: Option.Option -> IO ()
 run' opt = do
