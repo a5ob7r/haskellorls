@@ -11,6 +11,10 @@ In addition, has some extra options like some ls alternatives or replacements ha
 
 ![screenshort01](etc/screenshots/screenshot01.png)
 
+With [trapd00r/LS_COLORS](https://github.com/trapd00r/LS_COLORS/blob/master/LICENSE)
+
+![screenshort02](etc/screenshots/screenshot02.png)
+
 ## Extra Options
 
 Haskellorls has some extra options which are not implemented on GNU ls.
@@ -119,6 +123,7 @@ $ PATH="$PWD/bin:$PATH" goldplate golden-test --pretty-diff
 - Register to Hackage.
 - Add --head=N/--tail=N option to restrict max output file numbers.
   - This is useful with --recursive/-R
+- Update shell completions.
 - etc.
 
 ## NOTE
