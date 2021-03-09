@@ -23,6 +23,7 @@ import qualified Haskellorls.Utils as Utils
 import qualified System.FilePath.Posix as Posix
 import qualified System.IO as IO
 import qualified System.Posix.Files as Files
+
 #ifdef SELINUX
 import qualified System.Linux.SELinux as SELinux
 #endif
@@ -172,7 +173,10 @@ nodeInfoDirName = \case
   LinkInfo {..} -> getLinkDirName
   OrphanedLinkInfo {..} -> getOrphanedLinkDirName
 
--- | NOTE: This is not tested on SELinux enabled environment so maybe break.
+{- ORMOLU_DISABLE -}
+-- |
+-- NOTE: This is not tested on SELinux enabled environment so maybe break.
+-- NOTE: Disable ormolu because it does not support CPP extension.
 fileContext :: FilePath -> IO String
 fileContext path =
 #ifdef SELINUX
@@ -182,6 +186,7 @@ fileContext path =
 #else
   pure defaultContext
 #endif
+{- ORMOLU_ENABLE -}
 
 defaultContext :: String
 defaultContext = "?"
