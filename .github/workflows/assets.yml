@@ -2,7 +2,7 @@ name: Build and upload assets
 
 on:
   release:
-    type: created
+    types: [created]
 
 jobs:
   build:
