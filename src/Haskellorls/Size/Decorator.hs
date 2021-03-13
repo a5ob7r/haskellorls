@@ -24,7 +24,6 @@ import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import Haskellorls.Size.Type
 import qualified Haskellorls.WrappedText as WT
-import qualified System.Posix.Files as Files
 import qualified System.Posix.Types as Types
 
 data FileSizeComponent = FileSizeComponent
@@ -132,7 +131,7 @@ fileBlockSizeOf = \case
   _ -> Types.COff 0
 
 fileSizeOf :: Node.NodeInfo -> Types.FileOffset
-fileSizeOf = Files.fileSize . Node.nodeInfoStatus
+fileSizeOf = Node.pfsFileSize . Node.nodeInfoStatus
 
 fileSizeUnitSelector :: ScaleSuffix -> BaseScale -> T.Text
 fileSizeUnitSelector ss = case ss of

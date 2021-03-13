@@ -12,6 +12,7 @@ where
 
 import qualified Data.Text as T
 import qualified Haskellorls.LsColor.Config as Color
+import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.WrappedText as WT
 import qualified System.Posix.Files as Files
 import qualified System.Posix.Types as Types
@@ -54,7 +55,7 @@ data FilemodeField = FilemodeField
     getOtherExec :: FilemodeBitPatternType
   }
 
-filemodeField :: Files.FileStatus -> FilemodeField
+filemodeField :: Node.ProxyFileStatus -> FilemodeField
 filemodeField status =
   FilemodeField
     { getFiletype = fileType status,
@@ -69,7 +70,7 @@ filemodeField status =
       getOtherExec = otherExecModeType mode
     }
   where
-    mode = Files.fileMode status
+    mode = Node.pfsFileMode status
 
 showFilemodeField :: FilemodeField -> [WT.WrappedText]
 showFilemodeField field = WT.toWrappedTextSingleton . T.pack $ fType : permFields
@@ -227,16 +228,18 @@ otherLetter = '?'
 -- }}}
 
 -- Utilities for file type {{{
-fileType :: Files.FileStatus -> FileType
-fileType status
-  | Files.isRegularFile status = REGULAR
-  | Files.isDirectory status = DIR
-  | Files.isBlockDevice status = BLOCK
-  | Files.isCharacterDevice status = CHAR
-  | Files.isSymbolicLink status = SYMLINK
-  | Files.isNamedPipe status = FIFO
-  | Files.isSocket status = SOCK
-  | otherwise = OTHER
+fileType :: Node.ProxyFileStatus -> FileType
+fileType status = case nType of
+  Node.SymbolicLink -> SYMLINK
+  Node.NamedPipe -> FIFO
+  Node.Socket -> SOCK
+  Node.BlockDevise -> BLOCK
+  Node.CharDevise -> CHAR
+  _
+    | Node.isDirectory nType -> DIR
+    | otherwise -> REGULAR
+  where
+    nType = Node.pfsNodeType status
 
 fileTypeLetter :: FileType -> Char
 fileTypeLetter fType = case fType of

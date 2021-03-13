@@ -47,7 +47,6 @@ library
     Haskellorls.LsColor.Type
     Haskellorls.LsColor.Util
     Haskellorls.Name.Decorator
-    Haskellorls.Name.Type
     Haskellorls.NodeInfo
     Haskellorls.Option
     Haskellorls.Ownership.Decorator

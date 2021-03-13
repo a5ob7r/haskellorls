@@ -8,11 +8,10 @@ import qualified Data.Text as T
 import qualified Haskellorls.LsColor.Config as Color
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.WrappedText as WT
-import qualified System.Posix.Files as Files
 import qualified System.Posix.Types as Types
 
 nodeInodeNumber :: Node.NodeInfo -> Types.FileID
-nodeInodeNumber = Files.fileID . Node.nodeInfoStatus
+nodeInodeNumber = Node.pfsFileID . Node.nodeInfoStatus
 
 nodeInodeNumberWithColor :: Color.Config -> Node.NodeInfo -> [WT.WrappedText]
 nodeInodeNumberWithColor config node = [Color.toWrappedText config getterInode inodeNumber]

@@ -3,7 +3,10 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Haskellorls.NodeInfo
-  ( NodeInfo (..),
+  ( NodeType (..),
+    NodeInfo (..),
+    ProxyFileStatus (..),
+    isDirectory,
     nodeInfo,
     nodeInfoStatus,
     nodeInfoPath,
@@ -17,38 +20,159 @@ import qualified Control.Exception.Base as Exception
 import qualified Data.Either as Either
 import qualified Data.List as L
 import qualified Data.Text as T
+import qualified Data.Time.Clock.POSIX as Clock
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Tree.Type as Tree
 import qualified Haskellorls.Utils as Utils
 import qualified System.FilePath.Posix as Posix
 import qualified System.IO as IO
 import qualified System.Posix.Files as Files
+import qualified System.Posix.Types as Types
 
 #ifdef SELINUX
 import qualified System.Linux.SELinux as SELinux
 #endif
 
+data NodeType
+  = Directory
+  | SymbolicLink
+  | NamedPipe
+  | Socket
+  | BlockDevise
+  | CharDevise
+  | DoorsDevise -- NOTE: Doors device is not implemented on Linux
+  | Setuid
+  | Setgid
+  | Sticky
+  | StickyOtherWritable
+  | OtherWritable
+  | Executable
+  | File
+  | Orphan
+  deriving (Show)
+
+data ProxyFileStatus = ProxyFileStatus
+  { pfsFileMode :: Types.FileMode,
+    pfsFileID :: Types.FileID,
+    pfsLinkCount :: Types.LinkCount,
+    pfsUserID :: Types.UserID,
+    pfsGroupID :: Types.GroupID,
+    pfsFileSize :: Types.FileOffset,
+    pfsModificationTime :: Clock.POSIXTime,
+    pfsAccessTime :: Clock.POSIXTime,
+    pfsStatusChangeTime :: Clock.POSIXTime,
+    pfsNodeType :: NodeType
+  }
+
+proxyFileStatus :: Files.FileStatus -> ProxyFileStatus
+proxyFileStatus status =
+  ProxyFileStatus
+    { pfsFileMode = Files.fileMode status,
+      pfsFileID = Files.fileID status,
+      pfsLinkCount = Files.linkCount status,
+      pfsUserID = Files.fileOwner status,
+      pfsGroupID = Files.fileGroup status,
+      pfsFileSize = Files.fileSize status,
+      pfsModificationTime = Files.modificationTimeHiRes status,
+      pfsAccessTime = Files.accessTimeHiRes status,
+      pfsStatusChangeTime = Files.statusChangeTimeHiRes status,
+      pfsNodeType = nodeTypeOf status
+    }
+
+nodeTypeOf :: Files.FileStatus -> NodeType
+nodeTypeOf status
+  | Files.isRegularFile status = regularFileNodeTypeOf status
+  | Files.isDirectory status = directoryNodeTypeOf status
+  | Files.isSymbolicLink status = SymbolicLink
+  | Files.isNamedPipe status = NamedPipe
+  | Files.isSocket status = Socket
+  | Files.isBlockDevice status = BlockDevise
+  | Files.isCharacterDevice status = CharDevise
+  | otherwise = Orphan
+
+regularFileNodeTypeOf :: Files.FileStatus -> NodeType
+regularFileNodeTypeOf status
+  | isSetuidMode mode = Setuid
+  | isSetgidMode mode = Setgid
+  | isExecutableMode mode = Executable
+  | otherwise = File
+  where
+    mode = Files.fileMode status
+
+directoryNodeTypeOf :: Files.FileStatus -> NodeType
+directoryNodeTypeOf status
+  | isStickyOtherWrite mode = StickyOtherWritable
+  | isOtherWriteMode mode = OtherWritable
+  | isStickyMode mode = Sticky
+  | otherwise = Directory
+  where
+    mode = Files.fileMode status
+
+isDirectory :: NodeType -> Bool
+isDirectory = \case
+  StickyOtherWritable -> True
+  OtherWritable -> True
+  Sticky -> True
+  Directory -> True
+  _ -> False
+
+hasFileMode :: Types.FileMode -> Types.FileMode -> Bool
+hasFileMode x y = x == Files.intersectFileModes x y
+
+isOwnerExecuteMode :: Types.FileMode -> Bool
+isOwnerExecuteMode = hasFileMode Files.ownerExecuteMode
+
+isGroupExecuteMode :: Types.FileMode -> Bool
+isGroupExecuteMode = hasFileMode Files.groupExecuteMode
+
+isOtherWriteMode :: Types.FileMode -> Bool
+isOtherWriteMode = hasFileMode Files.otherWriteMode
+
+isOtherExecuteMode :: Types.FileMode -> Bool
+isOtherExecuteMode = hasFileMode Files.otherExecuteMode
+
+isExecutableMode :: Types.FileMode -> Bool
+isExecutableMode = or . sequence [isOwnerExecuteMode, isGroupExecuteMode, isOtherExecuteMode]
+
+isSetuidMode :: Types.FileMode -> Bool
+isSetuidMode = hasFileMode Files.setUserIDMode
+
+isSetgidMode :: Types.FileMode -> Bool
+isSetgidMode = hasFileMode Files.setGroupIDMode
+
+isStickyMode :: Types.FileMode -> Bool
+isStickyMode = hasFileMode stickyMode
+
+isStickyOtherWrite :: Types.FileMode -> Bool
+isStickyOtherWrite = hasFileMode stickyOtherWriteMode
+
+stickyMode :: Types.FileMode
+stickyMode = 548
+
+stickyOtherWriteMode :: Types.FileMode
+stickyOtherWriteMode = Files.unionFileModes stickyMode Files.otherWriteMode
+
 data NodeInfo
   = FileInfo
       { getFilePath :: FilePath,
-        getFileStatus :: Files.FileStatus,
+        getFileStatus :: ProxyFileStatus,
         getFileContext :: T.Text,
         getFileDirName :: FilePath,
         getTreeNodePositions :: [Tree.TreeNodePosition]
       }
   | LinkInfo
       { getLinkPath :: FilePath,
-        getLinkStatus :: Files.FileStatus,
+        getLinkStatus :: ProxyFileStatus,
         getLinkContext :: T.Text,
         getLinkDirName :: FilePath,
         getDestPath :: FilePath,
-        getDestStatus :: Files.FileStatus,
+        getDestStatus :: ProxyFileStatus,
         getDestContext :: T.Text,
         getTreeNodePositions :: [Tree.TreeNodePosition]
       }
   | OrphanedLinkInfo
       { getOrphanedLinkPath :: FilePath,
-        getOrphanedLinkStatus :: Files.FileStatus,
+        getOrphanedLinkStatus :: ProxyFileStatus,
         getOrphanedLinkContext :: T.Text,
         getOrphanedLinkDirName :: FilePath,
         getDestPath :: FilePath,
@@ -81,7 +205,7 @@ nodeInfo opt dirname basename = do
         (Right p, Nothing) ->
           OrphanedLinkInfo
             { getOrphanedLinkPath = basename,
-              getOrphanedLinkStatus = status,
+              getOrphanedLinkStatus = proxyFileStatus status,
               getOrphanedLinkContext = T.pack context,
               getOrphanedLinkDirName = dirname,
               getDestPath = p,
@@ -93,7 +217,7 @@ nodeInfo opt dirname basename = do
               || (Option.dereferenceCommandLineSymlinkToDir opt && Files.isDirectory s) ->
             FileInfo
               { getFilePath = basename,
-                getFileStatus = s,
+                getFileStatus = proxyFileStatus s,
                 getFileContext = T.pack context,
                 getFileDirName = dirname,
                 getTreeNodePositions = []
@@ -101,18 +225,18 @@ nodeInfo opt dirname basename = do
           | otherwise ->
             LinkInfo
               { getLinkPath = basename,
-                getLinkStatus = status,
+                getLinkStatus = proxyFileStatus status,
                 getLinkContext = T.pack context,
                 getLinkDirName = dirname,
                 getDestPath = p,
-                getDestStatus = s,
+                getDestStatus = proxyFileStatus s,
                 getDestContext = T.pack destContext,
                 getTreeNodePositions = []
               }
         _ ->
           FileInfo
             { getFilePath = basename,
-              getFileStatus = status,
+              getFileStatus = proxyFileStatus status,
               getFileContext = T.pack context,
               getFileDirName = dirname,
               getTreeNodePositions = []
@@ -121,7 +245,7 @@ nodeInfo opt dirname basename = do
       return $
         FileInfo
           { getFilePath = basename,
-            getFileStatus = status,
+            getFileStatus = proxyFileStatus status,
             getFileContext = T.pack context,
             getFileDirName = dirname,
             getTreeNodePositions = []
@@ -149,7 +273,7 @@ toFileInfo = \case
         ..
       }
 
-nodeInfoStatus :: NodeInfo -> Files.FileStatus
+nodeInfoStatus :: NodeInfo -> ProxyFileStatus
 nodeInfoStatus = \case
   FileInfo {..} -> getFileStatus
   LinkInfo {..} -> getLinkStatus

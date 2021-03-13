@@ -36,7 +36,6 @@ import qualified Haskellorls.Utils as Utils
 import qualified Haskellorls.WrappedText as WT
 import qualified System.FilePath.Posix as Posix
 import qualified System.IO as IO
-import qualified System.Posix.Files as Files
 
 data EntryType = FILES | SINGLEDIR | DIRECTORY
 
@@ -94,7 +93,7 @@ opToOps inodeSet opt op = case op of
     | Option.recursive opt && (not . Depth.isDepthZero . Option.level) opt -> mapM (pathToOp opt) paths <&> (newInodeSet,)
     | otherwise -> pure (Recursive.InodeSet S.empty, [])
     where
-      (newInodeSet, nodes) = Recursive.excludeAlreadySeenInode inodeSet $ filter (Files.isDirectory . Node.nodeInfoStatus) entryNodes
+      (newInodeSet, nodes) = Recursive.excludeAlreadySeenInode inodeSet $ filter (Node.isDirectory . Node.pfsNodeType . Node.nodeInfoStatus) entryNodes
       paths = map (\node -> entryPath Posix.</> Node.nodeInfoPath node) nodes
   _ -> pure (Recursive.InodeSet S.empty, [])
 
@@ -139,7 +138,7 @@ buildInitialOperations opt paths = do
   where
     isDirectory
       | Option.directory opt = const False
-      | otherwise = Files.isDirectory . Node.nodeInfoStatus
+      | otherwise = Node.isDirectory . Node.pfsNodeType . Node.nodeInfoStatus
 
 buildPrinter :: Option.Option -> Decorator.Printers -> Printer
 buildPrinter opt printers = Printer $ fmap (TL.toStrict . TLB.toLazyText . M.mconcat . L.intersperse (TLB.fromText "\n")) . generateEntryLines opt printers
@@ -164,7 +163,7 @@ generateEntryLines opt printers op = case op of
             | Format.isLongStyle opt -> (builder :)
             | otherwise -> id
           where
-            builder = TLB.fromText . T.concat . ("total " :) . map (T.concat . WT.toList) . Size.toTotalBlockSize opt $ map (Files.fileSize . Node.nodeInfoStatus) entryNodes
+            builder = TLB.fromText . T.concat . ("total " :) . map (T.concat . WT.toList) . Size.toTotalBlockSize opt $ map (Node.pfsFileSize . Node.nodeInfoStatus) entryNodes
 
     colLen <- Grid.virtualColumnSize opt
 

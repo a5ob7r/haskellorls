@@ -17,7 +17,6 @@ import Haskellorls.Sort.Type
 import qualified Haskellorls.Time.Decorator as Time
 import qualified Haskellorls.Time.Type as Time
 import qualified System.FilePath.Posix as Posix
-import qualified System.Posix.Files as Files
 
 sorter :: Option.Option -> [Node.NodeInfo] -> [Node.NodeInfo]
 sorter opt = merger . separater . sorter' opt
@@ -70,16 +69,16 @@ sortWithName = L.sortBy (\a b -> Node.nodeInfoPath a `compareName` Node.nodeInfo
         _ -> s
 
 sortWithSize :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithSize = L.sortOn $ O.Down . Files.fileSize . Node.nodeInfoStatus
+sortWithSize = L.sortOn $ O.Down . Node.pfsFileSize . Node.nodeInfoStatus
 
 sortWithModificationTime :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithModificationTime = L.sortOn $ O.Down . Files.modificationTime . Node.nodeInfoStatus
+sortWithModificationTime = L.sortOn $ O.Down . Node.pfsModificationTime . Node.nodeInfoStatus
 
 sortWithAccessTime :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithAccessTime = L.sortOn $ O.Down . Files.accessTime . Node.nodeInfoStatus
+sortWithAccessTime = L.sortOn $ O.Down . Node.pfsAccessTime . Node.nodeInfoStatus
 
 sortWithChangeTime :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithChangeTime = L.sortOn $ O.Down . Files.statusChangeTime . Node.nodeInfoStatus
+sortWithChangeTime = L.sortOn $ O.Down . Node.pfsStatusChangeTime . Node.nodeInfoStatus
 
 sortWithVersion :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithVersion = L.sortBy (\a b -> Node.nodeInfoPath a `NSort.compare` Node.nodeInfoPath b)
@@ -92,7 +91,7 @@ partitionDirectoriesAndFiles = L.partition isDirectory
 
 -- For GNU ls compatibility about `--group-directories-first` option.
 isDirectory :: Node.NodeInfo -> Bool
-isDirectory node = Files.isDirectory status
+isDirectory node = Node.isDirectory $ Node.pfsNodeType status
   where
     status = case node of
       Node.LinkInfo {..} -> getDestStatus

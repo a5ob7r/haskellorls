@@ -19,7 +19,6 @@ import Haskellorls.Tree.Type
 import qualified Haskellorls.Utils as Utils
 import qualified System.FilePath.Posix as Posix
 import qualified System.IO as IO
-import qualified System.Posix.Files as Files
 
 makeSomeNewPositionsList :: Int -> [TreeNodePosition] -> [[TreeNodePosition]]
 makeSomeNewPositionsList n _
@@ -37,7 +36,7 @@ makeSomeNewPositionsList' (x : xs) = L.snoc x MID : makeSomeNewPositionsList' xs
 makeTreeNodeInfos :: Option.Option -> FilePath -> IO (S.Seq Node.NodeInfo)
 makeTreeNodeInfos opt path = do
   node <- Node.nodeInfo opt "" path
-  let inodeSet = Recursive.InodeSet . Set.singleton . Files.fileID $ Node.nodeInfoStatus node
+  let inodeSet = Recursive.InodeSet . Set.singleton . Node.pfsFileID $ Node.nodeInfoStatus node
   makeTreeNodeInfos' inodeSet opt $ S.singleton node
 
 -- | With error message output.
@@ -47,7 +46,7 @@ makeTreeNodeInfos' inodeSet opt (node S.:<| nodeSeq) = do
   let path = Node.nodeInfoDirName node Posix.</> Node.nodeInfoPath node
   contents <-
     if
-        | Depth.isDepthZero depth || not (Files.isDirectory $ Node.nodeInfoStatus node) -> pure []
+        | Depth.isDepthZero depth || not (Node.isDirectory . Node.pfsNodeType $ Node.nodeInfoStatus node) -> pure []
         -- Force hide '.' and '..' to avoid infinite loop.
         | Option.all opt -> do
           Utils.listContents opt {Option.all = False, Option.almostAll = True} path >>= \case

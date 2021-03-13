@@ -16,10 +16,10 @@ import qualified Data.Time.Clock.POSIX as POSIX
 import qualified Data.Time.Format as Format
 import qualified Data.Time.LocalTime as LClock
 import qualified Haskellorls.LsColor.Config as Color
+import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import Haskellorls.Time.Type
 import qualified Haskellorls.WrappedText as WT
-import qualified System.Posix.Files as Files
 
 -- TODO: Reduce argument numbers
 timeStyleFunc :: LClock.TimeZone -> Format.TimeLocale -> Clock.UTCTime -> TimeStyle -> (Clock.UTCTime -> T.Text)
@@ -43,11 +43,11 @@ timeStyleFunc' fmt zone locale now fTime = T.pack . Format.formatTime locale for
     notRecent = if length formats == 2 then last formats else recent
     formats = parseTimeStyleFormat fmt
 
-fileTime :: TimeType -> (Files.FileStatus -> POSIX.POSIXTime)
+fileTime :: TimeType -> (Node.ProxyFileStatus -> POSIX.POSIXTime)
 fileTime tType = case tType of
-  MODIFICATION -> Files.modificationTimeHiRes
-  ACCESS -> Files.accessTimeHiRes
-  CHANGE -> Files.statusChangeTimeHiRes
+  MODIFICATION -> Node.pfsModificationTime
+  ACCESS -> Node.pfsAccessTime
+  CHANGE -> Node.pfsStatusChangeTime
 
 timeType :: Option.Option -> TimeType
 timeType opt

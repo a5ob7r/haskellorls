@@ -77,20 +77,20 @@ lookupIcon' node config@Config {..} = case node of
   Node.OrphanedLinkInfo {} -> orphanedIcon
 
 lookupIconForFileInfo :: Node.NodeInfo -> Config -> T.Text
-lookupIconForFileInfo node Config {..} = case Name.nodeTypeOf $ Node.nodeInfoStatus node of
-  Name.Directory -> directoryIcon
-  Name.NamedPipe -> pipeIcon
-  Name.Socket -> socketIcon
-  Name.BlockDevise -> blockDeviceIcon
-  Name.CharDevise -> charDeviceIcon
-  Name.Orphan -> orphanedIcon
+lookupIconForFileInfo node Config {..} = case Node.pfsNodeType $ Node.nodeInfoStatus node of
+  Node.Directory -> directoryIcon
+  Node.NamedPipe -> pipeIcon
+  Node.Socket -> socketIcon
+  Node.BlockDevise -> blockDeviceIcon
+  Node.CharDevise -> charDeviceIcon
+  Node.Orphan -> orphanedIcon
   _ -> lookupIconDictionary filename iconDirectory
   where
     filename = T.pack . Posix.takeFileName $ Node.nodeInfoPath node
 
 lookupIconForLinkInfo :: Node.NodeInfo -> Config -> T.Text
-lookupIconForLinkInfo node Config {..} = case Name.nodeTypeOf $ Node.nodeInfoStatus node of
-  Name.Directory -> symlinkDirIcon
+lookupIconForLinkInfo node Config {..} = case Node.pfsNodeType $ Node.nodeInfoStatus node of
+  Node.Directory -> symlinkDirIcon
   _ -> symlinkIcon
 
 defaultIconMap :: Color.LsColorDict

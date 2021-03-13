@@ -9,7 +9,6 @@ where
 import qualified Data.Text as T
 import qualified Haskellorls.Format.Util as Format
 import Haskellorls.Indicator.Type
-import qualified Haskellorls.Name.Decorator as Name
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.WrappedText as WT
@@ -55,16 +54,16 @@ classifyIndicators =
     }
 
 indicatorSelector :: Node.NodeInfo -> Indicators -> T.Text
-indicatorSelector node = case Name.nodeTypeOf (Node.nodeInfoStatus node) of
-  Name.Directory -> indicatorsDirectory
-  Name.Sticky -> indicatorsDirectory
-  Name.OtherWritable -> indicatorsDirectory
-  Name.StickyOtherWritable -> indicatorsDirectory
-  Name.SymbolicLink -> indicatorsLink
-  Name.NamedPipe -> indicatorsPipe
-  Name.Socket -> indicatorsSocket
-  Name.DoorsDevise -> indicatorsDoor
-  Name.Executable -> indicatorsExecutable
+indicatorSelector node = case Node.pfsNodeType (Node.nodeInfoStatus node) of
+  Node.Directory -> indicatorsDirectory
+  Node.Sticky -> indicatorsDirectory
+  Node.OtherWritable -> indicatorsDirectory
+  Node.StickyOtherWritable -> indicatorsDirectory
+  Node.SymbolicLink -> indicatorsLink
+  Node.NamedPipe -> indicatorsPipe
+  Node.Socket -> indicatorsSocket
+  Node.DoorsDevise -> indicatorsDoor
+  Node.Executable -> indicatorsExecutable
   _ -> const ""
 
 buildIndicatorPrinter :: Option.Option -> Node.NodeInfo -> [WT.WrappedText]

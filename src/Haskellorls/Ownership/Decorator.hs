@@ -27,7 +27,6 @@ import qualified Haskellorls.LsColor.Config as Color
 import qualified Haskellorls.NodeInfo as Node
 import Haskellorls.Ownership.Type
 import qualified Haskellorls.WrappedText as WT
-import qualified System.Posix.Files as Files
 import qualified System.Posix.Types as Types
 import qualified System.Posix.User as User
 
@@ -64,7 +63,7 @@ numericOwnerName :: Node.NodeInfo -> T.Text
 numericOwnerName = T.pack . show . numericOwnerName'
 
 numericOwnerName' :: Node.NodeInfo -> Types.UserID
-numericOwnerName' = Files.fileOwner . Node.nodeInfoStatus
+numericOwnerName' = Node.pfsUserID . Node.nodeInfoStatus
 
 coloredOwnerName :: UserIdSubstTable -> Color.Config -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
 coloredOwnerName table = coloredOwnerAs (ownerName table)
@@ -79,7 +78,7 @@ coloredOwnerAs f config user node = [Color.toWrappedText config getter (f node)]
       | currentUserID == nodeOwnerID = Color.ownerYourselfEscapeSequence . Color.extensionColorConfig
       | otherwise = Color.ownerNotYourselfEscapeSequence . Color.extensionColorConfig
     currentUserID = userInfoUserID user
-    nodeOwnerID = Files.fileOwner $ Node.nodeInfoStatus node
+    nodeOwnerID = Node.pfsUserID $ Node.nodeInfoStatus node
 
 -- }}}
 
@@ -93,7 +92,7 @@ numericGroupName :: Node.NodeInfo -> T.Text
 numericGroupName = T.pack . show . numericGroupName'
 
 numericGroupName' :: Node.NodeInfo -> Types.GroupID
-numericGroupName' = Files.fileGroup . Node.nodeInfoStatus
+numericGroupName' = Node.pfsGroupID . Node.nodeInfoStatus
 
 coloredGroupName :: GroupIdSubstTable -> Color.Config -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
 coloredGroupName table = coloredGroupAs (groupName table)
@@ -108,6 +107,6 @@ coloredGroupAs f config user node = [Color.toWrappedText config getter (f node)]
       | nodeGroupID `elem` groupIDs = Color.groupYouBelongsToEscapeSequence . Color.extensionColorConfig
       | otherwise = Color.groupYouNotBelongsToEscapeSequence . Color.extensionColorConfig
     groupIDs = userInfoGroupIDs user
-    nodeGroupID = Files.fileGroup $ Node.nodeInfoStatus node
+    nodeGroupID = Node.pfsGroupID $ Node.nodeInfoStatus node
 
 -- }}}
