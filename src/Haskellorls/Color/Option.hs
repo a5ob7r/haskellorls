@@ -21,8 +21,14 @@ colorParser =
     reader =
       str >>= \case
         "never" -> return NEVER
+        "no" -> return NEVER
+        "none" -> return NEVER
         "always" -> return ALWAYS
+        "yes" -> return ALWAYS
+        "force" -> return ALWAYS
         "auto" -> return AUTO
+        "tty" -> return AUTO
+        "if-tty" -> return AUTO
         _ -> readerError "Only never, always or auto"
 
 extraColorParser :: Parser Bool

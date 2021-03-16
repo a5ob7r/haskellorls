@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- Some acceptable values to `--color=WHEN` option for compatibility against GNU ls.
+
 ### Changed
 
 - Use ProxyFileStatus, which is original data type to have file attrinutes, to reduce memory consumption instead of System.Posix.Files.FileStatus.
