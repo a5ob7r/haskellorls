@@ -12,7 +12,6 @@ module Haskellorls.Utils
     exclude,
     partitionExistOrNotPathes,
     validatePathExistence,
-    isDirectory,
     textLengthForDisplay,
     replaceControlCharsToQuestion,
     escapeFormatter,
@@ -111,9 +110,6 @@ partitionExistOrNotPathes pathes = E.partitionEithers <$> mapM validatePathExist
 
 validatePathExistence :: FilePath -> IO (Either FilePath FilePath)
 validatePathExistence path = E.either (const $ Left path) (const $ Right path) <$> getSymbolicLinkStatus path
-
-isDirectory :: FilePath -> IO Bool
-isDirectory path = Files.isDirectory <$> Files.getSymbolicLinkStatus path
 
 -- | Assumes not Latin1 charactor has double width of Latin1 charactor for display.
 textLengthForDisplay :: T.Text -> Int
