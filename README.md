@@ -110,22 +110,6 @@ $ cabal install --overwrite-policy=always --installdir=bin
 $ PATH="$PWD/bin:$PATH" goldplate golden-test --pretty-diff
 ```
 
-## TODO
-
-- Add options for compatibility to GNU ls
-  - -D, --dired
-  - --hyperlink[=WHEN]
-- Add locale support for time style.
-- Fix size printer for charactor devices.
-- Improve performances.
-- Add tests.
-  - Unit tests with tasty.
-- Register to Hackage.
-- Add --head=N/--tail=N option to restrict max output file numbers.
-  - This is useful with --recursive/-R
-- Update shell completions.
-- etc.
-
 ## NOTE
 
 `Haskellorls` means Color ls in Haskell.
