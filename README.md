@@ -6,6 +6,8 @@
 
 Haskell implementation of ls which is compatible with GNU ls.
 
+`Haskellorls` means Color ls in Haskell.
+
 The goal of this project is to create a software which has GNU ls compatiblities about options and output.
 In addition, has some extra options like some ls alternatives or replacements have as long as having above compatiblities.
 
@@ -109,9 +111,3 @@ Run golden tests using [goldplate](https://github.com/fugue/goldplate).
 $ cabal install --overwrite-policy=always --installdir=bin
 $ PATH="$PWD/bin:$PATH" goldplate golden-test --pretty-diff
 ```
-
-## NOTE
-
-`Haskellorls` means Color ls in Haskell.
-
-This is a joke software created by a beginner.
