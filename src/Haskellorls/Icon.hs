@@ -71,13 +71,13 @@ lookupColoredIcon cConfig node config =
     selector = Name.lookupEscSeq node
 
 lookupIcon' :: Node.NodeInfo -> Config -> T.Text
-lookupIcon' node config@Config {..} = case node of
-  Node.FileInfo {} -> lookupIconForFileInfo node config
-  Node.LinkInfo {} -> lookupIconForLinkInfo node config
-  Node.OrphanedLinkInfo {} -> orphanedIcon
+lookupIcon' node config@Config {..} = case Node.getNodeLinkInfo node of
+  Nothing -> lookupIconForFileInfo node config
+  Just (Right _) -> lookupIconForLinkInfo node config
+  Just (Left _) -> orphanedIcon
 
 lookupIconForFileInfo :: Node.NodeInfo -> Config -> T.Text
-lookupIconForFileInfo node Config {..} = case Node.pfsNodeType $ Node.nodeInfoStatus node of
+lookupIconForFileInfo node Config {..} = case Node.pfsNodeType $ Node.getNodeStatus node of
   Node.Directory -> directoryIcon
   Node.NamedPipe -> pipeIcon
   Node.Socket -> socketIcon
@@ -86,10 +86,10 @@ lookupIconForFileInfo node Config {..} = case Node.pfsNodeType $ Node.nodeInfoSt
   Node.Orphan -> orphanedIcon
   _ -> lookupIconDictionary filename iconDirectory
   where
-    filename = T.pack . Posix.takeFileName $ Node.nodeInfoPath node
+    filename = T.pack . Posix.takeFileName $ Node.getNodePath node
 
 lookupIconForLinkInfo :: Node.NodeInfo -> Config -> T.Text
-lookupIconForLinkInfo node Config {..} = case Node.pfsNodeType $ Node.nodeInfoStatus node of
+lookupIconForLinkInfo node Config {..} = case Node.pfsNodeType $ Node.getNodeStatus node of
   Node.Directory -> symlinkDirIcon
   _ -> symlinkIcon
 

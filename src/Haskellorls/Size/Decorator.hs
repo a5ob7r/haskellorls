@@ -126,12 +126,12 @@ siHumanReadableFileSize size = FileSizeComponent {..}
 
 -- | Treat symbolic link block size as zero.
 fileBlockSizeOf :: Node.NodeInfo -> Types.FileOffset
-fileBlockSizeOf = \case
-  node@Node.FileInfo {} -> fileSizeOf node
+fileBlockSizeOf node = case Node.getNodeLinkInfo node of
+  Nothing -> fileSizeOf node
   _ -> Types.COff 0
 
 fileSizeOf :: Node.NodeInfo -> Types.FileOffset
-fileSizeOf = Node.pfsFileSize . Node.nodeInfoStatus
+fileSizeOf = Node.pfsFileSize . Node.getNodeStatus
 
 fileSizeUnitSelector :: ScaleSuffix -> BaseScale -> T.Text
 fileSizeUnitSelector ss = case ss of

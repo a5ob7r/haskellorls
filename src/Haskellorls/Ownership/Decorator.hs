@@ -63,7 +63,7 @@ numericOwnerName :: Node.NodeInfo -> T.Text
 numericOwnerName = T.pack . show . numericOwnerName'
 
 numericOwnerName' :: Node.NodeInfo -> Types.UserID
-numericOwnerName' = Node.pfsUserID . Node.nodeInfoStatus
+numericOwnerName' = Node.pfsUserID . Node.getNodeStatus
 
 coloredOwnerName :: UserIdSubstTable -> Color.Config -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
 coloredOwnerName table = coloredOwnerAs (ownerName table)
@@ -78,7 +78,7 @@ coloredOwnerAs f config user node = [Color.toWrappedText config getter (f node)]
       | currentUserID == nodeOwnerID = Color.ownerYourselfEscapeSequence . Color.extensionColorConfig
       | otherwise = Color.ownerNotYourselfEscapeSequence . Color.extensionColorConfig
     currentUserID = userInfoUserID user
-    nodeOwnerID = Node.pfsUserID $ Node.nodeInfoStatus node
+    nodeOwnerID = Node.pfsUserID $ Node.getNodeStatus node
 
 -- }}}
 
@@ -92,7 +92,7 @@ numericGroupName :: Node.NodeInfo -> T.Text
 numericGroupName = T.pack . show . numericGroupName'
 
 numericGroupName' :: Node.NodeInfo -> Types.GroupID
-numericGroupName' = Node.pfsGroupID . Node.nodeInfoStatus
+numericGroupName' = Node.pfsGroupID . Node.getNodeStatus
 
 coloredGroupName :: GroupIdSubstTable -> Color.Config -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
 coloredGroupName table = coloredGroupAs (groupName table)
@@ -107,6 +107,6 @@ coloredGroupAs f config user node = [Color.toWrappedText config getter (f node)]
       | nodeGroupID `elem` groupIDs = Color.groupYouBelongsToEscapeSequence . Color.extensionColorConfig
       | otherwise = Color.groupYouNotBelongsToEscapeSequence . Color.extensionColorConfig
     groupIDs = userInfoGroupIDs user
-    nodeGroupID = Node.pfsGroupID $ Node.nodeInfoStatus node
+    nodeGroupID = Node.pfsGroupID $ Node.getNodeStatus node
 
 -- }}}

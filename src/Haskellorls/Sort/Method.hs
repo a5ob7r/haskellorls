@@ -55,7 +55,7 @@ sortWithNone :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithNone = id
 
 sortWithName :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithName = L.sortBy (\a b -> Node.nodeInfoPath a `compareName` Node.nodeInfoPath b)
+sortWithName = L.sortBy (\a b -> Node.getNodePath a `compareName` Node.getNodePath b)
   where
     compareName a b
       | a' == b' = a `compare` b
@@ -69,22 +69,22 @@ sortWithName = L.sortBy (\a b -> Node.nodeInfoPath a `compareName` Node.nodeInfo
         _ -> s
 
 sortWithSize :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithSize = L.sortOn $ O.Down . Node.pfsFileSize . Node.nodeInfoStatus
+sortWithSize = L.sortOn $ O.Down . Node.pfsFileSize . Node.getNodeStatus
 
 sortWithModificationTime :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithModificationTime = L.sortOn $ O.Down . Node.pfsModificationTime . Node.nodeInfoStatus
+sortWithModificationTime = L.sortOn $ O.Down . Node.pfsModificationTime . Node.getNodeStatus
 
 sortWithAccessTime :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithAccessTime = L.sortOn $ O.Down . Node.pfsAccessTime . Node.nodeInfoStatus
+sortWithAccessTime = L.sortOn $ O.Down . Node.pfsAccessTime . Node.getNodeStatus
 
 sortWithChangeTime :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithChangeTime = L.sortOn $ O.Down . Node.pfsStatusChangeTime . Node.nodeInfoStatus
+sortWithChangeTime = L.sortOn $ O.Down . Node.pfsStatusChangeTime . Node.getNodeStatus
 
 sortWithVersion :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithVersion = L.sortBy (\a b -> Node.nodeInfoPath a `NSort.compare` Node.nodeInfoPath b)
+sortWithVersion = L.sortBy (\a b -> Node.getNodePath a `NSort.compare` Node.getNodePath b)
 
 sortWithExtension :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithExtension = L.sortBy (\a b -> Posix.takeExtension (Node.nodeInfoPath a) `compare` Posix.takeExtension (Node.nodeInfoPath b))
+sortWithExtension = L.sortBy (\a b -> Posix.takeExtension (Node.getNodePath a) `compare` Posix.takeExtension (Node.getNodePath b))
 
 partitionDirectoriesAndFiles :: [Node.NodeInfo] -> ([Node.NodeInfo], [Node.NodeInfo])
 partitionDirectoriesAndFiles = L.partition isDirectory
@@ -93,6 +93,6 @@ partitionDirectoriesAndFiles = L.partition isDirectory
 isDirectory :: Node.NodeInfo -> Bool
 isDirectory node = Node.isDirectory $ Node.pfsNodeType status
   where
-    status = case node of
-      Node.LinkInfo {..} -> getDestStatus
-      _ -> Node.nodeInfoStatus node
+    status = case Node.getNodeLinkInfo node of
+      Just (Right Node.LinkNodeInfo {..}) -> getLinkNodeStatus
+      _ -> Node.getNodeStatus node

@@ -13,6 +13,6 @@ newtype InodeSet = InodeSet (S.Set Types.FileID)
 excludeAlreadySeenInode :: InodeSet -> [Node.NodeInfo] -> (InodeSet, [Node.NodeInfo])
 excludeAlreadySeenInode (InodeSet inodeSet) nodes = (InodeSet $ S.union inodeSet newInodeSet, newNodes)
   where
-    newInodes = filter (`S.notMember` inodeSet) $ map (Node.pfsFileID . Node.nodeInfoStatus) nodes
+    newInodes = filter (`S.notMember` inodeSet) $ map (Node.pfsFileID . Node.getNodeStatus) nodes
     newInodeSet = S.fromList newInodes
-    newNodes = filter ((`S.member` newInodeSet) . Node.pfsFileID . Node.nodeInfoStatus) nodes
+    newNodes = filter ((`S.member` newInodeSet) . Node.pfsFileID . Node.getNodeStatus) nodes

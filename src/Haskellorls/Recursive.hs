@@ -93,8 +93,8 @@ opToOps inodeSet opt op = case op of
     | Option.recursive opt && (not . Depth.isDepthZero . Option.level) opt -> mapM (pathToOp opt) paths <&> (newInodeSet,)
     | otherwise -> pure (Recursive.InodeSet S.empty, [])
     where
-      (newInodeSet, nodes) = Recursive.excludeAlreadySeenInode inodeSet $ filter (Node.isDirectory . Node.pfsNodeType . Node.nodeInfoStatus) entryNodes
-      paths = map (\node -> entryPath Posix.</> Node.nodeInfoPath node) nodes
+      (newInodeSet, nodes) = Recursive.excludeAlreadySeenInode inodeSet $ filter (Node.isDirectory . Node.pfsNodeType . Node.getNodeStatus) entryNodes
+      paths = map (\node -> entryPath Posix.</> Node.getNodePath node) nodes
   _ -> pure (Recursive.InodeSet S.empty, [])
 
 pathToOp :: Option.Option -> FilePath -> IO Operation
@@ -126,7 +126,7 @@ buildInitialOperations opt paths = do
   (inodeSet, nodes) <- Recursive.excludeAlreadySeenInode (Recursive.InodeSet S.empty) . Sort.sorter opt <$> mapM (Node.nodeInfo opt "") paths
   let (dirs, files) = L.partition isDirectory nodes
       fileOp = [PrintEntry FILES "" files opt | not (null files)]
-  dirOps <- mapM (pathToOp opt . Node.nodeInfoPath) dirs
+  dirOps <- mapM (pathToOp opt . Node.getNodePath) dirs
   let dirOps' =
         if Option.tree opt
           then map (\PrintEntry {..} -> PrintTree entryPath entryOption) dirOps
@@ -138,7 +138,7 @@ buildInitialOperations opt paths = do
   where
     isDirectory
       | Option.directory opt = const False
-      | otherwise = Node.isDirectory . Node.pfsNodeType . Node.nodeInfoStatus
+      | otherwise = Node.isDirectory . Node.pfsNodeType . Node.getNodeStatus
 
 buildPrinter :: Option.Option -> Decorator.Printers -> Printer
 buildPrinter opt printers = Printer $ fmap (TL.toStrict . TLB.toLazyText . M.mconcat . L.intersperse (TLB.fromText "\n")) . generateEntryLines opt printers
@@ -163,7 +163,7 @@ generateEntryLines opt printers op = case op of
             | Format.isLongStyle opt -> (builder :)
             | otherwise -> id
           where
-            builder = TLB.fromText . T.concat . ("total " :) . map (T.concat . WT.toList) . Size.toTotalBlockSize opt $ map (Node.pfsFileSize . Node.nodeInfoStatus) entryNodes
+            builder = TLB.fromText . T.concat . ("total " :) . map (T.concat . WT.toList) . Size.toTotalBlockSize opt $ map (Node.pfsFileSize . Node.getNodeStatus) entryNodes
 
     colLen <- Grid.virtualColumnSize opt
 
@@ -176,6 +176,6 @@ generateEntryLines opt printers op = case op of
       wtToBuilder wt = M.mconcat . map TLB.fromText $ WT.toList wt
 
 shouldQuote :: [Node.NodeInfo] -> Bool
-shouldQuote = not . all (Set.null . Set.intersection setNeedQuotes . Set.fromList . Node.nodeInfoPath)
+shouldQuote = not . all (Set.null . Set.intersection setNeedQuotes . Set.fromList . Node.getNodePath)
   where
     setNeedQuotes = Set.fromList Quote.charactorsNeedQuote

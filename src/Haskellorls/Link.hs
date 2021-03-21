@@ -11,7 +11,7 @@ import qualified Haskellorls.WrappedText as WT
 import qualified System.Posix.Types as Types
 
 nodeLinksNumber :: Node.NodeInfo -> Types.LinkCount
-nodeLinksNumber = Node.pfsLinkCount . Node.nodeInfoStatus
+nodeLinksNumber = Node.pfsLinkCount . Node.getNodeStatus
 
 nodeLinksNumberWithColor :: Color.Config -> Node.NodeInfo -> [WT.WrappedText]
 nodeLinksNumberWithColor config node = [Color.toWrappedText config getter linksNumber]

@@ -209,7 +209,7 @@ buildPrinters opt = do
           else WT.toWrappedTextSingleton . timeStyleFunc . fileTime
         where
           timeStyleFunc = Time.timeStyleFunc timeZone TFormat.defaultTimeLocale currentTime timeStyle
-          fileTime = Clock.posixSecondsToUTCTime . Time.fileTime (Time.timeType opt) . Node.nodeInfoStatus
+          fileTime = Clock.posixSecondsToUTCTime . Time.fileTime (Time.timeType opt) . Node.getNodeStatus
           timeStyle = Time.timeStyle opt
 
       -- TODO: Should use colored icon? But, must consider charactor size and background color.
@@ -235,7 +235,7 @@ buildPrinters opt = do
 
   return $
     Printers
-      { fileFieldPrinter = filemodeFieldPrinter . Field.filemodeField . Node.nodeInfoStatus,
+      { fileFieldPrinter = filemodeFieldPrinter . Field.filemodeField . Node.getNodeStatus,
         fileNamePrinter = buildNodeNamePrinter opt nodeNamePrinters,
         fileNameWithDQuotePrinter = buildNodeNamePrinter opt nodeNameWithDQuotePrinters,
         ..

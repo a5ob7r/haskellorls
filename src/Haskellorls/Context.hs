@@ -10,7 +10,7 @@ import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.WrappedText as WT
 
 context :: Node.NodeInfo -> T.Text
-context = Node.nodeInfoContext
+context = Node.getNodeContext
 
 colorizedContext :: Color.Config -> Node.NodeInfo -> [WT.WrappedText]
 colorizedContext config node = [Color.toWrappedText config getter cont]

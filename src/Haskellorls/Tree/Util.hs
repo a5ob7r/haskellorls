@@ -36,17 +36,17 @@ makeSomeNewPositionsList' (x : xs) = L.snoc x MID : makeSomeNewPositionsList' xs
 makeTreeNodeInfos :: Option.Option -> FilePath -> IO (S.Seq Node.NodeInfo)
 makeTreeNodeInfos opt path = do
   node <- Node.nodeInfo opt "" path
-  let inodeSet = Recursive.InodeSet . Set.singleton . Node.pfsFileID $ Node.nodeInfoStatus node
+  let inodeSet = Recursive.InodeSet . Set.singleton . Node.pfsFileID $ Node.getNodeStatus node
   makeTreeNodeInfos' inodeSet opt $ S.singleton node
 
 -- | With error message output.
 makeTreeNodeInfos' :: Recursive.InodeSet -> Option.Option -> S.Seq Node.NodeInfo -> IO (S.Seq Node.NodeInfo)
 makeTreeNodeInfos' _ _ S.Empty = pure S.empty
 makeTreeNodeInfos' inodeSet opt (node S.:<| nodeSeq) = do
-  let path = Node.nodeInfoDirName node Posix.</> Node.nodeInfoPath node
+  let path = Node.getNodeDirName node Posix.</> Node.getNodePath node
   contents <-
     if
-        | Depth.isDepthZero depth || not (Node.isDirectory . Node.pfsNodeType $ Node.nodeInfoStatus node) -> pure []
+        | Depth.isDepthZero depth || not (Node.isDirectory . Node.pfsNodeType $ Node.getNodeStatus node) -> pure []
         -- Force hide '.' and '..' to avoid infinite loop.
         | Option.all opt -> do
           Utils.listContents opt {Option.all = False, Option.almostAll = True} path >>= \case

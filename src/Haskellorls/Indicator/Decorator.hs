@@ -54,7 +54,7 @@ classifyIndicators =
     }
 
 indicatorSelector :: Node.NodeInfo -> Indicators -> T.Text
-indicatorSelector node = case Node.pfsNodeType (Node.nodeInfoStatus node) of
+indicatorSelector node = case Node.pfsNodeType (Node.getNodeStatus node) of
   Node.Directory -> indicatorsDirectory
   Node.Sticky -> indicatorsDirectory
   Node.OtherWritable -> indicatorsDirectory
@@ -70,8 +70,8 @@ buildIndicatorPrinter :: Option.Option -> Node.NodeInfo -> [WT.WrappedText]
 buildIndicatorPrinter opt node = if T.null indicator then [] else WT.toWrappedTextSingleton indicator
   where
     indicator = indicatorSelector node' $ buildIndicators opt
-    node' = case node of
-      Node.LinkInfo {} | Format.isLongStyle opt -> Node.toFileInfo node
+    node' = case Node.getNodeLinkInfo node of
+      Just (Right _) | Format.isLongStyle opt -> Node.toFileInfo node
       _ -> node
 
 buildIndicators :: Option.Option -> Indicators

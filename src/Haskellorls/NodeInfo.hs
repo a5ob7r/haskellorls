@@ -5,13 +5,10 @@
 module Haskellorls.NodeInfo
   ( NodeType (..),
     NodeInfo (..),
+    LinkNodeInfo (..),
     ProxyFileStatus (..),
     isDirectory,
     nodeInfo,
-    nodeInfoStatus,
-    nodeInfoPath,
-    nodeInfoContext,
-    nodeInfoDirName,
     toFileInfo,
   )
 where
@@ -152,32 +149,22 @@ stickyMode = 548
 stickyOtherWriteMode :: Types.FileMode
 stickyOtherWriteMode = Files.unionFileModes stickyMode Files.otherWriteMode
 
-data NodeInfo
-  = FileInfo
-      { getFilePath :: FilePath,
-        getFileStatus :: ProxyFileStatus,
-        getFileContext :: T.Text,
-        getFileDirName :: FilePath,
-        getTreeNodePositions :: [Tree.TreeNodePosition]
-      }
-  | LinkInfo
-      { getLinkPath :: FilePath,
-        getLinkStatus :: ProxyFileStatus,
-        getLinkContext :: T.Text,
-        getLinkDirName :: FilePath,
-        getDestPath :: FilePath,
-        getDestStatus :: ProxyFileStatus,
-        getDestContext :: T.Text,
-        getTreeNodePositions :: [Tree.TreeNodePosition]
-      }
-  | OrphanedLinkInfo
-      { getOrphanedLinkPath :: FilePath,
-        getOrphanedLinkStatus :: ProxyFileStatus,
-        getOrphanedLinkContext :: T.Text,
-        getOrphanedLinkDirName :: FilePath,
-        getDestPath :: FilePath,
-        getTreeNodePositions :: [Tree.TreeNodePosition]
-      }
+data NodeInfo = NodeInfo
+  { getNodePath :: FilePath,
+    getNodeStatus :: ProxyFileStatus,
+    getNodeContext :: T.Text,
+    getNodeDirName :: FilePath,
+    getNodeLinkInfo :: Maybe (Either OrphanedLinkNodeInfo LinkNodeInfo),
+    getTreeNodePositions :: [Tree.TreeNodePosition]
+  }
+
+data LinkNodeInfo = LinkNodeInfo
+  { getLinkNodePath :: FilePath,
+    getLinkNodeStatus :: ProxyFileStatus,
+    getLinkNodeContext :: T.Text
+  }
+
+newtype OrphanedLinkNodeInfo = OrphanedLinkNodeInfo {getOrphanedNodeLinkPath :: FilePath}
 
 nodeInfo :: Option.Option -> FilePath -> FilePath -> IO NodeInfo
 nodeInfo opt dirname basename = do
@@ -203,99 +190,78 @@ nodeInfo opt dirname basename = do
 
       return $ case (linkPath, destStatus) of
         (Right p, Nothing) ->
-          OrphanedLinkInfo
-            { getOrphanedLinkPath = basename,
-              getOrphanedLinkStatus = proxyFileStatus status,
-              getOrphanedLinkContext = T.pack context,
-              getOrphanedLinkDirName = dirname,
-              getDestPath = p,
+          NodeInfo
+            { getNodePath = basename,
+              getNodeStatus = proxyFileStatus status,
+              getNodeContext = T.pack context,
+              getNodeDirName = dirname,
+              getNodeLinkInfo = Just . Left $ OrphanedLinkNodeInfo p,
               getTreeNodePositions = []
             }
         (Right p, Just s)
           | Option.dereference opt
               || Option.dereferenceCommandLine opt
               || (Option.dereferenceCommandLineSymlinkToDir opt && Files.isDirectory s) ->
-            FileInfo
-              { getFilePath = basename,
-                getFileStatus = proxyFileStatus s,
-                getFileContext = T.pack context,
-                getFileDirName = dirname,
+            NodeInfo
+              { getNodePath = basename,
+                getNodeStatus = proxyFileStatus s,
+                getNodeContext = T.pack context,
+                getNodeDirName = dirname,
+                getNodeLinkInfo = Nothing,
                 getTreeNodePositions = []
               }
           | otherwise ->
-            LinkInfo
-              { getLinkPath = basename,
-                getLinkStatus = proxyFileStatus status,
-                getLinkContext = T.pack context,
-                getLinkDirName = dirname,
-                getDestPath = p,
-                getDestStatus = proxyFileStatus s,
-                getDestContext = T.pack destContext,
+            NodeInfo
+              { getNodePath = basename,
+                getNodeStatus = proxyFileStatus status,
+                getNodeContext = T.pack context,
+                getNodeDirName = dirname,
+                getNodeLinkInfo =
+                  Just . Right $
+                    LinkNodeInfo
+                      { getLinkNodePath = p,
+                        getLinkNodeStatus = proxyFileStatus s,
+                        getLinkNodeContext = T.pack destContext
+                      },
                 getTreeNodePositions = []
               }
         _ ->
-          FileInfo
-            { getFilePath = basename,
-              getFileStatus = proxyFileStatus status,
-              getFileContext = T.pack context,
-              getFileDirName = dirname,
+          NodeInfo
+            { getNodePath = basename,
+              getNodeStatus = proxyFileStatus status,
+              getNodeContext = T.pack context,
+              getNodeDirName = dirname,
+              getNodeLinkInfo = Nothing,
               getTreeNodePositions = []
             }
     else
       return $
-        FileInfo
-          { getFilePath = basename,
-            getFileStatus = proxyFileStatus status,
-            getFileContext = T.pack context,
-            getFileDirName = dirname,
+        NodeInfo
+          { getNodePath = basename,
+            getNodeStatus = proxyFileStatus status,
+            getNodeContext = T.pack context,
+            getNodeDirName = dirname,
+            getNodeLinkInfo = Nothing,
             getTreeNodePositions = []
           }
   where
     path = dirname Posix.</> basename
 
 toFileInfo :: NodeInfo -> NodeInfo
-toFileInfo = \case
-  node@FileInfo {} -> node
-  LinkInfo {..} ->
-    FileInfo
-      { getFilePath = getDestPath,
-        getFileStatus = getDestStatus,
-        getFileContext = getDestContext,
-        getFileDirName = getLinkDirName,
+toFileInfo node@NodeInfo {..} = case getNodeLinkInfo of
+  Nothing -> node
+  Just (Right LinkNodeInfo {..}) ->
+    NodeInfo
+      { getNodePath = getLinkNodePath,
+        getNodeStatus = getLinkNodeStatus,
+        getNodeContext = getLinkNodeContext,
         ..
       }
-  OrphanedLinkInfo {..} ->
-    FileInfo
-      { getFilePath = getDestPath,
-        getFileStatus = getOrphanedLinkStatus,
-        getFileContext = getOrphanedLinkContext,
-        getFileDirName = getOrphanedLinkDirName,
+  Just (Left OrphanedLinkNodeInfo {..}) ->
+    NodeInfo
+      { getNodePath = getOrphanedNodeLinkPath,
         ..
       }
-
-nodeInfoStatus :: NodeInfo -> ProxyFileStatus
-nodeInfoStatus = \case
-  FileInfo {..} -> getFileStatus
-  LinkInfo {..} -> getLinkStatus
-  OrphanedLinkInfo {..} -> getOrphanedLinkStatus
-
-nodeInfoPath :: NodeInfo -> FilePath
-nodeInfoPath = \case
-  FileInfo {..} -> getFilePath
-  LinkInfo {..} -> getLinkPath
-  OrphanedLinkInfo {..} -> getOrphanedLinkPath
-
-nodeInfoContext :: NodeInfo -> T.Text
-nodeInfoContext = \case
-  FileInfo {..} -> getFileContext
-  LinkInfo {..} -> getLinkContext
-  OrphanedLinkInfo {..} -> getOrphanedLinkContext
-
-nodeInfoDirName :: NodeInfo -> FilePath
-nodeInfoDirName = \case
-  FileInfo {..} -> getFileDirName
-  LinkInfo {..} -> getLinkDirName
-  OrphanedLinkInfo {..} -> getOrphanedLinkDirName
 
 {- ORMOLU_DISABLE -}
 -- |

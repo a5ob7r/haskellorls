@@ -28,10 +28,10 @@ colorizedNodeName opt config nd = Color.toWrappedText config getter $ Utils.esca
     getter = lookupEscSeq nd
 
 lookupEscSeq :: Node.NodeInfo -> Color.Config -> T.Text
-lookupEscSeq nd conf = case nd of
-  Node.FileInfo {} -> nd `lookupEscSeq'` conf
-  Node.LinkInfo {} -> lookupSymlinkEscSeq
-  Node.OrphanedLinkInfo {} -> Color.orphanedSymlinkEscapeSequence conf
+lookupEscSeq nd conf = case Node.getNodeLinkInfo nd of
+  Nothing -> nd `lookupEscSeq'` conf
+  Just (Right _) -> lookupSymlinkEscSeq
+  Just (Left _) -> Color.orphanedSymlinkEscapeSequence conf
   where
     lookupSymlinkEscSeq =
       if symlinkEscSeq' == "target"
@@ -40,7 +40,7 @@ lookupEscSeq nd conf = case nd of
     symlinkEscSeq' = Color.symlinkEscapeSequence conf
 
 lookupEscSeq' :: Node.NodeInfo -> Color.Config -> T.Text
-lookupEscSeq' nd conf = case Node.pfsNodeType $ Node.nodeInfoStatus nd of
+lookupEscSeq' nd conf = case Node.pfsNodeType $ Node.getNodeStatus nd of
   Node.Directory -> Color.directoryEscapeSequence conf
   Node.NamedPipe -> Color.pipeEscapeSequence conf
   Node.Socket -> Color.socketEscapeSequence conf
@@ -63,4 +63,4 @@ nodeNameWrapper opt node = Quote.quote style . WT.toWrappedText $ Utils.escapeFo
     style = Quote.quoteStyle opt
 
 nodeName :: Node.NodeInfo -> T.Text
-nodeName = T.pack . Node.nodeInfoPath
+nodeName = T.pack . Node.getNodePath
