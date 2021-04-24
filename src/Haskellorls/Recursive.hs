@@ -11,6 +11,7 @@ module Haskellorls.Recursive
   )
 where
 
+import qualified Control.Monad.State.Strict as State
 import qualified Data.Foldable as Fold
 import Data.Functor
 import qualified Data.List as L
@@ -93,7 +94,7 @@ opToOps inodeSet opt op = case op of
     | Option.recursive opt && (not . Depth.isDepthZero . Option.level) opt -> mapM (pathToOp opt) paths <&> (newInodeSet,)
     | otherwise -> pure (Recursive.InodeSet S.empty, [])
     where
-      (newInodeSet, nodes) = Recursive.excludeAlreadySeenInode inodeSet $ filter (Node.isDirectory . Node.pfsNodeType . Node.getNodeStatus) entryNodes
+      (nodes, newInodeSet) = State.runState (Recursive.updateAlreadySeenInode $ filter (Node.isDirectory . Node.pfsNodeType . Node.getNodeStatus) entryNodes) inodeSet
       paths = map (\node -> entryPath Posix.</> Node.getNodePath node) nodes
   _ -> pure (Recursive.InodeSet S.empty, [])
 
@@ -123,7 +124,8 @@ buildDirectoryNodes opt path =
 -- | Assumes all paths exist.
 buildInitialOperations :: Option.Option -> [FilePath] -> IO (Recursive.InodeSet, [Operation])
 buildInitialOperations opt paths = do
-  (inodeSet, nodes) <- Recursive.excludeAlreadySeenInode (Recursive.InodeSet S.empty) . Sort.sorter opt <$> mapM (Node.nodeInfo opt "") paths
+  nodeinfos <- mapM (Node.nodeInfo opt "") paths
+  let (nodes, inodeSet) = State.runState (Recursive.updateAlreadySeenInode $ Sort.sorter opt nodeinfos) $ Recursive.InodeSet S.empty
   let (dirs, files) = L.partition isDirectory nodes
       fileOp = [PrintEntry FILES "" files opt | not (null files)]
   dirOps <- mapM (pathToOp opt . Node.getNodePath) dirs

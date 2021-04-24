@@ -83,6 +83,7 @@ library
     , extra
     , filepath
     , Glob
+    , mtl
     , natural-sort
     , optparse-applicative
     , terminal-size

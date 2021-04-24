@@ -7,6 +7,7 @@ module Haskellorls.Tree.Util
   )
 where
 
+import qualified Control.Monad.State.Strict as State
 import qualified Data.List.Extra as L
 import qualified Data.Sequence as S
 import qualified Data.Set as Set
@@ -58,8 +59,12 @@ makeTreeNodeInfos' inodeSet opt (node S.:<| nodeSeq) = do
             Right contents' -> pure contents'
 
   let pList = makeSomeNewPositionsList (length contents) $ Node.getTreeNodePositions node
-  (newInodeSet, nodes) <- Recursive.excludeAlreadySeenInode inodeSet <$> mapM (Node.nodeInfo opt path) contents
-  let nodes' = zipWith (\nd p -> nd {Node.getTreeNodePositions = p}) (Sort.sorter opt nodes) pList
+
+  -- Maybe contain nodeinfos which the inode number is already seen.
+  nodeinfos <- mapM (Node.nodeInfo opt path) contents
+
+  let (nodes, newInodeSet) = State.runState (Recursive.updateAlreadySeenInode nodeinfos) inodeSet
+      nodes' = zipWith (\nd p -> nd {Node.getTreeNodePositions = p}) (Sort.sorter opt nodes) pList
       newNodeSeq = S.fromList nodes' S.>< nodeSeq
 
   (node S.<|) <$> makeTreeNodeInfos' newInodeSet opt' newNodeSeq
