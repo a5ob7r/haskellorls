@@ -1,7 +1,7 @@
 module Haskellorls.Recursive.Utils
-  ( InodeSet,
-    emptyInodeSet,
-    singletonInodeSet,
+  ( AlreadySeenInodes,
+    emptyInodes,
+    singletonInodes,
     updateAlreadySeenInode,
   )
 where
@@ -11,26 +11,26 @@ import qualified Data.Set as S
 import qualified Haskellorls.NodeInfo as Node
 import qualified System.Posix.Types as Types
 
-newtype InodeSet = InodeSet (S.Set Types.FileID)
+newtype AlreadySeenInodes = AlreadySeenInodes (S.Set Types.FileID)
 
-emptyInodeSet :: InodeSet
-emptyInodeSet = InodeSet S.empty
+emptyInodes :: AlreadySeenInodes
+emptyInodes = AlreadySeenInodes S.empty
 
-singletonInodeSet :: Types.FileID -> InodeSet
-singletonInodeSet = InodeSet . S.singleton
+singletonInodes :: Types.FileID -> AlreadySeenInodes
+singletonInodes = AlreadySeenInodes . S.singleton
 
 -- | Update already seen inode number set.
-updateAlreadySeenInode :: [Node.NodeInfo] -> State.State InodeSet [Node.NodeInfo]
+updateAlreadySeenInode :: [Node.NodeInfo] -> State.State AlreadySeenInodes [Node.NodeInfo]
 updateAlreadySeenInode nodes = do
   -- Get already seen inode numbers set from the environment.
-  InodeSet inodeSet <- State.get
+  AlreadySeenInodes inodes <- State.get
 
   -- Select all node info which the inode number is not already seen.
-  let neverSeenNodes = filter ((`S.notMember` inodeSet) . getInodeNumber) nodes
+  let neverSeenNodes = filter ((`S.notMember` inodes) . getInodeNumber) nodes
       neverSeenInodes = map getInodeNumber neverSeenNodes
 
   -- Update already seen inode numbers set.
-  State.put . InodeSet . S.union inodeSet $ S.fromList neverSeenInodes
+  State.put . AlreadySeenInodes . S.union inodes $ S.fromList neverSeenInodes
 
   pure neverSeenNodes
 

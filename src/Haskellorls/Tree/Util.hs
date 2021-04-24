@@ -36,13 +36,13 @@ makeSomeNewPositionsList' (x : xs) = L.snoc x MID : makeSomeNewPositionsList' xs
 makeTreeNodeInfos :: Option.Option -> FilePath -> IO (S.Seq Node.NodeInfo)
 makeTreeNodeInfos opt path = do
   node <- Node.nodeInfo opt "" path
-  let inodeSet = Recursive.singletonInodeSet . Node.pfsFileID $ Node.getNodeStatus node
-  makeTreeNodeInfos' inodeSet opt $ S.singleton node
+  let inodes = Recursive.singletonInodes . Node.pfsFileID $ Node.getNodeStatus node
+  makeTreeNodeInfos' inodes opt $ S.singleton node
 
 -- | With error message output.
-makeTreeNodeInfos' :: Recursive.InodeSet -> Option.Option -> S.Seq Node.NodeInfo -> IO (S.Seq Node.NodeInfo)
+makeTreeNodeInfos' :: Recursive.AlreadySeenInodes -> Option.Option -> S.Seq Node.NodeInfo -> IO (S.Seq Node.NodeInfo)
 makeTreeNodeInfos' _ _ S.Empty = pure S.empty
-makeTreeNodeInfos' inodeSet opt (node S.:<| nodeSeq) = do
+makeTreeNodeInfos' inodes opt (node S.:<| nodeSeq) = do
   let path = Node.getNodeDirName node Posix.</> Node.getNodePath node
   contents <-
     if
@@ -62,11 +62,11 @@ makeTreeNodeInfos' inodeSet opt (node S.:<| nodeSeq) = do
   -- Maybe contain nodeinfos which the inode number is already seen.
   nodeinfos <- mapM (Node.nodeInfo opt path) contents
 
-  let (nodes, newInodeSet) = State.runState (Recursive.updateAlreadySeenInode nodeinfos) inodeSet
+  let (nodes, newInodes) = State.runState (Recursive.updateAlreadySeenInode nodeinfos) inodes
       nodes' = zipWith (\nd p -> nd {Node.getTreeNodePositions = p}) (Sort.sorter opt nodes) pList
       newNodeSeq = S.fromList nodes' S.>< nodeSeq
 
-  (node S.<|) <$> makeTreeNodeInfos' newInodeSet opt' newNodeSeq
+  (node S.<|) <$> makeTreeNodeInfos' newInodes opt' newNodeSeq
   where
     opt' = opt {Option.level = Depth.decreaseDepth depth}
     depth = Option.level opt
