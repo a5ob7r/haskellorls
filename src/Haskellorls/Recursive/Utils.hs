@@ -1,5 +1,7 @@
 module Haskellorls.Recursive.Utils
-  ( InodeSet (..),
+  ( InodeSet,
+    emptyInodeSet,
+    singletonInodeSet,
     updateAlreadySeenInode,
   )
 where
@@ -10,6 +12,12 @@ import qualified Haskellorls.NodeInfo as Node
 import qualified System.Posix.Types as Types
 
 newtype InodeSet = InodeSet (S.Set Types.FileID)
+
+emptyInodeSet :: InodeSet
+emptyInodeSet = InodeSet S.empty
+
+singletonInodeSet :: Types.FileID -> InodeSet
+singletonInodeSet = InodeSet . S.singleton
 
 -- | Update already seen inode number set.
 updateAlreadySeenInode :: [Node.NodeInfo] -> State.State InodeSet [Node.NodeInfo]

@@ -16,7 +16,6 @@ import qualified Data.Foldable as Fold
 import Data.Functor
 import qualified Data.List as L
 import qualified Data.Monoid as M
-import qualified Data.Set as S
 import qualified Data.Set as Set
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
@@ -92,11 +91,11 @@ opToOps :: Recursive.InodeSet -> Option.Option -> Operation -> IO (Recursive.Ino
 opToOps inodeSet opt op = case op of
   PrintEntry {..}
     | Option.recursive opt && (not . Depth.isDepthZero . Option.level) opt -> mapM (pathToOp opt) paths <&> (newInodeSet,)
-    | otherwise -> pure (Recursive.InodeSet S.empty, [])
+    | otherwise -> pure (Recursive.emptyInodeSet, [])
     where
       (nodes, newInodeSet) = State.runState (Recursive.updateAlreadySeenInode $ filter (Node.isDirectory . Node.pfsNodeType . Node.getNodeStatus) entryNodes) inodeSet
       paths = map (\node -> entryPath Posix.</> Node.getNodePath node) nodes
-  _ -> pure (Recursive.InodeSet S.empty, [])
+  _ -> pure (Recursive.emptyInodeSet, [])
 
 pathToOp :: Option.Option -> FilePath -> IO Operation
 pathToOp opt path = do
@@ -125,7 +124,7 @@ buildDirectoryNodes opt path =
 buildInitialOperations :: Option.Option -> [FilePath] -> IO (Recursive.InodeSet, [Operation])
 buildInitialOperations opt paths = do
   nodeinfos <- mapM (Node.nodeInfo opt "") paths
-  let (nodes, inodeSet) = State.runState (Recursive.updateAlreadySeenInode $ Sort.sorter opt nodeinfos) $ Recursive.InodeSet S.empty
+  let (nodes, inodeSet) = State.runState (Recursive.updateAlreadySeenInode $ Sort.sorter opt nodeinfos) Recursive.emptyInodeSet
   let (dirs, files) = L.partition isDirectory nodes
       fileOp = [PrintEntry FILES "" files opt | not (null files)]
   dirOps <- mapM (pathToOp opt . Node.getNodePath) dirs

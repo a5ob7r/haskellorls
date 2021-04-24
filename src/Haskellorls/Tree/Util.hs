@@ -10,7 +10,6 @@ where
 import qualified Control.Monad.State.Strict as State
 import qualified Data.List.Extra as L
 import qualified Data.Sequence as S
-import qualified Data.Set as Set
 import qualified Haskellorls.Depth as Depth
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
@@ -37,7 +36,7 @@ makeSomeNewPositionsList' (x : xs) = L.snoc x MID : makeSomeNewPositionsList' xs
 makeTreeNodeInfos :: Option.Option -> FilePath -> IO (S.Seq Node.NodeInfo)
 makeTreeNodeInfos opt path = do
   node <- Node.nodeInfo opt "" path
-  let inodeSet = Recursive.InodeSet . Set.singleton . Node.pfsFileID $ Node.getNodeStatus node
+  let inodeSet = Recursive.singletonInodeSet . Node.pfsFileID $ Node.getNodeStatus node
   makeTreeNodeInfos' inodeSet opt $ S.singleton node
 
 -- | With error message output.
