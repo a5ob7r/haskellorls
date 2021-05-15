@@ -7,8 +7,7 @@ module Haskellorls
 where
 
 import qualified Data.Either as E
-import qualified Data.Text as T
-import qualified Data.Text.IO as T
+import Data.Version (showVersion)
 import qualified Haskellorls.Decorator as Decorator
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Quote.Utils as Quote
@@ -16,6 +15,7 @@ import qualified Haskellorls.Recursive as Recursive
 import qualified Haskellorls.Size.Utils as Size
 import qualified Haskellorls.Utils as Utils
 import qualified Options.Applicative as OA
+import Paths_haskellorls (version)
 import qualified System.Exit as Exit
 import qualified System.IO as IO
 
@@ -36,7 +36,7 @@ run args = do
   quotingStyle <- Quote.lookupQuotingStyle options
 
   if Option.version options
-    then showVersion
+    then putStrLn versionFromCabal
     else run' options {Option.blockSize = blockSize, Option.quotingStyle = quotingStyle, Option.toStdout = isConnectedToTerminal}
 
 run' :: Option.Option -> IO ()
@@ -70,8 +70,6 @@ argParser args = OA.handleParseResult presult
     pprefs = OA.prefs OA.helpLongEquals
     pinfo = Option.opts
 
-showVersion :: IO ()
-showVersion = T.putStrLn version
-
-version :: T.Text
-version = "v0.4.0.0"
+-- Get version info from .cabal.
+versionFromCabal :: String
+versionFromCabal = showVersion version

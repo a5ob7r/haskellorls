@@ -9,6 +9,8 @@
 ### Changed
 
 - Use ProxyFileStatus, which is original data type to have file attrinutes, to reduce memory consumption instead of System.Posix.Files.FileStatus.
+- Remove a prefix(`v`) from `--version` output.
+  - `v0.4.0.0` -> `0.4.0.0`
 
 ## 0.4.0.0 -- 2021-03-10
 
