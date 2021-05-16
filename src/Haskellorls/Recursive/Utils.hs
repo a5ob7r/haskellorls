@@ -1,20 +1,21 @@
 module Haskellorls.Recursive.Utils
   ( AlreadySeenInodes,
-    emptyInodes,
+    Default (..),
     singletonInodes,
     updateAlreadySeenInode,
   )
 where
 
 import qualified Control.Monad.State.Strict as State
+import Data.Default
 import qualified Data.Set as S
 import qualified Haskellorls.NodeInfo as Node
 import qualified System.Posix.Types as Types
 
 newtype AlreadySeenInodes = AlreadySeenInodes (S.Set Types.FileID)
 
-emptyInodes :: AlreadySeenInodes
-emptyInodes = AlreadySeenInodes S.empty
+instance Default AlreadySeenInodes where
+  def = AlreadySeenInodes S.empty
 
 singletonInodes :: Types.FileID -> AlreadySeenInodes
 singletonInodes = AlreadySeenInodes . S.singleton

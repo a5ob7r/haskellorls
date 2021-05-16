@@ -91,11 +91,11 @@ opToOps :: Recursive.AlreadySeenInodes -> Option.Option -> Operation -> IO (Recu
 opToOps inodes opt op = case op of
   PrintEntry {..}
     | Option.recursive opt && (not . Depth.isDepthZero . Option.level) opt -> mapM (pathToOp opt) paths <&> (newInodes,)
-    | otherwise -> pure (Recursive.emptyInodes, [])
+    | otherwise -> pure (Recursive.def, [])
     where
       (nodes, newInodes) = State.runState (Recursive.updateAlreadySeenInode $ filter (Node.isDirectory . Node.pfsNodeType . Node.getNodeStatus) entryNodes) inodes
       paths = map (\node -> entryPath Posix.</> Node.getNodePath node) nodes
-  _ -> pure (Recursive.emptyInodes, [])
+  _ -> pure (Recursive.def, [])
 
 pathToOp :: Option.Option -> FilePath -> IO Operation
 pathToOp opt path = do
@@ -124,7 +124,7 @@ buildDirectoryNodes opt path =
 buildInitialOperations :: Option.Option -> [FilePath] -> IO (Recursive.AlreadySeenInodes, [Operation])
 buildInitialOperations opt paths = do
   nodeinfos <- mapM (Node.nodeInfo opt "") paths
-  let (nodes, inodes) = State.runState (Recursive.updateAlreadySeenInode $ Sort.sorter opt nodeinfos) Recursive.emptyInodes
+  let (nodes, inodes) = State.runState (Recursive.updateAlreadySeenInode $ Sort.sorter opt nodeinfos) Recursive.def
   let (dirs, files) = L.partition isDirectory nodes
       fileOp = [PrintEntry FILES "" files opt | not (null files)]
   dirOps <- mapM (pathToOp opt . Node.getNodePath) dirs

@@ -80,6 +80,7 @@ library
   ghc-options:        -Wall
   build-depends:
     , containers
+    , data-default
     , directory
     , extra
     , filepath

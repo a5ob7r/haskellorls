@@ -12,7 +12,7 @@ import qualified Data.List.Extra as L
 import qualified Data.Map.Strict as M
 import qualified Data.Maybe as Maybe
 import qualified Data.Text as T
-import Haskellorls.LsColor.Type
+import Haskellorls.LsColor.Type hiding (def)
 
 lookupLsColor :: T.Text -> LsColorDict -> T.Text
 lookupLsColor = findLsColorWithDefault ""

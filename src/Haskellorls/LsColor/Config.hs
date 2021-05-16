@@ -9,6 +9,7 @@ module Haskellorls.LsColor.Config
   )
 where
 
+import Data.Default
 import qualified Data.Map.Strict as Map
 import qualified Data.Maybe as Maybe
 import qualified Data.Text as T
@@ -44,6 +45,37 @@ data Config = Config
     fileColorIndicator :: LsColor.LsColorDict,
     extensionColorConfig :: ExtensionConfig
   }
+
+instance Default Config where
+  def =
+    Config
+      { leftEscapeSequence = "\^[[",
+        rightEscapeSequence = "m",
+        endEscapeSequence = "",
+        resetEscapeSequence = "0",
+        normalEscapeSequence = "",
+        fileEscaseSequence = "",
+        directoryEscapeSequence = "01;34",
+        symlinkEscapeSequence = "01;36",
+        pipeEscapeSequence = "33",
+        socketEscapeSequence = "01;35",
+        blockDeviceEscapeSequence = "01;33",
+        charDeviceEscapeSequence = "01;33",
+        missingFileEscapeSequence = "",
+        orphanedSymlinkEscapeSequence = "",
+        executableEscapeSequence = "01;32",
+        doorEscapeSequence = "01;35",
+        setuidEscapeSequence = "37;41",
+        setguiEscapeSequence = "30;43",
+        stickyEscapeSequence = "37;44",
+        otherWritableEscapeSequence = "34;42",
+        stickyOtherWritableEscapeSequence = "30;42",
+        capabilityEscapeSequence = "30;41",
+        multiHardlinkEscapeSequence = "",
+        clearLineEscapeSequence = "\^[[K",
+        fileColorIndicator = LsColor.def,
+        extensionColorConfig = def
+      }
 
 data ExtensionConfig = ExtensionConfig
   { userReadPermBitEscapeSequence :: T.Text,
@@ -88,81 +120,50 @@ data ExtensionConfig = ExtensionConfig
     fileContextEscapeSequence :: T.Text
   }
 
-defaultConfig :: Config
-defaultConfig =
-  Config
-    { leftEscapeSequence = "\^[[",
-      rightEscapeSequence = "m",
-      endEscapeSequence = "",
-      resetEscapeSequence = "0",
-      normalEscapeSequence = "",
-      fileEscaseSequence = "",
-      directoryEscapeSequence = "01;34",
-      symlinkEscapeSequence = "01;36",
-      pipeEscapeSequence = "33",
-      socketEscapeSequence = "01;35",
-      blockDeviceEscapeSequence = "01;33",
-      charDeviceEscapeSequence = "01;33",
-      missingFileEscapeSequence = "",
-      orphanedSymlinkEscapeSequence = "",
-      executableEscapeSequence = "01;32",
-      doorEscapeSequence = "01;35",
-      setuidEscapeSequence = "37;41",
-      setguiEscapeSequence = "30;43",
-      stickyEscapeSequence = "37;44",
-      otherWritableEscapeSequence = "34;42",
-      stickyOtherWritableEscapeSequence = "30;42",
-      capabilityEscapeSequence = "30;41",
-      multiHardlinkEscapeSequence = "",
-      clearLineEscapeSequence = "\^[[K",
-      fileColorIndicator = LsColor.LsColorDict Map.empty,
-      extensionColorConfig = defaultExtensionConfig
-    }
-
-defaultExtensionConfig :: ExtensionConfig
-defaultExtensionConfig =
-  ExtensionConfig
-    { userReadPermBitEscapeSequence = "1;32",
-      userWritePermBitEscapeSequence = "1;31",
-      userExecPermBitFileEscapeSequence = "1;33",
-      userExecPermBitOtherEscapeSequence = "1;93",
-      groupReadPermBitEscapeSequence = "32",
-      groupWritePermBitEscapeSequence = "31",
-      groupExecPermBitEscapeSequence = "33",
-      otherReadPermBitEscapeSequence = "32",
-      otherWritePermBitEscapeSequence = "31",
-      otherExecPermBitEscapeSequence = "33",
-      sPermBitFileEscapeSequence = "96",
-      sPermBitOtherEscapeSequence = "96",
-      ownerYourselfEscapeSequence = "35",
-      ownerNotYourselfEscapeSequence = "",
-      groupYouBelongsToEscapeSequence = "35",
-      groupYouNotBelongsToEscapeSequence = "",
-      fileSizeNumberEscapeSequence = "1;32",
-      fileSizeNumberBypeEscapeSequence = "1;32",
-      fileSizeNumberKiloEscapeSequence = "1;32",
-      fileSizeNumberMegaEscapeSequence = "1;32",
-      fileSizeNumberGigaEscapeSequence = "1;32",
-      fileSizeNumberTeraEscapeSequence = "1;32",
-      fileSizeNumberPetaEscapeSequence = "1;32",
-      fileSizeNumberExaEscapeSequence = "1;32",
-      fileSizeNumberZettaEscapeSequence = "1;32",
-      fileSizeNumberYottaEscapeSequence = "1;32",
-      fileSizeUnitBypeEscapeSequence = "32",
-      fileSizeUnitKiloEscapeSequence = "32",
-      fileSizeUnitMegaEscapeSequence = "32",
-      fileSizeUnitGigaEscapeSequence = "32",
-      fileSizeUnitTeraEscapeSequence = "32",
-      fileSizeUnitPetaEscapeSequence = "32",
-      fileSizeUnitExaEscapeSequence = "32",
-      fileSizeUnitZettaEscapeSequence = "32",
-      fileSizeUnitYottaEscapeSequence = "32",
-      dateEscapeSequence = "34",
-      fileLinkEscapeSequence = "36",
-      fileInodeEscapeSequence = "36",
-      treeBranchEscapeSequence = "90",
-      fileContextEscapeSequence = "36"
-    }
+instance Default ExtensionConfig where
+  def =
+    ExtensionConfig
+      { userReadPermBitEscapeSequence = "1;32",
+        userWritePermBitEscapeSequence = "1;31",
+        userExecPermBitFileEscapeSequence = "1;33",
+        userExecPermBitOtherEscapeSequence = "1;93",
+        groupReadPermBitEscapeSequence = "32",
+        groupWritePermBitEscapeSequence = "31",
+        groupExecPermBitEscapeSequence = "33",
+        otherReadPermBitEscapeSequence = "32",
+        otherWritePermBitEscapeSequence = "31",
+        otherExecPermBitEscapeSequence = "33",
+        sPermBitFileEscapeSequence = "96",
+        sPermBitOtherEscapeSequence = "96",
+        ownerYourselfEscapeSequence = "35",
+        ownerNotYourselfEscapeSequence = "",
+        groupYouBelongsToEscapeSequence = "35",
+        groupYouNotBelongsToEscapeSequence = "",
+        fileSizeNumberEscapeSequence = "1;32",
+        fileSizeNumberBypeEscapeSequence = "1;32",
+        fileSizeNumberKiloEscapeSequence = "1;32",
+        fileSizeNumberMegaEscapeSequence = "1;32",
+        fileSizeNumberGigaEscapeSequence = "1;32",
+        fileSizeNumberTeraEscapeSequence = "1;32",
+        fileSizeNumberPetaEscapeSequence = "1;32",
+        fileSizeNumberExaEscapeSequence = "1;32",
+        fileSizeNumberZettaEscapeSequence = "1;32",
+        fileSizeNumberYottaEscapeSequence = "1;32",
+        fileSizeUnitBypeEscapeSequence = "32",
+        fileSizeUnitKiloEscapeSequence = "32",
+        fileSizeUnitMegaEscapeSequence = "32",
+        fileSizeUnitGigaEscapeSequence = "32",
+        fileSizeUnitTeraEscapeSequence = "32",
+        fileSizeUnitPetaEscapeSequence = "32",
+        fileSizeUnitExaEscapeSequence = "32",
+        fileSizeUnitZettaEscapeSequence = "32",
+        fileSizeUnitYottaEscapeSequence = "32",
+        dateEscapeSequence = "34",
+        fileLinkEscapeSequence = "36",
+        fileInodeEscapeSequence = "36",
+        treeBranchEscapeSequence = "90",
+        fileContextEscapeSequence = "36"
+      }
 
 config :: IO Config
 config = configFrom . split <$> getLSCOLORS <> getEXACOLORS
@@ -200,7 +201,6 @@ configFrom lsColors =
       extensionColorConfig = extensionConfigFrom lsColors
     }
   where
-    def = defaultConfig
     indicator = LsColor.colorIndicatorsFrom lsColors
     parametors = LsColor.getLsColorDict $ LsColor.parametorsFrom lsColors
 
@@ -249,7 +249,6 @@ extensionConfigFrom lsColors =
       fileContextEscapeSequence = fileContextEscapeSequence def
     }
   where
-    def = defaultExtensionConfig
     parametors = LsColor.getLsColorDict $ LsColor.parametorsFrom lsColors
 
 getLSCOLORS :: IO T.Text
