@@ -8,12 +8,14 @@ module Haskellorls.Recursive
     buildInitialOperations,
     exec,
     generateEntryLines,
+    LsState,
   )
 where
 
+import Control.Monad.IO.Class
+import qualified Control.Monad.RWS.Strict as RWS
 import qualified Control.Monad.State.Strict as State
 import qualified Data.Foldable as Fold
-import Data.Functor
 import qualified Data.List as L
 import qualified Data.Monoid as M
 import qualified Data.Set as Set
@@ -54,6 +56,8 @@ data Operation
 
 newtype Printer = Printer (Operation -> IO T.Text)
 
+type LsState = RWS.RWST (Option.Option, Printer) () Recursive.AlreadySeenInodes IO [Operation]
+
 -- | NOTE: Execute output operation with stack data structure. This way may
 -- cause performance down about total execution time. But user can see output
 -- to stdout immediately. It leads to good user experiences. This focuses large
@@ -63,39 +67,44 @@ newtype Printer = Printer (Operation -> IO T.Text)
 -- reduces text building cost maximally. But can not output until get all text
 -- and concatenate them. So it causes output delay. This is bad user
 -- experiences.
-exec :: Recursive.AlreadySeenInodes -> Printer -> [Operation] -> IO ()
-exec _ _ [] = pure ()
-exec inodes printer (op : stack) = do
-  (newInodes, ops) <- eval inodes printer op
+exec :: [Operation] -> LsState
+exec [] = pure []
+exec (op : stack) = do
+  ops <- eval op
   let entries = (\es -> if null es then es else Newline : es) $ L.intersperse Newline ops
 
-  exec newInodes printer (entries <> stack)
+  exec $ entries <> stack
 
-eval :: Recursive.AlreadySeenInodes -> Printer -> Operation -> IO (Recursive.AlreadySeenInodes, [Operation])
-eval inodes (Printer printer) op = case op of
+eval :: Operation -> LsState
+eval op = case op of
   Newline -> do
-    T.putStrLn ""
-    pure (inodes, [])
+    RWS.liftIO $ T.putStrLn ""
+    pure []
   PrintEntry {..} -> do
-    T.putStrLn =<< printer op
-    opToOps inodes opt op
+    (_, Printer printer) <- RWS.ask
+    RWS.liftIO $ T.putStrLn =<< printer op
+    RWS.withRWST (\(_, p) s -> ((opt, p), s)) $ opToOps op
     where
       opt = entryOption {Option.level = Depth.decreaseDepth $ Option.level entryOption}
   PrintTree {..} -> do
-    T.putStrLn =<< printer op
-    opToOps inodes opt op
+    (_, Printer printer) <- RWS.ask
+    RWS.liftIO $ T.putStrLn =<< printer op
+    RWS.withRWST (\(_, p) s -> ((opt, p), s)) $ opToOps op
     where
       opt = entryOption {Option.level = Depth.decreaseDepth $ Option.level entryOption}
 
-opToOps :: Recursive.AlreadySeenInodes -> Option.Option -> Operation -> IO (Recursive.AlreadySeenInodes, [Operation])
-opToOps inodes opt op = case op of
-  PrintEntry {..}
-    | Option.recursive opt && (not . Depth.isDepthZero . Option.level) opt -> mapM (pathToOp opt) paths <&> (newInodes,)
-    | otherwise -> pure (Recursive.def, [])
-    where
-      (nodes, newInodes) = State.runState (Recursive.updateAlreadySeenInode $ filter (Node.isDirectory . Node.pfsNodeType . Node.getNodeStatus) entryNodes) inodes
-      paths = map (\node -> entryPath Posix.</> Node.getNodePath node) nodes
-  _ -> pure (Recursive.def, [])
+opToOps :: Operation -> LsState
+opToOps op = do
+  (opt, _) <- RWS.ask
+  case op of
+    PrintEntry {..}
+      | Option.recursive opt && (not . Depth.isDepthZero . Option.level) opt -> do
+        inodes <- RWS.get
+        let (nodes, newInodes) = State.runState (Recursive.updateAlreadySeenInode $ filter (Node.isDirectory . Node.pfsNodeType . Node.getNodeStatus) entryNodes) inodes
+            paths = map (\node -> entryPath Posix.</> Node.getNodePath node) nodes
+        RWS.put newInodes
+        liftIO $ mapM (pathToOp opt) paths
+    _ -> pure []
 
 pathToOp :: Option.Option -> FilePath -> IO Operation
 pathToOp opt path = do
