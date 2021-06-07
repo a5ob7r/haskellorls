@@ -21,10 +21,8 @@ flag selinux
 
 library
   import:             common-deps
-
-  -- cabal-fmt: expand src
-  exposed-modules:
-    Haskellorls
+  exposed-modules:    Haskellorls
+  other-modules:
     Haskellorls.Color.Option
     Haskellorls.Color.Type
     Haskellorls.Color.Utils
@@ -72,8 +70,8 @@ library
     Haskellorls.Tree.Util
     Haskellorls.Utils
     Haskellorls.WrappedText
+    Paths_haskellorls
 
-  other-modules:      Paths_haskellorls
   hs-source-dirs:     src
   default-language:   Haskell2010
   default-extensions: StrictData
