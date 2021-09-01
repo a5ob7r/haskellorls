@@ -33,20 +33,13 @@ jobs:
       - name: Add path
         run: echo "$HOME/.cabal/bin" >> $GITHUB_PATH
 
-      - name: Install ormolu
-        run: cabal install --overwrite-policy=always ormolu
-
       - name: Install cabal-fmt
         run: cabal install --overwrite-policy=always cabal-fmt
 
-      - name: Install hlint
-        run: cabal install --overwrite-policy=always hlint
-
-      - name: Run ormolu
-        run: ormolu --mode check $(find app src -name '*.hs')
+      - uses: mrkkrp/ormolu-action@v3
 
       - name: Run cabal-fmt
         run: cabal-fmt --check --Werror haskellorls.cabal
 
       - name: Run hlint
-        run: hlint .
+        run: curl -sSL https://raw.github.com/ndmitchell/hlint/master/misc/run.sh | sh -s .
