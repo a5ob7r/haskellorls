@@ -1,3 +1,5 @@
 packages: ./
 
+executable-static: true
+
 index-state: 2021-08-28T07:27:14Z
