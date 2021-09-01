@@ -288,7 +288,7 @@ buildLines nodes printers types = map cat $ buildGrid nodes printers types
     cat = List.intercalate (WT.toWrappedTextSingleton " ")
 
 leftPadding :: AlignmenterBuilder
-leftPadding c n | n > -1 = padding c (- n)
+leftPadding c n | n > -1 = padding c (-n)
 leftPadding c n = noPadding c n
 
 rightPadding :: AlignmenterBuilder
