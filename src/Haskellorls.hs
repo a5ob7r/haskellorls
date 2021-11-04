@@ -49,7 +49,7 @@ run' opt = do
       opt' = opt {Option.dereferenceCommandLine = False, Option.dereferenceCommandLineSymlinkToDir = False}
 
   statuses <- mapM Utils.getSymbolicLinkStatus targets
-  let (errs, exists) = E.partitionEithers $ zipWith (\s p -> E.either Left (const $ Right p) s) statuses targets
+  let (errs, exists) = E.partitionEithers $ zipWith (\s p -> s >>= const (Right p)) statuses targets
 
   mapM_ (IO.hPrint IO.stderr) errs
 
