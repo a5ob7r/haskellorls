@@ -45,8 +45,8 @@ quote style wt@WT.WrappedText {..} = case style of
     | '\'' `Set.member` setA -> quote DoubleQuote wt
     | Set.size (Set.intersection setA setB) > 0 -> quote SingleQuote wt
     | otherwise -> case style of
-      DynamicQuote -> quote SpacePadding wt
-      _ -> quote NoQuote wt
+        DynamicQuote -> quote SpacePadding wt
+        _ -> quote NoQuote wt
     where
       setA = textToSet wtWord
       setB = Set.fromList charactorsNeedQuote

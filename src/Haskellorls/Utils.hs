@@ -50,9 +50,9 @@ destFileStatusRecursive dirPath basePath = do
     Nothing -> pure Nothing
     Just status
       | Files.isSymbolicLink status ->
-        readSymbolicLink (linkDestPath dirPath basePath) >>= \case
-          Left _ -> pure Nothing
-          Right link -> destFileStatusRecursive dirPath link
+          readSymbolicLink (linkDestPath dirPath basePath) >>= \case
+            Left _ -> pure Nothing
+            Right link -> destFileStatusRecursive dirPath link
       | otherwise -> pure $ Just status
 
 linkDestPath :: FilePath -> FilePath -> FilePath

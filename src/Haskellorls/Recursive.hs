@@ -98,11 +98,11 @@ opToOps op = do
   case op of
     PrintEntry {..}
       | Option.recursive opt && (not . Depth.isDepthZero . Option.level) opt -> do
-        inodes <- RWS.get
-        let (nodes, newInodes) = State.runState (Recursive.updateAlreadySeenInode $ filter (Node.isDirectory . Node.pfsNodeType . Node.getNodeStatus) entryNodes) inodes
-            paths = map (\node -> entryPath Posix.</> Node.getNodePath node) nodes
-        RWS.put newInodes
-        liftIO $ mapM (pathToOp opt) paths
+          inodes <- RWS.get
+          let (nodes, newInodes) = State.runState (Recursive.updateAlreadySeenInode $ filter (Node.isDirectory . Node.pfsNodeType . Node.getNodeStatus) entryNodes) inodes
+              paths = map (\node -> entryPath Posix.</> Node.getNodePath node) nodes
+          RWS.put newInodes
+          liftIO $ mapM (pathToOp opt) paths
     _ -> pure []
 
 pathToOp :: Option.Option -> FilePath -> IO Operation

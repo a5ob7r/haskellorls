@@ -47,3 +47,44 @@ jobs:
 
       - name: Run tests
         run: goldplate golden-test --pretty-diff
+
+  format:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        ghc: ['8.10.7']
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: haskell/actions/setup@v1
+        id: setup-haskell
+        with:
+          ghc-version: ${{ matrix.ghc }}
+          cabal-version: 3.6.2.0
+
+      - uses: actions/cache@v2
+        with:
+          path: ${{ steps.setup-haskell.outputs.cabal-store }}
+          key: format-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project') }}
+          restore-keys: |
+            format-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project') }}
+            format-${{ runner.os }}-${{ matrix.ghc }}-
+
+      - name: Update cabal index state
+        run: cabal update
+
+      - name: Add path
+        run: echo ~/.cabal/bin >> "$GITHUB_PATH"
+
+      - name: Install cabal-fmt
+        run: cabal install --overwrite-policy=always cabal-fmt
+
+      - uses: mrkkrp/ormolu-action@v5
+
+      - name: Run cabal-fmt
+        run: cabal-fmt --check --Werror haskellorls.cabal
+
+      - name: Run hlint
+        run: curl -sSL https://raw.github.com/ndmitchell/hlint/master/misc/run.sh | sh -s .

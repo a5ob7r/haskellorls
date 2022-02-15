@@ -23,6 +23,6 @@ lookupBlockSize opt = case Option.blockSize opt of
   DefaultSize
     | Option.kibibyte opt -> pure DefaultSize
     | otherwise -> do
-      size <- lookupBlockSizeEnvVar <&> maybe Nothing (parseBlockSize . T.pack)
-      return $ Maybe.fromMaybe DefaultSize size
+        size <- lookupBlockSizeEnvVar <&> maybe Nothing (parseBlockSize . T.pack)
+        return $ Maybe.fromMaybe DefaultSize size
   size -> pure size

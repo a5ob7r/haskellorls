@@ -49,13 +49,13 @@ makeTreeNodeInfos' inodes opt (node S.:<| nodeSeq) = do
         | Depth.isDepthZero depth || not (Node.isDirectory . Node.pfsNodeType $ Node.getNodeStatus node) -> pure []
         -- Force hide '.' and '..' to avoid infinite loop.
         | Option.all opt -> do
-          Utils.listContents opt {Option.all = False, Option.almostAll = True} path >>= \case
-            Left errMsg -> IO.hPrint IO.stderr errMsg >> pure []
-            Right contents' -> pure contents'
+            Utils.listContents opt {Option.all = False, Option.almostAll = True} path >>= \case
+              Left errMsg -> IO.hPrint IO.stderr errMsg >> pure []
+              Right contents' -> pure contents'
         | otherwise ->
-          Utils.listContents opt path >>= \case
-            Left errMsg -> IO.hPrint IO.stderr errMsg >> pure []
-            Right contents' -> pure contents'
+            Utils.listContents opt path >>= \case
+              Left errMsg -> IO.hPrint IO.stderr errMsg >> pure []
+              Right contents' -> pure contents'
 
   let pList = makeSomeNewPositionsList (length contents) $ Node.getTreeNodePositions node
 

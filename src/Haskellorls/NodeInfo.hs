@@ -202,29 +202,29 @@ nodeInfo opt dirname basename = do
           | Option.dereference opt
               || Option.dereferenceCommandLine opt
               || (Option.dereferenceCommandLineSymlinkToDir opt && Files.isDirectory s) ->
-            NodeInfo
-              { getNodePath = basename,
-                getNodeStatus = proxyFileStatus s,
-                getNodeContext = T.pack context,
-                getNodeDirName = dirname,
-                getNodeLinkInfo = Nothing,
-                getTreeNodePositions = []
-              }
+              NodeInfo
+                { getNodePath = basename,
+                  getNodeStatus = proxyFileStatus s,
+                  getNodeContext = T.pack context,
+                  getNodeDirName = dirname,
+                  getNodeLinkInfo = Nothing,
+                  getTreeNodePositions = []
+                }
           | otherwise ->
-            NodeInfo
-              { getNodePath = basename,
-                getNodeStatus = proxyFileStatus status,
-                getNodeContext = T.pack context,
-                getNodeDirName = dirname,
-                getNodeLinkInfo =
-                  Just . Right $
-                    LinkNodeInfo
-                      { getLinkNodePath = p,
-                        getLinkNodeStatus = proxyFileStatus s,
-                        getLinkNodeContext = T.pack destContext
-                      },
-                getTreeNodePositions = []
-              }
+              NodeInfo
+                { getNodePath = basename,
+                  getNodeStatus = proxyFileStatus status,
+                  getNodeContext = T.pack context,
+                  getNodeDirName = dirname,
+                  getNodeLinkInfo =
+                    Just . Right $
+                      LinkNodeInfo
+                        { getLinkNodePath = p,
+                          getLinkNodeStatus = proxyFileStatus s,
+                          getLinkNodeContext = T.pack destContext
+                        },
+                  getTreeNodePositions = []
+                }
         _ ->
           NodeInfo
             { getNodePath = basename,
