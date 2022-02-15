@@ -108,7 +108,7 @@ iconMapSource =
       (".json", "\xfb25"),
       (".lock", "\xf023"),
       ("tags", "\xf02c"),
-      ("lisence", "\xe60a"),
+      ("license", "\xe60a"),
       (".pdf", "\xf1c1"),
       (".iso", "\xfaed"),
       -- Adobe
