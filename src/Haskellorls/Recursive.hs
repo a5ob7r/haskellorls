@@ -1,3 +1,4 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -5,15 +6,16 @@
 module Haskellorls.Recursive
   ( buildPrinter,
     buildInitialOperations,
-    exec,
     generateEntryLines,
-    LsState,
+    run,
+    LsConf (..),
+    LsState (..),
   )
 where
 
 import Control.Monad.IO.Class
-import qualified Control.Monad.RWS.Strict as RWS
-import qualified Control.Monad.State.Strict as State
+import Control.Monad.Reader
+import Control.Monad.State.Strict
 import qualified Data.Foldable as Fold
 import qualified Data.List as L
 import qualified Data.Monoid as M
@@ -40,75 +42,72 @@ import qualified System.IO as IO
 
 data EntryType = FILES | SINGLEDIR | DIRECTORY
 
+data Entry = Entry
+  { entryType :: EntryType,
+    entryPath :: FilePath,
+    entryNodes :: [Node.NodeInfo],
+    entryOption :: Option.Option,
+    entryDepth :: Depth.Depth
+  }
+
+data Tree = Tree
+  { treePath :: FilePath,
+    treeOption :: Option.Option
+  }
+
 data Operation
   = Newline
-  | PrintEntry
-      { entryType :: EntryType,
-        entryPath :: FilePath,
-        entryNodes :: [Node.NodeInfo],
-        entryOption :: Option.Option
-      }
-  | PrintTree
-      { entryPath :: FilePath,
-        entryOption :: Option.Option
-      }
+  | PrintEntry Entry
+  | PrintTree Tree
 
 newtype Printer = Printer (Operation -> IO T.Text)
 
-type LsState = RWS.RWST (Option.Option, Printer) () Recursive.AlreadySeenInodes IO [Operation]
+newtype LsConf = LsConf (Option.Option, Printer)
 
--- | NOTE: Execute output operation with stack data structure. This way may
--- cause performance down about total execution time. But user can see output
--- to stdout immediately. It leads to good user experiences. This focuses large
--- output situation like --recursive/-R option.
+newtype LsState = LsState ([Operation], Recursive.AlreadySeenInodes)
+
+-- | A central piece monad of haskellorls.
 --
--- Another way is concatenating many text using builder aa long as possible. It
--- reduces text building cost maximally. But can not output until get all text
--- and concatenate them. So it causes output delay. This is bad user
--- experiences.
-exec :: [Operation] -> LsState
-exec [] = pure []
-exec (op : stack) = do
-  ops <- eval op
-  let entries = (\es -> if null es then es else Newline : es) $ L.intersperse Newline ops
+-- NOTE: This is inspired from XMonad.
+-- https://github.com/xmonad/xmonad/blob/a902fefaf1f27f1a21dc35ece15e7dbb573f3d95/src/XMonad/Core.hs#L158
+newtype RuntimeContext a = RuntimeContext (ReaderT LsConf (StateT LsState IO) a)
+  deriving (Functor, Applicative, Monad, MonadIO, MonadReader LsConf, MonadState LsState)
 
-  exec $ entries <> stack
+type Ls = RuntimeContext ()
 
-eval :: Operation -> LsState
-eval op = case op of
-  Newline -> do
-    RWS.liftIO $ T.putStrLn ""
-    pure []
-  PrintEntry {..} -> do
-    (_, Printer printer) <- RWS.ask
-    RWS.liftIO $ T.putStrLn =<< printer op
-    RWS.withRWST (\(_, p) s -> ((opt, p), s)) $ opToOps op
-    where
-      opt = entryOption {Option.level = Depth.decreaseDepth $ Option.level entryOption}
-  PrintTree {..} -> do
-    (_, Printer printer) <- RWS.ask
-    RWS.liftIO $ T.putStrLn =<< printer op
-    RWS.withRWST (\(_, p) s -> ((opt, p), s)) $ opToOps op
-    where
-      opt = entryOption {Option.level = Depth.decreaseDepth $ Option.level entryOption}
+runLs :: LsConf -> LsState -> Ls -> IO ((), LsState)
+runLs c s (RuntimeContext a) = runStateT (runReaderT a c) s
 
-opToOps :: Operation -> LsState
-opToOps op = do
-  (opt, _) <- RWS.ask
-  case op of
-    PrintEntry {..}
-      | Option.recursive opt && (not . Depth.isDepthZero . Option.level) opt -> do
-          inodes <- RWS.get
-          let (nodes, newInodes) = State.runState (Recursive.updateAlreadySeenInode $ filter (Node.isDirectory . Node.pfsNodeType . Node.getNodeStatus) entryNodes) inodes
-              paths = map (\node -> entryPath Posix.</> Node.getNodePath node) nodes
-          RWS.put newInodes
-          liftIO $ mapM (pathToOp opt) paths
-    _ -> pure []
+run :: LsConf -> LsState -> IO ((), LsState)
+run c s = runLs c s go
+  where
+    go =
+      get >>= \case
+        LsState ([], _) -> pure ()
+        s@(LsState (op : _, _)) -> do
+          c@(LsConf (_, Printer printer)) <- ask
 
-pathToOp :: Option.Option -> FilePath -> IO Operation
-pathToOp opt path = do
+          liftIO $ T.putStrLn =<< printer op
+          put =<< liftIO (newLsState c s)
+
+          go
+
+newLsState :: LsConf -> LsState -> IO LsState
+newLsState _ s@(LsState ([], _)) = pure s
+newLsState c@(LsConf (opt, _)) s@(LsState (op : ops, inodes)) = case op of
+  PrintEntry (Entry {..})
+    | Option.recursive opt && entryDepth < Option.level opt -> do
+        let (nodes, newInodes) = runState (Recursive.updateAlreadySeenInode $ filter (Node.isDirectory . Node.pfsNodeType . Node.getNodeStatus) entryNodes) inodes
+            paths = map (\node -> entryPath Posix.</> Node.getNodePath node) nodes
+        ops' <- mapM (pathToOp c (Depth.increaseDepth entryDepth)) paths
+        let entries = (\es -> if null es then es else Newline : es) $ L.intersperse Newline ops'
+        pure $ LsState (entries <> ops, newInodes)
+  _ -> pure $ LsState (ops, inodes)
+
+pathToOp :: LsConf -> Depth.Depth -> FilePath -> IO Operation
+pathToOp (LsConf (opt, _)) depth path = do
   nodes <- buildDirectoryNodes opt path
-  pure $ PrintEntry DIRECTORY path nodes opt
+  pure . PrintEntry $ Entry DIRECTORY path nodes opt depth
 
 -- | With error message output.
 buildDirectoryNodes :: Option.Option -> FilePath -> IO [Node.NodeInfo]
@@ -129,22 +128,23 @@ buildDirectoryNodes opt path =
       | otherwise = Utils.exclude hidePtn
 
 -- | Assumes all paths exist.
-buildInitialOperations :: Option.Option -> [FilePath] -> IO (Recursive.AlreadySeenInodes, [Operation])
-buildInitialOperations opt paths = do
+buildInitialOperations :: LsConf -> [FilePath] -> IO (Recursive.AlreadySeenInodes, [Operation])
+buildInitialOperations c@(LsConf (opt, _)) paths = do
   nodeinfos <- mapM (Node.nodeInfo opt "") paths
-  let (nodes, inodes) = State.runState (Recursive.updateAlreadySeenInode $ Sort.sorter opt nodeinfos) Recursive.def
+  let (nodes, inodes) = runState (Recursive.updateAlreadySeenInode $ Sort.sorter opt nodeinfos) Recursive.def
   let (dirs, files) = L.partition isDirectory nodes
-      fileOp = [PrintEntry FILES "" files opt | not (null files)]
-  dirOps <- mapM (pathToOp opt . Node.getNodePath) dirs
+      fileOp = [PrintEntry (Entry FILES "" files opt depth) | not (null files)]
+  dirOps <- mapM (pathToOp c depth . Node.getNodePath) dirs
   let dirOps' =
         if Option.tree opt
-          then map (\PrintEntry {..} -> PrintTree entryPath entryOption) dirOps
+          then map (\(PrintEntry (Entry {..})) -> PrintTree (Tree entryPath entryOption)) dirOps
           else case dirOps of
             -- Considers no argument to be also a single directory.
-            [d] | null files && length (Option.targets opt) < 2 -> [d {entryType = SINGLEDIR}]
+            [PrintEntry e] | null files && length (Option.targets opt) < 2 -> [PrintEntry (e {entryType = SINGLEDIR})]
             _ -> dirOps
   pure (inodes, L.intersperse Newline $ fileOp <> dirOps')
   where
+    depth = Depth.increaseDepth Depth.makeZero
     isDirectory
       | Option.directory opt = const False
       | otherwise = Node.isDirectory . Node.pfsNodeType . Node.getNodeStatus
@@ -155,7 +155,7 @@ buildPrinter opt printers = Printer $ fmap (TL.toStrict . TLB.toLazyText . M.mco
 generateEntryLines :: Option.Option -> Decorator.Printers -> Operation -> IO [TLB.Builder]
 generateEntryLines opt printers op = case op of
   Newline -> pure []
-  PrintEntry {..} -> do
+  PrintEntry (Entry {..}) -> do
     let opt' = if shouldQuote entryNodes then opt else opt {Option.noQuote = True}
         nodes' = Decorator.buildLines entryNodes printers $ Decorator.buildPrinterTypes opt'
         addHeader = case entryType of
@@ -177,8 +177,8 @@ generateEntryLines opt printers op = case op of
     colLen <- Grid.virtualColumnSize opt
 
     return . addHeader . addTotalBlockSize . Grid.renderGrid $ Grid.buildValidGrid opt colLen nodes'
-  PrintTree {..} -> do
-    nodes <- Fold.toList <$> Tree.makeTreeNodeInfos opt entryPath
+  PrintTree (Tree {..}) -> do
+    nodes <- Fold.toList <$> Tree.makeTreeNodeInfos opt treePath
     let opt' = if shouldQuote nodes then opt else opt {Option.noQuote = True}
     pure . map (M.mconcat . map wtToBuilder) $ Decorator.buildLines nodes printers $ Decorator.buildPrinterTypes opt'
     where

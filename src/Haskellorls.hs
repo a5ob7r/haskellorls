@@ -6,7 +6,6 @@ module Haskellorls
   )
 where
 
-import qualified Control.Monad.RWS.Strict as RWS
 import qualified Data.Either as E
 import Data.Version (showVersion)
 import qualified Haskellorls.Decorator as Decorator
@@ -55,10 +54,13 @@ run' opt = do
 
   printers <- Decorator.buildPrinters opt'
   let printer = Recursive.buildPrinter opt' printers
+      c = Recursive.LsConf (opt, printer)
 
-  (inodes, ops) <- Recursive.buildInitialOperations opt exists
+  (inodes, ops) <- Recursive.buildInitialOperations c exists
 
-  _ <- RWS.runRWST (Recursive.exec ops) (opt, printer) inodes
+  let s = Recursive.LsState (ops, inodes)
+
+  _ <- Recursive.run c s
 
   if null errs
     then Exit.exitSuccess
