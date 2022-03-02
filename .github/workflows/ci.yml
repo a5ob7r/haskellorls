@@ -17,6 +17,8 @@ jobs:
         ghc: ['9.2.1', '9.0.2', '8.10.7', '8.8.4', '8.6.5']
 
     steps:
+      - uses: actions/checkout@v2
+
       - uses: haskell/actions/setup@v1
         id: setup-haskell
         with:
@@ -37,8 +39,6 @@ jobs:
       - name: Install goldplate
         run: cabal install --overwrite-policy=always -j goldplate
 
-      - uses: actions/checkout@v2
-
       - name: Build
         run: cabal install --overwrite-policy=always -j
 
@@ -49,6 +49,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v2
+
       - uses: haskell/actions/setup@v1
         id: setup-haskell
         with:
@@ -68,8 +70,6 @@ jobs:
 
       - name: Install cabal-fmt
         run: cabal install --overwrite-policy=always -j cabal-fmt
-
-      - uses: actions/checkout@v2
 
       - name: Run cabal-fmt
         run: cabal-fmt --check --Werror haskellorls.cabal
