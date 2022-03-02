@@ -1,5 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-
 module Haskellorls.Format.Option
   ( formatParser,
     module Haskellorls.Format.Type,

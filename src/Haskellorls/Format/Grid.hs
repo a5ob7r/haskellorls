@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Haskellorls.Format.Grid
   ( virtualColumnSize,
     buildValidGrid,

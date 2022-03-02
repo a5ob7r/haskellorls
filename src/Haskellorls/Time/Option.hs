@@ -1,5 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-
 module Haskellorls.Time.Option
   ( timeParser,
     timeStyleParser,

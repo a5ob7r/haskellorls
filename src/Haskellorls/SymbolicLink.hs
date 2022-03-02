@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Haskellorls.SymbolicLink
   ( linkName,
     coloredLinkName,
@@ -7,7 +5,7 @@ module Haskellorls.SymbolicLink
 where
 
 import qualified Data.Text as T
-import qualified Haskellorls.LsColor.Config as Color
+import qualified Haskellorls.LsColor.Color as Color
 import qualified Haskellorls.Name.Decorator as Name
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
@@ -24,7 +22,7 @@ linkName opt node = case Node.getNodeLinkInfo node of
     link = Name.nodeName $ Node.toFileInfo node
     prefix' = WT.toWrappedTextSingleton prefix
 
-coloredLinkName :: Option.Option -> Color.Config -> Node.NodeInfo -> [WT.WrappedText]
+coloredLinkName :: Option.Option -> Color.LsColors -> Node.NodeInfo -> [WT.WrappedText]
 coloredLinkName opt config node = case Node.getNodeLinkInfo node of
   Nothing -> []
   _ -> prefix' <> Quote.quote style link

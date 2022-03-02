@@ -1,6 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
-
 module Haskellorls.Decorator
   ( Printer,
     Printers (..),
@@ -17,16 +14,17 @@ import qualified Data.Text as T
 import qualified Data.Time.Clock.POSIX as Clock
 import qualified Data.Time.Format as TFormat
 import qualified Data.Time.LocalTime as LClock
+import Haskellorls.Class
 import qualified Haskellorls.Color.Utils as Color
 import qualified Haskellorls.Context as Context
-import qualified Haskellorls.Field as Field
+import qualified Haskellorls.Filemode as Filemode
 import qualified Haskellorls.Format.Util as Format
 import qualified Haskellorls.Icon as Icon
 import qualified Haskellorls.Indicator.Decorator as Indicator
 import qualified Haskellorls.Indicator.Type as Indicator
 import qualified Haskellorls.Inode as Inode
 import qualified Haskellorls.Link as Link
-import qualified Haskellorls.LsColor.Config as Color
+import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.Name.Decorator as Name
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
@@ -153,7 +151,8 @@ alignmenterBuilderSelectorFor aType = case aType of
 
 buildPrinters :: Option.Option -> IO Printers
 buildPrinters opt = do
-  cConfig <- Color.config
+  lscolors <- Color.lsColors
+  lsicons <- Color.lsIcons
   uidSubstTable <- if Option.numericUidGid opt then return Map.empty else Ownership.getUserIdSubstTable
   gidSubstTable <- if Option.numericUidGid opt then return Map.empty else Ownership.getGroupIdSubstTable
   userInfo <- Ownership.userInfo
@@ -165,47 +164,47 @@ buildPrinters opt = do
 
       fileInodePrinter =
         if shouldColorize && isEnableExtraColor
-          then Inode.nodeInodeNumberWithColor cConfig
+          then Inode.nodeInodeNumberWithColor lscolors
           else WT.toWrappedTextSingleton . T.pack . show . Inode.nodeInodeNumber
 
       fileBlockPrinter =
         if shouldColorize && isEnableExtraColor
-          then Size.coloredFileBlockSize cConfig opt
+          then Size.coloredFileBlockSize lscolors opt
           else Size.fileBlockSize opt
 
       filemodeFieldPrinter =
         if shouldColorize && isEnableExtraColor
-          then Field.showFilemodeFieldWithColor cConfig
-          else Field.showFilemodeField
+          then Filemode.showFilemodeFieldWithColor lscolors
+          else Filemode.showFilemodeField
 
       fileLinkPrinter =
         if shouldColorize && isEnableExtraColor
-          then Link.nodeLinksNumberWithColor cConfig
+          then Link.nodeLinksNumberWithColor lscolors
           else WT.toWrappedTextSingleton . T.pack . show . Link.nodeLinksNumber
 
       fileOwnerPrinter =
         if shouldColorize && isEnableExtraColor
-          then Ownership.coloredOwnerName uidSubstTable cConfig userInfo
+          then Ownership.coloredOwnerName uidSubstTable lscolors userInfo
           else WT.toWrappedTextSingleton . Ownership.ownerName uidSubstTable
 
       fileGroupPrinter =
         if shouldColorize && isEnableExtraColor
-          then Ownership.coloredGroupName gidSubstTable cConfig userInfo
+          then Ownership.coloredGroupName gidSubstTable lscolors userInfo
           else WT.toWrappedTextSingleton . Ownership.groupName gidSubstTable
 
       fileContextPrinter =
         if shouldColorize && isEnableExtraColor
-          then Context.colorizedContext cConfig
+          then Context.colorizedContext lscolors
           else WT.toWrappedTextSingleton . Context.context
 
       fileSizePrinter =
         if shouldColorize && isEnableExtraColor
-          then Size.coloredFileSize cConfig opt
+          then Size.coloredFileSize lscolors opt
           else Size.fileSize opt
 
       fileTimePrinter =
         if shouldColorize && isEnableExtraColor
-          then Time.coloredTimeStyleFunc cConfig timeZone TFormat.defaultTimeLocale currentTime timeStyle . fileTime
+          then Time.coloredTimeStyleFunc lscolors timeZone TFormat.defaultTimeLocale currentTime timeStyle . fileTime
           else WT.toWrappedTextSingleton . timeStyleFunc . fileTime
         where
           timeStyleFunc = Time.timeStyleFunc timeZone TFormat.defaultTimeLocale currentTime timeStyle
@@ -216,26 +215,26 @@ buildPrinters opt = do
       -- e.g. $ echo -e '\e[48;5;196;38;5;232;1m\e[0m'
       nodeTreePrinter =
         if shouldColorize
-          then Tree.treeBranchWithColor cConfig . Node.getTreeNodePositions
+          then Tree.treeBranchWithColor lscolors . Node.getTreeNodePositions
           else WT.toWrappedTextSingleton . Tree.treeBranch . Node.getTreeNodePositions
-      nodeIconPrinter = flip Icon.lookupIcon Icon.defaultConfig
+      nodeIconPrinter = flip Icon.lookupIcon lsicons
       buildNamePrinter option =
         if shouldColorize
-          then Name.colorizedNodeNameWrapper option cConfig
+          then Name.colorizedNodeNameWrapper option lscolors
           else Name.nodeNameWrapper option
       nodeNamePrinter = buildNamePrinter opt {Option.noQuote = True}
       nodeNameWithDQuotePrinter = buildNamePrinter opt
       nodeIndicatorPrinter = Indicator.buildIndicatorPrinter opt
       nodeLinkPrinter =
         if shouldColorize
-          then SymbolicLink.coloredLinkName opt cConfig
+          then SymbolicLink.coloredLinkName opt lscolors
           else SymbolicLink.linkName opt
       nodeNamePrinters = NodeNamePrinters {..}
       nodeNameWithDQuotePrinters = NodeNamePrinters {nodeNamePrinter = nodeNameWithDQuotePrinter, ..}
 
   return $
     Printers
-      { fileFieldPrinter = filemodeFieldPrinter . Field.filemodeField . Node.getNodeStatus,
+      { fileFieldPrinter = filemodeFieldPrinter . from . Node.getNodeStatus,
         fileNamePrinter = buildNodeNamePrinter opt nodeNamePrinters,
         fileNameWithDQuotePrinter = buildNodeNamePrinter opt nodeNameWithDQuotePrinters,
         ..

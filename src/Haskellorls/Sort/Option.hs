@@ -1,5 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-
 module Haskellorls.Sort.Option
   ( sortParser,
     noneSortParser,

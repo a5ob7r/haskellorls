@@ -1,6 +1,3 @@
-{-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE LambdaCase #-}
-
 module Haskellorls.Depth
   ( Depth,
     makeDepth,

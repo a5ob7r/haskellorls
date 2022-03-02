@@ -23,7 +23,7 @@ where
 
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
-import qualified Haskellorls.LsColor.Config as Color
+import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
 import Haskellorls.Ownership.Type
 import qualified Haskellorls.WrappedText as WT
@@ -65,18 +65,18 @@ numericOwnerName = T.pack . show . numericOwnerName'
 numericOwnerName' :: Node.NodeInfo -> Types.UserID
 numericOwnerName' = Node.pfsUserID . Node.getNodeStatus
 
-coloredOwnerName :: UserIdSubstTable -> Color.Config -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
+coloredOwnerName :: UserIdSubstTable -> Color.LsColors -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
 coloredOwnerName table = coloredOwnerAs (ownerName table)
 
-coloredNumericOwnerName :: Color.Config -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
+coloredNumericOwnerName :: Color.LsColors -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
 coloredNumericOwnerName = coloredOwnerAs numericOwnerName
 
-coloredOwnerAs :: (Node.NodeInfo -> T.Text) -> Color.Config -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
-coloredOwnerAs f config user node = [Color.toWrappedText config getter (f node)]
+coloredOwnerAs :: (Node.NodeInfo -> T.Text) -> Color.LsColors -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
+coloredOwnerAs f lscolors user node = [Color.toWrappedText lscolors getter (f node)]
   where
     getter
-      | currentUserID == nodeOwnerID = Color.ownerYourselfEscapeSequence . Color.extensionColorConfig
-      | otherwise = Color.ownerNotYourselfEscapeSequence . Color.extensionColorConfig
+      | currentUserID == nodeOwnerID = Color.lookup $ Myself nodeOwnerID
+      | otherwise = Color.lookup $ NotMyself nodeOwnerID
     currentUserID = userInfoUserID user
     nodeOwnerID = Node.pfsUserID $ Node.getNodeStatus node
 
@@ -94,18 +94,18 @@ numericGroupName = T.pack . show . numericGroupName'
 numericGroupName' :: Node.NodeInfo -> Types.GroupID
 numericGroupName' = Node.pfsGroupID . Node.getNodeStatus
 
-coloredGroupName :: GroupIdSubstTable -> Color.Config -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
+coloredGroupName :: GroupIdSubstTable -> Color.LsColors -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
 coloredGroupName table = coloredGroupAs (groupName table)
 
-coloredNumericGroupName :: Color.Config -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
+coloredNumericGroupName :: Color.LsColors -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
 coloredNumericGroupName = coloredGroupAs numericGroupName
 
-coloredGroupAs :: (Node.NodeInfo -> T.Text) -> Color.Config -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
-coloredGroupAs f config user node = [Color.toWrappedText config getter (f node)]
+coloredGroupAs :: (Node.NodeInfo -> T.Text) -> Color.LsColors -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
+coloredGroupAs f lscolors user node = [Color.toWrappedText lscolors getter (f node)]
   where
     getter
-      | nodeGroupID `elem` groupIDs = Color.groupYouBelongsToEscapeSequence . Color.extensionColorConfig
-      | otherwise = Color.groupYouNotBelongsToEscapeSequence . Color.extensionColorConfig
+      | nodeGroupID `elem` groupIDs = Color.lookup $ Belongs nodeGroupID
+      | otherwise = Color.lookup $ NotBelongs nodeGroupID
     groupIDs = userInfoGroupIDs user
     nodeGroupID = Node.pfsGroupID $ Node.getNodeStatus node
 

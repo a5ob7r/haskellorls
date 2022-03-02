@@ -1,7 +1,3 @@
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE RecordWildCards #-}
-
 module Haskellorls.NodeInfo
   ( NodeType (..),
     NodeInfo (..),
@@ -13,9 +9,6 @@ module Haskellorls.NodeInfo
   )
 where
 
-import qualified Control.Exception.Base as Exception
-import qualified Data.Either as Either
-import qualified Data.List as L
 import qualified Data.Text as T
 import qualified Data.Time.Clock.POSIX as Clock
 import qualified Haskellorls.Option as Option
@@ -27,6 +20,8 @@ import qualified System.Posix.Files as Files
 import qualified System.Posix.Types as Types
 
 #ifdef SELINUX
+import qualified Control.Exception.Base as Exception
+import qualified Data.Either as Either
 import qualified System.Linux.SELinux as SELinux
 #endif
 
@@ -268,13 +263,13 @@ toFileInfo node@NodeInfo {..} = case getNodeLinkInfo of
 -- NOTE: This is not tested on SELinux enabled environment so maybe break.
 -- NOTE: Disable ormolu because it does not support CPP extension.
 fileContext :: FilePath -> IO String
-fileContext path =
 #ifdef SELINUX
+fileContext path =
   do
     context <- Exception.try (SELinux.getFileCon path) :: IO (Either Exception.IOException String)
     pure $ Either.fromRight defaultContext context
 #else
-  pure defaultContext
+fileContext _ = pure defaultContext
 #endif
 {- ORMOLU_ENABLE -}
 

@@ -1,5 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-
 module Haskellorls.Color.Option
   ( colorParser,
     extraColorParser,

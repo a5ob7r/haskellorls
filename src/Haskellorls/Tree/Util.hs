@@ -1,6 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE MultiWayIf #-}
-
 module Haskellorls.Tree.Util
   ( makeSomeNewPositionsList,
     makeTreeNodeInfos,

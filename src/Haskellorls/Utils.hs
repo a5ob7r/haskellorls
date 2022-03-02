@@ -1,6 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 module Haskellorls.Utils
   ( getSymbolicLinkStatus,
     getFileStatus,

@@ -1,6 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
-
 module Haskellorls.Size.Option
   ( blockSizeParser,
     parseBlockSize,

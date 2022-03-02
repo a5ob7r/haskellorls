@@ -1,6 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
-
 -- |
 -- Derive block size parameter
 -- 1. Use '--block-size=SIZE' option value if it is passed.
@@ -18,7 +15,7 @@ module Haskellorls.Size.Decorator
 where
 
 import qualified Data.Text as T
-import qualified Haskellorls.LsColor.Config as Color
+import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import Haskellorls.Size.Type
@@ -55,8 +52,8 @@ toTotalBlockSize' opt = fileSize' opt' . sum . map toFileBlockSize
 fileBlockSize :: Option.Option -> Node.NodeInfo -> [WT.WrappedText]
 fileBlockSize opt node = toTotalBlockSize opt [fileBlockSizeOf node]
 
-coloredFileBlockSize :: Color.Config -> Option.Option -> Node.NodeInfo -> [WT.WrappedText]
-coloredFileBlockSize config opt node = coloredFileSize' config $ toTotalBlockSize' opt [fileBlockSizeOf node]
+coloredFileBlockSize :: Color.LsColors -> Option.Option -> Node.NodeInfo -> [WT.WrappedText]
+coloredFileBlockSize lscolors opt node = coloredFileSize' lscolors $ toTotalBlockSize' opt [fileBlockSizeOf node]
 
 toFileBlockSize :: Types.FileOffset -> Types.FileOffset
 toFileBlockSize size = a' * unitBlockSize
@@ -90,17 +87,17 @@ fileSize' opt size = case Option.blockSize opt of
         SI -> False
         _ -> True
 
-coloredFileSize :: Color.Config -> Option.Option -> Node.NodeInfo -> [WT.WrappedText]
-coloredFileSize config opt node = coloredFileSize' config . fileSize' opt $ fileSizeOf node
+coloredFileSize :: Color.LsColors -> Option.Option -> Node.NodeInfo -> [WT.WrappedText]
+coloredFileSize lscolors opt node = coloredFileSize' lscolors . fileSize' opt $ fileSizeOf node
 
-coloredFileSize' :: Color.Config -> FileSizeComponent -> [WT.WrappedText]
-coloredFileSize' config FileSizeComponent {..} =
-  [ Color.toWrappedText config sizeSelector fileSizeNumber,
-    Color.toWrappedText config unitSelector fileSizeUnit
+coloredFileSize' :: Color.LsColors -> FileSizeComponent -> [WT.WrappedText]
+coloredFileSize' lscolors FileSizeComponent {..} =
+  [ Color.toWrappedText lscolors sizeSelector fileSizeNumber,
+    Color.toWrappedText lscolors unitSelector fileSizeUnit
   ]
   where
-    unitSelector = unitEscapeSequenceSelector bScale
-    sizeSelector = sizeEscapeSequenceSelector bScale
+    sizeSelector = Color.lookup $ SizeNumberScale bScale
+    unitSelector = Color.lookup $ SizeUnitScale bScale
     bScale
       | fileSizeKibi = detectKibiBlockSizeType fileSizeRawNumber
       | otherwise = detectSiBlockSizeType fileSizeRawNumber
@@ -206,30 +203,6 @@ detectKibiBlockSizeType offset
   | offset < sizeZi = EXA
   | offset < sizeYi = ZETTA
   | otherwise = YOTTA
-
-sizeEscapeSequenceSelector :: BaseScale -> Color.Config -> T.Text
-sizeEscapeSequenceSelector bScale = case bScale of
-  BYTE -> Color.fileSizeNumberEscapeSequence . Color.extensionColorConfig
-  KILO -> Color.fileSizeNumberKiloEscapeSequence . Color.extensionColorConfig
-  MEGA -> Color.fileSizeNumberMegaEscapeSequence . Color.extensionColorConfig
-  GIGA -> Color.fileSizeNumberGigaEscapeSequence . Color.extensionColorConfig
-  TERA -> Color.fileSizeNumberTeraEscapeSequence . Color.extensionColorConfig
-  PETA -> Color.fileSizeNumberPetaEscapeSequence . Color.extensionColorConfig
-  EXA -> Color.fileSizeNumberExaEscapeSequence . Color.extensionColorConfig
-  ZETTA -> Color.fileSizeNumberZettaEscapeSequence . Color.extensionColorConfig
-  YOTTA -> Color.fileSizeNumberYottaEscapeSequence . Color.extensionColorConfig
-
-unitEscapeSequenceSelector :: BaseScale -> Color.Config -> T.Text
-unitEscapeSequenceSelector bScale = case bScale of
-  BYTE -> Color.fileSizeUnitBypeEscapeSequence . Color.extensionColorConfig
-  KILO -> Color.fileSizeUnitKiloEscapeSequence . Color.extensionColorConfig
-  MEGA -> Color.fileSizeUnitMegaEscapeSequence . Color.extensionColorConfig
-  GIGA -> Color.fileSizeUnitGigaEscapeSequence . Color.extensionColorConfig
-  TERA -> Color.fileSizeUnitTeraEscapeSequence . Color.extensionColorConfig
-  PETA -> Color.fileSizeUnitPetaEscapeSequence . Color.extensionColorConfig
-  EXA -> Color.fileSizeUnitExaEscapeSequence . Color.extensionColorConfig
-  ZETTA -> Color.fileSizeUnitZettaEscapeSequence . Color.extensionColorConfig
-  YOTTA -> Color.fileSizeUnitYottaEscapeSequence . Color.extensionColorConfig
 
 kibiUnit :: BaseScale -> T.Text
 kibiUnit bScale = case bScale of

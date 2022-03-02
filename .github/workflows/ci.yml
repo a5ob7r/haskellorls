@@ -17,8 +17,6 @@ jobs:
         ghc: ['9.2.1', '9.0.2', '8.10.7', '8.8.4', '8.6.5']
 
     steps:
-      - uses: actions/checkout@v2
-
       - uses: haskell/actions/setup@v1
         id: setup-haskell
         with:
@@ -39,26 +37,22 @@ jobs:
       - name: Install goldplate
         run: cabal install --overwrite-policy=always -j goldplate
 
+      - uses: actions/checkout@v2
+
       - name: Build
         run: cabal install --overwrite-policy=always -j
 
       - name: Run tests
         run: goldplate golden-test --pretty-diff
 
-  format:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        ghc: ['8.10.7']
+  cabal-format:
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-
       - uses: haskell/actions/setup@v1
         id: setup-haskell
         with:
-          ghc-version: ${{ matrix.ghc }}
+          ghc-version: 8.10.7
           cabal-version: 3.6.2.0
 
       - uses: actions/cache@v2
@@ -75,8 +69,16 @@ jobs:
       - name: Install cabal-fmt
         run: cabal install --overwrite-policy=always -j cabal-fmt
 
+      - uses: actions/checkout@v2
+
       - name: Run cabal-fmt
         run: cabal-fmt --check --Werror haskellorls.cabal
+
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
 
       - name: Run ormolu
         uses: mrkkrp/ormolu-action@v5

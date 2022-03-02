@@ -5,12 +5,18 @@
 -- KB : K, si
 -- kB : K, si
 module Haskellorls.Size.Type
-  ( Scale (..),
+  ( SizeNumberScale (..),
+    SizeUnitScale (..),
+    Scale (..),
     BaseScale (..),
     ScaleSuffix (..),
     BlockSize (..),
   )
 where
+
+newtype SizeNumberScale = SizeNumberScale {unSizeNumberScale :: BaseScale}
+
+newtype SizeUnitScale = SizeUnitScale {unSizeUnitScale :: BaseScale}
 
 data Scale
   = NoScale

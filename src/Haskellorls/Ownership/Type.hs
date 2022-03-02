@@ -1,6 +1,8 @@
 module Haskellorls.Ownership.Type
   ( UserInfo (..),
     userInfo,
+    UserID (..),
+    GroupID (..),
   )
 where
 
@@ -21,3 +23,7 @@ userInfo = do
       { userInfoUserID = uID,
         userInfoGroupIDs = gIDs
       }
+
+data UserID = Myself Types.UserID | NotMyself Types.UserID
+
+data GroupID = Belongs Types.GroupID | NotBelongs Types.GroupID

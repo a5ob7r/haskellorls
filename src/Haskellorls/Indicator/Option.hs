@@ -1,5 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-
 module Haskellorls.Indicator.Option
   ( indicatorStyleParser,
     module Haskellorls.Indicator.Type,

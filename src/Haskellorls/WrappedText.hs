@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Haskellorls.WrappedText
   ( WrappedText (..),
     wtLength,

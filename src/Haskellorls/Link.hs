@@ -5,7 +5,8 @@ module Haskellorls.Link
 where
 
 import qualified Data.Text as T
-import qualified Haskellorls.LsColor.Config as Color
+import Haskellorls.Link.Type
+import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.WrappedText as WT
 import qualified System.Posix.Types as Types
@@ -13,8 +14,8 @@ import qualified System.Posix.Types as Types
 nodeLinksNumber :: Node.NodeInfo -> Types.LinkCount
 nodeLinksNumber = Node.pfsLinkCount . Node.getNodeStatus
 
-nodeLinksNumberWithColor :: Color.Config -> Node.NodeInfo -> [WT.WrappedText]
-nodeLinksNumberWithColor config node = [Color.toWrappedText config getter linksNumber]
+nodeLinksNumberWithColor :: Color.LsColors -> Node.NodeInfo -> [WT.WrappedText]
+nodeLinksNumberWithColor lscolors node = [Color.toWrappedText lscolors getter linksNumber]
   where
     linksNumber = T.pack . show $ nodeLinksNumber node
-    getter = Color.fileLinkEscapeSequence . Color.extensionColorConfig
+    getter = Color.lookup . LinkCount $ nodeLinksNumber node

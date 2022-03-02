@@ -13,10 +13,16 @@
 -- - birth time(birth, creation)
 
 module Haskellorls.Time.Type
-  ( TimeStyle (..),
+  ( Datetime (..),
+    TimeStyle (..),
     TimeType (..),
   )
 where
+
+import qualified Data.Time.Clock as Clock
+
+data Datetime = ModificationTime Clock.UTCTime | AccessTime Clock.UTCTime | ChangeTime Clock.UTCTime
+  deriving (Eq, Ord, Show)
 
 -- WIP: locale and Prefixed with 'posix-' is not implemented yet.
 data TimeStyle

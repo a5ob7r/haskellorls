@@ -1,6 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 module Haskellorls.Tree.Decorator
   ( treeBranch,
     treeBranchWithColor,
@@ -8,7 +5,7 @@ module Haskellorls.Tree.Decorator
 where
 
 import qualified Data.Text as T
-import qualified Haskellorls.LsColor.Config as Color
+import qualified Haskellorls.LsColor as Color
 import Haskellorls.Tree.Type
 import qualified Haskellorls.WrappedText as WT
 
@@ -17,10 +14,12 @@ treeBranch [] = ""
 treeBranch [x] = toTextOnLast x
 treeBranch (x : xs) = toTextOnInit x <> treeBranch xs
 
-treeBranchWithColor :: Color.Config -> [TreeNodePosition] -> [WT.WrappedText]
-treeBranchWithColor config xs = [Color.toWrappedText config getter $ treeBranch xs]
+treeBranchWithColor :: Color.LsColors -> [TreeNodePosition] -> [WT.WrappedText]
+treeBranchWithColor _ [] = []
+treeBranchWithColor lscolors xs@(x : _) = [Color.toWrappedText lscolors getter branch]
   where
-    getter = Color.treeBranchEscapeSequence . Color.extensionColorConfig
+    branch = treeBranch xs
+    getter = Color.lookup x
 
 toTextOnInit :: TreeNodePosition -> T.Text
 toTextOnInit = \case
