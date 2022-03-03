@@ -29,7 +29,7 @@ Enable extra coloring contains file permission, file owner and group and so on.
 Show file icon before fine name.
 Matching algolithm between icons and filenames is same to `LS_COLORS`.
 
-You can configure the rule for matching between filenames and icons via an environment variable `LS_ICONS`. See [a5ob7r/LS_ICONS](https://github.com/a5ob7r/LS_ICONS) if you would like to configure it.
+You can configure the rule for matching between filenames and icons via an environment variable `LS_ICONS`. By default, `haskellorls` only has rules for filetypes and no them for filename patterns. See [a5ob7r/LS_ICONS](https://github.com/a5ob7r/LS_ICONS) if you would like to add filename pattern rules or configure them.
 
 ### --tree
 

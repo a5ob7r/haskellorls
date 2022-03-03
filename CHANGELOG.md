@@ -13,6 +13,10 @@
 - Remove a prefix(`v`) from `--version` output.
   - `v0.4.0.0` -> `0.4.0.0`
 
+### Removed
+
+- Default filename pattern rules for the `--icons` option.
+
 ## 0.4.0.0 -- 2021-03-10
 
 ### Added
