@@ -46,7 +46,11 @@ jobs:
         run: goldplate golden-test --pretty-diff
 
   cabal-format:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        ghc: ['8.10.7']
 
     steps:
       - uses: actions/checkout@v2
@@ -54,7 +58,7 @@ jobs:
       - uses: haskell/actions/setup@v1
         id: setup-haskell
         with:
-          ghc-version: 8.10.7
+          ghc-version: ${{ matrix.ghc }}
           cabal-version: 3.6.2.0
 
       - uses: actions/cache@v2
@@ -98,3 +102,14 @@ jobs:
         with:
           fail-on: status
           path: '["app/", "src/"]'
+
+  actionlint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run actionlint
+        run: |
+          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint -color
