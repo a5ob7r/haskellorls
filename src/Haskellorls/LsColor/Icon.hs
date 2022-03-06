@@ -71,7 +71,7 @@ instance Dictionary NodeInfo Icon LsIcons where
       BlockDevise -> block
       CharDevise -> char
       Orphan -> orphan
-      Directory -> Query filename `query` l <|> directory
+      Directory -> directory
       _ -> Query filename `query` l <|> file
       where
         filename = T.pack . Posix.takeFileName $ getNodePath n
