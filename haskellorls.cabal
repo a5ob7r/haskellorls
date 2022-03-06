@@ -14,16 +14,18 @@ extra-source-files:
   CHANGELOG.md
   README.md
 
-common common-deps
+common common-options
   -- NOTE: 'time' (>=1.12) requires 'base' (>= 4.13).
-  build-depends: base >=4.12 && <4.17
+  build-depends:    base >=4.12 && <4.17
+  default-language: Haskell2010
+  ghc-options:      -W -Wall -Wcompat
 
 flag selinux
   description: Enable SELinux support
   default:     False
 
 library
-  import:             common-deps
+  import:             common-options
   exposed-modules:    Haskellorls
   other-modules:
     Haskellorls.Class
@@ -89,7 +91,6 @@ library
     Paths_haskellorls
 
   hs-source-dirs:     src
-  default-language:   Haskell2010
   default-extensions:
     CPP
     DeriveFunctor
@@ -105,7 +106,6 @@ library
     TupleSections
     UndecidableInstances
 
-  ghc-options:        -Wall
   build-depends:
     , containers            ^>=0.6.5
     , data-default          ^>=0.7.1
@@ -126,9 +126,7 @@ library
     cpp-options:   -DSELINUX
 
 executable haskellorls
-  import:           common-deps
-  main-is:          Main.hs
-  hs-source-dirs:   app
-  default-language: Haskell2010
-  ghc-options:      -Wall
-  build-depends:    haskellorls
+  import:         common-options
+  main-is:        Main.hs
+  hs-source-dirs: app
+  build-depends:  haskellorls
