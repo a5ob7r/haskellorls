@@ -2,7 +2,6 @@ module Haskellorls.Utils
   ( getSymbolicLinkStatus,
     getFileStatus,
     readSymbolicLink,
-    destFileStatus,
     destFileStatusRecursive,
     linkDestPath,
     listContents,
@@ -16,10 +15,11 @@ module Haskellorls.Utils
   )
 where
 
-import qualified Control.Exception.Base as Exception
+import Control.Exception.Safe
+import Control.Monad.IO.Class
 import qualified Data.Char as C
 import qualified Data.Either as E
-import qualified Data.Either.Extra as E
+import Data.Functor
 import qualified Data.List as L
 import qualified Data.Text as T
 import qualified Haskellorls.Option as Option
@@ -29,28 +29,24 @@ import qualified System.FilePath.Glob as Glob
 import qualified System.FilePath.Posix as Posix
 import qualified System.Posix.Files as Files
 
-getSymbolicLinkStatus :: FilePath -> IO (Either Exception.IOException Files.FileStatus)
-getSymbolicLinkStatus path = Exception.try $ Files.getSymbolicLinkStatus path
+getSymbolicLinkStatus :: (MonadThrow m, MonadIO m) => FilePath -> m Files.FileStatus
+getSymbolicLinkStatus = liftIO . Files.getSymbolicLinkStatus
 
-getFileStatus :: FilePath -> IO (Either Exception.IOException Files.FileStatus)
-getFileStatus path = Exception.try $ Files.getFileStatus path
+getFileStatus :: (MonadThrow m, MonadIO m) => FilePath -> m Files.FileStatus
+getFileStatus = liftIO . Files.getFileStatus
 
-readSymbolicLink :: FilePath -> IO (Either Exception.IOException FilePath)
-readSymbolicLink path = Exception.try $ Files.readSymbolicLink path
+readSymbolicLink :: (MonadThrow m, MonadIO m) => FilePath -> m FilePath
+readSymbolicLink = liftIO . Files.readSymbolicLink
 
-destFileStatus :: FilePath -> IO (Maybe Files.FileStatus)
-destFileStatus path = E.eitherToMaybe <$> getFileStatus path
-
-destFileStatusRecursive :: FilePath -> FilePath -> IO (Maybe Files.FileStatus)
+destFileStatusRecursive :: (MonadThrow m, MonadIO m) => FilePath -> FilePath -> m Files.FileStatus
 destFileStatusRecursive dirPath basePath = do
-  destFileStatus (linkDestPath dirPath basePath) >>= \case
-    Nothing -> pure Nothing
-    Just status
-      | Files.isSymbolicLink status ->
-          readSymbolicLink (linkDestPath dirPath basePath) >>= \case
-            Left _ -> pure Nothing
-            Right link -> destFileStatusRecursive dirPath link
-      | otherwise -> pure $ Just status
+  s <- getFileStatus (linkDestPath dirPath basePath)
+
+  if Files.isSymbolicLink s
+    then do
+      link <- readSymbolicLink (linkDestPath dirPath basePath)
+      destFileStatusRecursive dirPath link
+    else pure s
 
 linkDestPath :: FilePath -> FilePath -> FilePath
 linkDestPath parPath linkPath
@@ -60,8 +56,8 @@ linkDestPath parPath linkPath
 isAbsPath :: FilePath -> Bool
 isAbsPath path = "/" `L.isPrefixOf` path
 
-listContents :: Option.Option -> FilePath -> IO (Either Exception.IOException [FilePath])
-listContents opt path = E.mapRight (ignoreExcluder . hideExcluder . ignoreFilter) <$> list path
+listContents :: (MonadThrow m, MonadIO m) => Option.Option -> FilePath -> m [FilePath]
+listContents opt path = list path <&> ignoreExcluder . hideExcluder . ignoreFilter
   where
     list
       | Option.all opt || Option.noneSortExtra opt = listAllEntries
@@ -80,14 +76,14 @@ listContents opt path = E.mapRight (ignoreExcluder . hideExcluder . ignoreFilter
       ptn -> exclude ptn
     isShowHiddenEntries = Option.all opt || Option.almostAll opt
 
-listAllEntries :: FilePath -> IO (Either Exception.IOException [FilePath])
-listAllEntries path = Exception.try $ Directory.getDirectoryContents path
+listAllEntries :: (MonadThrow m, MonadIO m) => FilePath -> m [FilePath]
+listAllEntries = liftIO . Directory.getDirectoryContents
 
-listSemiAllEntries :: FilePath -> IO (Either Exception.IOException [FilePath])
-listSemiAllEntries path = Exception.try $ Directory.listDirectory path
+listSemiAllEntries :: (MonadThrow m, MonadIO m) => FilePath -> m [FilePath]
+listSemiAllEntries = liftIO . Directory.listDirectory
 
-listEntries :: FilePath -> IO (Either Exception.IOException [FilePath])
-listEntries path = E.mapRight (filter $ not . isHiddenEntries) <$> listSemiAllEntries path
+listEntries :: (MonadThrow m, MonadIO m) => FilePath -> m [FilePath]
+listEntries path = listSemiAllEntries path <&> filter (not . isHiddenEntries)
 
 isHiddenEntries :: FilePath -> Bool
 isHiddenEntries [] = False
@@ -106,7 +102,7 @@ partitionExistOrNotPathes :: [FilePath] -> IO ([FilePath], [FilePath])
 partitionExistOrNotPathes pathes = E.partitionEithers <$> mapM validatePathExistence pathes
 
 validatePathExistence :: FilePath -> IO (Either FilePath FilePath)
-validatePathExistence path = E.either (const $ Left path) (const $ Right path) <$> getSymbolicLinkStatus path
+validatePathExistence path = E.either (const $ Left path) (const $ Right path) <$> tryIO (liftIO $ getSymbolicLinkStatus path)
 
 -- | Assumes not Latin1 charactor has double width of Latin1 charactor for display.
 textLengthForDisplay :: T.Text -> Int

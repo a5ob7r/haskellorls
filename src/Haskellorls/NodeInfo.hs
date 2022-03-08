@@ -9,19 +9,22 @@ module Haskellorls.NodeInfo
   )
 where
 
+import Control.Exception.Safe
+import Control.Monad.IO.Class
+import qualified Data.Either.Extra as E
+import Data.Functor
 import qualified Data.Text as T
 import qualified Data.Time.Clock.POSIX as Clock
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Tree.Type as Tree
 import qualified Haskellorls.Utils as Utils
 import qualified System.FilePath.Posix as Posix
-import qualified System.IO as IO
 import qualified System.Posix.Files as Files
 import qualified System.Posix.Types as Types
 
 #ifdef SELINUX
 import qualified Control.Exception.Base as Exception
-import qualified Data.Either as Either
+import qualified Data.Either as E
 import qualified System.Linux.SELinux as SELinux
 #endif
 
@@ -161,21 +164,20 @@ data LinkNodeInfo = LinkNodeInfo
 
 newtype OrphanedLinkNodeInfo = OrphanedLinkNodeInfo {getOrphanedNodeLinkPath :: FilePath}
 
-nodeInfo :: Option.Option -> FilePath -> FilePath -> IO NodeInfo
+-- | Create a filenode infomation from a filepath.
+nodeInfo :: (MonadCatch m, MonadIO m) => Option.Option -> FilePath -> FilePath -> m NodeInfo
 nodeInfo opt dirname basename = do
-  status <- Files.getSymbolicLinkStatus path
+  status <- Utils.getSymbolicLinkStatus path
   context <- fileContext path
+
   if Files.isSymbolicLink status
     then do
-      linkPath <- Utils.readSymbolicLink path
-      case linkPath of
-        Left e -> IO.hPrint IO.stderr e
-        _ -> pure ()
+      linkPath <- tryIO $ Utils.readSymbolicLink path
 
       destStatus <- do
         case linkPath of
           -- Dereference file status if a status presents symbolic link.
-          Right p -> Utils.destFileStatusRecursive path p
+          Right p -> tryIO (Utils.destFileStatusRecursive path p) <&> E.eitherToMaybe
           _ -> pure Nothing
 
       destContext <- do
@@ -262,12 +264,12 @@ toFileInfo node@NodeInfo {..} = case getNodeLinkInfo of
 -- |
 -- NOTE: This is not tested on SELinux enabled environment so maybe break.
 -- NOTE: Disable ormolu because it does not support CPP extension.
-fileContext :: FilePath -> IO String
+fileContext :: MonadIO m => FilePath -> m String
 #ifdef SELINUX
 fileContext path =
   do
-    context <- Exception.try (SELinux.getFileCon path) :: IO (Either Exception.IOException String)
-    pure $ Either.fromRight defaultContext context
+    context <- tryIO (SELinux.getFileCon path)
+    pure $ E.fromRight defaultContext context
 #else
 fileContext _ = pure defaultContext
 #endif

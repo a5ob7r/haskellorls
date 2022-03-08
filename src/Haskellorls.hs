@@ -7,6 +7,7 @@ where
 import qualified Data.Either as E
 import Data.Version (showVersion)
 import qualified Haskellorls.Decorator as Decorator
+import Haskellorls.Exception
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Quote.Utils as Quote
 import qualified Haskellorls.Recursive as Recursive
@@ -45,10 +46,10 @@ run' opt = do
       -- Only dereferences on command line arguments.
       opt' = opt {Option.dereferenceCommandLine = False, Option.dereferenceCommandLineSymlinkToDir = False}
 
-  statuses <- mapM Utils.getSymbolicLinkStatus targets
+  statuses <- mapM (tryIO . Utils.getSymbolicLinkStatus) targets
   let (errs, exists) = E.partitionEithers $ zipWith (\s p -> s >>= const (Right p)) statuses targets
 
-  mapM_ (IO.hPrint IO.stderr) errs
+  mapM_ printErr errs
 
   printers <- Decorator.buildPrinters opt'
   let printer = Recursive.buildPrinter opt' printers

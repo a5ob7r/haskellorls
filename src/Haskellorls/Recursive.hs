@@ -11,6 +11,7 @@ where
 import Control.Monad.IO.Class
 import Control.Monad.Reader
 import Control.Monad.State.Strict
+import qualified Data.Either as E
 import qualified Data.Foldable as Fold
 import qualified Data.List as L
 import qualified Data.Monoid as M
@@ -21,6 +22,7 @@ import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as TLB
 import qualified Haskellorls.Decorator as Decorator
 import qualified Haskellorls.Depth as Depth
+import Haskellorls.Exception
 import qualified Haskellorls.Format.Grid as Grid
 import qualified Haskellorls.Format.Util as Format
 import qualified Haskellorls.NodeInfo as Node
@@ -33,7 +35,6 @@ import qualified Haskellorls.Tree.Util as Tree
 import qualified Haskellorls.Utils as Utils
 import qualified Haskellorls.WrappedText as WT
 import qualified System.FilePath.Posix as Posix
-import qualified System.IO as IO
 
 data EntryType = FILES | SINGLEDIR | DIRECTORY
 
@@ -94,22 +95,22 @@ newLsState c@(LsConf (opt, _)) s@(LsState (op : ops, inodes)) = case op of
     | Option.recursive opt && entryDepth < Option.level opt -> do
         let (nodes, newInodes) = runState (Recursive.updateAlreadySeenInode $ filter (Node.isDirectory . Node.pfsNodeType . Node.getNodeStatus) entryNodes) inodes
             paths = map (\node -> entryPath Posix.</> Node.getNodePath node) nodes
-        ops' <- mapM (pathToOp c (Depth.increaseDepth entryDepth)) paths
+        (errs, ops') <- E.partitionEithers <$> mapM (tryIO . pathToOp c (Depth.increaseDepth entryDepth)) paths
+        mapM_ printErr errs
         let entries = (\es -> if null es then es else Newline : es) $ L.intersperse Newline ops'
         pure $ LsState (entries <> ops, newInodes)
   _ -> pure $ LsState (ops, inodes)
 
-pathToOp :: LsConf -> Depth.Depth -> FilePath -> IO Operation
+pathToOp :: (MonadCatch m, MonadIO m) => LsConf -> Depth.Depth -> FilePath -> m Operation
 pathToOp (LsConf (opt, _)) depth path = do
   nodes <- buildDirectoryNodes opt path
   pure . PrintEntry $ Entry DIRECTORY path nodes opt depth
 
 -- | With error message output.
-buildDirectoryNodes :: Option.Option -> FilePath -> IO [Node.NodeInfo]
-buildDirectoryNodes opt path =
-  Utils.listContents opt path >>= \case
-    Left errMsg -> IO.hPrint IO.stderr errMsg >> pure []
-    Right contents -> Sort.sorter opt <$> (mapM (Node.nodeInfo opt path) . excluder) contents
+buildDirectoryNodes :: (MonadCatch m, MonadIO m) => Option.Option -> FilePath -> m [Node.NodeInfo]
+buildDirectoryNodes opt path = do
+  contents <- Utils.listContents opt path
+  Sort.sorter opt <$> (mapM (Node.nodeInfo opt path) . excluder) contents
   where
     excluder = ignoreExcluder . hideExcluder
     ignorePtn = Option.ignore opt
@@ -123,9 +124,12 @@ buildDirectoryNodes opt path =
       | otherwise = Utils.exclude hidePtn
 
 -- | Assumes all paths exist.
-buildInitialOperations :: LsConf -> [FilePath] -> IO (Recursive.AlreadySeenInodes, [Operation])
+buildInitialOperations :: (MonadCatch m, MonadIO m) => LsConf -> [FilePath] -> m (Recursive.AlreadySeenInodes, [Operation])
 buildInitialOperations c@(LsConf (opt, _)) paths = do
-  nodeinfos <- mapM (Node.nodeInfo opt "") paths
+  (errs, nodeinfos) <- E.partitionEithers <$> mapM (tryIO . Node.nodeInfo opt "") paths
+
+  mapM_ (liftIO . printErr) errs
+
   let (nodes, inodes) = runState (Recursive.updateAlreadySeenInode $ Sort.sorter opt nodeinfos) Recursive.def
   let (dirs, files) = L.partition isDirectory nodes
       fileOp = [PrintEntry (Entry FILES "" files opt depth) | not (null files)]
