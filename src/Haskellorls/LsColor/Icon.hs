@@ -12,7 +12,7 @@ import Data.Bifunctor
 import Data.Default
 import Data.Functor
 import qualified Data.Map.Strict as M
-import qualified Data.Maybe as Maybe
+import Data.Maybe
 import Data.String
 import qualified Data.Text as T
 import Haskellorls.Class
@@ -26,7 +26,7 @@ lsIcons :: IO LsIcons
 lsIcons = getLSICONS <&> deserialize
 
 getLSICONS :: IO T.Text
-getLSICONS = Maybe.maybe "" T.pack <$> Env.lookupEnv "LS_ICONS"
+getLSICONS = maybe "" T.pack <$> Env.lookupEnv "LS_ICONS"
 
 -- | LS_ICONS
 type LsIcons = Options Icon Icons
@@ -86,7 +86,7 @@ newtype Icons = Icons {unIcons :: M.Map Query Icon}
   deriving (Show, Default)
 
 instance From Sources Icons where
-  from = Icons . M.fromList . map (bimap Query Icon) . Maybe.mapMaybe (uncurry f) . M.toList . unSources
+  from = Icons . M.fromList . map (bimap Query Icon) . mapMaybe (uncurry f) . M.toList . unSources
     where
       f k v = case T.uncons k of
         Just (c, k') | c == '*' -> Just (T.toUpper k', v)

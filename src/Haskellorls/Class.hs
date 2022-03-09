@@ -7,7 +7,7 @@ module Haskellorls.Class
 where
 
 import qualified Data.Map.Strict as M
-import qualified Data.Maybe as Maybe
+import Data.Maybe
 import qualified Data.Text as T
 
 class Dictionary k v d where
@@ -36,7 +36,7 @@ instance From a a where
   from = id
 
 instance (Monoid a) => From (Maybe a) a where
-  from = Maybe.fromMaybe mempty
+  from = fromMaybe mempty
 
 -- | Specialized version of 'From a Text'.
 class (From a T.Text) => Serialize a where

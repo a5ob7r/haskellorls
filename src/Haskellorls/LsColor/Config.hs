@@ -11,7 +11,7 @@ where
 import Control.Applicative
 import Data.Default
 import qualified Data.Map.Strict as M
-import qualified Data.Maybe as Maybe
+import Data.Maybe
 import qualified Data.Text as T
 import Haskellorls.Class
 import Haskellorls.LsColor.Class
@@ -26,7 +26,7 @@ instance Dictionary T.Text T.Text Sources where
   lookup t (Sources m) = t `lookup` m
 
 instance From T.Text Sources where
-  from = Sources . M.fromList . Maybe.mapMaybe (makePair . T.splitOn "=") . T.splitOn ":"
+  from = Sources . M.fromList . mapMaybe (makePair . T.splitOn "=") . T.splitOn ":"
     where
       makePair :: [T.Text] -> Maybe (T.Text, T.Text)
       makePair [k, v] = Just (k, v)

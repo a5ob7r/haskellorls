@@ -5,7 +5,7 @@ module Haskellorls.Filemode.Type
   )
 where
 
-import qualified Data.Maybe as Maybe
+import Data.Maybe
 import Haskellorls.Filemode.Entry
 import Haskellorls.Filemode.Permission
 import Haskellorls.NodeInfo
@@ -29,15 +29,15 @@ instance From ProxyFileStatus Filemode where
   from status =
     Filemode
       { getFiletype = from status,
-        getUserRead = Maybe.fromMaybe NOTHING $ UserPerm READ `lookup` mode,
-        getUserWrite = Maybe.fromMaybe NOTHING $ UserPerm WRITE `lookup` mode,
-        getUserExec = Maybe.fromMaybe NOTHING $ UserPerm EXEC `lookup` mode,
-        getGroupRead = Maybe.fromMaybe NOTHING $ GroupPerm READ `lookup` mode,
-        getGroupWrite = Maybe.fromMaybe NOTHING $ GroupPerm WRITE `lookup` mode,
-        getGroupExec = Maybe.fromMaybe NOTHING $ GroupPerm EXEC `lookup` mode,
-        getOtherRead = Maybe.fromMaybe NOTHING $ OtherPerm READ `lookup` mode,
-        getOtherWrite = Maybe.fromMaybe NOTHING $ OtherPerm WRITE `lookup` mode,
-        getOtherExec = Maybe.fromMaybe NOTHING $ OtherPerm EXEC `lookup` mode
+        getUserRead = fromMaybe NOTHING $ UserPerm READ `lookup` mode,
+        getUserWrite = fromMaybe NOTHING $ UserPerm WRITE `lookup` mode,
+        getUserExec = fromMaybe NOTHING $ UserPerm EXEC `lookup` mode,
+        getGroupRead = fromMaybe NOTHING $ GroupPerm READ `lookup` mode,
+        getGroupWrite = fromMaybe NOTHING $ GroupPerm WRITE `lookup` mode,
+        getGroupExec = fromMaybe NOTHING $ GroupPerm EXEC `lookup` mode,
+        getOtherRead = fromMaybe NOTHING $ OtherPerm READ `lookup` mode,
+        getOtherWrite = fromMaybe NOTHING $ OtherPerm WRITE `lookup` mode,
+        getOtherExec = fromMaybe NOTHING $ OtherPerm EXEC `lookup` mode
       }
     where
       mode = pfsFileMode status

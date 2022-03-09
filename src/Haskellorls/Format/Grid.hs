@@ -6,7 +6,7 @@ module Haskellorls.Format.Grid
 where
 
 import qualified Data.List as List
-import qualified Data.Maybe as Maybe
+import Data.Maybe
 import qualified Data.Monoid as M
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
@@ -20,7 +20,7 @@ import qualified System.Console.Terminal.Size as TS
 virtualColumnSize :: Option.Option -> IO Int
 virtualColumnSize opt = do
   fdWidth <- fmap TS.width <$> TS.size
-  return . head $ Maybe.catMaybes [styleWidth, optWidth, fdWidth, Just 1]
+  return . head $ catMaybes [styleWidth, optWidth, fdWidth, Just 1]
   where
     optWidth = Option.width opt
     styleWidth = case Format.formatStyle opt of

@@ -6,7 +6,7 @@ module Haskellorls.Name.Decorator
   )
 where
 
-import qualified Data.Maybe as Maybe
+import Data.Maybe
 import qualified Data.Text as T
 import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
@@ -23,10 +23,10 @@ colorizedNodeName opt c@(Color.Options {..}) nd = WT.WrappedText (left' <> l <> 
   where
     name = nodeName nd
     name' = Utils.escapeFormatter opt name
-    left' = Color.unSequence $ Maybe.fromMaybe "" left
-    right' = Color.unSequence $ Maybe.fromMaybe "" right
-    l = Maybe.maybe "" Color.unSequence $ nd `Color.lookup` c
-    r = Color.unSequence $ Maybe.fromMaybe "" reset
+    left' = Color.unSequence $ fromMaybe "" left
+    right' = Color.unSequence $ fromMaybe "" right
+    l = maybe "" Color.unSequence $ nd `Color.lookup` c
+    r = Color.unSequence $ fromMaybe "" reset
 
 nodeNameWrapper :: Option.Option -> Node.NodeInfo -> [WT.WrappedText]
 nodeNameWrapper opt node = Quote.quote style . WT.toWrappedText $ Utils.escapeFormatter opt name

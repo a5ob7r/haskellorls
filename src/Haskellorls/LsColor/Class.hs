@@ -4,7 +4,7 @@ module Haskellorls.LsColor.Class
   )
 where
 
-import qualified Data.Maybe as Maybe
+import Data.Maybe
 import Data.String
 import qualified Data.Text as T
 import Haskellorls.Class
@@ -14,7 +14,7 @@ import Prelude hiding (lookup)
 class (Dictionary Query v d) => Queryable v d where
   -- This default implementation matches shortest suffix pattern.
   query :: Query -> d -> Maybe v
-  query q d = Maybe.listToMaybe . Maybe.mapMaybe (`lookup` d) $ queries q
+  query q d = listToMaybe . mapMaybe (`lookup` d) $ queries q
 
 -- | A query parameter.
 newtype Query = Query {unQuery :: T.Text}

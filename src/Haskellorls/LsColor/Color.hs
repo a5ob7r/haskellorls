@@ -12,7 +12,7 @@ import Data.Bifunctor
 import Data.Default
 import Data.Functor
 import qualified Data.Map.Strict as M
-import qualified Data.Maybe as Maybe
+import Data.Maybe
 import Data.String
 import qualified Data.Text as T
 import Haskellorls.Class
@@ -34,10 +34,10 @@ lsColors :: IO LsColors
 lsColors = getLSCOLORS <> getEXACOLORS <&> deserialize
 
 getLSCOLORS :: IO T.Text
-getLSCOLORS = Maybe.maybe "" T.pack <$> Env.lookupEnv "LS_COLORS"
+getLSCOLORS = maybe "" T.pack <$> Env.lookupEnv "LS_COLORS"
 
 getEXACOLORS :: IO T.Text
-getEXACOLORS = Maybe.maybe "" T.pack <$> Env.lookupEnv "EXA_COLORS"
+getEXACOLORS = maybe "" T.pack <$> Env.lookupEnv "EXA_COLORS"
 
 -- | LS_COLORS
 type LsColors = Options Sequence Extensions
@@ -211,7 +211,7 @@ newtype Sequences = Sequences (M.Map Query Sequence)
   deriving (Show, Default)
 
 instance From Sources Sequences where
-  from = Sequences . M.fromList . map (bimap Query Sequence) . Maybe.mapMaybe (uncurry f) . M.toList . unSources
+  from = Sequences . M.fromList . map (bimap Query Sequence) . mapMaybe (uncurry f) . M.toList . unSources
     where
       f k v = case T.uncons k of
         Just (c, k') | c == '*' -> Just (T.toUpper k', v)

@@ -4,7 +4,7 @@ module Haskellorls.Size.Utils
 where
 
 import Data.Functor
-import qualified Data.Maybe as Maybe
+import Data.Maybe
 import qualified Data.Text as T
 import qualified Haskellorls.Option as Option
 import Haskellorls.Size.Option
@@ -22,5 +22,5 @@ lookupBlockSize opt = case Option.blockSize opt of
     | Option.kibibyte opt -> pure DefaultSize
     | otherwise -> do
         size <- lookupBlockSizeEnvVar <&> maybe Nothing (parseBlockSize . T.pack)
-        return $ Maybe.fromMaybe DefaultSize size
+        return $ fromMaybe DefaultSize size
   size -> pure size
