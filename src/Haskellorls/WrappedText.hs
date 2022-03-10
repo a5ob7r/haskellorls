@@ -1,15 +1,11 @@
 module Haskellorls.WrappedText
   ( WrappedText (..),
-    wtLength,
-    wtLengthForDisplay,
-    render,
-    toWrappedText,
-    toWrappedTextSingleton,
-    toList,
+    module Haskellorls.Class,
   )
 where
 
 import qualified Data.Text as T
+import Haskellorls.Class
 import qualified Haskellorls.Utils as Utils
 
 data WrappedText = WrappedText
@@ -18,20 +14,15 @@ data WrappedText = WrappedText
     wtSuffix :: T.Text
   }
 
-wtLength :: WrappedText -> Int
-wtLength = T.length . wtWord
+instance From WrappedText T.Text where
+  from (WrappedText {..}) = wtPrefix <> wtWord <> wtSuffix
 
-wtLengthForDisplay :: WrappedText -> Int
-wtLengthForDisplay = Utils.textLengthForDisplay . wtWord
+instance Serialize WrappedText
 
-render :: WrappedText -> T.Text
-render wt = wtPrefix wt <> wtWord wt <> wtSuffix wt
+instance From T.Text WrappedText where
+  from t = WrappedText "" t ""
 
-toWrappedText :: T.Text -> WrappedText
-toWrappedText t = WrappedText "" t ""
+instance Deserialize WrappedText
 
-toWrappedTextSingleton :: T.Text -> [WrappedText]
-toWrappedTextSingleton t = [toWrappedText t]
-
-toList :: WrappedText -> [T.Text]
-toList wt = map (\f -> f wt) [wtPrefix, wtWord, wtSuffix]
+instance Length WrappedText where
+  len = Utils.textLengthForDisplay . wtWord

@@ -171,7 +171,7 @@ generateEntryLines opt printers op = case op of
             | Format.isLongStyle opt -> (builder :)
             | otherwise -> id
           where
-            builder = TLB.fromText . T.concat . ("total " :) . map (T.concat . WT.toList) . Size.toTotalBlockSize opt $ map (Node.pfsFileSize . Node.getNodeStatus) entryNodes
+            builder = TLB.fromText . T.concat . ("total " :) . map WT.serialize . Size.toTotalBlockSize opt $ map (Node.pfsFileSize . Node.getNodeStatus) entryNodes
 
     colLen <- Grid.virtualColumnSize opt
 
@@ -181,7 +181,7 @@ generateEntryLines opt printers op = case op of
     let opt' = if shouldQuote nodes then opt else opt {Option.noQuote = True}
     pure . map (M.mconcat . map wtToBuilder) $ Decorator.buildLines nodes printers $ Decorator.buildPrinterTypes opt'
     where
-      wtToBuilder wt = M.mconcat . map TLB.fromText $ WT.toList wt
+      wtToBuilder = TLB.fromText . WT.serialize
 
 shouldQuote :: [Node.NodeInfo] -> Bool
 shouldQuote = not . all (Set.null . Set.intersection setNeedQuotes . Set.fromList . Node.getNodePath)

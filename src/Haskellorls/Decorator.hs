@@ -165,7 +165,7 @@ buildPrinters opt = do
       fileInodePrinter =
         if shouldColorize && isEnableExtraColor
           then Inode.nodeInodeNumberWithColor lscolors
-          else WT.toWrappedTextSingleton . T.pack . show . Inode.nodeInodeNumber
+          else (\t -> [WT.deserialize t]) . T.pack . show . Inode.nodeInodeNumber
 
       fileBlockPrinter =
         if shouldColorize && isEnableExtraColor
@@ -180,22 +180,22 @@ buildPrinters opt = do
       fileLinkPrinter =
         if shouldColorize && isEnableExtraColor
           then Link.nodeLinksNumberWithColor lscolors
-          else WT.toWrappedTextSingleton . T.pack . show . Link.nodeLinksNumber
+          else (\t -> [WT.deserialize t]) . T.pack . show . Link.nodeLinksNumber
 
       fileOwnerPrinter =
         if shouldColorize && isEnableExtraColor
           then Ownership.coloredOwnerName uidSubstTable lscolors userInfo
-          else WT.toWrappedTextSingleton . Ownership.ownerName uidSubstTable
+          else (\t -> [WT.deserialize t]) . Ownership.ownerName uidSubstTable
 
       fileGroupPrinter =
         if shouldColorize && isEnableExtraColor
           then Ownership.coloredGroupName gidSubstTable lscolors userInfo
-          else WT.toWrappedTextSingleton . Ownership.groupName gidSubstTable
+          else (\t -> [WT.deserialize t]) . Ownership.groupName gidSubstTable
 
       fileContextPrinter =
         if shouldColorize && isEnableExtraColor
           then Context.colorizedContext lscolors
-          else WT.toWrappedTextSingleton . Context.context
+          else (\t -> [WT.deserialize t]) . Context.context
 
       fileSizePrinter =
         if shouldColorize && isEnableExtraColor
@@ -205,7 +205,7 @@ buildPrinters opt = do
       fileTimePrinter =
         if shouldColorize && isEnableExtraColor
           then Time.coloredTimeStyleFunc lscolors timeZone TFormat.defaultTimeLocale currentTime timeStyle . fileTime
-          else WT.toWrappedTextSingleton . timeStyleFunc . fileTime
+          else (\t -> [WT.deserialize t]) . timeStyleFunc . fileTime
         where
           timeStyleFunc = Time.timeStyleFunc timeZone TFormat.defaultTimeLocale currentTime timeStyle
           fileTime = Clock.posixSecondsToUTCTime . Time.fileTime (Time.timeType opt) . Node.getNodeStatus
@@ -216,7 +216,7 @@ buildPrinters opt = do
       nodeTreePrinter =
         if shouldColorize
           then Tree.treeBranchWithColor lscolors . Node.getTreeNodePositions
-          else WT.toWrappedTextSingleton . Tree.treeBranch . Node.getTreeNodePositions
+          else (\t -> [WT.deserialize t]) . Tree.treeBranch . Node.getTreeNodePositions
       nodeIconPrinter = flip Icon.lookupIcon lsicons
       buildNamePrinter option =
         if shouldColorize
@@ -273,7 +273,7 @@ buildColumn nodes printers pType = map alignmenter nodes'
   where
     printer = printerSelectorFor pType printers
     nodes' = map printer nodes
-    maxLen = maximum $ map (sum . map WT.wtLengthForDisplay) nodes'
+    maxLen = maximum $ map (sum . map WT.len) nodes'
     aType = alignmentTypeFor pType
     aBuilder = alignmenterBuilderSelectorFor aType
     alignmenter = aBuilder " " maxLen
@@ -284,7 +284,7 @@ buildGrid nodes printers = List.transpose . map (buildColumn nodes printers)
 buildLines :: [Node.NodeInfo] -> Printers -> [PrinterType] -> [[WT.WrappedText]]
 buildLines nodes printers types = map cat $ buildGrid nodes printers types
   where
-    cat = List.intercalate (WT.toWrappedTextSingleton " ")
+    cat = List.intercalate [WT.deserialize " "]
 
 leftPadding :: AlignmenterBuilder
 leftPadding c n | n > -1 = padding c (-n)
@@ -299,12 +299,12 @@ noPadding _ _ = id
 
 padding :: AlignmenterBuilder
 padding c n ys
-  | n' > len = padding' c padSize ys
+  | n' > l = padding' c padSize ys
   | otherwise = ys
   where
     n' = abs n
-    len = sum $ map WT.wtLengthForDisplay ys
-    padSize = signum n * (n' - len)
+    l = sum $ map WT.len ys
+    padSize = signum n * (n' - l)
 
 padding' :: AlignmenterBuilder
 padding' c n t = case n `compare` 0 of
@@ -312,4 +312,4 @@ padding' c n t = case n `compare` 0 of
   LT -> pad <> t
   EQ -> t
   where
-    pad = WT.toWrappedTextSingleton $ T.replicate (abs n) c
+    pad = (: []) . WT.deserialize $ T.replicate (abs n) c

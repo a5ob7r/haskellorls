@@ -11,7 +11,7 @@ import qualified Haskellorls.WrappedText as WT
 import Prelude hiding (lookup)
 
 showFilemodeField :: Filemode -> [WT.WrappedText]
-showFilemodeField (Filemode {..}) = WT.toWrappedTextSingleton . T.pack $ fType : permFields
+showFilemodeField (Filemode {..}) = [WT.deserialize . T.pack $ fType : permFields]
   where
     fType = from getFiletype
     permFields = from <$> [getUserRead, getUserWrite, getUserExec, getGroupRead, getGroupWrite, getGroupExec, getOtherRead, getOtherWrite, getOtherExec]

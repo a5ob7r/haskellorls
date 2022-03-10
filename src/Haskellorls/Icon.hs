@@ -10,8 +10,8 @@ import qualified Haskellorls.WrappedText as WT
 
 lookupIcon :: Node.NodeInfo -> Color.LsIcons -> [WT.WrappedText]
 lookupIcon node lsicons =
-  [ WT.toWrappedText icon,
-    WT.toWrappedText margin
+  [ WT.deserialize icon,
+    WT.deserialize margin
   ]
   where
     icon = maybe "" Color.unIcon $ node `Color.lookup` lsicons

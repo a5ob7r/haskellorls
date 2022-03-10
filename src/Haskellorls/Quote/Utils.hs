@@ -34,7 +34,7 @@ import qualified System.Environment as Env
 quote :: QuoteStyle -> WT.WrappedText -> [WT.WrappedText]
 quote style wt@WT.WrappedText {..} = case style of
   NoQuote -> [wt]
-  SpacePadding -> [WT.toWrappedText " ", wt]
+  SpacePadding -> [WT.deserialize " ", wt]
   SingleQuote -> [wt {WT.wtWord = "'" <> wtWord <> "'"}]
   DoubleQuote -> [wt {WT.wtWord = "\"" <> escapeDoubleQuote wtWord <> "\""}]
   _

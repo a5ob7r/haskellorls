@@ -65,7 +65,7 @@ indicatorSelector node = case Node.pfsNodeType (Node.getNodeStatus node) of
   _ -> const ""
 
 buildIndicatorPrinter :: Option.Option -> Node.NodeInfo -> [WT.WrappedText]
-buildIndicatorPrinter opt node = if T.null indicator then [] else WT.toWrappedTextSingleton indicator
+buildIndicatorPrinter opt node = [WT.deserialize indicator | not (T.null indicator)]
   where
     indicator = indicatorSelector node' $ buildIndicators opt
     node' = case Node.getNodeLinkInfo node of

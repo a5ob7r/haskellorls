@@ -2,6 +2,7 @@ module Haskellorls.Class
   ( Deserialize (..),
     Dictionary (..),
     From (..),
+    Length (..),
     Serialize (..),
   )
 where
@@ -47,3 +48,13 @@ class (From a T.Text) => Serialize a where
 class (From T.Text a) => Deserialize a where
   deserialize :: T.Text -> a
   deserialize = from
+
+-- | It has length.
+class Length a where
+  len :: a -> Int
+
+instance Length [a] where
+  len = length
+
+instance Length T.Text where
+  len = T.length

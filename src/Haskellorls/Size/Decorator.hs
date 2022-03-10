@@ -33,8 +33,8 @@ newtype UnitSize = UnitSize {getUnitSize :: Int}
 
 toWrappedText :: FileSizeComponent -> [WT.WrappedText]
 toWrappedText FileSizeComponent {..} =
-  [ WT.toWrappedText fileSizeNumber,
-    WT.toWrappedText fileSizeUnit
+  [ WT.deserialize fileSizeNumber,
+    WT.deserialize fileSizeUnit
   ]
 
 toTotalBlockSize :: Option.Option -> [Types.FileOffset] -> [WT.WrappedText]

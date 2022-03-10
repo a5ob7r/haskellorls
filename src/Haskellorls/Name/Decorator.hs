@@ -29,7 +29,7 @@ colorizedNodeName opt c@(Color.Options {..}) nd = WT.WrappedText (left' <> l <> 
     r = Color.unSequence $ fromMaybe "" reset
 
 nodeNameWrapper :: Option.Option -> Node.NodeInfo -> [WT.WrappedText]
-nodeNameWrapper opt node = Quote.quote style . WT.toWrappedText $ Utils.escapeFormatter opt name
+nodeNameWrapper opt node = Quote.quote style . WT.deserialize $ Utils.escapeFormatter opt name
   where
     name = nodeName node
     style = Quote.quoteStyle opt
