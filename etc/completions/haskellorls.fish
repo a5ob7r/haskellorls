@@ -7,7 +7,7 @@
     for arg in $cl
       set tmpline $tmpline --bash-completion-word $arg
     end
-    for opt in ($(which haskellorls) $tmpline)
+    for opt in (haskellorls $tmpline)
       if test -d $opt
         echo -E "$opt/"
       else

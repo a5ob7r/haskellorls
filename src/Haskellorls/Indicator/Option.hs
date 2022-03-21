@@ -14,6 +14,7 @@ indicatorStyleParser =
       <> metavar "WORD"
       <> value IndicatorNone
       <> help "Specify indicator style, 'none', 'slash', 'file-tyep' and 'classify'"
+      <> completeWith ["none", "slash", "file-type", "classify"]
   where
     reader =
       auto >>= \case

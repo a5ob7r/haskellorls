@@ -489,7 +489,7 @@ versionParser =
       <> OA.help "Show version info"
 
 argParser :: OA.Parser [String]
-argParser = A.many . OA.strArgument $ OA.metavar "[FILE]..."
+argParser = A.many . OA.strArgument $ OA.metavar "[FILE]..." <> OA.action "file"
 
 header :: T.Text
 header =

@@ -13,6 +13,7 @@ formatParser =
     long "format"
       <> metavar "WORD"
       <> value VERTICAL
+      <> completeWith ["across", "commas", "horizontal", "long", "single-column", "verbose", "vertical"]
   where
     reader =
       str >>= \case

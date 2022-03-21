@@ -8,7 +8,7 @@ _haskellorls()
         CMDLINE=(${CMDLINE[@]} --bash-completion-word $arg)
     done
 
-    COMPREPLY=( $($(which haskellorls) "${CMDLINE[@]}") )
+    COMPREPLY=( $(haskellorls "${CMDLINE[@]}") )
 }
 
 complete -o filenames -F _haskellorls haskellorls

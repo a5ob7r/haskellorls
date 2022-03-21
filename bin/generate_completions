@@ -6,19 +6,20 @@
 # Set useful shell options
 set -Cueo pipefail
 
-readonly FILEBASE=$(dirname "${BASH_SOURCE[0]}")
+FILEBASE="$(dirname "${BASH_SOURCE[0]}")"
+readonly FILEBASE
 
 cd "${FILEBASE}/.."
 
 readonly CMD='cabal run --verbose=0 haskellorls --'
 
 echo ':: Generate a completion for bash'
-$CMD --bash-completion-script '$(which haskellorls)' | tee etc/completions/haskellorls.bash
+$CMD --bash-completion-script 'haskellorls' | tee etc/completions/haskellorls.bash
 
 echo
 echo ':: Generate a completion for zsh'
-$CMD --zsh-completion-script '$(which haskellorls)' | tee etc/completions/haskellorls.zsh
+$CMD --zsh-completion-script 'haskellorls' | tee etc/completions/haskellorls.zsh
 
 echo
 echo ':: Generate a completion for fish'
-$CMD --fish-completion-script '$(which haskellorls)' | tee etc/completions/haskellorls.fish
+$CMD --fish-completion-script 'haskellorls' | tee etc/completions/haskellorls.fish

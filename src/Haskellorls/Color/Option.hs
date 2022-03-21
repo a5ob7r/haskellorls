@@ -15,6 +15,7 @@ colorParser =
       <> metavar "WHEN"
       <> value NEVER
       <> help "When use output with color (default is 'never')"
+      <> completeWith ["never", "always", "auto"]
   where
     reader =
       str >>= \case

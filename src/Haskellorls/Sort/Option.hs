@@ -19,6 +19,7 @@ sortParser =
       <> metavar "WORD"
       <> value NAME
       <> help "Specify an attribute to sort outputs"
+      <> completeWith ["none", "size", "time", "version", "extension"]
   where
     reader =
       str >>= \case

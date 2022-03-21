@@ -16,6 +16,7 @@ quotingStyleParser =
       <> metavar "WORD"
       <> value NoStyle
       <> help "Specify file name and link name quoting style; this also effects to file name and link name escape style"
+      <> completeWith ["literal", "shell", "shell-always", "shell-escape", "shell-escape-always", "c", "escape"]
   where
     reader =
       str >>= \t -> case parseQuotingStyle t of

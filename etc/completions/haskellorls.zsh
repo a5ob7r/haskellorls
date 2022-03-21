@@ -10,7 +10,7 @@ for arg in ${words[@]}; do
   request=(${request[@]} --bash-completion-word $arg)
 done
 
-IFS=$'\n' completions=($( $(which haskellorls) "${request[@]}" ))
+IFS=$'\n' completions=($( haskellorls "${request[@]}" ))
 
 for word in $completions; do
   local -a parts

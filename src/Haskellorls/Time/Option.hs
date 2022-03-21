@@ -15,6 +15,7 @@ timeParser =
       <> metavar "WORD"
       <> value MODIFICATION
       <> help "Specify a time kind which is used as file's time attribute"
+      <> completeWith ["atime", "access", "use", "ctime", "status"]
   where
     reader =
       str >>= \case
@@ -34,6 +35,7 @@ timeStyleParser =
       <> metavar "TYPE_STYLE"
       <> value ISO
       <> help "Specify time output format"
+      <> completeWith ["full-iso", "long-iso", "iso"]
   where
     reader =
       str >>= \s -> case s of
