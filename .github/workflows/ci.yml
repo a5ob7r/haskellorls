@@ -25,7 +25,7 @@ jobs:
           ghc-version: ${{ matrix.ghc }}
           cabal-version: 3.6.2.0
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ${{ steps.setup-haskell.outputs.cabal-store }}
           key: ci-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project') }}
@@ -61,7 +61,7 @@ jobs:
           ghc-version: ${{ matrix.ghc }}
           cabal-version: 3.6.2.0
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ${{ steps.setup-haskell.outputs.cabal-store }}
           key: format-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project') }}
