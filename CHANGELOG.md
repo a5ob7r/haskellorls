@@ -6,6 +6,7 @@
 
 - Some acceptable values to `--color=WHEN` option for compatibility against GNU ls.
 - Support an environment variable `LS_ICONS`, which configures the `--icons` option.
+- Support the `fi` parameter of `LS_COLORS`.
 
 ### Changed
 

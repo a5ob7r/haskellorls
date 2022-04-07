@@ -89,7 +89,7 @@ instance Dictionary NodeInfo Sequence LsColors where
       StickyOtherWritable -> stickyOtherWritable
       OtherWritable -> otherWritable
       Executable -> executable
-      File -> q `query` l
+      File -> q `query` l <|> file
         where
           q = Query . T.pack $ getNodePath n'
       _ -> orphan
