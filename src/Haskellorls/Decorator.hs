@@ -9,7 +9,6 @@ module Haskellorls.Decorator
 where
 
 import qualified Data.List as List
-import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 import qualified Data.Time.Clock.POSIX as Clock
 import qualified Data.Time.Format as TFormat
@@ -153,8 +152,8 @@ buildPrinters :: Option.Option -> IO Printers
 buildPrinters opt = do
   lscolors <- Color.lsColors
   lsicons <- Color.lsIcons
-  uidSubstTable <- if Option.numericUidGid opt then return Map.empty else Ownership.getUserIdSubstTable
-  gidSubstTable <- if Option.numericUidGid opt then return Map.empty else Ownership.getGroupIdSubstTable
+  uidSubstTable <- if Option.numericUidGid opt then pure Ownership.def else Ownership.getUserIdSubstTable
+  gidSubstTable <- if Option.numericUidGid opt then pure Ownership.def else Ownership.getGroupIdSubstTable
   userInfo <- Ownership.userInfo
   currentTime <- Clock.getCurrentTime
   timeZone <- LClock.getCurrentTimeZone
@@ -163,49 +162,58 @@ buildPrinters opt = do
       isEnableExtraColor = Option.extraColor opt
 
       fileInodePrinter =
-        if shouldColorize && isEnableExtraColor
-          then Inode.nodeInodeNumberWithColor lscolors
-          else (\t -> [WT.deserialize t]) . T.pack . show . Inode.nodeInodeNumber
+        case (shouldColorize, isEnableExtraColor) of
+          (True, True) -> Inode.nodeInodeNumberWithColor lscolors
+          (True, _) -> Inode.nodeInodeNumberWithNormalColor lscolors
+          _ -> (\t -> [WT.deserialize t]) . T.pack . show . Inode.nodeInodeNumber
 
       fileBlockPrinter =
-        if shouldColorize && isEnableExtraColor
-          then Size.coloredFileBlockSize lscolors opt
-          else Size.fileBlockSize opt
+        case (shouldColorize, isEnableExtraColor) of
+          (True, True) -> Size.coloredFileBlockSize lscolors opt
+          (True, _) -> Size.normalColoredFileBlockSize lscolors opt
+          _ -> Size.fileBlockSize opt
 
       filemodeFieldPrinter =
-        if shouldColorize && isEnableExtraColor
-          then Filemode.showFilemodeFieldWithColor lscolors
-          else Filemode.showFilemodeField
+        case (shouldColorize, isEnableExtraColor) of
+          (True, True) -> Filemode.showFilemodeFieldWithColor lscolors
+          (True, _) -> Filemode.showFilemodeFieldWithNormalColor lscolors
+          _ -> Filemode.showFilemodeField
 
       fileLinkPrinter =
-        if shouldColorize && isEnableExtraColor
-          then Link.nodeLinksNumberWithColor lscolors
-          else (\t -> [WT.deserialize t]) . T.pack . show . Link.nodeLinksNumber
+        case (shouldColorize, isEnableExtraColor) of
+          (True, True) -> Link.nodeLinksNumberWithColor lscolors
+          (True, _) -> Link.nodeLinksNumberWithNormalColor lscolors
+          _ -> (\t -> [WT.deserialize t]) . T.pack . show . Link.nodeLinksNumber
 
       fileOwnerPrinter =
-        if shouldColorize && isEnableExtraColor
-          then Ownership.coloredOwnerName uidSubstTable lscolors userInfo
-          else (\t -> [WT.deserialize t]) . Ownership.ownerName uidSubstTable
+        case (shouldColorize, isEnableExtraColor) of
+          (True, True) -> Ownership.coloredOwnerName uidSubstTable lscolors userInfo
+          (True, _) -> Ownership.normalColoredOwnerName uidSubstTable lscolors
+          _ -> (\t -> [WT.deserialize t]) . Ownership.ownerName uidSubstTable
 
       fileGroupPrinter =
-        if shouldColorize && isEnableExtraColor
-          then Ownership.coloredGroupName gidSubstTable lscolors userInfo
-          else (\t -> [WT.deserialize t]) . Ownership.groupName gidSubstTable
+        case (shouldColorize, isEnableExtraColor) of
+          (True, True) -> Ownership.coloredGroupName gidSubstTable lscolors userInfo
+          (True, _) -> Ownership.normalColoredGroupName gidSubstTable lscolors
+          _ -> (\t -> [WT.deserialize t]) . Ownership.groupName gidSubstTable
 
       fileContextPrinter =
-        if shouldColorize && isEnableExtraColor
-          then Context.colorizedContext lscolors
-          else (\t -> [WT.deserialize t]) . Context.context
+        case (shouldColorize, isEnableExtraColor) of
+          (True, True) -> Context.colorizedContext lscolors
+          (True, _) -> Context.normalColorizedContext lscolors
+          _ -> (\t -> [WT.deserialize t]) . Context.context
 
       fileSizePrinter =
-        if shouldColorize && isEnableExtraColor
-          then Size.coloredFileSize lscolors opt
-          else Size.fileSize opt
+        case (shouldColorize, isEnableExtraColor) of
+          (True, True) -> Size.coloredFileSize lscolors opt
+          (True, _) -> Size.normalColoredFileSize lscolors opt
+          _ -> Size.fileSize opt
 
       fileTimePrinter =
-        if shouldColorize && isEnableExtraColor
-          then Time.coloredTimeStyleFunc lscolors timeZone TFormat.defaultTimeLocale currentTime timeStyle . fileTime
-          else (\t -> [WT.deserialize t]) . timeStyleFunc . fileTime
+        case (shouldColorize, isEnableExtraColor) of
+          (True, True) -> Time.coloredTimeStyleFunc lscolors timeZone TFormat.defaultTimeLocale currentTime timeStyle . fileTime
+          (True, _) -> Time.normalColoredTimeStyleFunc lscolors timeZone TFormat.defaultTimeLocale currentTime timeStyle . fileTime
+          _ -> (\t -> [WT.deserialize t]) . timeStyleFunc . fileTime
         where
           timeStyleFunc = Time.timeStyleFunc timeZone TFormat.defaultTimeLocale currentTime timeStyle
           fileTime = Clock.posixSecondsToUTCTime . Time.fileTime (Time.timeType opt) . Node.getNodeStatus

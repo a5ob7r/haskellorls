@@ -9,61 +9,87 @@
 module Haskellorls.Ownership.Decorator
   ( ownerName,
     numericOwnerName,
+    normalColoredOwnerName,
     coloredOwnerName,
     coloredNumericOwnerName,
     groupName,
     numericGroupName,
+    normalColoredGroupName,
     coloredGroupName,
     coloredNumericGroupName,
     getGroupIdSubstTable,
     getUserIdSubstTable,
+    module Data.Default,
     module Haskellorls.Ownership.Type,
   )
 where
 
+import Data.Default
 import qualified Data.Map.Strict as M
+import Data.Maybe
 import qualified Data.Text as T
+import Haskellorls.Class
 import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
 import Haskellorls.Ownership.Type
 import qualified Haskellorls.WrappedText as WT
 import qualified System.Posix.Types as Types
 import qualified System.Posix.User as User
+import Prelude hiding (lookup)
 
-type UserIdSubstTable = M.Map Types.UserID T.Text
+newtype UserIdSubstTable = UserIdSubstTable {unUserIdSubstTable :: M.Map Types.UserID T.Text}
+  deriving (Default)
 
-type GroupIdSubstTable = M.Map Types.GroupID T.Text
+newtype GroupIdSubstTable = GroupIdSubstTable {unGroupIdSubstTable :: M.Map Types.GroupID T.Text}
+  deriving (Default)
 
 -- Utilities {{{
-lookupUserName :: Types.UserID -> UserIdSubstTable -> T.Text
-lookupUserName uid = M.findWithDefault (T.pack $ show uid) uid
+instance From Types.UserID T.Text where
+  from = T.pack . show
 
-lookupGroupName :: Types.GroupID -> GroupIdSubstTable -> T.Text
-lookupGroupName gid = M.findWithDefault (T.pack $ show gid) gid
+instance Serialize Types.UserID
+
+instance From Types.GroupID T.Text where
+  from = T.pack . show
+
+instance Serialize Types.GroupID
+
+instance Dictionary Types.UserID T.Text UserIdSubstTable where
+  lookup k (UserIdSubstTable m) = k `M.lookup` m
+
+instance Dictionary Types.GroupID T.Text GroupIdSubstTable where
+  lookup k (GroupIdSubstTable m) = k `M.lookup` m
 
 getUserIdSubstTable :: IO UserIdSubstTable
 getUserIdSubstTable = do
   entries <- User.getAllUserEntries
-  return . M.fromList $ map (\entry -> (User.userID entry, T.pack $ User.userName entry)) entries
+  pure . UserIdSubstTable . M.fromList $ map (\entry -> (User.userID entry, T.pack $ User.userName entry)) entries
 
 getGroupIdSubstTable :: IO GroupIdSubstTable
 getGroupIdSubstTable = do
   entries <- User.getAllGroupEntries
-  return . M.fromList $ map (\entry -> (User.groupID entry, T.pack $ User.groupName entry)) entries
+  pure . GroupIdSubstTable . M.fromList $ map (\entry -> (User.groupID entry, T.pack $ User.groupName entry)) entries
+
+instance From Node.NodeInfo Types.UserID where
+  from = Node.pfsUserID . Node.getNodeStatus
 
 -- }}}
 
 -- Owner name {{{
 ownerName :: UserIdSubstTable -> Node.NodeInfo -> T.Text
-ownerName table node = ownerID `lookupUserName` table
+ownerName table node = fromMaybe (serialize ownerID) $ ownerID `lookup` table
   where
-    ownerID = numericOwnerName' node
+    ownerID :: Types.UserID
+    ownerID = from node
 
 numericOwnerName :: Node.NodeInfo -> T.Text
-numericOwnerName = T.pack . show . numericOwnerName'
+numericOwnerName = T.pack . show . (from :: Node.NodeInfo -> Types.UserID)
 
-numericOwnerName' :: Node.NodeInfo -> Types.UserID
-numericOwnerName' = Node.pfsUserID . Node.getNodeStatus
+-- | A node owner name decorator for the @no@ parameter of @LS_COLORS@.
+normalColoredOwnerName :: UserIdSubstTable -> Color.LsColors -> Node.NodeInfo -> [WT.WrappedText]
+normalColoredOwnerName table lscolors node = [Color.toWrappedText lscolors Color.normal name]
+  where
+    name = ownerName table node
 
 coloredOwnerName :: UserIdSubstTable -> Color.LsColors -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
 coloredOwnerName table = coloredOwnerAs (ownerName table)
@@ -84,7 +110,7 @@ coloredOwnerAs f lscolors user node = [Color.toWrappedText lscolors getter (f no
 
 -- Group name {{{
 groupName :: GroupIdSubstTable -> Node.NodeInfo -> T.Text
-groupName table node = groupID `lookupGroupName` table
+groupName table node = fromMaybe (serialize groupID) $ groupID `lookup` table
   where
     groupID = numericGroupName' node
 
@@ -93,6 +119,12 @@ numericGroupName = T.pack . show . numericGroupName'
 
 numericGroupName' :: Node.NodeInfo -> Types.GroupID
 numericGroupName' = Node.pfsGroupID . Node.getNodeStatus
+
+-- | A node group name decorator for the @no@ parameter of @LS_COLORS@.
+normalColoredGroupName :: GroupIdSubstTable -> Color.LsColors -> Node.NodeInfo -> [WT.WrappedText]
+normalColoredGroupName table lscolors node = [Color.toWrappedText lscolors Color.normal name]
+  where
+    name = groupName table node
 
 coloredGroupName :: GroupIdSubstTable -> Color.LsColors -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
 coloredGroupName table = coloredGroupAs (groupName table)

@@ -8,8 +8,10 @@
 module Haskellorls.Size.Decorator
   ( toTotalBlockSize,
     fileBlockSize,
+    normalColoredFileBlockSize,
     coloredFileBlockSize,
     fileSize,
+    normalColoredFileSize,
     coloredFileSize,
   )
 where
@@ -52,6 +54,14 @@ toTotalBlockSize' opt = fileSize' opt' . sum . map toFileBlockSize
 fileBlockSize :: Option.Option -> Node.NodeInfo -> [WT.WrappedText]
 fileBlockSize opt node = toTotalBlockSize opt [fileBlockSizeOf node]
 
+-- | A node block size decorator for the @no@ parameter of @LS_COLORS@.
+normalColoredFileBlockSize :: Color.LsColors -> Option.Option -> Node.NodeInfo -> [WT.WrappedText]
+normalColoredFileBlockSize lscolors opt node = [Color.toWrappedText lscolors getter (fileSizeNumber <> fileSizeUnit)]
+  where
+    blocksize = fileBlockSizeOf node
+    getter = Color.normal
+    FileSizeComponent {..} = toTotalBlockSize' opt [blocksize]
+
 coloredFileBlockSize :: Color.LsColors -> Option.Option -> Node.NodeInfo -> [WT.WrappedText]
 coloredFileBlockSize lscolors opt node = coloredFileSize' lscolors $ toTotalBlockSize' opt [fileBlockSizeOf node]
 
@@ -86,6 +96,12 @@ fileSize' opt size = case Option.blockSize opt of
       fileSizeKibi = case scaleSuffix of
         SI -> False
         _ -> True
+
+-- | A node file size decorator for the @no@ parameter of the @LS_COLORS@.
+normalColoredFileSize :: Color.LsColors -> Option.Option -> Node.NodeInfo -> [WT.WrappedText]
+normalColoredFileSize lscolors opt node = [Color.toWrappedText lscolors Color.normal (fileSizeNumber <> fileSizeUnit)]
+  where
+    FileSizeComponent {..} = fileSize' opt $ fileSizeOf node
 
 coloredFileSize :: Color.LsColors -> Option.Option -> Node.NodeInfo -> [WT.WrappedText]
 coloredFileSize lscolors opt node = coloredFileSize' lscolors . fileSize' opt $ fileSizeOf node

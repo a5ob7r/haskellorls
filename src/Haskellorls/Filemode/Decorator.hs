@@ -1,5 +1,6 @@
 module Haskellorls.Filemode.Decorator
   ( showFilemodeField,
+    showFilemodeFieldWithNormalColor,
     showFilemodeFieldWithColor,
   )
 where
@@ -13,6 +14,14 @@ import Prelude hiding (lookup)
 showFilemodeField :: Filemode -> [WT.WrappedText]
 showFilemodeField (Filemode {..}) = [WT.deserialize . T.pack $ fType : permFields]
   where
+    fType = from getFiletype
+    permFields = from <$> [getUserRead, getUserWrite, getUserExec, getGroupRead, getGroupWrite, getGroupExec, getOtherRead, getOtherWrite, getOtherExec]
+
+-- | A node filemode field decorator for the @no@ parameter of the @LS_COLORS@.
+showFilemodeFieldWithNormalColor :: LsColors -> Filemode -> [WT.WrappedText]
+showFilemodeFieldWithNormalColor lscolors (Filemode {..}) = [toWrappedText lscolors normal field]
+  where
+    field = T.pack $ fType : permFields
     fType = from getFiletype
     permFields = from <$> [getUserRead, getUserWrite, getUserExec, getGroupRead, getGroupWrite, getGroupExec, getOtherRead, getOtherWrite, getOtherExec]
 

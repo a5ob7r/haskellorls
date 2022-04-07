@@ -1,5 +1,6 @@
 module Haskellorls.Link
   ( nodeLinksNumber,
+    nodeLinksNumberWithNormalColor,
     nodeLinksNumberWithColor,
   )
 where
@@ -13,6 +14,13 @@ import qualified System.Posix.Types as Types
 
 nodeLinksNumber :: Node.NodeInfo -> Types.LinkCount
 nodeLinksNumber = Node.pfsLinkCount . Node.getNodeStatus
+
+-- | A number of node links decorator with the @no@ parameter of the @LS_COLORS@.
+nodeLinksNumberWithNormalColor :: Color.LsColors -> Node.NodeInfo -> [WT.WrappedText]
+nodeLinksNumberWithNormalColor lscolors node = [Color.toWrappedText lscolors getter linksNumber]
+  where
+    linksNumber = T.pack . show $ nodeLinksNumber node
+    getter = Color.normal
 
 nodeLinksNumberWithColor :: Color.LsColors -> Node.NodeInfo -> [WT.WrappedText]
 nodeLinksNumberWithColor lscolors node = [Color.toWrappedText lscolors getter linksNumber]

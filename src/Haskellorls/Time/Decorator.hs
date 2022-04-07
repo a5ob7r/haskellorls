@@ -3,6 +3,7 @@ module Haskellorls.Time.Decorator
     timeType,
     fileTime,
     timeStyleFunc,
+    normalColoredTimeStyleFunc,
     coloredTimeStyleFunc,
   )
 where
@@ -27,6 +28,13 @@ timeStyleFunc zone locale time = \case
   ISO -> timeStyleFunc' ('+' : isoFormat) zone locale time
   FORMAT fmt -> timeStyleFunc' fmt zone locale time
 
+normalColoredTimeStyleFunc :: Color.LsColors -> LClock.TimeZone -> Format.TimeLocale -> Clock.UTCTime -> TimeStyle -> Clock.UTCTime -> [WT.WrappedText]
+normalColoredTimeStyleFunc lscolors zone locale time style fTime = [Color.toWrappedText lscolors getter timeAsT]
+  where
+    timeAsT = timeStyleFunc zone locale time style fTime
+    getter = Color.normal
+
+-- | A node misc time decorator with the @no@ parameter of the @LS_COLORS@.
 coloredTimeStyleFunc :: Color.LsColors -> LClock.TimeZone -> Format.TimeLocale -> Clock.UTCTime -> TimeStyle -> Clock.UTCTime -> [WT.WrappedText]
 coloredTimeStyleFunc lscolors zone locale time style fTime = [Color.toWrappedText lscolors getter timeAsT]
   where
