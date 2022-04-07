@@ -1,7 +1,0 @@
-cradle:
-  cabal:
-    - path: "src"
-      component: "lib:haskellorls"
-
-    - path: "app/Main.hs"
-      component: "haskellorls:exe:haskellorls"
