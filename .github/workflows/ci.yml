@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: haskell/actions/setup@v1
+      - uses: haskell/actions/setup@v2
         id: setup-haskell
         with:
           ghc-version: ${{ matrix.ghc }}
@@ -55,7 +55,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: haskell/actions/setup@v1
+      - uses: haskell/actions/setup@v2
         id: setup-haskell
         with:
           ghc-version: ${{ matrix.ghc }}
@@ -93,12 +93,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: haskell/actions/hlint-setup@v1
+      - uses: haskell/actions/hlint-setup@v2
         with:
           version: '3.3.6'
 
       - name: Run hlint
-        uses: haskell/actions/hlint-run@v1
+        uses: haskell/actions/hlint-run@v2
         with:
           fail-on: status
           path: '["app/", "src/"]'
