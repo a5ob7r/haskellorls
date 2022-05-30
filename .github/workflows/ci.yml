@@ -13,8 +13,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest]
-        ghc: ['9.2.2', '9.0.2', '8.10.7', '8.8.4', '8.6.5']
+        os:
+          - ubuntu-latest
+          - macOS-latest
+        ghc:
+          - '9.2.3'
+          - '9.0.2'
+          - '8.10.7'
+          - '8.8.4'
+          - '8.6.5'
 
     steps:
       - uses: actions/checkout@v3
@@ -30,7 +37,6 @@ jobs:
           path: ${{ steps.setup-haskell.outputs.cabal-store }}
           key: ci-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project') }}
           restore-keys: |
-            ci-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project') }}
             ci-${{ runner.os }}-${{ matrix.ghc }}-
 
       - name: Add path
