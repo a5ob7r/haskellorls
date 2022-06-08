@@ -26,4 +26,6 @@ userInfo = do
 
 data UserID = Myself Types.UserID | NotMyself Types.UserID
 
+-- | A group ID with a context, whether or not the current user belongs the
+-- group.
 data GroupID = Belongs Types.GroupID | NotBelongs Types.GroupID

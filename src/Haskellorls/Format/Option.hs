@@ -16,7 +16,7 @@ formatParser =
       <> completeWith ["across", "commas", "horizontal", "long", "single-column", "verbose", "vertical"]
   where
     reader =
-      str >>= \case
+      (str :: ReadM String) >>= \case
         "across" -> pure HORIZONTAL
         "commas" -> pure COMMAS
         "horizontal" -> pure HORIZONTAL

@@ -57,7 +57,7 @@ jobs:
           esac
 
       - name: Build
-        run: cabal install --overwrite-policy=always -j
+        run: cabal install --overwrite-policy=always -j --flags=pedantic
 
       - name: Run tests
         run: goldplate golden-test --pretty-diff

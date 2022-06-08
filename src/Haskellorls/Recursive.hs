@@ -13,6 +13,7 @@ import Control.Monad.Reader
 import Control.Monad.State.Strict
 import qualified Data.Either as E
 import qualified Data.Foldable as Fold
+import Data.Functor
 import qualified Data.List as L
 import qualified Data.Monoid as M
 import qualified Data.Set as Set
@@ -80,17 +81,17 @@ run c s = runLs c s go
     go =
       get >>= \case
         LsState ([], _) -> pure ()
-        s@(LsState (op : _, _)) -> do
-          c@(LsConf (_, Printer printer)) <- ask
+        s'@(LsState (op : _, _)) -> do
+          c'@(LsConf (_, Printer printer)) <- ask
 
           liftIO $ T.putStrLn =<< printer op
-          put =<< liftIO (newLsState c s)
+          put =<< liftIO (newLsState c' s')
 
           go
 
 newLsState :: LsConf -> LsState -> IO LsState
 newLsState _ s@(LsState ([], _)) = pure s
-newLsState c@(LsConf (opt, _)) s@(LsState (op : ops, inodes)) = case op of
+newLsState c@(LsConf (opt, _)) (LsState (op : ops, inodes)) = case op of
   PrintEntry (Entry {..})
     | Option.recursive opt && entryDepth < Option.level opt -> do
         let (nodes, newInodes) = runState (Recursive.updateAlreadySeenInode $ filter (Node.isDirectory . Node.pfsNodeType . Node.getNodeStatus) entryNodes) inodes
@@ -136,7 +137,10 @@ buildInitialOperations c@(LsConf (opt, _)) paths = do
   dirOps <- mapM (pathToOp c depth . Node.getNodePath) dirs
   let dirOps' =
         if Option.tree opt
-          then map (\(PrintEntry (Entry {..})) -> PrintTree (Tree entryPath entryOption)) dirOps
+          then
+            dirOps <&> \case
+              (PrintEntry (Entry {..})) -> PrintTree (Tree entryPath entryOption)
+              o -> o
           else case dirOps of
             -- Considers no argument to be also a single directory.
             [PrintEntry e] | null files && length (Option.targets opt) < 2 -> [PrintEntry (e {entryType = SINGLEDIR})]

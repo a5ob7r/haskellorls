@@ -15,6 +15,7 @@ import qualified Data.Either.Extra as E
 import Data.Functor
 import qualified Data.Text as T
 import qualified Data.Time.Clock.POSIX as Clock
+import Haskellorls.Class
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Tree.Type as Tree
 import qualified Haskellorls.Utils as Utils
@@ -58,6 +59,12 @@ data ProxyFileStatus = ProxyFileStatus
     pfsStatusChangeTime :: Clock.POSIXTime,
     pfsNodeType :: NodeType
   }
+
+instance From ProxyFileStatus Types.UserID where
+  from = pfsUserID
+
+instance From ProxyFileStatus Types.GroupID where
+  from = pfsGroupID
 
 proxyFileStatus :: Files.FileStatus -> ProxyFileStatus
 proxyFileStatus status =
@@ -155,6 +162,12 @@ data NodeInfo = NodeInfo
     getNodeLinkInfo :: Maybe (Either OrphanedLinkNodeInfo LinkNodeInfo),
     getTreeNodePositions :: [Tree.TreeNodePosition]
   }
+
+instance From NodeInfo Types.UserID where
+  from = from . getNodeStatus
+
+instance From NodeInfo Types.GroupID where
+  from = from . getNodeStatus
 
 data LinkNodeInfo = LinkNodeInfo
   { getLinkNodePath :: FilePath,

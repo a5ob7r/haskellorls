@@ -37,47 +37,31 @@ import qualified System.Posix.Types as Types
 import qualified System.Posix.User as User
 import Prelude hiding (lookup)
 
-newtype UserIdSubstTable = UserIdSubstTable {unUserIdSubstTable :: M.Map Types.UserID T.Text}
+newtype UserIdSubstTable = UserIdSubstTable (M.Map Types.UserID T.Text)
   deriving (Default)
-
-newtype GroupIdSubstTable = GroupIdSubstTable {unGroupIdSubstTable :: M.Map Types.GroupID T.Text}
-  deriving (Default)
-
--- Utilities {{{
-instance From Types.UserID T.Text where
-  from = T.pack . show
-
-instance Serialize Types.UserID
-
-instance From Types.GroupID T.Text where
-  from = T.pack . show
-
-instance Serialize Types.GroupID
 
 instance Dictionary Types.UserID T.Text UserIdSubstTable where
   lookup k (UserIdSubstTable m) = k `M.lookup` m
-
-instance Dictionary Types.GroupID T.Text GroupIdSubstTable where
-  lookup k (GroupIdSubstTable m) = k `M.lookup` m
 
 getUserIdSubstTable :: IO UserIdSubstTable
 getUserIdSubstTable = do
   entries <- User.getAllUserEntries
   pure . UserIdSubstTable . M.fromList $ map (\entry -> (User.userID entry, T.pack $ User.userName entry)) entries
 
+newtype GroupIdSubstTable = GroupIdSubstTable (M.Map Types.GroupID T.Text)
+  deriving (Default)
+
+instance Dictionary Types.GroupID T.Text GroupIdSubstTable where
+  lookup k (GroupIdSubstTable m) = k `M.lookup` m
+
 getGroupIdSubstTable :: IO GroupIdSubstTable
 getGroupIdSubstTable = do
   entries <- User.getAllGroupEntries
   pure . GroupIdSubstTable . M.fromList $ map (\entry -> (User.groupID entry, T.pack $ User.groupName entry)) entries
 
-instance From Node.NodeInfo Types.UserID where
-  from = Node.pfsUserID . Node.getNodeStatus
-
--- }}}
-
 -- Owner name {{{
 ownerName :: UserIdSubstTable -> Node.NodeInfo -> T.Text
-ownerName table node = fromMaybe (serialize ownerID) $ ownerID `lookup` table
+ownerName table node = fromMaybe (T.pack $ show ownerID) $ ownerID `lookup` table
   where
     ownerID :: Types.UserID
     ownerID = from node
@@ -104,13 +88,13 @@ coloredOwnerAs f lscolors user node = [Color.toWrappedText lscolors getter (f no
       | currentUserID == nodeOwnerID = Color.lookup $ Myself nodeOwnerID
       | otherwise = Color.lookup $ NotMyself nodeOwnerID
     currentUserID = userInfoUserID user
-    nodeOwnerID = Node.pfsUserID $ Node.getNodeStatus node
+    nodeOwnerID = from node
 
 -- }}}
 
 -- Group name {{{
 groupName :: GroupIdSubstTable -> Node.NodeInfo -> T.Text
-groupName table node = fromMaybe (serialize groupID) $ groupID `lookup` table
+groupName table node = fromMaybe (T.pack $ show groupID) $ groupID `lookup` table
   where
     groupID = numericGroupName' node
 
@@ -139,6 +123,6 @@ coloredGroupAs f lscolors user node = [Color.toWrappedText lscolors getter (f no
       | nodeGroupID `elem` groupIDs = Color.lookup $ Belongs nodeGroupID
       | otherwise = Color.lookup $ NotBelongs nodeGroupID
     groupIDs = userInfoGroupIDs user
-    nodeGroupID = Node.pfsGroupID $ Node.getNodeStatus node
+    nodeGroupID = from node
 
 -- }}}
