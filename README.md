@@ -108,7 +108,6 @@ $ cabal run haskellorls
 Run golden tests using [goldplate](https://github.com/fugue/goldplate).
 
 ```sh
-# On project root
-$ cabal install --overwrite-policy=always --installdir=bin
-$ PATH="$PWD/bin:$PATH" goldplate golden-test --pretty-diff
+$ cabal build
+$ cabal exec -- goldplate --pretty-diff golden-test
 ```
