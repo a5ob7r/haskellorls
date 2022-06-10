@@ -19,9 +19,9 @@ module Haskellorls.Time.Type
   )
 where
 
-import qualified Data.Time.Clock as Clock
+import Data.Time.Clock
 
-data Datetime = ModificationTime Clock.UTCTime | AccessTime Clock.UTCTime | ChangeTime Clock.UTCTime
+data Datetime = ModificationTime UTCTime | AccessTime UTCTime | ChangeTime UTCTime
   deriving (Eq, Ord, Show)
 
 -- WIP: locale and Prefixed with 'posix-' is not implemented yet.

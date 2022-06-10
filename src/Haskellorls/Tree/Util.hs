@@ -5,7 +5,7 @@ module Haskellorls.Tree.Util
 where
 
 import Control.Monad.IO.Class
-import qualified Control.Monad.State.Strict as State
+import Control.Monad.State.Strict
 import qualified Data.List.Extra as L
 import qualified Data.Sequence as S
 import qualified Haskellorls.Depth as Depth
@@ -16,7 +16,7 @@ import qualified Haskellorls.Recursive.Utils as Recursive
 import qualified Haskellorls.Sort.Method as Sort
 import Haskellorls.Tree.Type
 import qualified Haskellorls.Utils as Utils
-import qualified System.FilePath.Posix as Posix
+import System.FilePath.Posix
 
 makeSomeNewPositionsList :: Int -> [TreeNodePosition] -> [[TreeNodePosition]]
 makeSomeNewPositionsList n _
@@ -39,9 +39,9 @@ makeTreeNodeInfos opt path = do
 
 -- | With error message output.
 makeTreeNodeInfos' :: (MonadCatch m, MonadIO m) => Recursive.AlreadySeenInodes -> Option.Option -> S.Seq Node.NodeInfo -> m (S.Seq Node.NodeInfo)
-makeTreeNodeInfos' _ _ S.Empty = pure S.empty
+makeTreeNodeInfos' _ _ S.Empty = pure mempty
 makeTreeNodeInfos' inodes opt (node S.:<| nodeSeq) = do
-  let path = Node.getNodeDirName node Posix.</> Node.getNodePath node
+  let path = Node.getNodeDirName node </> Node.getNodePath node
   contents <-
     if
         | Depth.isDepthZero depth || not (Node.isDirectory $ Node.nodeType node) -> pure []
@@ -60,9 +60,9 @@ makeTreeNodeInfos' inodes opt (node S.:<| nodeSeq) = do
   -- Maybe contain nodeinfos which the inode number is already seen.
   nodeinfos <- mapM (Node.mkNodeInfo opt path) contents
 
-  let (nodes, newInodes) = State.runState (Recursive.updateAlreadySeenInode nodeinfos) inodes
+  let (nodes, newInodes) = runState (Recursive.updateAlreadySeenInode nodeinfos) inodes
       nodes' = zipWith (\nd p -> nd {Node.getTreeNodePositions = p}) (Sort.sorter opt nodes) pList
-      newNodeSeq = S.fromList nodes' S.>< nodeSeq
+      newNodeSeq = S.fromList nodes' <> nodeSeq
 
   (node S.<|) <$> makeTreeNodeInfos' newInodes opt' newNodeSeq
   where

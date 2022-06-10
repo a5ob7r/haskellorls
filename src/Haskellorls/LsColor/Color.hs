@@ -9,7 +9,7 @@ where
 
 import Control.Applicative
 import Data.Bifunctor
-import Data.Default
+import Data.Default.Class
 import Data.Functor
 import qualified Data.Map.Strict as M
 import Data.Maybe
@@ -27,17 +27,17 @@ import Haskellorls.Ownership.Type
 import Haskellorls.Size.Type
 import Haskellorls.Time.Type
 import Haskellorls.Tree.Type
-import qualified System.Environment as Env
+import System.Environment
 import Prelude hiding (lookup)
 
 lsColors :: IO LsColors
 lsColors = getLSCOLORS <> getEXACOLORS <&> deserialize
 
 getLSCOLORS :: IO T.Text
-getLSCOLORS = maybe "" T.pack <$> Env.lookupEnv "LS_COLORS"
+getLSCOLORS = maybe "" T.pack <$> lookupEnv "LS_COLORS"
 
 getEXACOLORS :: IO T.Text
-getEXACOLORS = maybe "" T.pack <$> Env.lookupEnv "EXA_COLORS"
+getEXACOLORS = maybe "" T.pack <$> lookupEnv "EXA_COLORS"
 
 -- | LS_COLORS
 type LsColors = Options Sequence Extensions
@@ -169,7 +169,7 @@ data Extensions = Extensions {sequences :: Sequences, extraLsColors :: ExtraLsCo
   deriving (Show)
 
 instance Default Extensions where
-  def = Extensions def def
+  def = Extensions mempty def
 
 instance From Sources Extensions where
   from s = Extensions (from s) (from s)
@@ -208,7 +208,7 @@ instance Queryable Sequence Extensions
 
 -- | Filename extension patterns or prefix them and paired sequences.
 newtype Sequences = Sequences (M.Map Query Sequence)
-  deriving (Show, Default)
+  deriving (Show, Semigroup, Monoid)
 
 instance From Sources Sequences where
   from = Sequences . M.fromList . map (bimap Query Sequence) . mapMaybe (uncurry f) . M.toList . unSources

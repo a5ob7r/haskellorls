@@ -1,10 +1,11 @@
 module Haskellorls
-  ( run,
+  ( haskellorls,
     argParser,
   )
 where
 
-import qualified Data.Either as E
+import Control.Monad
+import Data.Either
 import Data.Version (showVersion)
 import qualified Haskellorls.Decorator as Decorator
 import Haskellorls.Exception
@@ -13,10 +14,10 @@ import qualified Haskellorls.Quote.Utils as Quote
 import qualified Haskellorls.Recursive as Recursive
 import qualified Haskellorls.Size.Utils as Size
 import qualified Haskellorls.Utils as Utils
-import qualified Options.Applicative as OA
+import Options.Applicative
 import Paths_haskellorls (version)
-import qualified System.Exit as Exit
-import qualified System.IO as IO
+import System.Exit
+import System.IO
 
 -- | Haskellorls's process flow
 -- 1. Gets all arguments passed to itself as string list.
@@ -26,20 +27,21 @@ import qualified System.IO as IO
 -- 5. Build file status 'printers' from the 'option' record.
 -- 6. Build 'entry' printer form the 'option' record and 'printers'.
 -- 7. Print all 'entries' using the 'entry' printer.
-run :: [String] -> IO ()
-run args = do
+haskellorls :: [String] -> IO ()
+haskellorls args = do
   options <- argParser args
 
-  isConnectedToTerminal <- IO.hIsTerminalDevice IO.stdout
-  blockSize <- Size.lookupBlockSize options
-  quotingStyle <- Quote.lookupQuotingStyle options
-
   if Option.version options
-    then putStrLn versionFromCabal
-    else run' options {Option.blockSize = blockSize, Option.quotingStyle = quotingStyle, Option.toStdout = isConnectedToTerminal}
+    then putStrLn $ showVersion version
+    else do
+      isConnectedToTerminal <- hIsTerminalDevice stdout
+      blockSize <- Size.lookupBlockSize options
+      quotingStyle <- Quote.lookupQuotingStyle options
 
-run' :: Option.Option -> IO ()
-run' opt = do
+      run options {Option.blockSize = blockSize, Option.quotingStyle = quotingStyle, Option.toStdout = isConnectedToTerminal}
+
+run :: Option.Option -> IO ()
+run opt = do
   -- Assumes that current directory path is passed as argument implicitly if no argument.
   let targets = (\ss -> if null ss then ["."] else ss) $ Option.targets opt
 
@@ -47,7 +49,7 @@ run' opt = do
       opt' = opt {Option.dereferenceCommandLine = False, Option.dereferenceCommandLineSymlinkToDir = False}
 
   statuses <- mapM (tryIO . Utils.getSymbolicLinkStatus) targets
-  let (errs, exists) = E.partitionEithers $ zipWith (\s p -> s >>= const (Right p)) statuses targets
+  let (errs, exists) = partitionEithers $ zipWith (\s p -> s >>= const (Right p)) statuses targets
 
   mapM_ printErr errs
 
@@ -61,17 +63,11 @@ run' opt = do
 
   _ <- Recursive.run c s
 
-  if null errs
-    then Exit.exitSuccess
-    else Exit.exitWith $ Exit.ExitFailure 2
+  unless (null errs) . exitWith $ ExitFailure 2
 
 argParser :: [String] -> IO Option.Option
-argParser args = OA.handleParseResult presult
+argParser args = handleParseResult presult
   where
-    presult = OA.execParserPure pprefs pinfo args
-    pprefs = OA.prefs OA.helpLongEquals
+    presult = execParserPure pprefs pinfo args
+    pprefs = prefs helpLongEquals
     pinfo = Option.opts
-
--- Get version info from .cabal.
-versionFromCabal :: String
-versionFromCabal = showVersion version

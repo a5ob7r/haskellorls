@@ -8,13 +8,13 @@ module Haskellorls.Quote.Utils
   )
 where
 
-import qualified Data.Set as Set
+import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Haskellorls.Option as Option
 import Haskellorls.Quote.Option
 import Haskellorls.Quote.Type
 import qualified Haskellorls.WrappedText as WT
-import qualified System.Environment as Env
+import System.Environment
 
 -- filename:
 --   - double quote (-Q / --quote-name)
@@ -38,14 +38,14 @@ quote style wt@WT.WrappedText {..} = case style of
   SingleQuote -> [wt {WT.wtWord = "'" <> wtWord <> "'"}]
   DoubleQuote -> [wt {WT.wtWord = "\"" <> escapeDoubleQuote wtWord <> "\""}]
   _
-    | '\'' `Set.member` setA -> quote DoubleQuote wt
-    | Set.size (Set.intersection setA setB) > 0 -> quote SingleQuote wt
+    | '\'' `S.member` setA -> quote DoubleQuote wt
+    | not $ S.disjoint setA setB -> quote SingleQuote wt
     | otherwise -> case style of
         DynamicQuote -> quote SpacePadding wt
         _ -> quote NoQuote wt
     where
-      setA = textToSet wtWord
-      setB = Set.fromList charactorsNeedQuote
+      setA = T.foldl' (flip S.insert) mempty wtWord
+      setB = S.fromList charactorsNeedQuote
 
 -- WIP: Should implement singole quote version. Also need to change printer
 -- architecture.
@@ -72,9 +72,6 @@ quoteStyleForLink opt = case style of
   where
     style = quoteStyle opt
 
-textToSet :: T.Text -> Set.Set Char
-textToSet = Set.fromList . T.unpack
-
 charactorsNeedQuote :: String
 charactorsNeedQuote = " !\"$&()*;<=>[^`|"
 
@@ -86,7 +83,7 @@ escapeDoubleQuote = T.concatMap $ \case
 lookupQuotingStyle :: Option.Option -> IO QuotingStyle
 lookupQuotingStyle opt = case Option.quotingStyle opt of
   NoStyle -> do
-    Env.lookupEnv "QUOTING_STYLE" >>= \case
+    lookupEnv "QUOTING_STYLE" >>= \case
       Just styleFromEnv ->
         case parseQuotingStyle (T.pack styleFromEnv) of
           Nothing -> pure NoStyle

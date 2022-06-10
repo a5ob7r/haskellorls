@@ -8,11 +8,12 @@ module Haskellorls.Decorator
   )
 where
 
-import qualified Data.List as List
+import Data.Foldable
+import qualified Data.List as L
 import qualified Data.Text as T
-import qualified Data.Time.Clock.POSIX as Clock
-import qualified Data.Time.Format as TFormat
-import qualified Data.Time.LocalTime as LClock
+import Data.Time.Clock.POSIX
+import Data.Time.Format
+import Data.Time.LocalTime
 import Haskellorls.Class
 import qualified Haskellorls.Color.Utils as Color
 import qualified Haskellorls.Context as Context
@@ -152,11 +153,11 @@ buildPrinters :: Option.Option -> IO Printers
 buildPrinters opt = do
   lscolors <- Color.lsColors
   lsicons <- Color.lsIcons
-  uidSubstTable <- if Option.numericUidGid opt then pure Ownership.def else Ownership.getUserIdSubstTable
-  gidSubstTable <- if Option.numericUidGid opt then pure Ownership.def else Ownership.getGroupIdSubstTable
+  uidSubstTable <- if Option.numericUidGid opt then pure mempty else Ownership.getUserIdSubstTable
+  gidSubstTable <- if Option.numericUidGid opt then pure mempty else Ownership.getGroupIdSubstTable
   userInfo <- Ownership.userInfo
-  currentTime <- Clock.getCurrentTime
-  timeZone <- LClock.getCurrentTimeZone
+  currentTime <- getCurrentTime
+  timeZone <- getCurrentTimeZone
 
   let shouldColorize = Color.shouldColorize opt
       isEnableExtraColor = Option.extraColor opt
@@ -211,12 +212,12 @@ buildPrinters opt = do
 
       fileTimePrinter =
         case (shouldColorize, isEnableExtraColor) of
-          (True, True) -> Time.coloredTimeStyleFunc lscolors timeZone TFormat.defaultTimeLocale currentTime timeStyle . fileTime
-          (True, _) -> Time.normalColoredTimeStyleFunc lscolors timeZone TFormat.defaultTimeLocale currentTime timeStyle . fileTime
+          (True, True) -> Time.coloredTimeStyleFunc lscolors timeZone defaultTimeLocale currentTime timeStyle . fileTime
+          (True, _) -> Time.normalColoredTimeStyleFunc lscolors timeZone defaultTimeLocale currentTime timeStyle . fileTime
           _ -> (\t -> [WT.deserialize t]) . timeStyleFunc . fileTime
         where
-          timeStyleFunc = Time.timeStyleFunc timeZone TFormat.defaultTimeLocale currentTime timeStyle
-          fileTime = Clock.posixSecondsToUTCTime . Time.fileTime (Time.timeType opt)
+          timeStyleFunc = Time.timeStyleFunc timeZone defaultTimeLocale currentTime timeStyle
+          fileTime = posixSecondsToUTCTime . Time.fileTime (Time.timeType opt)
           timeStyle = Time.timeStyle opt
 
       -- TODO: Should use colored icon? But, must consider charactor size and background color.
@@ -287,12 +288,10 @@ buildColumn nodes printers pType = map alignmenter nodes'
     alignmenter = aBuilder " " maxLen
 
 buildGrid :: [Node.NodeInfo] -> Printers -> [PrinterType] -> [[[WT.WrappedText]]]
-buildGrid nodes printers = List.transpose . map (buildColumn nodes printers)
+buildGrid nodes printers = L.transpose . map (buildColumn nodes printers)
 
-buildLines :: [Node.NodeInfo] -> Printers -> [PrinterType] -> [[WT.WrappedText]]
-buildLines nodes printers types = map cat $ buildGrid nodes printers types
-  where
-    cat = List.intercalate [WT.deserialize " "]
+buildLines :: Foldable t => t Node.NodeInfo -> Printers -> [PrinterType] -> [[WT.WrappedText]]
+buildLines nodes printers types = L.intercalate [WT.deserialize " "] <$> buildGrid (toList nodes) printers types
 
 leftPadding :: AlignmenterBuilder
 leftPadding c n | n > -1 = padding c (-n)

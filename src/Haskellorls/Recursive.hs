@@ -11,12 +11,10 @@ where
 import Control.Monad.IO.Class
 import Control.Monad.Reader
 import Control.Monad.State.Strict
-import qualified Data.Either as E
-import qualified Data.Foldable as Fold
+import Data.Either
 import Data.Functor
 import qualified Data.List as L
-import qualified Data.Monoid as M
-import qualified Data.Set as Set
+import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.Text.Lazy as TL
@@ -35,7 +33,7 @@ import qualified Haskellorls.Sort.Method as Sort
 import qualified Haskellorls.Tree.Util as Tree
 import qualified Haskellorls.Utils as Utils
 import qualified Haskellorls.WrappedText as WT
-import qualified System.FilePath.Posix as Posix
+import System.FilePath.Posix
 
 data EntryType = FILES | SINGLEDIR | DIRECTORY
 
@@ -66,14 +64,12 @@ newtype LsState = LsState ([Operation], Recursive.AlreadySeenInodes)
 -- | A central piece monad of haskellorls.
 --
 -- NOTE: This is inspired from XMonad.
--- https://github.com/xmonad/xmonad/blob/a902fefaf1f27f1a21dc35ece15e7dbb573f3d95/src/XMonad/Core.hs#L158
-newtype RuntimeContext a = RuntimeContext (ReaderT LsConf (StateT LsState IO) a)
+-- <https://github.com/xmonad/xmonad/blob/a902fefaf1f27f1a21dc35ece15e7dbb573f3d95/src/XMonad/Core.hs#L158>
+newtype Ls a = Ls (ReaderT LsConf (StateT LsState IO) a)
   deriving (Functor, Applicative, Monad, MonadIO, MonadReader LsConf, MonadState LsState)
 
-type Ls = RuntimeContext ()
-
-runLs :: LsConf -> LsState -> Ls -> IO ((), LsState)
-runLs c s (RuntimeContext a) = runStateT (runReaderT a c) s
+runLs :: LsConf -> LsState -> Ls a -> IO (a, LsState)
+runLs c s (Ls a) = runStateT (runReaderT a c) s
 
 run :: LsConf -> LsState -> IO ((), LsState)
 run c s = runLs c s go
@@ -95,8 +91,8 @@ newLsState c@(LsConf (opt, _)) (LsState (op : ops, inodes)) = case op of
   PrintEntry (Entry {..})
     | Option.recursive opt && entryDepth < Option.level opt -> do
         let (nodes, newInodes) = runState (Recursive.updateAlreadySeenInode $ filter (Node.isDirectory . Node.nodeType) entryNodes) inodes
-            paths = map (\node -> entryPath Posix.</> Node.getNodePath node) nodes
-        (errs, ops') <- E.partitionEithers <$> mapM (tryIO . pathToOp c (Depth.increaseDepth entryDepth)) paths
+            paths = map (\node -> entryPath </> Node.getNodePath node) nodes
+        (errs, ops') <- partitionEithers <$> mapM (tryIO . pathToOp c (Depth.increaseDepth entryDepth)) paths
         mapM_ printErr errs
         let entries = (\es -> if null es then es else Newline : es) $ L.intersperse Newline ops'
         pure $ LsState (entries <> ops, newInodes)
@@ -127,11 +123,11 @@ buildDirectoryNodes opt path = do
 -- | Assumes all paths exist.
 buildInitialOperations :: (MonadCatch m, MonadIO m) => LsConf -> [FilePath] -> m (Recursive.AlreadySeenInodes, [Operation])
 buildInitialOperations c@(LsConf (opt, _)) paths = do
-  (errs, nodeinfos) <- E.partitionEithers <$> mapM (tryIO . Node.mkNodeInfo opt "") paths
+  (errs, nodeinfos) <- partitionEithers <$> mapM (tryIO . Node.mkNodeInfo opt "") paths
 
   mapM_ (liftIO . printErr) errs
 
-  let (nodes, inodes) = runState (Recursive.updateAlreadySeenInode $ Sort.sorter opt nodeinfos) Recursive.def
+  let (nodes, inodes) = runState (Recursive.updateAlreadySeenInode $ Sort.sorter opt nodeinfos) mempty
   let (dirs, files) = L.partition isDirectory nodes
       fileOp = [PrintEntry (Entry FILES "" files opt depth) | not (null files)]
   dirOps <- mapM (pathToOp c depth . Node.getNodePath) dirs
@@ -153,7 +149,7 @@ buildInitialOperations c@(LsConf (opt, _)) paths = do
       | otherwise = Node.isDirectory . Node.nodeType
 
 buildPrinter :: Option.Option -> Decorator.Printers -> Printer
-buildPrinter opt printers = Printer $ fmap (TL.toStrict . TLB.toLazyText . M.mconcat . L.intersperse (TLB.fromText "\n")) . generateEntryLines opt printers
+buildPrinter opt printers = Printer $ fmap (TL.toStrict . TLB.toLazyText . mconcat . L.intersperse (TLB.fromText "\n")) . generateEntryLines opt printers
 
 generateEntryLines :: Option.Option -> Decorator.Printers -> Operation -> IO [TLB.Builder]
 generateEntryLines opt printers op = case op of
@@ -181,13 +177,13 @@ generateEntryLines opt printers op = case op of
 
     return . addHeader . addTotalBlockSize . Grid.renderGrid $ Grid.buildValidGrid opt colLen nodes'
   PrintTree (Tree {..}) -> do
-    nodes <- Fold.toList <$> Tree.makeTreeNodeInfos opt treePath
+    nodes <- Tree.makeTreeNodeInfos opt treePath
     let opt' = if shouldQuote nodes then opt else opt {Option.noQuote = True}
-    pure . map (M.mconcat . map wtToBuilder) $ Decorator.buildLines nodes printers $ Decorator.buildPrinterTypes opt'
+    pure . map (mconcat . map wtToBuilder) $ Decorator.buildLines nodes printers $ Decorator.buildPrinterTypes opt'
     where
       wtToBuilder = TLB.fromText . WT.serialize
 
-shouldQuote :: [Node.NodeInfo] -> Bool
-shouldQuote = not . all (Set.null . Set.intersection setNeedQuotes . Set.fromList . Node.getNodePath)
+shouldQuote :: Foldable t => t Node.NodeInfo -> Bool
+shouldQuote = not . all (S.null . S.intersection setNeedQuotes . S.fromList . Node.getNodePath)
   where
-    setNeedQuotes = Set.fromList Quote.charactorsNeedQuote
+    setNeedQuotes = S.fromList Quote.charactorsNeedQuote

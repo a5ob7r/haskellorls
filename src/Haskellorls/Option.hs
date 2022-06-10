@@ -4,7 +4,6 @@ module Haskellorls.Option
   )
 where
 
-import qualified Control.Applicative as A
 import qualified Data.Text as T
 import qualified Haskellorls.Color.Option as Color
 import qualified Haskellorls.Depth as Depth
@@ -16,7 +15,7 @@ import qualified Haskellorls.Sort.Option as Sort
 import qualified Haskellorls.Time.Option as Time
 import qualified Options.Applicative as OA
 import qualified Options.Applicative.Help.Pretty as OA
-import qualified Text.Read as Read
+import Text.Read
 
 data Option = Option
   { all :: Bool,
@@ -297,7 +296,7 @@ levelParser =
   where
     reader =
       OA.str >>= \s -> do
-        case Read.readMaybe s >>= Depth.makeDepth of
+        case readMaybe s >>= Depth.makeDepth of
           Just d -> return d
           _ -> OA.readerError "Acceptable value is only natural number"
 
@@ -412,7 +411,7 @@ tabSizeParser =
   where
     reader =
       OA.str >>= \cols ->
-        case Read.readMaybe cols of
+        case readMaybe cols of
           Just n -> pure n
           Nothing -> OA.readerError "COLS must be a natural number"
 
@@ -489,7 +488,7 @@ versionParser =
       <> OA.help "Show version info"
 
 argParser :: OA.Parser [String]
-argParser = A.many . OA.strArgument $ OA.metavar "[FILE]..." <> OA.action "file"
+argParser = OA.many . OA.strArgument $ OA.metavar "[FILE]..." <> OA.action "file"
 
 header :: T.Text
 header =

@@ -7,7 +7,7 @@ module Haskellorls.Size.Option
   )
 where
 
-import qualified Data.Char as C
+import Data.Char
 import qualified Data.List as L
 import qualified Data.Text as T
 import Haskellorls.Size.Type
@@ -48,10 +48,10 @@ parseBlockSize s = case parseLabel $ normalizeUnit unit of
   _ -> Nothing
   where
     scale = toScale sVal
-    (sVal, unit) = T.span C.isDigit s
+    (sVal, unit) = T.span isDigit s
 
 normalizeUnit :: T.Text -> T.Text
-normalizeUnit = maybe "" (\(c, cs) -> C.toUpper c `T.cons` cs) . T.uncons
+normalizeUnit = maybe "" (\(c, cs) -> toUpper c `T.cons` cs) . T.uncons
 
 parseLabel :: T.Text -> Maybe (BaseScale, ScaleSuffix)
 parseLabel t

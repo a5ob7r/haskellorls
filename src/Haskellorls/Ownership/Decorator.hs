@@ -19,12 +19,10 @@ module Haskellorls.Ownership.Decorator
     coloredNumericGroupName,
     getGroupIdSubstTable,
     getUserIdSubstTable,
-    module Data.Default,
     module Haskellorls.Ownership.Type,
   )
 where
 
-import Data.Default
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import qualified Data.Text as T
@@ -38,7 +36,7 @@ import qualified System.Posix.User as User
 import Prelude hiding (lookup)
 
 newtype UserIdSubstTable = UserIdSubstTable (M.Map Types.UserID T.Text)
-  deriving (Default)
+  deriving (Semigroup, Monoid)
 
 instance Dictionary Types.UserID T.Text UserIdSubstTable where
   lookup k (UserIdSubstTable m) = k `M.lookup` m
@@ -49,7 +47,7 @@ getUserIdSubstTable = do
   pure . UserIdSubstTable . M.fromList $ map (\entry -> (User.userID entry, T.pack $ User.userName entry)) entries
 
 newtype GroupIdSubstTable = GroupIdSubstTable (M.Map Types.GroupID T.Text)
-  deriving (Default)
+  deriving (Semigroup, Monoid)
 
 instance Dictionary Types.GroupID T.Text GroupIdSubstTable where
   lookup k (GroupIdSubstTable m) = k `M.lookup` m

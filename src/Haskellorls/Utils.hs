@@ -6,27 +6,22 @@ module Haskellorls.Utils
     linkDestPath,
     listContents,
     exclude,
-    partitionExistOrNotPathes,
-    validatePathExistence,
     textLengthForDisplay,
-    replaceControlCharsToQuestion,
     escapeFormatter,
-    escapeCharsForStdout,
   )
 where
 
 import Control.Exception.Safe
 import Control.Monad.IO.Class
-import qualified Data.Char as C
-import qualified Data.Either as E
+import Data.Char
 import Data.Functor
 import qualified Data.List as L
 import qualified Data.Text as T
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Quote.Type as Quote
-import qualified System.Directory as Directory
-import qualified System.FilePath.Glob as Glob
-import qualified System.FilePath.Posix as Posix
+import System.Directory
+import System.FilePath.Glob
+import System.FilePath.Posix
 import qualified System.Posix.Files as Files
 
 getSymbolicLinkStatus :: (MonadThrow m, MonadIO m) => FilePath -> m Files.FileStatus
@@ -51,7 +46,7 @@ destFileStatusRecursive dirPath basePath = do
 linkDestPath :: FilePath -> FilePath -> FilePath
 linkDestPath parPath linkPath
   | isAbsPath linkPath = linkPath
-  | otherwise = Posix.takeDirectory parPath Posix.</> linkPath
+  | otherwise = takeDirectory parPath </> linkPath
 
 isAbsPath :: FilePath -> Bool
 isAbsPath path = "/" `L.isPrefixOf` path
@@ -77,10 +72,10 @@ listContents opt path = list path <&> ignoreExcluder . hideExcluder . ignoreFilt
     isShowHiddenEntries = Option.all opt || Option.almostAll opt
 
 listAllEntries :: (MonadThrow m, MonadIO m) => FilePath -> m [FilePath]
-listAllEntries = liftIO . Directory.getDirectoryContents
+listAllEntries = liftIO . getDirectoryContents
 
 listSemiAllEntries :: (MonadThrow m, MonadIO m) => FilePath -> m [FilePath]
-listSemiAllEntries = liftIO . Directory.listDirectory
+listSemiAllEntries = liftIO . listDirectory
 
 listEntries :: (MonadThrow m, MonadIO m) => FilePath -> m [FilePath]
 listEntries path = listSemiAllEntries path <&> filter (not . isHiddenEntries)
@@ -94,22 +89,16 @@ ignoreBackupsFilter :: [FilePath] -> [FilePath]
 ignoreBackupsFilter = filter (\path -> not $ "~" `L.isSuffixOf` path)
 
 exclude :: String -> [FilePath] -> [FilePath]
-exclude ptn = filter (not . Glob.match ptn')
+exclude ptn = filter (not . match ptn')
   where
-    ptn' = Glob.compile ptn
-
-partitionExistOrNotPathes :: [FilePath] -> IO ([FilePath], [FilePath])
-partitionExistOrNotPathes pathes = E.partitionEithers <$> mapM validatePathExistence pathes
-
-validatePathExistence :: FilePath -> IO (Either FilePath FilePath)
-validatePathExistence path = E.either (const $ Left path) (const $ Right path) <$> tryIO (liftIO $ getSymbolicLinkStatus path)
+    ptn' = compile ptn
 
 -- | Assumes not Latin1 charactor has double width of Latin1 charactor for display.
 textLengthForDisplay :: T.Text -> Int
-textLengthForDisplay = sum . map (\c -> if C.isLatin1 c then 1 else 2) . T.unpack
+textLengthForDisplay = T.foldr (\c acc -> acc + if isLatin1 c then 1 else 2) 0
 
 replaceControlCharsToQuestion :: T.Text -> T.Text
-replaceControlCharsToQuestion = T.map (\c -> if C.isPrint c then c else '?')
+replaceControlCharsToQuestion = T.map (\c -> if isPrint c then c else '?')
 
 escapeCharsForStdout :: T.Text -> T.Text
 escapeCharsForStdout = T.concatMap $ \case

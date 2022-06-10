@@ -8,12 +8,12 @@ import Data.Maybe
 import qualified Data.Text as T
 import qualified Haskellorls.Option as Option
 import Haskellorls.Size.Option
-import qualified System.Environment as Env
+import System.Environment
 
 lookupBlockSizeEnvVar :: IO (Maybe String)
 lookupBlockSizeEnvVar =
-  Env.lookupEnv "LS_BLOCK_SIZE" >>= \case
-    Nothing -> Env.lookupEnv "BLOCK_SIZE"
+  lookupEnv "LS_BLOCK_SIZE" >>= \case
+    Nothing -> lookupEnv "BLOCK_SIZE"
     size -> pure size
 
 lookupBlockSize :: Option.Option -> IO BlockSize

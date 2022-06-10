@@ -5,12 +5,12 @@ module Haskellorls.Exception
 where
 
 import Control.Exception.Safe
-import qualified System.IO as IO
+import System.IO
 
 -- | Print a message to stderr. This is similar to a shell command
 -- `echo message >&2`.
 printAsStderr :: (Show a) => a -> IO ()
-printAsStderr = IO.hPrint IO.stderr
+printAsStderr = hPrint stderr
 
 -- | Print an exception.
 printErr :: Exception e => e -> IO ()

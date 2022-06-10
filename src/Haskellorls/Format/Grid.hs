@@ -5,9 +5,8 @@ module Haskellorls.Format.Grid
   )
 where
 
-import qualified Data.List as List
+import qualified Data.List as L
 import Data.Maybe
-import qualified Data.Monoid as M
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as TLB
@@ -15,11 +14,11 @@ import qualified Haskellorls.Format.Util as Format
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Utils as Utils
 import qualified Haskellorls.WrappedText as WT
-import qualified System.Console.Terminal.Size as TS
+import System.Console.Terminal.Size
 
 virtualColumnSize :: Option.Option -> IO Int
 virtualColumnSize opt = do
-  fdWidth <- fmap TS.width <$> TS.size
+  fdWidth <- fmap width <$> size
   return . head $ catMaybes [styleWidth, optWidth, fdWidth, Just 1]
   where
     optWidth = Option.width opt
@@ -33,7 +32,7 @@ virtualColumnSize opt = do
 -- > horizontalSplitInto 2 [1 .. 6] == [[1, 3, 5], [2, 4, 6]]
 -- > horizontalSplitInto 3 [1 .. 10] == [[1, 4, 7, 10], [2, 5, 8], [3, 6, 9]]
 verticalSplitInto :: Int -> [a] -> [[a]]
-verticalSplitInto n = List.transpose . slice n
+verticalSplitInto n = L.transpose . slice n
 
 horizontalSplitInto :: Int -> [a] -> [[a]]
 horizontalSplitInto = splitInto
@@ -102,7 +101,7 @@ splitsAt [] _ = []
 splitsAt _ [] = []
 splitsAt (n : nx) xs = ys : splitsAt nx xs'
   where
-    (ys, xs') = List.splitAt n xs
+    (ys, xs') = L.splitAt n xs
 
 buildValidGrid :: Option.Option -> Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
 buildValidGrid _ _ [] = []
@@ -129,16 +128,16 @@ renderGridAsPlain :: [[[WT.WrappedText]]] -> [TLB.Builder]
 renderGridAsPlain = map renderLineAsPlain
 
 renderLine :: [[WT.WrappedText]] -> TLB.Builder
-renderLine = M.mconcat . map renderWTList
+renderLine = mconcat . map renderWTList
 
 renderLineAsPlain :: [[WT.WrappedText]] -> TLB.Builder
-renderLineAsPlain = M.mconcat . map renderWTListAsPlain
+renderLineAsPlain = mconcat . map renderWTListAsPlain
 
 renderWTList :: [WT.WrappedText] -> TLB.Builder
-renderWTList = M.mconcat . map (TLB.fromText . WT.serialize)
+renderWTList = mconcat . map (TLB.fromText . WT.serialize)
 
 renderWTListAsPlain :: [WT.WrappedText] -> TLB.Builder
-renderWTListAsPlain = M.mconcat . map (TLB.fromText . WT.wtWord)
+renderWTListAsPlain = mconcat . map (TLB.fromText . WT.wtWord)
 
 validateGrid :: Int -> [[[WT.WrappedText]]] -> Bool
 validateGrid n grid
@@ -148,7 +147,7 @@ validateGrid n grid
     maxLen = maximum . map (Utils.textLengthForDisplay . TL.toStrict . TLB.toLazyText) $ renderGridAsPlain grid
 
 buildGridWithTab :: Option.Option -> Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
-buildGridWithTab opt n wtss = map (buildRow (Option.tabSize opt) maxLengths) $ List.transpose grid
+buildGridWithTab opt n wtss = map (buildRow (Option.tabSize opt) maxLengths) $ L.transpose grid
   where
     grid = splitter n wtss
     maxLengths = mapToInit (+ 2) $ calcEachRowMaxWTLength grid
@@ -206,7 +205,7 @@ buildPaddingsWithSpace len (n : ns) (m : ms) = T.replicate (nLen - mLen) " " : b
     mLen = len + m
 
 buildGridWithSpace :: Option.Option -> Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
-buildGridWithSpace opt n wtss = map (buildRowWithSpace maxLengths) $ List.transpose grid
+buildGridWithSpace opt n wtss = map (buildRowWithSpace maxLengths) $ L.transpose grid
   where
     grid = splitter n wtss
     maxLengths = mapToInit (+ 2) $ calcEachRowMaxWTLength grid

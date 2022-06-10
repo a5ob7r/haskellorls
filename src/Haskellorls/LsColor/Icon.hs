@@ -9,7 +9,7 @@ where
 
 import Control.Applicative
 import Data.Bifunctor
-import Data.Default
+import Data.Default.Class
 import Data.Functor
 import qualified Data.Map.Strict as M
 import Data.Maybe
@@ -18,15 +18,15 @@ import qualified Data.Text as T
 import Haskellorls.Class
 import Haskellorls.LsColor.Config
 import Haskellorls.NodeInfo
-import qualified System.Environment as Env
-import qualified System.FilePath.Posix as Posix
+import System.Environment
+import System.FilePath.Posix
 import Prelude hiding (lookup)
 
 lsIcons :: IO LsIcons
 lsIcons = getLSICONS <&> deserialize
 
 getLSICONS :: IO T.Text
-getLSICONS = maybe "" T.pack <$> Env.lookupEnv "LS_ICONS"
+getLSICONS = maybe "" T.pack <$> lookupEnv "LS_ICONS"
 
 -- | LS_ICONS
 type LsIcons = Options Icon Icons
@@ -74,7 +74,7 @@ instance Dictionary NodeInfo Icon LsIcons where
       Directory -> directory
       _ -> Query filename `query` l <|> file
       where
-        filename = T.pack . Posix.takeFileName $ getNodePath n
+        filename = T.pack . takeFileName $ getNodePath n
 
 instance Dictionary Query Icon LsIcons where
   lookup (Query t) (Options {..}) = extension >>= \e -> Query (T.toUpper t) `lookup` e
@@ -82,8 +82,8 @@ instance Dictionary Query Icon LsIcons where
 instance Queryable Icon LsIcons
 
 -- | Filename patterns and corresponsing icons.
-newtype Icons = Icons {unIcons :: M.Map Query Icon}
-  deriving (Show, Default)
+newtype Icons = Icons (M.Map Query Icon)
+  deriving (Semigroup, Monoid)
 
 instance From Sources Icons where
   from = Icons . M.fromList . map (bimap Query Icon) . mapMaybe (uncurry f) . M.toList . unSources

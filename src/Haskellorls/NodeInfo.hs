@@ -19,20 +19,19 @@ where
 
 import Control.Exception.Safe
 import Control.Monad.IO.Class
-import qualified Data.Either.Extra as E
+import Data.Either.Extra
 import Data.Functor
 import qualified Data.Text as T
-import qualified Data.Time.Clock.POSIX as Clock
+import Data.Time.Clock.POSIX
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Tree.Type as Tree
 import qualified Haskellorls.Utils as Utils
-import qualified System.FilePath.Posix as Posix
+import System.FilePath.Posix
 import qualified System.Posix.Files as Files
 import qualified System.Posix.Types as Types
 
 #ifdef SELINUX
-import qualified Control.Exception.Base as Exception
-import qualified Data.Either as E
+import Data.Either
 import qualified System.Linux.SELinux as SELinux
 #endif
 
@@ -128,9 +127,9 @@ data ProxyFileStatus = ProxyFileStatus
     pfsUserID :: Types.UserID,
     pfsGroupID :: Types.GroupID,
     pfsFileSize :: Types.FileOffset,
-    pfsModificationTime :: Clock.POSIXTime,
-    pfsAccessTime :: Clock.POSIXTime,
-    pfsStatusChangeTime :: Clock.POSIXTime,
+    pfsModificationTime :: POSIXTime,
+    pfsAccessTime :: POSIXTime,
+    pfsStatusChangeTime :: POSIXTime,
     pfsNodeType :: NodeType
   }
 
@@ -171,7 +170,7 @@ mkNodeInfo opt dirname basename = do
       destStatus <- do
         case linkPath of
           -- Dereference file status if a status presents symbolic link.
-          Right p -> tryIO (Utils.destFileStatusRecursive path p) <&> E.eitherToMaybe
+          Right p -> tryIO (Utils.destFileStatusRecursive path p) <&> eitherToMaybe
           _ -> pure Nothing
 
       destContext <- do
@@ -236,7 +235,7 @@ mkNodeInfo opt dirname basename = do
             getTreeNodePositions = []
           }
   where
-    path = dirname Posix.</> basename
+    path = dirname </> basename
 
 fileMode :: NodeInfo -> Types.FileMode
 fileMode = pfsFileMode . getNodeStatus
@@ -256,13 +255,13 @@ groupID = pfsGroupID . getNodeStatus
 fileSize :: NodeInfo -> Types.FileOffset
 fileSize = pfsFileSize . getNodeStatus
 
-modificationTime :: NodeInfo -> Clock.POSIXTime
+modificationTime :: NodeInfo -> POSIXTime
 modificationTime = pfsModificationTime . getNodeStatus
 
-accessTime :: NodeInfo -> Clock.POSIXTime
+accessTime :: NodeInfo -> POSIXTime
 accessTime = pfsAccessTime . getNodeStatus
 
-changeTime :: NodeInfo -> Clock.POSIXTime
+changeTime :: NodeInfo -> POSIXTime
 changeTime = pfsStatusChangeTime . getNodeStatus
 
 nodeType :: NodeInfo -> NodeType
@@ -302,7 +301,7 @@ fileContext :: MonadIO m => FilePath -> m String
 fileContext path =
   do
     context <- tryIO (SELinux.getFileCon path)
-    pure $ E.fromRight defaultContext context
+    pure $ fromRight defaultContext context
 #else
 fileContext _ = pure defaultContext
 #endif

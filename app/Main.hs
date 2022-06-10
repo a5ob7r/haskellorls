@@ -1,7 +1,7 @@
-module Main where
+module Main (main) where
 
-import Haskellorls (run)
+import Haskellorls
 import System.Environment (getArgs)
 
 main :: IO ()
-main = getArgs >>= run
+main = getArgs >>= haskellorls

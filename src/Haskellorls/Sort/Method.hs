@@ -4,16 +4,16 @@ module Haskellorls.Sort.Method
 where
 
 import qualified Algorithms.NaturalSort as NSort
-import qualified Data.Char as C
+import Data.Char
 import qualified Data.List as L
-import qualified Data.Ord as O
+import Data.Ord
 import qualified Haskellorls.Format.Util as Format
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import Haskellorls.Sort.Type
 import qualified Haskellorls.Time.Decorator as Time
 import qualified Haskellorls.Time.Type as Time
-import qualified System.FilePath.Posix as Posix
+import System.FilePath.Posix
 
 sorter :: Option.Option -> [Node.NodeInfo] -> [Node.NodeInfo]
 sorter opt = merger . separater . sorter' opt
@@ -61,27 +61,27 @@ sortWithName = L.sortBy (\a b -> Node.getNodePath a `compareName` Node.getNodePa
         a' = norm a
         b' = norm b
     norm =
-      map C.toUpper . \s -> case s of
+      map toUpper . \s -> case s of
         '.' : s' -> s'
         _ -> s
 
 sortWithSize :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithSize = L.sortOn $ O.Down . Node.fileSize
+sortWithSize = L.sortOn $ Down . Node.fileSize
 
 sortWithModificationTime :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithModificationTime = L.sortOn $ O.Down . Node.modificationTime
+sortWithModificationTime = L.sortOn $ Down . Node.modificationTime
 
 sortWithAccessTime :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithAccessTime = L.sortOn $ O.Down . Node.accessTime
+sortWithAccessTime = L.sortOn $ Down . Node.accessTime
 
 sortWithChangeTime :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithChangeTime = L.sortOn $ O.Down . Node.changeTime
+sortWithChangeTime = L.sortOn $ Down . Node.changeTime
 
 sortWithVersion :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithVersion = L.sortBy (\a b -> Node.getNodePath a `NSort.compare` Node.getNodePath b)
 
 sortWithExtension :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithExtension = L.sortBy (\a b -> Posix.takeExtension (Node.getNodePath a) `compare` Posix.takeExtension (Node.getNodePath b))
+sortWithExtension = L.sortBy (\a b -> takeExtension (Node.getNodePath a) `compare` takeExtension (Node.getNodePath b))
 
 partitionDirectoriesAndFiles :: [Node.NodeInfo] -> ([Node.NodeInfo], [Node.NodeInfo])
 partitionDirectoriesAndFiles = L.partition isDirectory
