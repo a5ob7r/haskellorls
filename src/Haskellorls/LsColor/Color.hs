@@ -76,7 +76,7 @@ instance Dictionary NodeInfo Sequence LsColors where
   lookup n l@(Options {..}) = case getNodeLinkInfo n of
     Just (Left _) -> orphan
     Just (Right _) | symlink /= Just "target" -> symlink
-    _ -> case pfsNodeType $ getNodeStatus n' of
+    _ -> case nodeType n' of
       Directory -> directory
       NamedPipe -> pipe
       Socket -> socket

@@ -65,7 +65,7 @@ instance Dictionary NodeInfo Icon LsIcons where
   lookup n l@(Options {..}) = case getNodeLinkInfo n of
     Just (Left _) -> orphan
     Just (Right _) -> symlink
-    _ -> case pfsNodeType $ getNodeStatus n of
+    _ -> case nodeType n of
       NamedPipe -> pipe
       Socket -> socket
       BlockDevise -> block

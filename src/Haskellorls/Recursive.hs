@@ -94,7 +94,7 @@ newLsState _ s@(LsState ([], _)) = pure s
 newLsState c@(LsConf (opt, _)) (LsState (op : ops, inodes)) = case op of
   PrintEntry (Entry {..})
     | Option.recursive opt && entryDepth < Option.level opt -> do
-        let (nodes, newInodes) = runState (Recursive.updateAlreadySeenInode $ filter (Node.isDirectory . Node.pfsNodeType . Node.getNodeStatus) entryNodes) inodes
+        let (nodes, newInodes) = runState (Recursive.updateAlreadySeenInode $ filter (Node.isDirectory . Node.nodeType) entryNodes) inodes
             paths = map (\node -> entryPath Posix.</> Node.getNodePath node) nodes
         (errs, ops') <- E.partitionEithers <$> mapM (tryIO . pathToOp c (Depth.increaseDepth entryDepth)) paths
         mapM_ printErr errs
@@ -111,7 +111,7 @@ pathToOp (LsConf (opt, _)) depth path = do
 buildDirectoryNodes :: (MonadCatch m, MonadIO m) => Option.Option -> FilePath -> m [Node.NodeInfo]
 buildDirectoryNodes opt path = do
   contents <- Utils.listContents opt path
-  Sort.sorter opt <$> (mapM (Node.nodeInfo opt path) . excluder) contents
+  Sort.sorter opt <$> (mapM (Node.mkNodeInfo opt path) . excluder) contents
   where
     excluder = ignoreExcluder . hideExcluder
     ignorePtn = Option.ignore opt
@@ -127,7 +127,7 @@ buildDirectoryNodes opt path = do
 -- | Assumes all paths exist.
 buildInitialOperations :: (MonadCatch m, MonadIO m) => LsConf -> [FilePath] -> m (Recursive.AlreadySeenInodes, [Operation])
 buildInitialOperations c@(LsConf (opt, _)) paths = do
-  (errs, nodeinfos) <- E.partitionEithers <$> mapM (tryIO . Node.nodeInfo opt "") paths
+  (errs, nodeinfos) <- E.partitionEithers <$> mapM (tryIO . Node.mkNodeInfo opt "") paths
 
   mapM_ (liftIO . printErr) errs
 
@@ -150,7 +150,7 @@ buildInitialOperations c@(LsConf (opt, _)) paths = do
     depth = Depth.increaseDepth Depth.makeZero
     isDirectory
       | Option.directory opt = const False
-      | otherwise = Node.isDirectory . Node.pfsNodeType . Node.getNodeStatus
+      | otherwise = Node.isDirectory . Node.nodeType
 
 buildPrinter :: Option.Option -> Decorator.Printers -> Printer
 buildPrinter opt printers = Printer $ fmap (TL.toStrict . TLB.toLazyText . M.mconcat . L.intersperse (TLB.fromText "\n")) . generateEntryLines opt printers
@@ -175,7 +175,7 @@ generateEntryLines opt printers op = case op of
             | Format.isLongStyle opt -> (builder :)
             | otherwise -> id
           where
-            builder = TLB.fromText . T.concat . ("total " :) . map WT.serialize . Size.toTotalBlockSize opt $ map (Node.pfsFileSize . Node.getNodeStatus) entryNodes
+            builder = TLB.fromText . T.concat . ("total " :) . map WT.serialize . Size.toTotalBlockSize opt $ map Node.fileSize entryNodes
 
     colLen <- Grid.virtualColumnSize opt
 

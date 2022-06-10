@@ -25,10 +25,10 @@ data Filemode = Filemode
   }
   deriving (Show)
 
-instance From ProxyFileStatus Filemode where
-  from status =
+instance From NodeInfo Filemode where
+  from node =
     Filemode
-      { getFiletype = from status,
+      { getFiletype = from node,
         getUserRead = fromMaybe NOTHING $ UserPerm READ `lookup` mode,
         getUserWrite = fromMaybe NOTHING $ UserPerm WRITE `lookup` mode,
         getUserExec = fromMaybe NOTHING $ UserPerm EXEC `lookup` mode,
@@ -40,4 +40,4 @@ instance From ProxyFileStatus Filemode where
         getOtherExec = fromMaybe NOTHING $ OtherPerm EXEC `lookup` mode
       }
     where
-      mode = pfsFileMode status
+      mode = fileMode node

@@ -73,7 +73,7 @@ toFileBlockSize size = a' * unitBlockSize
     unitBlockSize = sizeKi * 4
 
 fileSize :: Option.Option -> Node.NodeInfo -> [WT.WrappedText]
-fileSize opt node = toWrappedText . fileSize' opt $ fileSizeOf node
+fileSize opt = toWrappedText . fileSize' opt . Node.fileSize
 
 fileSize' :: Option.Option -> Types.FileOffset -> FileSizeComponent
 fileSize' opt size = case Option.blockSize opt of
@@ -101,10 +101,10 @@ fileSize' opt size = case Option.blockSize opt of
 normalColoredFileSize :: Color.LsColors -> Option.Option -> Node.NodeInfo -> [WT.WrappedText]
 normalColoredFileSize lscolors opt node = [Color.toWrappedText lscolors Color.normal (fileSizeNumber <> fileSizeUnit)]
   where
-    FileSizeComponent {..} = fileSize' opt $ fileSizeOf node
+    FileSizeComponent {..} = fileSize' opt $ Node.fileSize node
 
 coloredFileSize :: Color.LsColors -> Option.Option -> Node.NodeInfo -> [WT.WrappedText]
-coloredFileSize lscolors opt node = coloredFileSize' lscolors . fileSize' opt $ fileSizeOf node
+coloredFileSize lscolors opt = coloredFileSize' lscolors . fileSize' opt . Node.fileSize
 
 coloredFileSize' :: Color.LsColors -> FileSizeComponent -> [WT.WrappedText]
 coloredFileSize' lscolors FileSizeComponent {..} =
@@ -139,11 +139,8 @@ siHumanReadableFileSize size = FileSizeComponent {..}
 -- | Treat symbolic link block size as zero.
 fileBlockSizeOf :: Node.NodeInfo -> Types.FileOffset
 fileBlockSizeOf node = case Node.getNodeLinkInfo node of
-  Nothing -> fileSizeOf node
+  Nothing -> Node.fileSize node
   _ -> Types.COff 0
-
-fileSizeOf :: Node.NodeInfo -> Types.FileOffset
-fileSizeOf = Node.pfsFileSize . Node.getNodeStatus
 
 fileSizeUnitSelector :: ScaleSuffix -> BaseScale -> T.Text
 fileSizeUnitSelector ss = case ss of

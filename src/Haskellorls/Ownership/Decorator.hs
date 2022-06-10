@@ -63,11 +63,10 @@ getGroupIdSubstTable = do
 ownerName :: UserIdSubstTable -> Node.NodeInfo -> T.Text
 ownerName table node = fromMaybe (T.pack $ show ownerID) $ ownerID `lookup` table
   where
-    ownerID :: Types.UserID
-    ownerID = from node
+    ownerID = Node.userID node
 
 numericOwnerName :: Node.NodeInfo -> T.Text
-numericOwnerName = T.pack . show . (from :: Node.NodeInfo -> Types.UserID)
+numericOwnerName = T.pack . show . Node.userID
 
 -- | A node owner name decorator for the @no@ parameter of @LS_COLORS@.
 normalColoredOwnerName :: UserIdSubstTable -> Color.LsColors -> Node.NodeInfo -> [WT.WrappedText]
@@ -88,7 +87,7 @@ coloredOwnerAs f lscolors user node = [Color.toWrappedText lscolors getter (f no
       | currentUserID == nodeOwnerID = Color.lookup $ Myself nodeOwnerID
       | otherwise = Color.lookup $ NotMyself nodeOwnerID
     currentUserID = userInfoUserID user
-    nodeOwnerID = from node
+    nodeOwnerID = Node.userID node
 
 -- }}}
 
@@ -96,13 +95,10 @@ coloredOwnerAs f lscolors user node = [Color.toWrappedText lscolors getter (f no
 groupName :: GroupIdSubstTable -> Node.NodeInfo -> T.Text
 groupName table node = fromMaybe (T.pack $ show groupID) $ groupID `lookup` table
   where
-    groupID = numericGroupName' node
+    groupID = Node.groupID node
 
 numericGroupName :: Node.NodeInfo -> T.Text
-numericGroupName = T.pack . show . numericGroupName'
-
-numericGroupName' :: Node.NodeInfo -> Types.GroupID
-numericGroupName' = Node.pfsGroupID . Node.getNodeStatus
+numericGroupName = T.pack . show . Node.groupID
 
 -- | A node group name decorator for the @no@ parameter of @LS_COLORS@.
 normalColoredGroupName :: GroupIdSubstTable -> Color.LsColors -> Node.NodeInfo -> [WT.WrappedText]
@@ -123,6 +119,6 @@ coloredGroupAs f lscolors user node = [Color.toWrappedText lscolors getter (f no
       | nodeGroupID `elem` groupIDs = Color.lookup $ Belongs nodeGroupID
       | otherwise = Color.lookup $ NotBelongs nodeGroupID
     groupIDs = userInfoGroupIDs user
-    nodeGroupID = from node
+    nodeGroupID = Node.groupID node
 
 -- }}}

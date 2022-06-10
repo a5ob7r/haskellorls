@@ -13,7 +13,7 @@ import qualified Haskellorls.WrappedText as WT
 import qualified System.Posix.Types as Types
 
 nodeInodeNumber :: Node.NodeInfo -> Types.FileID
-nodeInodeNumber = Node.pfsFileID . Node.getNodeStatus
+nodeInodeNumber = Node.fileID
 
 -- | A node inode number decorator with the @no@ parameter of the @LS_COLORS@.
 nodeInodeNumberWithNormalColor :: Color.LsColors -> Node.NodeInfo -> [WT.WrappedText]

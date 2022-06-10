@@ -216,7 +216,7 @@ buildPrinters opt = do
           _ -> (\t -> [WT.deserialize t]) . timeStyleFunc . fileTime
         where
           timeStyleFunc = Time.timeStyleFunc timeZone TFormat.defaultTimeLocale currentTime timeStyle
-          fileTime = Clock.posixSecondsToUTCTime . Time.fileTime (Time.timeType opt) . Node.getNodeStatus
+          fileTime = Clock.posixSecondsToUTCTime . Time.fileTime (Time.timeType opt)
           timeStyle = Time.timeStyle opt
 
       -- TODO: Should use colored icon? But, must consider charactor size and background color.
@@ -242,7 +242,7 @@ buildPrinters opt = do
 
   return $
     Printers
-      { fileFieldPrinter = filemodeFieldPrinter . from . Node.getNodeStatus,
+      { fileFieldPrinter = filemodeFieldPrinter . from,
         fileNamePrinter = buildNodeNamePrinter opt nodeNamePrinters,
         fileNameWithDQuotePrinter = buildNodeNamePrinter opt nodeNameWithDQuotePrinters,
         ..

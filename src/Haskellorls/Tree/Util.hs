@@ -33,8 +33,8 @@ makeSomeNewPositionsList' (x : xs) = L.snoc x MID : makeSomeNewPositionsList' xs
 
 makeTreeNodeInfos :: (MonadCatch m, MonadIO m) => Option.Option -> FilePath -> m (S.Seq Node.NodeInfo)
 makeTreeNodeInfos opt path = do
-  node <- Node.nodeInfo opt "" path
-  let inodes = Recursive.singletonInodes . Node.pfsFileID $ Node.getNodeStatus node
+  node <- Node.mkNodeInfo opt "" path
+  let inodes = Recursive.singletonInodes $ Node.fileID node
   makeTreeNodeInfos' inodes opt $ S.singleton node
 
 -- | With error message output.
@@ -44,7 +44,7 @@ makeTreeNodeInfos' inodes opt (node S.:<| nodeSeq) = do
   let path = Node.getNodeDirName node Posix.</> Node.getNodePath node
   contents <-
     if
-        | Depth.isDepthZero depth || not (Node.isDirectory . Node.pfsNodeType $ Node.getNodeStatus node) -> pure []
+        | Depth.isDepthZero depth || not (Node.isDirectory $ Node.nodeType node) -> pure []
         -- Force hide '.' and '..' to avoid infinite loop.
         | Option.all opt -> do
             tryIO (Utils.listContents opt {Option.all = False, Option.almostAll = True} path) >>= \case
@@ -58,7 +58,7 @@ makeTreeNodeInfos' inodes opt (node S.:<| nodeSeq) = do
   let pList = makeSomeNewPositionsList (length contents) $ Node.getTreeNodePositions node
 
   -- Maybe contain nodeinfos which the inode number is already seen.
-  nodeinfos <- mapM (Node.nodeInfo opt path) contents
+  nodeinfos <- mapM (Node.mkNodeInfo opt path) contents
 
   let (nodes, newInodes) = State.runState (Recursive.updateAlreadySeenInode nodeinfos) inodes
       nodes' = zipWith (\nd p -> nd {Node.getTreeNodePositions = p}) (Sort.sorter opt nodes) pList

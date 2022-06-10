@@ -19,8 +19,8 @@ data EntryType
   | OTHER
   deriving (Show)
 
-instance From ProxyFileStatus EntryType where
-  from s = case nType of
+instance From NodeInfo EntryType where
+  from node = case nType of
     SymbolicLink -> SYMLINK
     NamedPipe -> FIFO
     Socket -> SOCK
@@ -30,7 +30,7 @@ instance From ProxyFileStatus EntryType where
       | isDirectory nType -> DIR
       | otherwise -> REGULAR
     where
-      nType = pfsNodeType s
+      nType = nodeType node
 
 instance From EntryType Char where
   from = \case

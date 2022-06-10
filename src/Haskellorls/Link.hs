@@ -13,7 +13,7 @@ import qualified Haskellorls.WrappedText as WT
 import qualified System.Posix.Types as Types
 
 nodeLinksNumber :: Node.NodeInfo -> Types.LinkCount
-nodeLinksNumber = Node.pfsLinkCount . Node.getNodeStatus
+nodeLinksNumber = Node.linkCount
 
 -- | A number of node links decorator with the @no@ parameter of the @LS_COLORS@.
 nodeLinksNumberWithNormalColor :: Color.LsColors -> Node.NodeInfo -> [WT.WrappedText]

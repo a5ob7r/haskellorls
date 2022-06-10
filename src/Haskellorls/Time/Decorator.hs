@@ -51,11 +51,11 @@ timeStyleFunc' fmt zone locale now fTime = T.pack . Format.formatTime locale for
     notRecent = if length formats == 2 then last formats else recent
     formats = parseTimeStyleFormat fmt
 
-fileTime :: TimeType -> (Node.ProxyFileStatus -> POSIX.POSIXTime)
+fileTime :: TimeType -> (Node.NodeInfo -> POSIX.POSIXTime)
 fileTime tType = case tType of
-  MODIFICATION -> Node.pfsModificationTime
-  ACCESS -> Node.pfsAccessTime
-  CHANGE -> Node.pfsStatusChangeTime
+  MODIFICATION -> Node.modificationTime
+  ACCESS -> Node.accessTime
+  CHANGE -> Node.changeTime
 
 timeType :: Option.Option -> TimeType
 timeType opt

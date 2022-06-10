@@ -52,7 +52,7 @@ classifyIndicators =
     }
 
 indicatorSelector :: Node.NodeInfo -> Indicators -> T.Text
-indicatorSelector node = case Node.pfsNodeType (Node.getNodeStatus node) of
+indicatorSelector node = case Node.nodeType node of
   Node.Directory -> indicatorsDirectory
   Node.Sticky -> indicatorsDirectory
   Node.OtherWritable -> indicatorsDirectory

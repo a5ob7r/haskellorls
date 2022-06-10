@@ -27,13 +27,10 @@ updateAlreadySeenInode nodes = do
   AlreadySeenInodes inodes <- State.get
 
   -- Select all node info which the inode number is not already seen.
-  let neverSeenNodes = filter ((`S.notMember` inodes) . getInodeNumber) nodes
-      neverSeenInodes = map getInodeNumber neverSeenNodes
+  let neverSeenNodes = filter ((`S.notMember` inodes) . Node.fileID) nodes
+      neverSeenInodes = map Node.fileID neverSeenNodes
 
   -- Update already seen inode numbers set.
   State.put . AlreadySeenInodes . S.union inodes $ S.fromList neverSeenInodes
 
   pure neverSeenNodes
-
-getInodeNumber :: Node.NodeInfo -> Types.FileID
-getInodeNumber = Node.pfsFileID . Node.getNodeStatus

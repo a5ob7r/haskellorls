@@ -66,16 +66,16 @@ sortWithName = L.sortBy (\a b -> Node.getNodePath a `compareName` Node.getNodePa
         _ -> s
 
 sortWithSize :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithSize = L.sortOn $ O.Down . Node.pfsFileSize . Node.getNodeStatus
+sortWithSize = L.sortOn $ O.Down . Node.fileSize
 
 sortWithModificationTime :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithModificationTime = L.sortOn $ O.Down . Node.pfsModificationTime . Node.getNodeStatus
+sortWithModificationTime = L.sortOn $ O.Down . Node.modificationTime
 
 sortWithAccessTime :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithAccessTime = L.sortOn $ O.Down . Node.pfsAccessTime . Node.getNodeStatus
+sortWithAccessTime = L.sortOn $ O.Down . Node.accessTime
 
 sortWithChangeTime :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithChangeTime = L.sortOn $ O.Down . Node.pfsStatusChangeTime . Node.getNodeStatus
+sortWithChangeTime = L.sortOn $ O.Down . Node.changeTime
 
 sortWithVersion :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithVersion = L.sortBy (\a b -> Node.getNodePath a `NSort.compare` Node.getNodePath b)
@@ -88,8 +88,4 @@ partitionDirectoriesAndFiles = L.partition isDirectory
 
 -- For GNU ls compatibility about `--group-directories-first` option.
 isDirectory :: Node.NodeInfo -> Bool
-isDirectory node = Node.isDirectory $ Node.pfsNodeType status
-  where
-    status = case Node.getNodeLinkInfo node of
-      Just (Right Node.LinkNodeInfo {..}) -> getLinkNodeStatus
-      _ -> Node.getNodeStatus node
+isDirectory = Node.isDirectory . Node.nodeType . Node.toFileInfo
