@@ -77,7 +77,7 @@ instance Dictionary NodeInfo Icon LsIcons where
         filename = T.pack . takeFileName $ getNodePath n
 
 instance Dictionary Query Icon LsIcons where
-  lookup (Query t) (Options {..}) = extension >>= \e -> Query (T.toUpper t) `lookup` e
+  lookup q (Options {..}) = extension >>= \e -> q `lookup` e
 
 instance Queryable Icon LsIcons
 

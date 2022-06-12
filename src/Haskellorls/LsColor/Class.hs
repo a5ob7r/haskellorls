@@ -4,6 +4,7 @@ module Haskellorls.LsColor.Class
   )
 where
 
+import Data.Foldable
 import Data.Maybe
 import Data.String
 import qualified Data.Text as T
@@ -22,4 +23,4 @@ newtype Query = Query {unQuery :: T.Text}
 
 -- | A 'tails' wrapper for 'Query'.
 queries :: Query -> [Query]
-queries = map (Query . T.toUpper) . reverse . T.tails . unQuery
+queries = foldl' (\acc t -> Query t : acc) [] . T.tails . T.toUpper . unQuery

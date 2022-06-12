@@ -160,7 +160,7 @@ instance Dictionary TreeNodePosition Sequence LsColors where
   lookup t (Options {..}) = extension >>= lookup t
 
 instance Dictionary Query Sequence LsColors where
-  lookup (Query t) (Options {..}) = extension >>= \e -> Query (T.toUpper t) `lookup` e
+  lookup q (Options {..}) = extension >>= \e -> q `lookup` e
 
 instance Queryable Sequence LsColors
 
