@@ -217,7 +217,7 @@ buildPrinters opt = do
           _ -> (\t -> [WT.deserialize t]) . timeStyleFunc . fileTime
         where
           timeStyleFunc = Time.timeStyleFunc timeZone defaultTimeLocale currentTime timeStyle
-          fileTime = posixSecondsToUTCTime . Time.fileTime (Time.timeType opt)
+          fileTime = posixSecondsToUTCTime . Node.fileTime
           timeStyle = Time.timeStyle opt
 
       -- TODO: Should use colored icon? But, must consider charactor size and background color.

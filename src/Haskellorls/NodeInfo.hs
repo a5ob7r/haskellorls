@@ -7,9 +7,7 @@ module Haskellorls.NodeInfo
     fileSize,
     userID,
     groupID,
-    modificationTime,
-    accessTime,
-    changeTime,
+    fileTime,
     nodeType,
     isDirectory,
     mkNodeInfo,
@@ -24,6 +22,7 @@ import Data.Functor
 import qualified Data.Text as T
 import Data.Time.Clock.POSIX
 import qualified Haskellorls.Option as Option
+import qualified Haskellorls.Time.Type as Time
 import qualified Haskellorls.Tree.Type as Tree
 import qualified Haskellorls.Utils as Utils
 import System.FilePath.Posix
@@ -127,14 +126,12 @@ data ProxyFileStatus = ProxyFileStatus
     pfsUserID :: Types.UserID,
     pfsGroupID :: Types.GroupID,
     pfsFileSize :: Types.FileOffset,
-    pfsModificationTime :: POSIXTime,
-    pfsAccessTime :: POSIXTime,
-    pfsStatusChangeTime :: POSIXTime,
+    pfsFileTime :: POSIXTime,
     pfsNodeType :: NodeType
   }
 
-mkProxyFileStatus :: Files.FileStatus -> ProxyFileStatus
-mkProxyFileStatus status =
+mkProxyFileStatus :: Option.Option -> Files.FileStatus -> ProxyFileStatus
+mkProxyFileStatus opt status =
   ProxyFileStatus
     { pfsFileMode = Files.fileMode status,
       pfsFileID = Files.fileID status,
@@ -142,9 +139,10 @@ mkProxyFileStatus status =
       pfsUserID = Files.fileOwner status,
       pfsGroupID = Files.fileGroup status,
       pfsFileSize = Files.fileSize status,
-      pfsModificationTime = Files.modificationTimeHiRes status,
-      pfsAccessTime = Files.accessTimeHiRes status,
-      pfsStatusChangeTime = Files.statusChangeTimeHiRes status,
+      pfsFileTime = case Option.time opt of
+        Time.MODIFICATION -> Files.modificationTimeHiRes status
+        Time.ACCESS -> Files.accessTimeHiRes status
+        Time.CHANGE -> Files.statusChangeTimeHiRes status,
       pfsNodeType = mkNodeType status
     }
 
@@ -182,7 +180,7 @@ mkNodeInfo opt dirname basename = do
         (Right p, Nothing) ->
           NodeInfo
             { getNodePath = basename,
-              getNodeStatus = mkProxyFileStatus status,
+              getNodeStatus = mkProxyFileStatus opt status,
               getNodeContext = T.pack context,
               getNodeDirName = dirname,
               getNodeLinkInfo = Just . Left $ OrphanedLinkNodeInfo p,
@@ -194,7 +192,7 @@ mkNodeInfo opt dirname basename = do
               || (Option.dereferenceCommandLineSymlinkToDir opt && Files.isDirectory s) ->
               NodeInfo
                 { getNodePath = basename,
-                  getNodeStatus = mkProxyFileStatus s,
+                  getNodeStatus = mkProxyFileStatus opt s,
                   getNodeContext = T.pack context,
                   getNodeDirName = dirname,
                   getNodeLinkInfo = Nothing,
@@ -203,14 +201,14 @@ mkNodeInfo opt dirname basename = do
           | otherwise ->
               NodeInfo
                 { getNodePath = basename,
-                  getNodeStatus = mkProxyFileStatus status,
+                  getNodeStatus = mkProxyFileStatus opt status,
                   getNodeContext = T.pack context,
                   getNodeDirName = dirname,
                   getNodeLinkInfo =
                     Just . Right $
                       LinkNodeInfo
                         { getLinkNodePath = p,
-                          getLinkNodeStatus = mkProxyFileStatus s,
+                          getLinkNodeStatus = mkProxyFileStatus opt s,
                           getLinkNodeContext = T.pack destContext
                         },
                   getTreeNodePositions = []
@@ -218,7 +216,7 @@ mkNodeInfo opt dirname basename = do
         _ ->
           NodeInfo
             { getNodePath = basename,
-              getNodeStatus = mkProxyFileStatus status,
+              getNodeStatus = mkProxyFileStatus opt status,
               getNodeContext = T.pack context,
               getNodeDirName = dirname,
               getNodeLinkInfo = Nothing,
@@ -228,7 +226,7 @@ mkNodeInfo opt dirname basename = do
       return $
         NodeInfo
           { getNodePath = basename,
-            getNodeStatus = mkProxyFileStatus status,
+            getNodeStatus = mkProxyFileStatus opt status,
             getNodeContext = T.pack context,
             getNodeDirName = dirname,
             getNodeLinkInfo = Nothing,
@@ -255,14 +253,8 @@ groupID = pfsGroupID . getNodeStatus
 fileSize :: NodeInfo -> Types.FileOffset
 fileSize = pfsFileSize . getNodeStatus
 
-modificationTime :: NodeInfo -> POSIXTime
-modificationTime = pfsModificationTime . getNodeStatus
-
-accessTime :: NodeInfo -> POSIXTime
-accessTime = pfsAccessTime . getNodeStatus
-
-changeTime :: NodeInfo -> POSIXTime
-changeTime = pfsStatusChangeTime . getNodeStatus
+fileTime :: NodeInfo -> POSIXTime
+fileTime = pfsFileTime . getNodeStatus
 
 nodeType :: NodeInfo -> NodeType
 nodeType = pfsNodeType . getNodeStatus

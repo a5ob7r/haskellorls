@@ -11,8 +11,6 @@ import qualified Haskellorls.Format.Util as Format
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import Haskellorls.Sort.Type
-import qualified Haskellorls.Time.Decorator as Time
-import qualified Haskellorls.Time.Type as Time
 import System.FilePath.Posix
 
 sorter :: Option.Option -> [Node.NodeInfo] -> [Node.NodeInfo]
@@ -36,10 +34,7 @@ sorter' opt = case Option.sort opt of
     | Option.extensionSort opt -> sortWithExtension
     | otherwise -> sortWithName
   SIZE -> sortWithSize
-  TIME -> case Time.timeType opt of
-    Time.MODIFICATION -> sortWithModificationTime
-    Time.ACCESS -> sortWithAccessTime
-    Time.CHANGE -> sortWithChangeTime
+  TIME -> sortWithTime
   VERSION -> sortWithVersion
   EXTENSION -> sortWithExtension
 
@@ -68,14 +63,8 @@ sortWithName = L.sortBy (\a b -> Node.getNodePath a `compareName` Node.getNodePa
 sortWithSize :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithSize = L.sortOn $ Down . Node.fileSize
 
-sortWithModificationTime :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithModificationTime = L.sortOn $ Down . Node.modificationTime
-
-sortWithAccessTime :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithAccessTime = L.sortOn $ Down . Node.accessTime
-
-sortWithChangeTime :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithChangeTime = L.sortOn $ Down . Node.changeTime
+sortWithTime :: [Node.NodeInfo] -> [Node.NodeInfo]
+sortWithTime = L.sortOn $ Down . Node.fileTime
 
 sortWithVersion :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithVersion = L.sortBy (\a b -> Node.getNodePath a `NSort.compare` Node.getNodePath b)

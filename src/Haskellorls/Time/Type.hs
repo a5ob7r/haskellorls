@@ -21,7 +21,7 @@ where
 
 import Data.Time.Clock
 
-data Datetime = ModificationTime UTCTime | AccessTime UTCTime | ChangeTime UTCTime
+newtype Datetime = Datatime UTCTime
   deriving (Eq, Ord, Show)
 
 -- WIP: locale and Prefixed with 'posix-' is not implemented yet.

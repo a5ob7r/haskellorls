@@ -1,7 +1,6 @@
 module Haskellorls.Time.Decorator
   ( timeStyle,
     timeType,
-    fileTime,
     timeStyleFunc,
     normalColoredTimeStyleFunc,
     coloredTimeStyleFunc,
@@ -11,11 +10,9 @@ where
 import qualified Data.List.Extra as L
 import qualified Data.Text as T
 import Data.Time.Clock
-import Data.Time.Clock.POSIX
 import Data.Time.Format
 import Data.Time.LocalTime
 import qualified Haskellorls.LsColor as Color
-import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import Haskellorls.Time.Type
 import qualified Haskellorls.WrappedText as WT
@@ -41,7 +38,7 @@ coloredTimeStyleFunc lscolors zone locale time style fTime = [Color.toWrappedTex
     timeAsT = timeStyleFunc zone locale time style fTime
     -- TODO: We have no time type information such as modification, access and
     -- so on at this point. So assume that it is modification time.
-    getter = Color.lookup $ ModificationTime fTime
+    getter = Color.lookup $ Datatime fTime
 
 timeStyleFunc' :: String -> TimeZone -> TimeLocale -> UTCTime -> UTCTime -> T.Text
 timeStyleFunc' fmt zone locale now fTime = T.pack . formatTime locale format $ utcToZonedTime zone fTime
@@ -50,12 +47,6 @@ timeStyleFunc' fmt zone locale now fTime = T.pack . formatTime locale format $ u
     recent = if not (null formats) then head formats else mainISOFormat
     notRecent = if length formats == 2 then last formats else recent
     formats = parseTimeStyleFormat fmt
-
-fileTime :: TimeType -> (Node.NodeInfo -> POSIXTime)
-fileTime tType = case tType of
-  MODIFICATION -> Node.modificationTime
-  ACCESS -> Node.accessTime
-  CHANGE -> Node.changeTime
 
 timeType :: Option.Option -> TimeType
 timeType opt
