@@ -11,7 +11,7 @@ import qualified Haskellorls.Format.Util as Format
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
 import Haskellorls.Sort.Type
-import System.FilePath.Posix
+import System.FilePath.Posix.ByteString
 
 sorter :: Option.Option -> [Node.NodeInfo] -> [Node.NodeInfo]
 sorter opt = merger . separater . sorter' opt
@@ -47,8 +47,9 @@ sortWithNone :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithNone = id
 
 sortWithName :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithName = L.sortBy (\a b -> Node.getNodePath a `compareName` Node.getNodePath b)
+sortWithName = L.sortBy (\a b -> toPath a `compareName` toPath b)
   where
+    toPath = decodeFilePath . Node.getNodePath
     compareName a b
       | a' == b' = a `compare` b
       | otherwise = a' `compare` b'
@@ -67,7 +68,9 @@ sortWithTime :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithTime = L.sortOn $ Down . Node.fileTime
 
 sortWithVersion :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithVersion = L.sortBy (\a b -> Node.getNodePath a `NSort.compare` Node.getNodePath b)
+sortWithVersion = L.sortBy (\a b -> toPath a `NSort.compare` toPath b)
+  where
+    toPath = decodeFilePath . Node.getNodePath
 
 sortWithExtension :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithExtension = L.sortBy (\a b -> takeExtension (Node.getNodePath a) `compare` takeExtension (Node.getNodePath b))

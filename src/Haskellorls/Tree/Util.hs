@@ -16,7 +16,7 @@ import qualified Haskellorls.Recursive.Utils as Recursive
 import qualified Haskellorls.Sort.Method as Sort
 import Haskellorls.Tree.Type
 import qualified Haskellorls.Utils as Utils
-import System.FilePath.Posix
+import System.FilePath.Posix.ByteString
 
 makeSomeNewPositionsList :: Int -> [TreeNodePosition] -> [[TreeNodePosition]]
 makeSomeNewPositionsList n _
@@ -31,7 +31,7 @@ makeSomeNewPositionsList' [] = []
 makeSomeNewPositionsList' [x] = [L.snoc x LAST]
 makeSomeNewPositionsList' (x : xs) = L.snoc x MID : makeSomeNewPositionsList' xs
 
-makeTreeNodeInfos :: (MonadCatch m, MonadIO m) => Option.Option -> FilePath -> m (S.Seq Node.NodeInfo)
+makeTreeNodeInfos :: (MonadCatch m, MonadIO m) => Option.Option -> RawFilePath -> m (S.Seq Node.NodeInfo)
 makeTreeNodeInfos opt path = do
   node <- Node.mkNodeInfo opt "" path
   let inodes = Recursive.singletonInodes $ Node.fileID node

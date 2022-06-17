@@ -15,6 +15,7 @@ import qualified Data.Map.Strict as M
 import Data.Maybe
 import Data.String
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import Haskellorls.Class
 import Haskellorls.Context.Type
 import Haskellorls.Filemode.Entry.Type
@@ -91,7 +92,7 @@ instance Dictionary NodeInfo Sequence LsColors where
       Executable -> executable
       File -> q `query` l <|> file <|> normal
         where
-          q = Query . T.pack $ getNodePath n'
+          q = Query . T.decodeUtf8 $ getNodePath n'
       _ -> orphan
     where
       n' = toFileInfo n

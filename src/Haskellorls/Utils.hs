@@ -13,27 +13,27 @@ where
 
 import Control.Exception.Safe
 import Control.Monad.IO.Class
+import qualified Data.ByteString as B
 import Data.Char
 import Data.Functor
-import qualified Data.List as L
 import qualified Data.Text as T
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Quote.Type as Quote
-import System.Directory
+import RawFilePath.Directory
 import System.FilePath.Glob
-import System.FilePath.Posix
-import qualified System.Posix.Files as Files
+import System.FilePath.Posix.ByteString
+import qualified System.Posix.Files.ByteString as Files
 
-getSymbolicLinkStatus :: (MonadThrow m, MonadIO m) => FilePath -> m Files.FileStatus
+getSymbolicLinkStatus :: (MonadThrow m, MonadIO m) => RawFilePath -> m Files.FileStatus
 getSymbolicLinkStatus = liftIO . Files.getSymbolicLinkStatus
 
-getFileStatus :: (MonadThrow m, MonadIO m) => FilePath -> m Files.FileStatus
+getFileStatus :: (MonadThrow m, MonadIO m) => RawFilePath -> m Files.FileStatus
 getFileStatus = liftIO . Files.getFileStatus
 
-readSymbolicLink :: (MonadThrow m, MonadIO m) => FilePath -> m FilePath
+readSymbolicLink :: (MonadThrow m, MonadIO m) => RawFilePath -> m RawFilePath
 readSymbolicLink = liftIO . Files.readSymbolicLink
 
-destFileStatusRecursive :: (MonadThrow m, MonadIO m) => FilePath -> FilePath -> m Files.FileStatus
+destFileStatusRecursive :: (MonadThrow m, MonadIO m) => RawFilePath -> RawFilePath -> m Files.FileStatus
 destFileStatusRecursive dirPath basePath = do
   s <- getFileStatus (linkDestPath dirPath basePath)
 
@@ -43,15 +43,15 @@ destFileStatusRecursive dirPath basePath = do
       destFileStatusRecursive dirPath link
     else pure s
 
-linkDestPath :: FilePath -> FilePath -> FilePath
+linkDestPath :: RawFilePath -> RawFilePath -> RawFilePath
 linkDestPath parPath linkPath
   | isAbsPath linkPath = linkPath
   | otherwise = takeDirectory parPath </> linkPath
 
-isAbsPath :: FilePath -> Bool
-isAbsPath path = "/" `L.isPrefixOf` path
+isAbsPath :: RawFilePath -> Bool
+isAbsPath path = "/" `B.isPrefixOf` path
 
-listContents :: (MonadThrow m, MonadIO m) => Option.Option -> FilePath -> m [FilePath]
+listContents :: (MonadThrow m, MonadIO m) => Option.Option -> RawFilePath -> m [RawFilePath]
 listContents opt path = list path <&> ignoreExcluder . hideExcluder . ignoreFilter
   where
     list
@@ -71,25 +71,27 @@ listContents opt path = list path <&> ignoreExcluder . hideExcluder . ignoreFilt
       ptn -> exclude ptn
     isShowHiddenEntries = Option.all opt || Option.almostAll opt
 
-listAllEntries :: (MonadThrow m, MonadIO m) => FilePath -> m [FilePath]
-listAllEntries = liftIO . getDirectoryContents
+listAllEntries :: (MonadThrow m, MonadIO m) => RawFilePath -> m [RawFilePath]
+listAllEntries = liftIO . getDirectoryFiles
 
-listSemiAllEntries :: (MonadThrow m, MonadIO m) => FilePath -> m [FilePath]
+listSemiAllEntries :: (MonadThrow m, MonadIO m) => RawFilePath -> m [RawFilePath]
 listSemiAllEntries = liftIO . listDirectory
 
-listEntries :: (MonadThrow m, MonadIO m) => FilePath -> m [FilePath]
+listEntries :: (MonadThrow m, MonadIO m) => RawFilePath -> m [RawFilePath]
 listEntries path = listSemiAllEntries path <&> filter (not . isHiddenEntries)
 
-isHiddenEntries :: FilePath -> Bool
-isHiddenEntries [] = False
-isHiddenEntries ('.' : _) = True
+isHiddenEntries :: RawFilePath -> Bool
+isHiddenEntries s
+  | B.null s = False
+  | "." `B.isPrefixOf` s = True
 isHiddenEntries _ = False
 
-ignoreBackupsFilter :: [FilePath] -> [FilePath]
-ignoreBackupsFilter = filter (\path -> not $ "~" `L.isSuffixOf` path)
+ignoreBackupsFilter :: [RawFilePath] -> [RawFilePath]
+ignoreBackupsFilter = filter (\path -> not $ "~" `B.isSuffixOf` path)
 
-exclude :: String -> [FilePath] -> [FilePath]
-exclude ptn = filter (not . match ptn')
+-- | TODO: Use 'ByteString' native globbing instead of 'String' one.
+exclude :: String -> [RawFilePath] -> [RawFilePath]
+exclude ptn = map encodeFilePath . filter (not . match ptn') . map decodeFilePath
   where
     ptn' = compile ptn
 

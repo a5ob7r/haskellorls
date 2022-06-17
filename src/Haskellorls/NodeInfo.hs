@@ -25,7 +25,7 @@ import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Time.Type as Time
 import qualified Haskellorls.Tree.Type as Tree
 import qualified Haskellorls.Utils as Utils
-import System.FilePath.Posix
+import System.FilePath.Posix.ByteString
 import qualified System.Posix.Files as Files
 import qualified System.Posix.Types as Types
 
@@ -147,16 +147,16 @@ mkProxyFileStatus opt status =
     }
 
 data NodeInfo = NodeInfo
-  { getNodePath :: FilePath,
+  { getNodePath :: RawFilePath,
     getNodeStatus :: ProxyFileStatus,
     getNodeContext :: T.Text,
-    getNodeDirName :: FilePath,
+    getNodeDirName :: RawFilePath,
     getNodeLinkInfo :: Maybe (Either OrphanedLinkNodeInfo LinkNodeInfo),
     getTreeNodePositions :: [Tree.TreeNodePosition]
   }
 
 -- | Create a filenode infomation from a filepath.
-mkNodeInfo :: (MonadCatch m, MonadIO m) => Option.Option -> FilePath -> FilePath -> m NodeInfo
+mkNodeInfo :: (MonadCatch m, MonadIO m) => Option.Option -> RawFilePath -> RawFilePath -> m NodeInfo
 mkNodeInfo opt dirname basename = do
   status <- Utils.getSymbolicLinkStatus path
   context <- fileContext path
@@ -260,12 +260,12 @@ nodeType :: NodeInfo -> NodeType
 nodeType = pfsNodeType . getNodeStatus
 
 data LinkNodeInfo = LinkNodeInfo
-  { getLinkNodePath :: FilePath,
+  { getLinkNodePath :: RawFilePath,
     getLinkNodeStatus :: ProxyFileStatus,
     getLinkNodeContext :: T.Text
   }
 
-newtype OrphanedLinkNodeInfo = OrphanedLinkNodeInfo {getOrphanedNodeLinkPath :: FilePath}
+newtype OrphanedLinkNodeInfo = OrphanedLinkNodeInfo {getOrphanedNodeLinkPath :: RawFilePath}
 
 -- | Convert a 'NodeInfo' value to the dereferenced 'NodeInfo'.
 toFileInfo :: NodeInfo -> NodeInfo
@@ -288,7 +288,7 @@ toFileInfo node@NodeInfo {..} = case getNodeLinkInfo of
 -- |
 -- NOTE: This is not tested on SELinux enabled environment so maybe break.
 -- NOTE: Disable ormolu because it does not support CPP extension.
-fileContext :: MonadIO m => FilePath -> m String
+fileContext :: MonadIO m => RawFilePath -> m String
 #ifdef SELINUX
 fileContext path =
   do

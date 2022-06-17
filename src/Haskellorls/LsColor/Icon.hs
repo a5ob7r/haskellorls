@@ -15,11 +15,12 @@ import qualified Data.Map.Strict as M
 import Data.Maybe
 import Data.String
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import Haskellorls.Class
 import Haskellorls.LsColor.Config
 import Haskellorls.NodeInfo
 import System.Environment
-import System.FilePath.Posix
+import System.FilePath.Posix.ByteString
 import Prelude hiding (lookup)
 
 lsIcons :: IO LsIcons
@@ -74,7 +75,7 @@ instance Dictionary NodeInfo Icon LsIcons where
       Directory -> directory
       _ -> Query filename `query` l <|> file
       where
-        filename = T.pack . takeFileName $ getNodePath n
+        filename = T.decodeUtf8 . takeFileName $ getNodePath n
 
 instance Dictionary Query Icon LsIcons where
   lookup q (Options {..}) = extension >>= \e -> q `lookup` e

@@ -17,6 +17,7 @@ import qualified Haskellorls.Utils as Utils
 import Options.Applicative
 import Paths_haskellorls (version)
 import System.Exit
+import System.FilePath.Posix.ByteString
 import System.IO
 
 -- | Haskellorls's process flow
@@ -43,7 +44,7 @@ haskellorls args = do
 run :: Option.Option -> IO ()
 run opt = do
   -- Assumes that current directory path is passed as argument implicitly if no argument.
-  let targets = (\ss -> if null ss then ["."] else ss) $ Option.targets opt
+  let targets = map encodeFilePath . (\ss -> if null ss then ["."] else ss) $ Option.targets opt
 
       -- Only dereferences on command line arguments.
       opt' = opt {Option.dereferenceCommandLine = False, Option.dereferenceCommandLineSymlinkToDir = False}

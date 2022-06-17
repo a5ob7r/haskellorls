@@ -8,6 +8,7 @@ where
 
 import Data.Maybe
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
@@ -35,4 +36,4 @@ nodeNameWrapper opt node = Quote.quote style . WT.deserialize $ Utils.escapeForm
     style = Quote.quoteStyle opt
 
 nodeName :: Node.NodeInfo -> T.Text
-nodeName = T.pack . Node.getNodePath
+nodeName = T.decodeUtf8 . Node.getNodePath

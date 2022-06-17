@@ -11,11 +11,13 @@ where
 import Control.Monad.IO.Class
 import Control.Monad.Reader
 import Control.Monad.State.Strict
+import qualified Data.ByteString.Char8 as C
 import Data.Either
 import Data.Functor
 import qualified Data.List as L
 import qualified Data.Set as S
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import qualified Data.Text.IO as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as TLB
@@ -33,20 +35,20 @@ import qualified Haskellorls.Sort.Method as Sort
 import qualified Haskellorls.Tree.Util as Tree
 import qualified Haskellorls.Utils as Utils
 import qualified Haskellorls.WrappedText as WT
-import System.FilePath.Posix
+import System.FilePath.Posix.ByteString
 
 data EntryType = FILES | SINGLEDIR | DIRECTORY
 
 data Entry = Entry
   { entryType :: EntryType,
-    entryPath :: FilePath,
+    entryPath :: RawFilePath,
     entryNodes :: [Node.NodeInfo],
     entryOption :: Option.Option,
     entryDepth :: Depth.Depth
   }
 
 data Tree = Tree
-  { treePath :: FilePath,
+  { treePath :: RawFilePath,
     treeOption :: Option.Option
   }
 
@@ -98,13 +100,13 @@ newLsState c@(LsConf (opt, _)) (LsState (op : ops, inodes)) = case op of
         pure $ LsState (entries <> ops, newInodes)
   _ -> pure $ LsState (ops, inodes)
 
-pathToOp :: (MonadCatch m, MonadIO m) => LsConf -> Depth.Depth -> FilePath -> m Operation
+pathToOp :: (MonadCatch m, MonadIO m) => LsConf -> Depth.Depth -> RawFilePath -> m Operation
 pathToOp (LsConf (opt, _)) depth path = do
   nodes <- buildDirectoryNodes opt path
   pure . PrintEntry $ Entry DIRECTORY path nodes opt depth
 
 -- | With error message output.
-buildDirectoryNodes :: (MonadCatch m, MonadIO m) => Option.Option -> FilePath -> m [Node.NodeInfo]
+buildDirectoryNodes :: (MonadCatch m, MonadIO m) => Option.Option -> RawFilePath -> m [Node.NodeInfo]
 buildDirectoryNodes opt path = do
   contents <- Utils.listContents opt path
   Sort.sorter opt <$> (mapM (Node.mkNodeInfo opt path) . excluder) contents
@@ -121,7 +123,7 @@ buildDirectoryNodes opt path = do
       | otherwise = Utils.exclude hidePtn
 
 -- | Assumes all paths exist.
-buildInitialOperations :: (MonadCatch m, MonadIO m) => LsConf -> [FilePath] -> m (Recursive.AlreadySeenInodes, [Operation])
+buildInitialOperations :: (MonadCatch m, MonadIO m) => LsConf -> [RawFilePath] -> m (Recursive.AlreadySeenInodes, [Operation])
 buildInitialOperations c@(LsConf (opt, _)) paths = do
   (errs, nodeinfos) <- partitionEithers <$> mapM (tryIO . Node.mkNodeInfo opt "") paths
 
@@ -160,7 +162,7 @@ generateEntryLines opt printers op = case op of
         addHeader = case entryType of
           FILES -> id
           SINGLEDIR | not (Option.recursive opt) -> id
-          _ -> \ss -> TLB.fromText (T.pack entryPath `T.snoc` ':') : ss
+          _ -> \ss -> TLB.fromText (T.decodeUtf8 entryPath `T.snoc` ':') : ss
 
         -- Add total block size header only about directries when long style
         -- layout or `-s / --size` is passed.
@@ -184,6 +186,6 @@ generateEntryLines opt printers op = case op of
       wtToBuilder = TLB.fromText . WT.serialize
 
 shouldQuote :: Foldable t => t Node.NodeInfo -> Bool
-shouldQuote = not . all (S.null . S.intersection setNeedQuotes . S.fromList . Node.getNodePath)
+shouldQuote = not . all (S.null . S.intersection setNeedQuotes . C.foldr S.insert mempty . Node.getNodePath)
   where
     setNeedQuotes = S.fromList Quote.charactorsNeedQuote
