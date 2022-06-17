@@ -152,6 +152,7 @@ data NodeInfo = NodeInfo
     getNodeContext :: T.Text,
     getNodeDirName :: RawFilePath,
     getNodeLinkInfo :: Maybe (Either OrphanedLinkNodeInfo LinkNodeInfo),
+    -- | This contains reversed list due to the performance problem.
     getTreeNodePositions :: [Tree.TreeNodePosition]
   }
 

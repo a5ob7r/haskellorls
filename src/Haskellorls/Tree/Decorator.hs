@@ -5,6 +5,8 @@ module Haskellorls.Tree.Decorator
 where
 
 import qualified Data.Text as T
+import qualified Data.Text.Lazy as L
+import qualified Data.Text.Lazy.Builder as L
 import qualified Haskellorls.LsColor as Color
 import Haskellorls.Tree.Type
 import qualified Haskellorls.WrappedText as WT
@@ -12,7 +14,7 @@ import qualified Haskellorls.WrappedText as WT
 treeBranch :: [TreeNodePosition] -> T.Text
 treeBranch [] = ""
 treeBranch [x] = toTextOnLast x
-treeBranch (x : xs) = toTextOnInit x <> treeBranch xs
+treeBranch (x : xs) = L.toStrict . L.toLazyText $ foldr (\a acc -> L.fromText (toTextOnInit a) <> acc) (L.fromText $ toTextOnLast x) xs
 
 treeBranchWithColor :: Color.LsColors -> [TreeNodePosition] -> [WT.WrappedText]
 treeBranchWithColor _ [] = []

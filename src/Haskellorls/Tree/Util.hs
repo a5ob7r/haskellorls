@@ -6,7 +6,6 @@ where
 
 import Control.Monad.IO.Class
 import Control.Monad.State.Strict
-import qualified Data.List.Extra as L
 import qualified Data.Sequence as S
 import qualified Haskellorls.Depth as Depth
 import Haskellorls.Exception
@@ -21,15 +20,15 @@ import System.FilePath.Posix.ByteString
 makeSomeNewPositionsList :: Int -> [TreeNodePosition] -> [[TreeNodePosition]]
 makeSomeNewPositionsList n _
   | n < 1 = [[]]
-makeSomeNewPositionsList 1 xs = [L.snoc xs LAST]
+makeSomeNewPositionsList 1 xs = [LAST : xs]
 makeSomeNewPositionsList n xs = case replicate n xs of
   [] -> []
-  (y : ys) -> L.snoc y HEAD : makeSomeNewPositionsList' ys
+  (y : ys) -> (HEAD : y) : makeSomeNewPositionsList' ys
 
 makeSomeNewPositionsList' :: [[TreeNodePosition]] -> [[TreeNodePosition]]
 makeSomeNewPositionsList' [] = []
-makeSomeNewPositionsList' [x] = [L.snoc x LAST]
-makeSomeNewPositionsList' (x : xs) = L.snoc x MID : makeSomeNewPositionsList' xs
+makeSomeNewPositionsList' [x] = [LAST : x]
+makeSomeNewPositionsList' (x : xs) = (MID : x) : makeSomeNewPositionsList' xs
 
 makeTreeNodeInfos :: (MonadCatch m, MonadIO m) => Option.Option -> RawFilePath -> m (S.Seq Node.NodeInfo)
 makeTreeNodeInfos opt path = do
