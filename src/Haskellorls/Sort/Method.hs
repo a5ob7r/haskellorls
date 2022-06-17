@@ -4,9 +4,10 @@ module Haskellorls.Sort.Method
 where
 
 import qualified Algorithms.NaturalSort as NSort
-import Data.Char
 import qualified Data.List as L
 import Data.Ord
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import qualified Haskellorls.Format.Util as Format
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Option as Option
@@ -49,7 +50,7 @@ sortWithNone = id
 sortWithName :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithName = L.sortBy (\a b -> toPath a `compareName` toPath b)
   where
-    toPath = decodeFilePath . Node.getNodePath
+    toPath = T.decodeUtf8 . Node.getNodePath
     compareName a b
       | a' == b' = a `compare` b
       | otherwise = a' `compare` b'
@@ -57,8 +58,8 @@ sortWithName = L.sortBy (\a b -> toPath a `compareName` toPath b)
         a' = norm a
         b' = norm b
     norm =
-      map toUpper . \s -> case s of
-        '.' : s' -> s'
+      T.toUpper . \s -> case T.uncons s of
+        Just ('.', s') -> s'
         _ -> s
 
 sortWithSize :: [Node.NodeInfo] -> [Node.NodeInfo]
@@ -70,7 +71,7 @@ sortWithTime = L.sortOn $ Down . Node.fileTime
 sortWithVersion :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithVersion = L.sortBy (\a b -> toPath a `NSort.compare` toPath b)
   where
-    toPath = decodeFilePath . Node.getNodePath
+    toPath = T.decodeUtf8 . Node.getNodePath
 
 sortWithExtension :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortWithExtension = L.sortBy (\a b -> takeExtension (Node.getNodePath a) `compare` takeExtension (Node.getNodePath b))
