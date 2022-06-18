@@ -49,7 +49,7 @@ jobs:
           set -eu
 
           mkdir assets
-          readonly version='${{ github.ref }}'
+          readonly version='${{ github.ref_name }}'
           case "$OSTYPE" in
             linux-gnu )
               readonly os=linux
