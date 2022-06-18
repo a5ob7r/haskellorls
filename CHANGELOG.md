@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixed
+
+- `--tree`'s branch rendering.
+
 ## 0.5.0.0 -- 2022-06-19
 
 ### Added
