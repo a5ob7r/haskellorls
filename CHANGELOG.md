@@ -18,6 +18,7 @@
 ### Removed
 
 - Default filename pattern rules for the `--icons` option.
+- Support for GHC 8.6.5 and 8.8.4.
 
 ## 0.4.0.0 -- 2021-03-10
 
