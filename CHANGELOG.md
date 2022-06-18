@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.5.0.0 -- 2022-06-19
+
 ### Added
 
 - Some acceptable values to `--color=WHEN` option for compatibility against GNU ls.
