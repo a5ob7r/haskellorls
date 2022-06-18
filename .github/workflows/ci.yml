@@ -30,10 +30,13 @@ jobs:
           ghc-version: ${{ matrix.ghc }}
           cabal-version: 3.6.2.0
 
+      - name: Freeze dependencies
+        run: cabal freeze
+
       - uses: actions/cache@v3
         with:
           path: ${{ steps.setup-haskell.outputs.cabal-store }}
-          key: ci-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project') }}
+          key: ci-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
           restore-keys: |
             ci-${{ runner.os }}-${{ matrix.ghc }}-
 
@@ -55,10 +58,12 @@ jobs:
           esac
 
       - name: Build
-        run: cabal install --overwrite-policy=always -j --flags=pedantic
+        run: |
+          rm cabal.project.freeze
+          cabal install --overwrite-policy=always --jobs --flags=pedantic
 
       - name: Run tests
-        run: goldplate golden-test --pretty-diff
+        run: goldplate --pretty-diff golden-test
 
   cabal-format:
     runs-on: ${{ matrix.os }}
@@ -81,7 +86,6 @@ jobs:
           path: ${{ steps.setup-haskell.outputs.cabal-store }}
           key: format-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project') }}
           restore-keys: |
-            format-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project') }}
             format-${{ runner.os }}-${{ matrix.ghc }}-
 
       - name: Add path
