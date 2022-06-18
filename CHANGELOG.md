@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.5.0.2 -- 2022-06-19
+
+### Fixed
+
+- Crash by looking up a nonexistence filepath when runs with the `--tree` option.
+
 ## 0.5.0.1 -- 2022-06-19
 
 ### Fixed

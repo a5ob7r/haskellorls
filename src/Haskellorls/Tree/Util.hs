@@ -6,7 +6,9 @@ where
 
 import Control.Monad.IO.Class
 import Control.Monad.State.Strict
+import Data.Either
 import qualified Data.Sequence as S
+import GHC.IO.Exception
 import qualified Haskellorls.Depth as Depth
 import Haskellorls.Exception
 import qualified Haskellorls.NodeInfo as Node
@@ -54,16 +56,22 @@ makeTreeNodeInfos' inodes opt (node S.:<| nodeSeq) = do
               Left errMsg -> liftIO (printErr errMsg) >> pure []
               Right contents' -> pure contents'
 
-  let pList = makeSomeNewPositionsList (length contents) $ Node.getTreeNodePositions node
-
   -- Maybe contain nodeinfos which the inode number is already seen.
-  nodeinfos <- mapM (Node.mkNodeInfo opt path) contents
+  (errs, nodeinfos) <- partitionEithers <$> mapM (tryIO . Node.mkNodeInfo opt path) contents
 
-  let (nodes, newInodes) = runState (Recursive.updateAlreadySeenInode nodeinfos) inodes
-      nodes' = zipWith (\nd p -> nd {Node.getTreeNodePositions = p}) (Sort.sorter opt nodes) pList
-      newNodeSeq = S.fromList nodes' <> nodeSeq
+  -- NOTE: In this application, and probably almost all applications,
+  -- traversing directory contents and getting each file statuses are
+  -- non-atomic. So maybe causes looking up nonexistence filepaths. In such
+  -- case, ignore nonexistence filepaths.
+  case filter (\e -> ioe_type e /= NoSuchThing) errs of
+    e : _ -> throwIO e
+    _ -> do
+      let (nodes, newInodes) = runState (Recursive.updateAlreadySeenInode nodeinfos) inodes
+          pList = makeSomeNewPositionsList (length nodes) $ Node.getTreeNodePositions node
+          nodes' = zipWith (\nd p -> nd {Node.getTreeNodePositions = p}) (Sort.sorter opt nodes) pList
+          newNodeSeq = S.fromList nodes' <> nodeSeq
 
-  (node S.<|) <$> makeTreeNodeInfos' newInodes opt' newNodeSeq
+      (node S.<|) <$> makeTreeNodeInfos' newInodes opt' newNodeSeq
   where
     opt' = opt {Option.level = Depth.decreaseDepth depth}
     depth = Option.level opt
