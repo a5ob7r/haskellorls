@@ -1,4 +1,4 @@
-name: Create release
+name: Release and upload assets
 
 on:
   push:
@@ -6,16 +6,60 @@ on:
       - "v[0-9]+.[0-9]+.[0-9]+.[0-9]+"
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  release:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest]
+        ghc: ['9.2.3']
+        cabal: ['3.6.2.0']
 
     steps:
-      - name: Create release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v3
+
+      - id: setup-haskell
+        uses: haskell/actions/setup@v2
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
+          ghc-version: ${{ matrix.ghc }}
+          cabal-version: ${{ matrix.cabal }}
+
+      - uses: actions/cache@v3
+        with:
+          path: ${{ steps.setup-haskell.outputs.cabal-store }}
+          key: release-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project') }}
+          restore-keys:
+            release-${{ runner.os }}-${{ matrix.ghc }}-
+
+      - name: Build single binary
+        run: |
+          cabal install \
+            --jobs \
+            --install-method=copy \
+            --installdir=. \
+            --enable-optimization=2 \
+            --enable-split-sections \
+            ;
+
+      - name: Compress assets
+        run: |
+          set -eu
+
+          mkdir assets
+          readonly version='${{ github.ref }}'
+          case "$OSTYPE" in
+            linux-gnu )
+              readonly os=linux
+              ;;
+            darwin* )
+              readonly os=macos
+              ;;
+          esac
+          arch=$(uname -m)
+          readonly arch
+
+          tar -czf "assets/haskellorls-$version-$os-$arch.tar.gz" haskellorls
+
+      - uses: softprops/action-gh-release@v1
+        with:
           draft: true
-          prerelease: false
+          files: assets/*
