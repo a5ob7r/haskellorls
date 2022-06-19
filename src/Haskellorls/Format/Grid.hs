@@ -9,7 +9,7 @@ import qualified Data.List as L
 import Data.Maybe
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
-import qualified Data.Text.Lazy.Builder as TLB
+import qualified Data.Text.Lazy.Builder as TL
 import qualified Haskellorls.Format.Util as Format
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Utils as Utils
@@ -121,30 +121,30 @@ buildValidGrid opt columnLength sss =
         then buildGridWithTab
         else buildGridWithSpace
 
-renderGrid :: [[[WT.WrappedText]]] -> [TLB.Builder]
+renderGrid :: [[[WT.WrappedText]]] -> [TL.Builder]
 renderGrid = map renderLine
 
-renderGridAsPlain :: [[[WT.WrappedText]]] -> [TLB.Builder]
+renderGridAsPlain :: [[[WT.WrappedText]]] -> [TL.Builder]
 renderGridAsPlain = map renderLineAsPlain
 
-renderLine :: [[WT.WrappedText]] -> TLB.Builder
+renderLine :: [[WT.WrappedText]] -> TL.Builder
 renderLine = mconcat . map renderWTList
 
-renderLineAsPlain :: [[WT.WrappedText]] -> TLB.Builder
+renderLineAsPlain :: [[WT.WrappedText]] -> TL.Builder
 renderLineAsPlain = mconcat . map renderWTListAsPlain
 
-renderWTList :: [WT.WrappedText] -> TLB.Builder
-renderWTList = mconcat . map (TLB.fromText . WT.serialize)
+renderWTList :: [WT.WrappedText] -> TL.Builder
+renderWTList = mconcat . map (TL.fromText . WT.serialize)
 
-renderWTListAsPlain :: [WT.WrappedText] -> TLB.Builder
-renderWTListAsPlain = mconcat . map (TLB.fromText . WT.wtWord)
+renderWTListAsPlain :: [WT.WrappedText] -> TL.Builder
+renderWTListAsPlain = mconcat . map (TL.fromText . WT.wtWord)
 
 validateGrid :: Int -> [[[WT.WrappedText]]] -> Bool
 validateGrid n grid
   | n >= maxLen = True
   | otherwise = False
   where
-    maxLen = maximum . map (Utils.textLengthForDisplay . TL.toStrict . TLB.toLazyText) $ renderGridAsPlain grid
+    maxLen = maximum . map (Utils.textLengthForDisplay . TL.toStrict . TL.toLazyText) $ renderGridAsPlain grid
 
 buildGridWithTab :: Option.Option -> Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
 buildGridWithTab opt n wtss = map (buildRow (Option.tabSize opt) maxLengths) $ L.transpose grid

@@ -20,7 +20,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Data.Text.IO as T
 import qualified Data.Text.Lazy as TL
-import qualified Data.Text.Lazy.Builder as TLB
+import qualified Data.Text.Lazy.Builder as TL
 import qualified Haskellorls.Decorator as Decorator
 import qualified Haskellorls.Depth as Depth
 import Haskellorls.Exception
@@ -151,9 +151,9 @@ buildInitialOperations c@(LsConf (opt, _)) paths = do
       | otherwise = Node.isDirectory . Node.nodeType
 
 buildPrinter :: Option.Option -> Decorator.Printers -> Printer
-buildPrinter opt printers = Printer $ fmap (TL.toStrict . TLB.toLazyText . mconcat . L.intersperse (TLB.fromText "\n")) . generateEntryLines opt printers
+buildPrinter opt printers = Printer $ fmap (TL.toStrict . TL.toLazyText . mconcat . L.intersperse (TL.fromText "\n")) . generateEntryLines opt printers
 
-generateEntryLines :: Option.Option -> Decorator.Printers -> Operation -> IO [TLB.Builder]
+generateEntryLines :: Option.Option -> Decorator.Printers -> Operation -> IO [TL.Builder]
 generateEntryLines opt printers op = case op of
   Newline -> pure []
   PrintEntry (Entry {..}) -> do
@@ -162,7 +162,7 @@ generateEntryLines opt printers op = case op of
         addHeader = case entryType of
           FILES -> id
           SINGLEDIR | not (Option.recursive opt) -> id
-          _ -> \ss -> TLB.fromText (T.decodeUtf8 entryPath `T.snoc` ':') : ss
+          _ -> \ss -> TL.fromText (T.decodeUtf8 entryPath `T.snoc` ':') : ss
 
         -- Add total block size header only about directries when long style
         -- layout or `-s / --size` is passed.
@@ -173,7 +173,7 @@ generateEntryLines opt printers op = case op of
             | Format.isLongStyle opt -> (builder :)
             | otherwise -> id
           where
-            builder = TLB.fromText . T.concat . ("total " :) . map WT.serialize . Size.toTotalBlockSize opt $ map Node.fileSize entryNodes
+            builder = TL.fromText . T.concat . ("total " :) . map WT.serialize . Size.toTotalBlockSize opt $ map Node.fileSize entryNodes
 
     colLen <- Grid.virtualColumnSize opt
 
@@ -183,7 +183,7 @@ generateEntryLines opt printers op = case op of
     let opt' = if shouldQuote nodes then opt else opt {Option.noQuote = True}
     pure . map (mconcat . map wtToBuilder) $ Decorator.buildLines nodes printers $ Decorator.buildPrinterTypes opt'
     where
-      wtToBuilder = TLB.fromText . WT.serialize
+      wtToBuilder = TL.fromText . WT.serialize
 
 shouldQuote :: Foldable t => t Node.NodeInfo -> Bool
 shouldQuote = not . all (S.null . S.intersection setNeedQuotes . C.foldr S.insert mempty . Node.getNodePath)
