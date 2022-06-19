@@ -1,7 +1,6 @@
 module Haskellorls.Recursive
   ( buildPrinter,
     buildInitialOperations,
-    generateEntryLines,
     run,
     LsConf (..),
     LsState (..),
@@ -181,9 +180,7 @@ generateEntryLines opt printers op = case op of
   PrintTree (Tree {..}) -> do
     nodes <- Tree.makeTreeNodeInfos opt treePath
     let opt' = if shouldQuote nodes then opt else opt {Option.noQuote = True}
-    pure . map (mconcat . map wtToBuilder) $ Decorator.buildLines nodes printers $ Decorator.buildPrinterTypes opt'
-    where
-      wtToBuilder = TL.fromText . WT.serialize
+    pure . map (foldMap $ TL.fromText . WT.serialize) $ Decorator.buildLines nodes printers $ Decorator.buildPrinterTypes opt'
 
 shouldQuote :: Foldable t => t Node.NodeInfo -> Bool
 shouldQuote = not . all (S.null . S.intersection setNeedQuotes . C.foldr S.insert mempty . Node.getNodePath)

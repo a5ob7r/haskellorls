@@ -128,16 +128,16 @@ renderGridAsPlain :: [[[WT.WrappedText]]] -> [TL.Builder]
 renderGridAsPlain = map renderLineAsPlain
 
 renderLine :: [[WT.WrappedText]] -> TL.Builder
-renderLine = mconcat . map renderWTList
+renderLine = foldMap renderWTList
 
 renderLineAsPlain :: [[WT.WrappedText]] -> TL.Builder
-renderLineAsPlain = mconcat . map renderWTListAsPlain
+renderLineAsPlain = foldMap renderWTListAsPlain
 
 renderWTList :: [WT.WrappedText] -> TL.Builder
-renderWTList = mconcat . map (TL.fromText . WT.serialize)
+renderWTList = foldMap (TL.fromText . WT.serialize)
 
 renderWTListAsPlain :: [WT.WrappedText] -> TL.Builder
-renderWTListAsPlain = mconcat . map (TL.fromText . WT.wtWord)
+renderWTListAsPlain = foldMap (TL.fromText . WT.wtWord)
 
 validateGrid :: Int -> [[[WT.WrappedText]]] -> Bool
 validateGrid n grid
@@ -213,11 +213,15 @@ buildGridWithSpace opt n wtss = map (buildRowWithSpace maxLengths) $ L.transpose
       Format.HORIZONTAL -> verticalSplitInto
       _ -> horizontalSplitInto
 
+-- | Apply a function to each elements in a list, but exclude the last one.
+--
+-- > mapToInit (+1) [0..2]
+-- [1,2,2]
 mapToInit :: (a -> a) -> [a] -> [a]
-mapToInit f xs = map f (init xs) <> [last xs]
+mapToInit f = foldr (\x acc -> if null acc then [x] else f x : acc) mempty
 
 calcEachRowMaxWTLength :: [[[WT.WrappedText]]] -> [Int]
-calcEachRowMaxWTLength = map $ maximum . map (sum . map WT.len)
+calcEachRowMaxWTLength = map $ maximum . (0 :) . map (sum . map WT.len)
 
 commaSuffix :: T.Text
 commaSuffix = ", "
