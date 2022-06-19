@@ -95,6 +95,7 @@ library
     Haskellorls.WrappedText
     Paths_haskellorls
 
+  autogen-modules:    Paths_haskellorls
   hs-source-dirs:     src
   default-extensions:
     CPP
