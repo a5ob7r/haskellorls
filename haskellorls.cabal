@@ -11,6 +11,11 @@ extra-source-files:
   CHANGELOG.md
   README.md
 
+flag rtsopts
+  description: Enable -rtsopts
+  default:     False
+  manual:      True
+
 flag pedantic
   description: Enable -Werror
   default:     False
@@ -138,3 +143,6 @@ executable haskellorls
   main-is:        Main.hs
   hs-source-dirs: app
   build-depends:  haskellorls
+
+  if flag(rtsopts)
+    ghc-options: -rtsopts
