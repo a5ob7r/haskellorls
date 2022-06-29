@@ -24,6 +24,7 @@ flag pedantic
 flag selinux
   description: Enable SELinux support
   default:     False
+  manual:      True
 
 common common-options
   build-depends:    base >=4.14 && <4.17
