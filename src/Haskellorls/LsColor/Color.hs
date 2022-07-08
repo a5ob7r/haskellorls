@@ -219,7 +219,7 @@ instance From Sources Sequences where
         _ -> Nothing
 
 instance From T.Text Sequences where
-  from = from . (deserialize :: T.Text -> Sources)
+  from = from @Sources . deserialize
 
 instance Deserialize Sequences
 

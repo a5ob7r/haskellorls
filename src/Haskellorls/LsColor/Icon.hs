@@ -94,7 +94,7 @@ instance From Sources Icons where
         _ -> Nothing
 
 instance From T.Text Icons where
-  from = from . (from :: T.Text -> Sources)
+  from = from @Sources . from
 
 instance Deserialize Icons
 

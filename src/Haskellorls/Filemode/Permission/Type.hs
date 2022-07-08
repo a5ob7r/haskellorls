@@ -15,7 +15,7 @@ import Prelude hiding (lookup)
 type Permission = PermissionContext PermissionClass
 
 instance From Permission Char where
-  from = from . (from :: Permission -> PermissionClass)
+  from = from @PermissionClass . from
 
 -- | Permission context such as user/group/other.
 data PermissionContext a = UserPerm a | GroupPerm a | OtherPerm a

@@ -68,7 +68,7 @@ data Options a e = Options
   deriving (Show)
 
 instance (Deserialize a, From Sources e, Default (Options a e)) => From T.Text (Options a e) where
-  from = from . (from :: T.Text -> Sources)
+  from = from @Sources . from
 
 instance (Deserialize a, From Sources e, Default (Options a e)) => Deserialize (Options a e)
 

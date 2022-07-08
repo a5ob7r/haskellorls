@@ -116,6 +116,7 @@ library
     RecordWildCards
     StrictData
     TupleSections
+    TypeApplications
     UndecidableInstances
 
   build-depends:
