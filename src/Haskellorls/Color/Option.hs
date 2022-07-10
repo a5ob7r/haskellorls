@@ -18,7 +18,7 @@ colorParser =
       <> completeWith ["never", "always", "auto"]
   where
     reader =
-      (str :: ReadM String) >>= \case
+      str @String >>= \case
         "never" -> return NEVER
         "no" -> return NEVER
         "none" -> return NEVER

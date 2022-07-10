@@ -17,7 +17,7 @@ indicatorStyleParser =
       <> completeWith ["none", "slash", "file-type", "classify"]
   where
     reader =
-      (str :: ReadM String) >>= \case
+      str @String >>= \case
         "none" -> return IndicatorNone
         "slash" -> return IndicatorSlash
         "file-type" -> return IndicatorFiletype

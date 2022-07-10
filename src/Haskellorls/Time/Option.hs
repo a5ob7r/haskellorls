@@ -18,7 +18,7 @@ timeParser =
       <> completeWith ["atime", "access", "use", "ctime", "status"]
   where
     reader =
-      (str :: ReadM String) >>= \case
+      str @String >>= \case
         "atime" -> pure ACCESS
         "access" -> pure ACCESS
         "use" -> pure ACCESS

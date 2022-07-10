@@ -22,7 +22,7 @@ sortParser =
       <> completeWith ["none", "size", "time", "version", "extension"]
   where
     reader =
-      (str :: ReadM String) >>= \case
+      str @String >>= \case
         "none" -> pure NONE
         "size" -> pure SIZE
         "time" -> pure TIME
