@@ -1,6 +1,6 @@
 cabal-version:      2.2
 name:               haskellorls
-version:            0.5.0.2
+version:            0.5.1.0
 synopsis:           Haskell implementation of ls
 license:            BSD-3-Clause
 license-file:       LICENSE
@@ -60,6 +60,8 @@ library
     Haskellorls.Format.Option
     Haskellorls.Format.Type
     Haskellorls.Format.Util
+    Haskellorls.Hyperlink.Option
+    Haskellorls.Hyperlink.Type
     Haskellorls.Icon
     Haskellorls.Indicator.Decorator
     Haskellorls.Indicator.Option
@@ -112,6 +114,7 @@ library
     LambdaCase
     MultiParamTypeClasses
     MultiWayIf
+    NamedFieldPuns
     OverloadedStrings
     RecordWildCards
     StrictData
@@ -126,6 +129,7 @@ library
     , extra                 ^>=1.7.10
     , filepath-bytestring   ^>=1.4.2.1.10
     , Glob                  ^>=0.10.2
+    , hostname              ^>=1.0
     , mtl                   ^>=2.2.2
     , natural-sort          ^>=0.1.2
     , optparse-applicative  ^>=0.17.0

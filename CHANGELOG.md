@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.5.1.0 -- 2022-07-12
+
+### Added
+
+- Support `--hyperlink=WHEN` option.
+
 ## 0.5.0.2 -- 2022-06-19
 
 ### Fixed

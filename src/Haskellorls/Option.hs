@@ -8,6 +8,7 @@ import qualified Data.Text as T
 import qualified Haskellorls.Color.Option as Color
 import qualified Haskellorls.Depth as Depth
 import qualified Haskellorls.Format.Option as Format
+import qualified Haskellorls.Hyperlink.Option as Hyperlink
 import qualified Haskellorls.Indicator.Option as Indicator
 import qualified Haskellorls.Quote.Option as Quote
 import qualified Haskellorls.Size.Option as Size
@@ -15,6 +16,7 @@ import qualified Haskellorls.Sort.Option as Sort
 import qualified Haskellorls.Time.Option as Time
 import qualified Options.Applicative as OA
 import qualified Options.Applicative.Help.Pretty as OA
+import System.FilePath.Posix.ByteString
 import Text.Read
 
 data Option = Option
@@ -42,6 +44,7 @@ data Option = Option
     dereferenceCommandLine :: Bool,
     dereferenceCommandLineSymlinkToDir :: Bool,
     hide :: String,
+    hyperlink :: Hyperlink.WHEN,
     icon :: Bool,
     indicatorStyle :: Indicator.IndicatorStyle,
     inode :: Bool,
@@ -80,6 +83,8 @@ data Option = Option
     oneline :: Bool,
     toStdout :: Bool,
     noQuote :: Bool,
+    currentWorkingDirectory :: RawFilePath,
+    hostname :: T.Text,
     version :: Bool,
     targets :: [FilePath]
   }
@@ -114,6 +119,7 @@ optionParser =
     <*> dereferenceCommandLineParser
     <*> dereferenceCommandLineSymlinkToDirParser
     <*> hideParser
+    <*> Hyperlink.hyperlinkParser
     <*> iconParser
     <*> Indicator.indicatorStyleParser
     <*> inodeParser
@@ -152,6 +158,8 @@ optionParser =
     <*> onelineParser
     <*> toStdoutParser
     <*> noQuoteParser
+    <*> currentWorkingDirectoryParser
+    <*> hostnameParser
     <*> versionParser
     <*> argParser
 
@@ -480,6 +488,12 @@ escapeParser =
     OA.long "escape"
       <> OA.short 'b'
       <> OA.help "Escape file name and link name by C lang style"
+
+currentWorkingDirectoryParser :: OA.Parser RawFilePath
+currentWorkingDirectoryParser = OA.strOption $ OA.value "" <> OA.internal
+
+hostnameParser :: OA.Parser T.Text
+hostnameParser = OA.strOption $ OA.value "" <> OA.internal
 
 versionParser :: OA.Parser Bool
 versionParser =

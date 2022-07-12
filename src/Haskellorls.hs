@@ -6,6 +6,7 @@ where
 
 import Control.Monad
 import Data.Either
+import qualified Data.Text as T
 import Data.Version (showVersion)
 import qualified Haskellorls.Decorator as Decorator
 import Haskellorls.Exception
@@ -14,11 +15,13 @@ import qualified Haskellorls.Quote.Utils as Quote
 import qualified Haskellorls.Recursive as Recursive
 import qualified Haskellorls.Size.Utils as Size
 import qualified Haskellorls.Utils as Utils
+import Network.HostName
 import Options.Applicative
 import Paths_haskellorls (version)
 import System.Exit
 import System.FilePath.Posix.ByteString
 import System.IO
+import System.Posix.Directory.ByteString
 
 -- | Haskellorls's process flow
 -- 1. Gets all arguments passed to itself as string list.
@@ -38,8 +41,17 @@ haskellorls args = do
       isConnectedToTerminal <- hIsTerminalDevice stdout
       blockSize <- Size.lookupBlockSize options
       quotingStyle <- Quote.lookupQuotingStyle options
+      cwd <- getWorkingDirectory
+      hostname <- T.pack <$> getHostName
 
-      run options {Option.blockSize = blockSize, Option.quotingStyle = quotingStyle, Option.toStdout = isConnectedToTerminal}
+      run
+        options
+          { Option.blockSize = blockSize,
+            Option.quotingStyle = quotingStyle,
+            Option.toStdout = isConnectedToTerminal,
+            Option.currentWorkingDirectory = cwd,
+            Option.hostname = hostname
+          }
 
 run :: Option.Option -> IO ()
 run opt = do

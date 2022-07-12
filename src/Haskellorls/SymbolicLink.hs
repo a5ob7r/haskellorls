@@ -16,10 +16,10 @@ import qualified Haskellorls.WrappedText as WT
 linkName :: Option.Option -> Node.NodeInfo -> [WT.WrappedText]
 linkName opt node = case Node.getNodeLinkInfo node of
   Nothing -> []
-  _ -> prefix' : Quote.quote style (WT.deserialize $ Utils.escapeFormatter opt link)
+  _ -> prefix' : Quote.quote style (WT.modify (Utils.escapeFormatter opt) link)
   where
     style = Quote.quoteStyleForLink opt
-    link = Name.nodeName $ Node.toFileInfo node
+    link = Name.nodeName opt $ Node.toFileInfo node
     prefix' = WT.deserialize prefix
 
 coloredLinkName :: Option.Option -> Color.LsColors -> Node.NodeInfo -> [WT.WrappedText]
