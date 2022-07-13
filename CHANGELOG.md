@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.5.2.0 -- 2022-07-14
+
+### Changed
+
+- Use initial column size at the invocation for grid layout.
+- Return 1 as an exit code if there are any no permission sub-directories.
+
 ## 0.5.1.0 -- 2022-07-12
 
 ### Added

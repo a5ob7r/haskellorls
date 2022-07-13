@@ -1,20 +1,14 @@
-module Haskellorls
-  ( haskellorls,
-    argParser,
-  )
-where
+module Haskellorls (haskellorls) where
 
-import Control.Monad
-import Data.Either
 import qualified Data.Text as T
 import Data.Version (showVersion)
 import qualified Haskellorls.Decorator as Decorator
 import Haskellorls.Exception
+import qualified Haskellorls.Format.Grid as Grid
 import qualified Haskellorls.Option as Option
 import qualified Haskellorls.Quote.Utils as Quote
 import qualified Haskellorls.Recursive as Recursive
 import qualified Haskellorls.Size.Utils as Size
-import qualified Haskellorls.Utils as Utils
 import Network.HostName
 import Options.Applicative
 import Paths_haskellorls (version)
@@ -23,26 +17,30 @@ import System.FilePath.Posix.ByteString
 import System.IO
 import System.Posix.Directory.ByteString
 
--- | Haskellorls's process flow
--- 1. Gets all arguments passed to itself as string list.
--- 2. Parses the arguments and converts them into an 'option' record.
--- 3. Gets 'files' record from the 'option' record's 'target' attribute.
--- 4. Converts the 'files' record into 'entry' record list.
--- 5. Build file status 'printers' from the 'option' record.
--- 6. Build 'entry' printer form the 'option' record and 'printers'.
--- 7. Print all 'entries' using the 'entry' printer.
-haskellorls :: [String] -> IO ()
+-- | Run @ls@.
+--
+-- Return @'ExitSuccess'@ if no error.
+--
+-- Return @'ExitFailure' 2@ if there are any missing filepaths in command
+-- arguments.
+--
+-- Return @'ExitFailure' 1@ if there are any no permission subdirectories in
+-- traversed them.
+haskellorls :: [String] -> IO ExitCode
 haskellorls args = do
   options <- argParser args
 
   if Option.version options
-    then putStrLn $ showVersion version
+    then do
+      putStrLn $ showVersion version
+      return ExitSuccess
     else do
       isConnectedToTerminal <- hIsTerminalDevice stdout
       blockSize <- Size.lookupBlockSize options
       quotingStyle <- Quote.lookupQuotingStyle options
       cwd <- getWorkingDirectory
       hostname <- T.pack <$> getHostName
+      columnSize <- Grid.virtualColumnSize options
 
       run
         options
@@ -50,10 +48,11 @@ haskellorls args = do
             Option.quotingStyle = quotingStyle,
             Option.toStdout = isConnectedToTerminal,
             Option.currentWorkingDirectory = cwd,
-            Option.hostname = hostname
+            Option.hostname = hostname,
+            Option.columnSize = columnSize
           }
 
-run :: Option.Option -> IO ()
+run :: Option.Option -> IO ExitCode
 run opt = do
   -- Assumes that current directory path is passed as argument implicitly if no argument.
   let targets = map encodeFilePath . (\ss -> if null ss then ["."] else ss) $ Option.targets opt
@@ -61,22 +60,26 @@ run opt = do
       -- Only dereferences on command line arguments.
       opt' = opt {Option.dereferenceCommandLine = False, Option.dereferenceCommandLineSymlinkToDir = False}
 
-  statuses <- mapM (tryIO . Utils.getSymbolicLinkStatus) targets
-  let (errs, exists) = partitionEithers $ zipWith (\s p -> s >>= const (Right p)) statuses targets
-
-  mapM_ printErr errs
-
   printers <- Decorator.buildPrinters opt'
   let printer = Recursive.buildPrinter opt' printers
       c = Recursive.LsConf (opt, printer)
 
-  (inodes, ops) <- Recursive.buildInitialOperations c exists
+  (ops, inodes, errs) <- Recursive.mkInitialOperations c targets
 
-  let s = Recursive.LsState (ops, inodes)
+  mapM_ printErr errs
 
-  _ <- Recursive.run c s
+  let s = Recursive.LsState (ops, inodes, [])
 
-  unless (null errs) . exitWith $ ExitFailure 2
+  (_, Recursive.LsState (_, _, errors)) <- Recursive.run c s
+
+  return $
+    if
+        -- Serious error.
+        | not (null errs) -> ExitFailure 2
+        -- Minor error.
+        | not (null errors) -> ExitFailure 1
+        -- No error.
+        | otherwise -> ExitSuccess
 
 argParser :: [String] -> IO Option.Option
 argParser args = handleParseResult presult

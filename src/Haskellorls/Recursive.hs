@@ -1,6 +1,6 @@
 module Haskellorls.Recursive
   ( buildPrinter,
-    buildInitialOperations,
+    mkInitialOperations,
     run,
     LsConf (..),
     LsState (..),
@@ -10,10 +10,12 @@ where
 import Control.Monad.IO.Class
 import Control.Monad.Reader
 import Control.Monad.State.Strict
+import Data.Bifunctor
 import qualified Data.ByteString.Char8 as C
 import Data.Either
 import Data.Functor
 import qualified Data.List as L
+import qualified Data.Sequence as Seq
 import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
@@ -48,6 +50,8 @@ data Entry = Entry
 
 data Tree = Tree
   { treePath :: RawFilePath,
+    treeNode :: Node.NodeInfo,
+    treeNodes :: Seq.Seq Node.NodeInfo,
     treeOption :: Option.Option
   }
 
@@ -56,11 +60,11 @@ data Operation
   | PrintEntry Entry
   | PrintTree Tree
 
-newtype Printer = Printer (Operation -> IO T.Text)
+newtype Printer = Printer (Operation -> T.Text)
 
 newtype LsConf = LsConf (Option.Option, Printer)
 
-newtype LsState = LsState ([Operation], Recursive.AlreadySeenInodes)
+newtype LsState = LsState ([Operation], Recursive.AlreadySeenInodes, [SomeException])
 
 -- | A central piece monad of haskellorls.
 --
@@ -77,18 +81,31 @@ run c s = runLs c s go
   where
     go =
       get >>= \case
-        LsState ([], _) -> pure ()
-        s'@(LsState (op : _, _)) -> do
-          c'@(LsConf (_, Printer printer)) <- ask
+        LsState ([], _, _) -> pure ()
+        s'@(LsState (op : _, _, _)) -> do
+          c'@(LsConf (opt, Printer printer)) <- ask
 
-          liftIO $ T.putStrLn =<< printer op
+          errs <- liftIO $ do
+            (op', errs) <- case op of
+              (PrintTree (Tree {..})) -> do
+                -- TODO: Move directory traversing into an appropriate place.
+                (nodes, errs) <- Tree.mkTreeNodeInfos opt treeNode
+                return (PrintTree $ Tree {treeNodes = nodes, ..}, errs)
+              _ -> return (op, mempty)
+
+            T.putStrLn $ printer op'
+
+            return errs
+
+          modify (\(LsState (ops, inodes, errors)) -> LsState (ops, inodes, errs <> errors))
+
           put =<< liftIO (newLsState c' s')
 
           go
 
 newLsState :: LsConf -> LsState -> IO LsState
-newLsState _ s@(LsState ([], _)) = pure s
-newLsState c@(LsConf (opt, _)) (LsState (op : ops, inodes)) = case op of
+newLsState _ s@(LsState ([], _, _)) = pure s
+newLsState c@(LsConf (opt, _)) (LsState (op : ops, inodes, errors)) = case op of
   PrintEntry (Entry {..})
     | Option.recursive opt && entryDepth < Option.level opt -> do
         let (nodes, newInodes) = runState (Recursive.updateAlreadySeenInode $ filter (Node.isDirectory . Node.nodeType) entryNodes) inodes
@@ -96,8 +113,8 @@ newLsState c@(LsConf (opt, _)) (LsState (op : ops, inodes)) = case op of
         (errs, ops') <- partitionEithers <$> mapM (tryIO . pathToOp c (Depth.increaseDepth entryDepth)) paths
         mapM_ printErr errs
         let entries = (\es -> if null es then es else Newline : es) $ L.intersperse Newline ops'
-        pure $ LsState (entries <> ops, newInodes)
-  _ -> pure $ LsState (ops, inodes)
+        pure $ LsState (entries <> ops, newInodes, (toException <$> errs) <> errors)
+  _ -> pure $ LsState (ops, inodes, errors)
 
 pathToOp :: (MonadCatch m, MonadIO m) => LsConf -> Depth.Depth -> RawFilePath -> m Operation
 pathToOp (LsConf (opt, _)) depth path = do
@@ -121,28 +138,27 @@ buildDirectoryNodes opt path = do
       | null hidePtn || isShowHiddenEntries = id
       | otherwise = Utils.exclude hidePtn
 
--- | Assumes all paths exist.
-buildInitialOperations :: (MonadCatch m, MonadIO m) => LsConf -> [RawFilePath] -> m (Recursive.AlreadySeenInodes, [Operation])
-buildInitialOperations c@(LsConf (opt, _)) paths = do
-  (errs, nodeinfos) <- partitionEithers <$> mapM (tryIO . Node.mkNodeInfo opt "") paths
+mkInitialOperations :: (MonadCatch m, MonadIO m) => LsConf -> [RawFilePath] -> m ([Operation], Recursive.AlreadySeenInodes, [SomeException])
+mkInitialOperations c@(LsConf (opt@Option.Option {tree}, _)) paths = do
+  (errs, nodeinfos) <- first (map toException) . partitionEithers <$> mapM (tryIO . Node.mkNodeInfo opt "") paths
 
   mapM_ (liftIO . printErr) errs
 
   let (nodes, inodes) = runState (Recursive.updateAlreadySeenInode $ Sort.sorter opt nodeinfos) mempty
   let (dirs, files) = L.partition isDirectory nodes
       fileOp = [PrintEntry (Entry FILES "" files opt depth) | not (null files)]
-  dirOps <- mapM (pathToOp c depth . Node.getNodePath) dirs
-  let dirOps' =
-        if Option.tree opt
-          then
-            dirOps <&> \case
-              (PrintEntry (Entry {..})) -> PrintTree (Tree entryPath entryOption)
-              o -> o
-          else case dirOps of
-            -- Considers no argument to be also a single directory.
-            [PrintEntry e] | null files && length (Option.targets opt) < 2 -> [PrintEntry (e {entryType = SINGLEDIR})]
-            _ -> dirOps
-  pure (inodes, L.intersperse Newline $ fileOp <> dirOps')
+
+  if tree
+    then do
+      let ops = dirs <&> \node -> PrintTree $ Tree (Node.getNodePath node) node mempty opt
+      return (L.intersperse Newline $ fileOp <> ops, inodes, errs)
+    else do
+      dirOps <-
+        mapM (pathToOp c depth . Node.getNodePath) dirs <&> \case
+          -- Considers no argument to be also a single directory.
+          [PrintEntry e] | null files && length (Option.targets opt) < 2 -> [PrintEntry (e {entryType = SINGLEDIR})]
+          ops -> ops
+      return (L.intersperse Newline $ fileOp <> dirOps, inodes, errs)
   where
     depth = Depth.increaseDepth Depth.makeZero
     isDirectory
@@ -150,37 +166,41 @@ buildInitialOperations c@(LsConf (opt, _)) paths = do
       | otherwise = Node.isDirectory . Node.nodeType
 
 buildPrinter :: Option.Option -> Decorator.Printers -> Printer
-buildPrinter opt printers = Printer $ fmap (TL.toStrict . TL.toLazyText . mconcat . L.intersperse (TL.fromText "\n")) . generateEntryLines opt printers
+buildPrinter opt printers = Printer $ (TL.toStrict . TL.toLazyText . mconcat . L.intersperse (TL.fromText "\n")) . generateEntryLines opt printers
 
-generateEntryLines :: Option.Option -> Decorator.Printers -> Operation -> IO [TL.Builder]
+generateEntryLines :: Option.Option -> Decorator.Printers -> Operation -> [TL.Builder]
 generateEntryLines opt printers op = case op of
-  Newline -> pure []
-  PrintEntry (Entry {..}) -> do
-    let opt' = if shouldQuote entryNodes then opt else opt {Option.noQuote = True}
-        nodes' = Decorator.buildLines entryNodes printers $ Decorator.buildPrinterTypes opt'
-        addHeader = case entryType of
-          FILES -> id
-          SINGLEDIR | not (Option.recursive opt) -> id
-          _ -> \ss -> TL.fromText (T.decodeUtf8 entryPath `T.snoc` ':') : ss
+  Newline -> []
+  PrintEntry (Entry {..}) ->
+    addHeader . addTotalBlockSize . Grid.renderGrid $ Grid.buildValidGrid opt (Option.columnSize opt) nodes'
+    where
+      opt' =
+        if shouldQuote entryNodes
+          then opt
+          else opt {Option.noQuote = True}
+      nodes' = Decorator.buildLines entryNodes printers $ Decorator.buildPrinterTypes opt'
+      addHeader = case entryType of
+        FILES -> id
+        SINGLEDIR | not (Option.recursive opt) -> id
+        _ -> \ss -> TL.fromText (T.decodeUtf8 entryPath `T.snoc` ':') : ss
 
-        -- Add total block size header only about directries when long style
-        -- layout or `-s / --size` is passed.
-        addTotalBlockSize = case entryType of
-          _ | Option.size opt -> (builder :)
-          FILES -> id
-          _
-            | Format.isLongStyle opt -> (builder :)
-            | otherwise -> id
-          where
-            builder = TL.fromText . T.concat . ("total " :) . map WT.serialize . Size.toTotalBlockSize opt $ map Node.fileSize entryNodes
-
-    colLen <- Grid.virtualColumnSize opt
-
-    return . addHeader . addTotalBlockSize . Grid.renderGrid $ Grid.buildValidGrid opt colLen nodes'
-  PrintTree (Tree {..}) -> do
-    nodes <- Tree.makeTreeNodeInfos opt treePath
-    let opt' = if shouldQuote nodes then opt else opt {Option.noQuote = True}
-    pure . map (foldMap $ TL.fromText . WT.serialize) $ Decorator.buildLines nodes printers $ Decorator.buildPrinterTypes opt'
+      -- Add total block size header only about directries when long style
+      -- layout or `-s / --size` is passed.
+      addTotalBlockSize = case entryType of
+        _ | Option.size opt -> (builder :)
+        FILES -> id
+        _
+          | Format.isLongStyle opt -> (builder :)
+          | otherwise -> id
+        where
+          builder = TL.fromText . T.concat . ("total " :) . map WT.serialize . Size.toTotalBlockSize opt $ map Node.fileSize entryNodes
+  PrintTree (Tree {..}) ->
+    map (foldMap $ TL.fromText . WT.serialize) . Decorator.buildLines treeNodes printers $ Decorator.buildPrinterTypes opt'
+    where
+      opt' =
+        if shouldQuote treeNodes
+          then opt
+          else opt {Option.noQuote = True}
 
 shouldQuote :: Foldable t => t Node.NodeInfo -> Bool
 shouldQuote = not . all (S.null . S.intersection setNeedQuotes . C.foldr S.insert mempty . Node.getNodePath)

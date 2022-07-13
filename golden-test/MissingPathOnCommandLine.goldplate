@@ -1,0 +1,7 @@
+{
+  "command": "haskellorls",
+  "arguments": ["foobar"],
+  "asserts": [
+    {"exit_code": 2}
+  ]
+}

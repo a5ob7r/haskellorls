@@ -1,12 +1,10 @@
-module Haskellorls.Tree.Util
-  ( makeSomeNewPositionsList,
-    makeTreeNodeInfos,
-  )
-where
+module Haskellorls.Tree.Util (mkTreeNodeInfos) where
 
 import Control.Monad.IO.Class
 import Control.Monad.State.Strict
+import Data.Bifunctor
 import Data.Either
+import Data.Functor
 import qualified Data.Sequence as S
 import GHC.IO.Exception
 import qualified Haskellorls.Depth as Depth
@@ -25,23 +23,23 @@ makeSomeNewPositionsList n _
 makeSomeNewPositionsList 1 xs = [LAST : xs]
 makeSomeNewPositionsList n xs = case replicate n xs of
   [] -> []
-  (y : ys) -> (HEAD : y) : makeSomeNewPositionsList' ys
+  (y : ys) -> (HEAD : y) : mkSomeNewPositionsList' ys
 
-makeSomeNewPositionsList' :: [[TreeNodePosition]] -> [[TreeNodePosition]]
-makeSomeNewPositionsList' [] = []
-makeSomeNewPositionsList' [x] = [LAST : x]
-makeSomeNewPositionsList' (x : xs) = (MID : x) : makeSomeNewPositionsList' xs
+mkSomeNewPositionsList' :: [[TreeNodePosition]] -> [[TreeNodePosition]]
+mkSomeNewPositionsList' [] = []
+mkSomeNewPositionsList' [x] = [LAST : x]
+mkSomeNewPositionsList' (x : xs) = (MID : x) : mkSomeNewPositionsList' xs
 
-makeTreeNodeInfos :: (MonadCatch m, MonadIO m) => Option.Option -> RawFilePath -> m (S.Seq Node.NodeInfo)
-makeTreeNodeInfos opt path = do
-  node <- Node.mkNodeInfo opt "" path
+mkTreeNodeInfos :: (MonadCatch m, MonadIO m) => Option.Option -> Node.NodeInfo -> m (S.Seq Node.NodeInfo, [SomeException])
+mkTreeNodeInfos opt node = do
   let inodes = Recursive.singletonInodes $ Node.fileID node
-  makeTreeNodeInfos' inodes opt $ S.singleton node
+
+  mkTreeNodeInfos' inodes opt (S.singleton node) []
 
 -- | With error message output.
-makeTreeNodeInfos' :: (MonadCatch m, MonadIO m) => Recursive.AlreadySeenInodes -> Option.Option -> S.Seq Node.NodeInfo -> m (S.Seq Node.NodeInfo)
-makeTreeNodeInfos' _ _ S.Empty = pure mempty
-makeTreeNodeInfos' inodes opt (node S.:<| nodeSeq) = do
+mkTreeNodeInfos' :: (MonadCatch m, MonadIO m) => Recursive.AlreadySeenInodes -> Option.Option -> S.Seq Node.NodeInfo -> [SomeException] -> m (S.Seq Node.NodeInfo, [SomeException])
+mkTreeNodeInfos' _ _ S.Empty _ = pure mempty
+mkTreeNodeInfos' inodes opt (node S.:<| nodeSeq) errors = do
   let path = Node.getNodeDirName node </> Node.getNodePath node
   contents <-
     if
@@ -63,15 +61,14 @@ makeTreeNodeInfos' inodes opt (node S.:<| nodeSeq) = do
   -- traversing directory contents and getting each file statuses are
   -- non-atomic. So maybe causes looking up nonexistence filepaths. In such
   -- case, ignore nonexistence filepaths.
-  case filter (\e -> ioe_type e /= NoSuchThing) errs of
-    e : _ -> throwIO e
-    _ -> do
-      let (nodes, newInodes) = runState (Recursive.updateAlreadySeenInode nodeinfos) inodes
-          pList = makeSomeNewPositionsList (length nodes) $ Node.getTreeNodePositions node
-          nodes' = zipWith (\nd p -> nd {Node.getTreeNodePositions = p}) (Sort.sorter opt nodes) pList
-          newNodeSeq = S.fromList nodes' <> nodeSeq
+  let errs' = toException <$> filter (\e -> ioe_type e /= NoSuchThing) errs
 
-      (node S.<|) <$> makeTreeNodeInfos' newInodes opt' newNodeSeq
+  let (nodes, newInodes) = runState (Recursive.updateAlreadySeenInode nodeinfos) inodes
+      pList = makeSomeNewPositionsList (length nodes) $ Node.getTreeNodePositions node
+      nodes' = zipWith (\nd p -> nd {Node.getTreeNodePositions = p}) (Sort.sorter opt nodes) pList
+      newNodeSeq = S.fromList nodes' <> nodeSeq
+
+  mkTreeNodeInfos' newInodes opt' newNodeSeq (errs' <> errors) <&> first (node S.<|)
   where
     opt' = opt {Option.level = Depth.decreaseDepth depth}
     depth = Option.level opt

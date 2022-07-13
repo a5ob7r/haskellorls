@@ -85,6 +85,7 @@ data Option = Option
     noQuote :: Bool,
     currentWorkingDirectory :: RawFilePath,
     hostname :: T.Text,
+    columnSize :: Int,
     version :: Bool,
     targets :: [FilePath]
   }
@@ -160,6 +161,7 @@ optionParser =
     <*> noQuoteParser
     <*> currentWorkingDirectoryParser
     <*> hostnameParser
+    <*> columnSizeParser
     <*> versionParser
     <*> argParser
 
@@ -494,6 +496,9 @@ currentWorkingDirectoryParser = OA.strOption $ OA.value "" <> OA.internal
 
 hostnameParser :: OA.Parser T.Text
 hostnameParser = OA.strOption $ OA.value "" <> OA.internal
+
+columnSizeParser :: OA.Parser Int
+columnSizeParser = OA.option OA.auto $ OA.value 0 <> OA.internal
 
 versionParser :: OA.Parser Bool
 versionParser =
