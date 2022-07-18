@@ -1,0 +1,9 @@
+{
+  "command": "haskellorls",
+  "arguments": ["--color", "files/examples01"],
+  "environment": {"LS_COLORS": "di=38;5;30:*README=38;5;220;1:*README.rst=38;5;220;1:*README.md=38;5;220;1:*.md=38;5;184:*.rst=38;5;184:"},
+  "asserts": [
+    {"exit_code": 0},
+    {"stdout": "${GOLDPLATE_NAME}.stdout"}
+  ]
+}

@@ -9,14 +9,16 @@ import Haskellorls.Color.Type
 import Options.Applicative
 
 colorParser :: Parser Colorize
-colorParser =
-  option reader $
-    long "color"
-      <> metavar "WHEN"
-      <> value NEVER
-      <> help "When use output with color (default is 'never')"
-      <> completeWith ["never", "always", "auto"]
+colorParser = noArg <|> withArg
   where
+    noArg = flag' ALWAYS (long "color")
+    withArg =
+      option reader $
+        long "color"
+          <> metavar "WHEN"
+          <> value NEVER
+          <> help "When use output with color. If omits =WHEN, then the value assumes 'always'. (default is 'never')."
+          <> completeWith ["never", "always", "auto"]
     reader =
       str @String >>= \case
         "never" -> return NEVER

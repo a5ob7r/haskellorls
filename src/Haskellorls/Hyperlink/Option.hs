@@ -8,14 +8,16 @@ import Haskellorls.Hyperlink.Type
 import Options.Applicative
 
 hyperlinkParser :: Parser WHEN
-hyperlinkParser =
-  option reader $
-    long "hyperlink"
-      <> metavar "WHEN"
-      <> value NEVER
-      <> help "When embed the hyperlink to the file into the filename."
-      <> completeWith ["never", "always", "auto"]
+hyperlinkParser = noArg <|> withArg
   where
+    noArg = flag' ALWAYS $ long "hyperlink"
+    withArg =
+      option reader $
+        long "hyperlink"
+          <> metavar "WHEN"
+          <> value NEVER
+          <> help "When embed the hyperlink to the file into the filename."
+          <> completeWith ["never", "always", "auto"]
     reader =
       str @String >>= \case
         "never" -> return NEVER

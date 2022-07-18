@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Added
+
+- Two no argument options, `--color` and `--hyperlink`.
+
+### Changed
+
+- Disallow to specify an option argument without an equal character for `--color` and `--hyperlink`.
+
 ## 0.5.2.0 -- 2022-07-14
 
 ### Changed
