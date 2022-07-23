@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.5.3.0 -- 2022-07-23
+
 ### Added
 
 - Two no argument options, `--color` and `--hyperlink`.
