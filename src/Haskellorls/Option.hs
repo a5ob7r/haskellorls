@@ -31,7 +31,7 @@ data Option = Option
     color :: Color.Colorize,
     directory :: Bool,
     noneSortExtra :: Bool,
-    classify :: Bool,
+    classify :: Indicator.WHEN,
     extraColor :: Bool,
     fileType :: Bool,
     format :: Format.Format,
@@ -107,7 +107,7 @@ optionParser =
     <*> Color.colorParser
     <*> directoryParser
     <*> noneSortExtraParser
-    <*> classifyParser
+    <*> Indicator.classifyParser
     <*> Color.extraColorParser
     <*> fileTypeParser
     <*> Format.formatParser
@@ -238,13 +238,6 @@ inodeParser =
     OA.long "inode"
       <> OA.short 'i'
       <> OA.help "Output inode number about each files"
-
-classifyParser :: OA.Parser Bool
-classifyParser =
-  OA.switch $
-    OA.long "classify"
-      <> OA.short 'F'
-      <> OA.help "Append a indicator follows filename"
 
 directoryIndicatorParser :: OA.Parser Bool
 directoryIndicatorParser =

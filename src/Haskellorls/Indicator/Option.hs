@@ -1,11 +1,36 @@
 module Haskellorls.Indicator.Option
-  ( indicatorStyleParser,
+  ( classifyParser,
+    indicatorStyleParser,
     module Haskellorls.Indicator.Type,
   )
 where
 
 import Haskellorls.Indicator.Type
 import Options.Applicative
+
+classifyParser :: Parser WHEN
+classifyParser = noArg <|> withArg
+  where
+    noArg = flag' ALWAYS $ long "classify" <> short 'F'
+    withArg =
+      option reader $
+        long "classify"
+          <> value NEVER
+          <> metavar "WHEN"
+          <> help "Append a indicator follows filename"
+          <> completeWith ["never", "always", "auto"]
+    reader =
+      str @String >>= \case
+        "never" -> return NEVER
+        "no" -> return NEVER
+        "none" -> return NEVER
+        "always" -> return ALWAYS
+        "yes" -> return ALWAYS
+        "force" -> return ALWAYS
+        "auto" -> return AUTO
+        "tty" -> return AUTO
+        "if-tty" -> return AUTO
+        _ -> readerError "Only never, always or auto"
 
 indicatorStyleParser :: Parser IndicatorStyle
 indicatorStyleParser =

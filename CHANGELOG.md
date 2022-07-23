@@ -5,6 +5,7 @@
 ### Added
 
 - Two no argument options, `--color` and `--hyperlink`.
+- Support `--classify=WHEN` option.
 
 ### Changed
 

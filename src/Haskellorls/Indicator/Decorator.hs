@@ -88,9 +88,13 @@ deriveIndicatorStyle :: Option.Option -> IndicatorStyle
 deriveIndicatorStyle opt = maximum [classify, directory, fileType, style]
   where
     classify =
-      if Option.classify opt
-        then IndicatorClassify
-        else IndicatorNone
+      case Option.classify opt of
+        NEVER -> IndicatorNone
+        ALWAYS -> IndicatorClassify
+        AUTO ->
+          if Option.toStdout opt
+            then IndicatorClassify
+            else IndicatorNone
     directory =
       if Option.directoryIndicator opt
         then IndicatorSlash

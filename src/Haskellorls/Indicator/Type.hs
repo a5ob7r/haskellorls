@@ -1,7 +1,10 @@
 module Haskellorls.Indicator.Type
-  ( IndicatorStyle (..),
+  ( WHEN (..),
+    IndicatorStyle (..),
   )
 where
+
+data WHEN = NEVER | ALWAYS | AUTO
 
 data IndicatorStyle
   = IndicatorNone
