@@ -17,17 +17,17 @@ import Data.String
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import Haskellorls.Class
-import Haskellorls.Context.Type
-import Haskellorls.Filemode.Entry.Type
-import Haskellorls.Filemode.Permission.Type
-import Haskellorls.Inode.Type
-import Haskellorls.Link.Type
+import Haskellorls.Config.Context
+import Haskellorls.Config.Filemode.Entry
+import Haskellorls.Config.Filemode.Permission
+import Haskellorls.Config.Inode
+import Haskellorls.Config.Link
+import Haskellorls.Config.Ownership
+import Haskellorls.Config.Size
+import Haskellorls.Config.Time
+import Haskellorls.Config.Tree
 import Haskellorls.LsColor.Config
 import Haskellorls.NodeInfo
-import Haskellorls.Ownership.Type
-import Haskellorls.Size.Type
-import Haskellorls.Time.Type
-import Haskellorls.Tree.Type
 import System.Environment
 import Prelude hiding (lookup)
 

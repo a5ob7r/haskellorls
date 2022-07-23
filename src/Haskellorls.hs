@@ -1,21 +1,16 @@
 module Haskellorls (haskellorls) where
 
-import qualified Data.Text as T
 import Data.Version (showVersion)
-import qualified Haskellorls.Decorator as Decorator
+import Haskellorls.Config
+import Haskellorls.Config.Environment
+import qualified Haskellorls.Config.Option as Option
 import Haskellorls.Exception
-import qualified Haskellorls.Format.Grid as Grid
-import qualified Haskellorls.Option as Option
-import qualified Haskellorls.Quote.Utils as Quote
+import qualified Haskellorls.Formatter as Formatter
 import qualified Haskellorls.Recursive as Recursive
-import qualified Haskellorls.Size.Utils as Size
-import Network.HostName
 import Options.Applicative
 import Paths_haskellorls (version)
 import System.Exit
 import System.FilePath.Posix.ByteString
-import System.IO
-import System.Posix.Directory.ByteString
 
 -- | Run @ls@.
 --
@@ -30,39 +25,28 @@ haskellorls :: [String] -> IO ExitCode
 haskellorls args = do
   options <- argParser args
 
-  if Option.version options
+  if Option.oVersion options
     then do
       putStrLn $ showVersion version
       return ExitSuccess
-    else do
-      isConnectedToTerminal <- hIsTerminalDevice stdout
-      blockSize <- Size.lookupBlockSize options
-      quotingStyle <- Quote.lookupQuotingStyle options
-      cwd <- getWorkingDirectory
-      hostname <- T.pack <$> getHostName
-      columnSize <- Grid.virtualColumnSize options
-
-      run
-        options
-          { Option.blockSize = blockSize,
-            Option.quotingStyle = quotingStyle,
-            Option.toStdout = isConnectedToTerminal,
-            Option.currentWorkingDirectory = cwd,
-            Option.hostname = hostname,
-            Option.columnSize = columnSize
-          }
+    else run options
 
 run :: Option.Option -> IO ExitCode
 run opt = do
+  env <- mkEnvironment
+
   -- Assumes that current directory path is passed as argument implicitly if no argument.
-  let targets = map encodeFilePath . (\ss -> if null ss then ["."] else ss) $ Option.targets opt
+  let targets = map encodeFilePath . (\ss -> if null ss then ["."] else ss) $ Option.oTargets opt
 
       -- Only dereferences on command line arguments.
-      opt' = opt {Option.dereferenceCommandLine = False, Option.dereferenceCommandLineSymlinkToDir = False}
+      opt' = opt {Option.oDereferenceCommandLine = False, Option.oDereferenceCommandLineSymlinkToDir = False}
 
-  printers <- Decorator.buildPrinters opt'
-  let printer = Recursive.buildPrinter opt' printers
-      c = Recursive.LsConf (opt, printer)
+      config = mkConfig env opt
+      config' = mkConfig env opt'
+
+  printers <- Formatter.buildPrinters config'
+  let printer = Recursive.buildPrinter config' printers
+      c = Recursive.LsConf (config, printer)
 
   (ops, inodes, errs) <- Recursive.mkInitialOperations c targets
 

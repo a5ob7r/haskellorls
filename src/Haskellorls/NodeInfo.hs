@@ -21,9 +21,9 @@ import Data.Either.Extra
 import Data.Functor
 import qualified Data.Text as T
 import Data.Time.Clock.POSIX
-import qualified Haskellorls.Option as Option
-import qualified Haskellorls.Time.Type as Time
-import qualified Haskellorls.Tree.Type as Tree
+import qualified Haskellorls.Config as Config
+import qualified Haskellorls.Config.Time as Time
+import qualified Haskellorls.Config.Tree as Tree
 import qualified Haskellorls.Utils as Utils
 import System.FilePath.Posix.ByteString
 import qualified System.Posix.Files as Files
@@ -130,8 +130,8 @@ data ProxyFileStatus = ProxyFileStatus
     pfsNodeType :: NodeType
   }
 
-mkProxyFileStatus :: Option.Option -> Files.FileStatus -> ProxyFileStatus
-mkProxyFileStatus opt status =
+mkProxyFileStatus :: Config.Config -> Files.FileStatus -> ProxyFileStatus
+mkProxyFileStatus config status =
   ProxyFileStatus
     { pfsFileMode = Files.fileMode status,
       pfsFileID = Files.fileID status,
@@ -139,7 +139,7 @@ mkProxyFileStatus opt status =
       pfsUserID = Files.fileOwner status,
       pfsGroupID = Files.fileGroup status,
       pfsFileSize = Files.fileSize status,
-      pfsFileTime = case Option.time opt of
+      pfsFileTime = case Config.time config of
         Time.MODIFICATION -> Files.modificationTimeHiRes status
         Time.ACCESS -> Files.accessTimeHiRes status
         Time.CHANGE -> Files.statusChangeTimeHiRes status,
@@ -157,8 +157,8 @@ data NodeInfo = NodeInfo
   }
 
 -- | Create a filenode infomation from a filepath.
-mkNodeInfo :: (MonadCatch m, MonadIO m) => Option.Option -> RawFilePath -> RawFilePath -> m NodeInfo
-mkNodeInfo opt dirname basename = do
+mkNodeInfo :: (MonadCatch m, MonadIO m) => Config.Config -> RawFilePath -> RawFilePath -> m NodeInfo
+mkNodeInfo config dirname basename = do
   status <- Utils.getSymbolicLinkStatus path
   context <- fileContext path
 
@@ -181,19 +181,19 @@ mkNodeInfo opt dirname basename = do
         (Right p, Nothing) ->
           NodeInfo
             { getNodePath = basename,
-              getNodeStatus = mkProxyFileStatus opt status,
+              getNodeStatus = mkProxyFileStatus config status,
               getNodeContext = T.pack context,
               getNodeDirName = dirname,
               getNodeLinkInfo = Just . Left $ OrphanedLinkNodeInfo p,
               getTreeNodePositions = []
             }
         (Right p, Just s)
-          | Option.dereference opt
-              || Option.dereferenceCommandLine opt
-              || (Option.dereferenceCommandLineSymlinkToDir opt && Files.isDirectory s) ->
+          | Config.dereference config
+              || Config.dereferenceCommandLine config
+              || (Config.dereferenceCommandLineSymlinkToDir config && Files.isDirectory s) ->
               NodeInfo
                 { getNodePath = basename,
-                  getNodeStatus = mkProxyFileStatus opt s,
+                  getNodeStatus = mkProxyFileStatus config s,
                   getNodeContext = T.pack context,
                   getNodeDirName = dirname,
                   getNodeLinkInfo = Nothing,
@@ -202,14 +202,14 @@ mkNodeInfo opt dirname basename = do
           | otherwise ->
               NodeInfo
                 { getNodePath = basename,
-                  getNodeStatus = mkProxyFileStatus opt status,
+                  getNodeStatus = mkProxyFileStatus config status,
                   getNodeContext = T.pack context,
                   getNodeDirName = dirname,
                   getNodeLinkInfo =
                     Just . Right $
                       LinkNodeInfo
                         { getLinkNodePath = p,
-                          getLinkNodeStatus = mkProxyFileStatus opt s,
+                          getLinkNodeStatus = mkProxyFileStatus config s,
                           getLinkNodeContext = T.pack destContext
                         },
                   getTreeNodePositions = []
@@ -217,7 +217,7 @@ mkNodeInfo opt dirname basename = do
         _ ->
           NodeInfo
             { getNodePath = basename,
-              getNodeStatus = mkProxyFileStatus opt status,
+              getNodeStatus = mkProxyFileStatus config status,
               getNodeContext = T.pack context,
               getNodeDirName = dirname,
               getNodeLinkInfo = Nothing,
@@ -227,7 +227,7 @@ mkNodeInfo opt dirname basename = do
       return $
         NodeInfo
           { getNodePath = basename,
-            getNodeStatus = mkProxyFileStatus opt status,
+            getNodeStatus = mkProxyFileStatus config status,
             getNodeContext = T.pack context,
             getNodeDirName = dirname,
             getNodeLinkInfo = Nothing,

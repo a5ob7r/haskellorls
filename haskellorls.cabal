@@ -39,66 +39,64 @@ library
   exposed-modules:    Haskellorls
   other-modules:
     Haskellorls.Class
-    Haskellorls.Color.Option
-    Haskellorls.Color.Type
-    Haskellorls.Color.Utils
-    Haskellorls.Context
-    Haskellorls.Context.Type
-    Haskellorls.Decorator
+    Haskellorls.Config
+    Haskellorls.Config.Context
+    Haskellorls.Config.Environment
+    Haskellorls.Config.Filemode
+    Haskellorls.Config.Filemode.Entry
+    Haskellorls.Config.Filemode.Permission
+    Haskellorls.Config.Format
+    Haskellorls.Config.Indicator
+    Haskellorls.Config.Inode
+    Haskellorls.Config.Link
+    Haskellorls.Config.Listing
+    Haskellorls.Config.Option
+    Haskellorls.Config.Option.Color
+    Haskellorls.Config.Option.Format
+    Haskellorls.Config.Option.Hyperlink
+    Haskellorls.Config.Option.Indicator
+    Haskellorls.Config.Option.Quote
+    Haskellorls.Config.Option.Size
+    Haskellorls.Config.Option.Sort
+    Haskellorls.Config.Option.Time
+    Haskellorls.Config.Option.When
+    Haskellorls.Config.Ownership
+    Haskellorls.Config.Quote
+    Haskellorls.Config.Size
+    Haskellorls.Config.Sort
+    Haskellorls.Config.Time
+    Haskellorls.Config.Tree
+    Haskellorls.Config.When
     Haskellorls.Depth
     Haskellorls.Exception
-    Haskellorls.Filemode
-    Haskellorls.Filemode.Decorator
-    Haskellorls.Filemode.Entry
-    Haskellorls.Filemode.Entry.Decorator
-    Haskellorls.Filemode.Entry.Type
-    Haskellorls.Filemode.Permission
-    Haskellorls.Filemode.Permission.Decorator
-    Haskellorls.Filemode.Permission.Type
-    Haskellorls.Filemode.Type
-    Haskellorls.Format.Grid
-    Haskellorls.Format.Option
-    Haskellorls.Format.Type
-    Haskellorls.Format.Util
-    Haskellorls.Hyperlink.Option
-    Haskellorls.Hyperlink.Type
-    Haskellorls.Icon
-    Haskellorls.Indicator.Decorator
-    Haskellorls.Indicator.Option
-    Haskellorls.Indicator.Type
-    Haskellorls.Inode
-    Haskellorls.Inode.Type
-    Haskellorls.Link
-    Haskellorls.Link.Type
+    Haskellorls.Formatter
+    Haskellorls.Formatter.Context
+    Haskellorls.Formatter.Escape
+    Haskellorls.Formatter.Filemode
+    Haskellorls.Formatter.Filemode.Entry
+    Haskellorls.Formatter.Filemode.Permission
+    Haskellorls.Formatter.Icon
+    Haskellorls.Formatter.Indicator
+    Haskellorls.Formatter.Inode
+    Haskellorls.Formatter.Layout.Grid
+    Haskellorls.Formatter.Link
+    Haskellorls.Formatter.Name
+    Haskellorls.Formatter.Ownership
+    Haskellorls.Formatter.Quote
+    Haskellorls.Formatter.Size
+    Haskellorls.Formatter.SymbolicLink
+    Haskellorls.Formatter.Time
+    Haskellorls.Formatter.Tree
     Haskellorls.LsColor
     Haskellorls.LsColor.Class
     Haskellorls.LsColor.Color
     Haskellorls.LsColor.Config
     Haskellorls.LsColor.Icon
-    Haskellorls.Name.Decorator
     Haskellorls.NodeInfo
-    Haskellorls.Option
-    Haskellorls.Ownership.Decorator
-    Haskellorls.Ownership.Type
-    Haskellorls.Quote.Option
-    Haskellorls.Quote.Type
-    Haskellorls.Quote.Utils
     Haskellorls.Recursive
+    Haskellorls.Recursive.Tree
     Haskellorls.Recursive.Utils
-    Haskellorls.Size.Decorator
-    Haskellorls.Size.Option
-    Haskellorls.Size.Type
-    Haskellorls.Size.Utils
-    Haskellorls.Sort.Method
-    Haskellorls.Sort.Option
-    Haskellorls.Sort.Type
-    Haskellorls.SymbolicLink
-    Haskellorls.Time.Decorator
-    Haskellorls.Time.Option
-    Haskellorls.Time.Type
-    Haskellorls.Tree.Decorator
-    Haskellorls.Tree.Type
-    Haskellorls.Tree.Util
+    Haskellorls.Sort
     Haskellorls.Utils
     Haskellorls.WrappedText
     Paths_haskellorls

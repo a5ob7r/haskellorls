@@ -7,7 +7,6 @@ module Haskellorls.Utils
     listContents,
     exclude,
     textLengthForDisplay,
-    escapeFormatter,
   )
 where
 
@@ -17,8 +16,8 @@ import qualified Data.ByteString as B
 import Data.Char
 import Data.Functor
 import qualified Data.Text as T
-import qualified Haskellorls.Option as Option
-import qualified Haskellorls.Quote.Type as Quote
+import qualified Haskellorls.Config as Config
+import Haskellorls.Config.Listing
 import RawFilePath.Directory
 import System.FilePath.Glob
 import System.FilePath.Posix.ByteString
@@ -51,25 +50,27 @@ linkDestPath parPath linkPath
 isAbsPath :: RawFilePath -> Bool
 isAbsPath path = "/" `B.isPrefixOf` path
 
-listContents :: (MonadThrow m, MonadIO m) => Option.Option -> RawFilePath -> m [RawFilePath]
-listContents opt path = list path <&> ignoreExcluder . hideExcluder . ignoreFilter
+listContents :: (MonadThrow m, MonadIO m) => Config.Config -> RawFilePath -> m [RawFilePath]
+listContents config path = list path <&> ignoreExcluder . hideExcluder . ignoreFilter
   where
-    list
-      | Option.all opt || Option.noneSortExtra opt = listAllEntries
-      | Option.almostAll opt = listSemiAllEntries
-      | otherwise = listEntries
+    list = case Config.listing config of
+      All -> listAllEntries
+      AlmostAll -> listSemiAllEntries
+      NoHidden -> listEntries
     ignoreFilter =
-      if Option.ignoreBackups opt
+      if Config.ignoreBackups config
         then ignoreBackupsFilter
         else id
-    ignoreExcluder = case Option.ignore opt of
+    ignoreExcluder = case Config.ignore config of
       "" -> id
       ptn -> exclude ptn
-    hideExcluder = case Option.hide opt of
+    hideExcluder = case Config.hide config of
       "" -> id
       _ | isShowHiddenEntries -> id
       ptn -> exclude ptn
-    isShowHiddenEntries = Option.all opt || Option.almostAll opt
+    isShowHiddenEntries = case Config.listing config of
+      NoHidden -> False
+      _ -> True
 
 listAllEntries :: (MonadThrow m, MonadIO m) => RawFilePath -> m [RawFilePath]
 listAllEntries = liftIO . getDirectoryFiles
@@ -98,39 +99,3 @@ exclude ptn = map encodeFilePath . filter (not . match ptn') . map decodeFilePat
 -- | Assumes not Latin1 charactor has double width of Latin1 charactor for display.
 textLengthForDisplay :: T.Text -> Int
 textLengthForDisplay = T.foldr (\c acc -> acc + if isLatin1 c then 1 else 2) 0
-
-replaceControlCharsToQuestion :: T.Text -> T.Text
-replaceControlCharsToQuestion = T.map (\c -> if isPrint c then c else '?')
-
-escapeCharsForStdout :: T.Text -> T.Text
-escapeCharsForStdout = T.concatMap $ \case
-  '\r' -> "'$'\\r''"
-  '\t' -> "'$'\\t''"
-  c -> T.singleton c
-
--- | NOTE: There may be some missing targets.
-escapeCharsForStdoutByCStyle :: T.Text -> T.Text
-escapeCharsForStdoutByCStyle = T.concatMap $ \case
-  '\t' -> "\\t"
-  '\r' -> "\\r"
-  '\n' -> "\\n"
-  ' ' -> "\\ "
-  '|' -> "\\|"
-  '\\' -> "\\\\"
-  c -> T.singleton c
-
-escapeFormatter :: Option.Option -> T.Text -> T.Text
-escapeFormatter opt = case Option.quotingStyle opt of
-  _
-    | Option.literal opt -> replaceControlCharsToQuestion
-    | Option.escape opt -> escapeCharsForStdoutByCStyle
-    | Option.hideControlChars opt && not (Option.showControlChars opt) -> replaceControlCharsToQuestion
-  Quote.Literal -> replaceControlCharsToQuestion
-  Quote.Shell -> replaceControlCharsToQuestion
-  Quote.ShellAlways -> replaceControlCharsToQuestion
-  Quote.ShellEscape -> escapeCharsForStdout
-  Quote.ShellEscapeAlways -> escapeCharsForStdout
-  Quote.C -> escapeCharsForStdoutByCStyle
-  Quote.Escape -> escapeCharsForStdoutByCStyle
-  _ | Option.toStdout opt -> escapeCharsForStdout
-  _ -> id
