@@ -82,7 +82,6 @@ data Option = Option
     oExtensionSort :: Bool,
     oContext :: Bool,
     oOneline :: Bool,
-    oNoQuote :: Bool,
     oVersion :: Bool,
     oTargets :: [FilePath]
   }
@@ -154,7 +153,6 @@ optionParser =
     <*> Sort.extensionSortParser
     <*> contextParser
     <*> onelineParser
-    <*> noQuoteParser
     <*> versionParser
     <*> argParser
 
@@ -423,12 +421,6 @@ quoteNameParser =
     OA.long "quote-name"
       <> OA.short 'Q'
       <> OA.help "Quote file name and link name with double quote (\")"
-
-noQuoteParser :: OA.Parser Bool
-noQuoteParser =
-  OA.switch $
-    OA.long "no-quote"
-      <> OA.internal
 
 contextParser :: OA.Parser Bool
 contextParser =

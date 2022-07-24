@@ -172,7 +172,7 @@ mkConfig env Option {..} = Config {..}
       Format.SINGLECOLUMN -> 1
       Format.LONG -> 1
       _ -> fromMaybe 1 $ oWidth <|> Env.columnSize env
-    noQuote = oNoQuote
+    noQuote = False
     toTTY = Env.toTerminal env
     currentWorkingDirectory = Env.cwd env
     hostname = T.pack $ Env.hostname env
