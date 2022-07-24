@@ -4,7 +4,6 @@ module Haskellorls.Config.Option
   )
 where
 
-import qualified Data.Text as T
 import qualified Haskellorls.Config.Option.Color as Color
 import qualified Haskellorls.Config.Option.Format as Format
 import qualified Haskellorls.Config.Option.Hyperlink as Hyperlink
@@ -15,8 +14,8 @@ import qualified Haskellorls.Config.Option.Sort as Sort
 import qualified Haskellorls.Config.Option.Time as Time
 import qualified Haskellorls.Config.When as W
 import qualified Haskellorls.Depth as Depth
-import qualified Options.Applicative as OA
-import qualified Options.Applicative.Help.Pretty as OA
+import Options.Applicative hiding (header)
+import Options.Applicative.Help.Pretty
 import Text.Read
 
 -- | An interface type for the option parser.
@@ -86,10 +85,10 @@ data Option = Option
     oTargets :: [FilePath]
   }
 
-opts :: OA.ParserInfo Option
-opts = OA.info (optionParser OA.<**> OA.helper) $ OA.fullDesc <> (OA.headerDoc . Just . OA.text . T.unpack) header
+opts :: ParserInfo Option
+opts = info (optionParser <**> helper) $ fullDesc <> (headerDoc . Just . text) header
 
-optionParser :: OA.Parser Option
+optionParser :: Parser Option
 optionParser =
   Option
     <$> allParser
@@ -156,325 +155,325 @@ optionParser =
     <*> versionParser
     <*> argParser
 
-longParser :: OA.Parser Bool
+longParser :: Parser Bool
 longParser =
-  OA.switch $
-    OA.short 'l'
-      <> OA.help "Enable long layout which provides informative outputs about files"
+  switch $
+    short 'l'
+      <> help "Enable long layout which provides informative outputs about files"
 
-allParser :: OA.Parser Bool
+allParser :: Parser Bool
 allParser =
-  OA.switch $
-    OA.short 'a'
-      <> OA.long "all"
-      <> OA.help "Output hidden files contain '.' and '..'"
+  switch $
+    short 'a'
+      <> long "all"
+      <> help "Output hidden files contain '.' and '..'"
 
-almostAllParser :: OA.Parser Bool
+almostAllParser :: Parser Bool
 almostAllParser =
-  OA.switch $
-    OA.short 'A'
-      <> OA.long "almost-all"
-      <> OA.help "Output hidden files doesn't contain '.' and '..'"
+  switch $
+    short 'A'
+      <> long "almost-all"
+      <> help "Output hidden files doesn't contain '.' and '..'"
 
-reverseParser :: OA.Parser Bool
+reverseParser :: Parser Bool
 reverseParser =
-  OA.switch $
-    OA.short 'r'
-      <> OA.long "reverse"
-      <> OA.help "Reverse outputs order"
+  switch $
+    short 'r'
+      <> long "reverse"
+      <> help "Reverse outputs order"
 
-onelineParser :: OA.Parser Bool
+onelineParser :: Parser Bool
 onelineParser =
-  OA.switch $
-    OA.short '1'
-      <> OA.help "Enable oneline layout which outputs one file by one line"
+  switch $
+    short '1'
+      <> help "Enable oneline layout which outputs one file by one line"
 
-noGroupParser :: OA.Parser Bool
+noGroupParser :: Parser Bool
 noGroupParser =
-  OA.switch $
-    OA.short 'G'
-      <> OA.long "no-group"
-      <> OA.help "Hide file group field"
+  switch $
+    short 'G'
+      <> long "no-group"
+      <> help "Hide file group field"
 
-longWithoutGroupParser :: OA.Parser Bool
+longWithoutGroupParser :: Parser Bool
 longWithoutGroupParser =
-  OA.switch $
-    OA.short 'o'
-      <> OA.help "Enable long layout without file group"
+  switch $
+    short 'o'
+      <> help "Enable long layout without file group"
 
-longWithoutOwnerParser :: OA.Parser Bool
+longWithoutOwnerParser :: Parser Bool
 longWithoutOwnerParser =
-  OA.switch $
-    OA.short 'g'
-      <> OA.help "Enable long layout without file owner"
+  switch $
+    short 'g'
+      <> help "Enable long layout without file owner"
 
-widthParser :: OA.Parser (Maybe Int)
+widthParser :: Parser (Maybe Int)
 widthParser =
-  OA.option reader $
-    OA.long "width"
-      <> OA.short 'w'
-      <> OA.metavar "COLS"
-      <> OA.help "Specify output width. Assumes infinity width if 0."
-      <> OA.value Nothing
+  option reader $
+    long "width"
+      <> short 'w'
+      <> metavar "COLS"
+      <> help "Specify output width. Assumes infinity width if 0."
+      <> value Nothing
   where
     reader =
-      OA.auto >>= \n ->
+      auto >>= \n ->
         if n >= 0
           then return $ Just n
-          else OA.readerError "COLS must be a natural number"
+          else readerError "COLS must be a natural number"
 
-inodeParser :: OA.Parser Bool
+inodeParser :: Parser Bool
 inodeParser =
-  OA.switch $
-    OA.long "inode"
-      <> OA.short 'i'
-      <> OA.help "Output inode number about each files"
+  switch $
+    long "inode"
+      <> short 'i'
+      <> help "Output inode number about each files"
 
-directoryIndicatorParser :: OA.Parser Bool
+directoryIndicatorParser :: Parser Bool
 directoryIndicatorParser =
-  OA.switch $
-    OA.short 'p'
-      <> OA.help "Append a indicator '/' to directories"
+  switch $
+    short 'p'
+      <> help "Append a indicator '/' to directories"
 
-fileTypeParser :: OA.Parser Bool
+fileTypeParser :: Parser Bool
 fileTypeParser =
-  OA.switch $
-    OA.long "file-type"
-      <> OA.help "Append indicators without '*'"
+  switch $
+    long "file-type"
+      <> help "Append indicators without '*'"
 
-ignoreBackupsParser :: OA.Parser Bool
+ignoreBackupsParser :: Parser Bool
 ignoreBackupsParser =
-  OA.switch $
-    OA.long "ignore-backups"
-      <> OA.short 'B'
-      <> OA.help "Ignore backup files which have a suffix with '~'"
+  switch $
+    long "ignore-backups"
+      <> short 'B'
+      <> help "Ignore backup files which have a suffix with '~'"
 
-numericUidGidParser :: OA.Parser Bool
+numericUidGidParser :: Parser Bool
 numericUidGidParser =
-  OA.switch $
-    OA.long "numeric-uid-gid"
-      <> OA.short 'n'
-      <> OA.help "Output numeric uid and gid instead of alphabetical them"
+  switch $
+    long "numeric-uid-gid"
+      <> short 'n'
+      <> help "Output numeric uid and gid instead of alphabetical them"
 
-ignoreParser :: OA.Parser String
+ignoreParser :: Parser String
 ignoreParser =
-  OA.strOption $
-    OA.long "ignore"
-      <> OA.short 'I'
-      <> OA.metavar "PATTERN"
-      <> OA.value ""
-      <> OA.help "Don't output file infos if the file name matches to glob 'PATTERN'"
+  strOption $
+    long "ignore"
+      <> short 'I'
+      <> metavar "PATTERN"
+      <> value ""
+      <> help "Don't output file infos if the file name matches to glob 'PATTERN'"
 
-hideParser :: OA.Parser String
+hideParser :: Parser String
 hideParser =
-  OA.strOption $
-    OA.long "hide"
-      <> OA.metavar "PATTERN"
-      <> OA.value ""
-      <> OA.help "Don't output file infos if the file name matches to glob 'PATTERN', but this option is ignored when -a or -A is passed at same time"
+  strOption $
+    long "hide"
+      <> metavar "PATTERN"
+      <> value ""
+      <> help "Don't output file infos if the file name matches to glob 'PATTERN', but this option is ignored when -a or -A is passed at same time"
 
-recursiveParser :: OA.Parser Bool
+recursiveParser :: Parser Bool
 recursiveParser =
-  OA.switch $
-    OA.long "recursive"
-      <> OA.short 'R'
-      <> OA.help "Output infos about files in sub directories recursively"
+  switch $
+    long "recursive"
+      <> short 'R'
+      <> help "Output infos about files in sub directories recursively"
 
-levelParser :: OA.Parser Depth.Depth
+levelParser :: Parser Depth.Depth
 levelParser =
-  OA.option reader $
-    OA.long "level"
-      <> OA.metavar "DEPTH"
-      <> OA.value Depth.makeInf
-      <> OA.help "Specify how much depth drills in directory"
+  option reader $
+    long "level"
+      <> metavar "DEPTH"
+      <> value Depth.makeInf
+      <> help "Specify how much depth drills in directory"
   where
     reader =
-      OA.str >>= \s -> do
+      str >>= \s -> do
         case readMaybe s >>= Depth.makeDepth of
           Just d -> return d
-          _ -> OA.readerError "Acceptable value is only natural number"
+          _ -> readerError "Acceptable value is only natural number"
 
-authorParser :: OA.Parser Bool
+authorParser :: Parser Bool
 authorParser =
-  OA.switch $
-    OA.long "author"
-      <> OA.help "Output file author, but this is equal to file owner (for compatibiliy to GNU ls)"
+  switch $
+    long "author"
+      <> help "Output file author, but this is equal to file owner (for compatibiliy to GNU ls)"
 
-sizeParser :: OA.Parser Bool
+sizeParser :: Parser Bool
 sizeParser =
-  OA.switch $
-    OA.long "size"
-      <> OA.short 's'
-      <> OA.help "Output allocated block size of each files"
+  switch $
+    long "size"
+      <> short 's'
+      <> help "Output allocated block size of each files"
 
-iconParser :: OA.Parser Bool
+iconParser :: Parser Bool
 iconParser =
-  OA.switch $
-    OA.long "icons"
-      <> OA.help "Output icon for each files"
+  switch $
+    long "icons"
+      <> help "Output icon for each files"
 
-treeParser :: OA.Parser Bool
+treeParser :: Parser Bool
 treeParser =
-  OA.switch $
-    OA.long "tree"
-      <> OA.help "Output each files with tree style layout. If combines with '-a/--all', the option is disabled forcefully and '-A/--almost-all' is enabled instead."
+  switch $
+    long "tree"
+      <> help "Output each files with tree style layout. If combines with '-a/--all', the option is disabled forcefully and '-A/--almost-all' is enabled instead."
 
-dereferenceParser :: OA.Parser Bool
+dereferenceParser :: Parser Bool
 dereferenceParser =
-  OA.switch $
-    OA.long "dereference"
-      <> OA.short 'L'
-      <> OA.help "Use symbolic link destination file instead of link itself"
+  switch $
+    long "dereference"
+      <> short 'L'
+      <> help "Use symbolic link destination file instead of link itself"
 
-dereferenceCommandLineParser :: OA.Parser Bool
+dereferenceCommandLineParser :: Parser Bool
 dereferenceCommandLineParser =
-  OA.switch $
-    OA.long "dereference-command-line"
-      <> OA.short 'H'
-      <> OA.help "Use symbolic link destination file instead of link itself on command line arguments"
+  switch $
+    long "dereference-command-line"
+      <> short 'H'
+      <> help "Use symbolic link destination file instead of link itself on command line arguments"
 
-dereferenceCommandLineSymlinkToDirParser :: OA.Parser Bool
+dereferenceCommandLineSymlinkToDirParser :: Parser Bool
 dereferenceCommandLineSymlinkToDirParser =
-  OA.switch $
-    OA.long "dereference-command-line-symlink-to-dir"
-      <> OA.help "Use symbolic link destination file instead of link itself on command line arguments when destination is directory"
+  switch $
+    long "dereference-command-line-symlink-to-dir"
+      <> help "Use symbolic link destination file instead of link itself on command line arguments when destination is directory"
 
-fullTimeParser :: OA.Parser Bool
+fullTimeParser :: Parser Bool
 fullTimeParser =
-  OA.switch $
-    OA.long "full-time"
-      <> OA.help "Equals to specify '-l' and '--time-style=full-iso'"
+  switch $
+    long "full-time"
+      <> help "Equals to specify '-l' and '--time-style=full-iso'"
 
-groupDirectoriesFirstParser :: OA.Parser Bool
+groupDirectoriesFirstParser :: Parser Bool
 groupDirectoriesFirstParser =
-  OA.switch $
-    OA.long "group-directories-first"
-      <> OA.help "Outputs directories firstly than files; can use with '--sort=WORD' option, but this is disabled when with '--sort=none or -U'"
+  switch $
+    long "group-directories-first"
+      <> help "Outputs directories firstly than files; can use with '--sort=WORD' option, but this is disabled when with '--sort=none or -U'"
 
-verticalParser :: OA.Parser Bool
+verticalParser :: Parser Bool
 verticalParser =
-  OA.switch $
-    OA.short 'C'
-      <> OA.help "Outputs files by columns"
+  switch $
+    short 'C'
+      <> help "Outputs files by columns"
 
-horihontalParser :: OA.Parser Bool
+horihontalParser :: Parser Bool
 horihontalParser =
-  OA.switch $
-    OA.short 'x'
-      <> OA.help "Outputs files by rows instead of columns"
+  switch $
+    short 'x'
+      <> help "Outputs files by rows instead of columns"
 
-fillWidthParser :: OA.Parser Bool
+fillWidthParser :: Parser Bool
 fillWidthParser =
-  OA.switch $
-    OA.short 'm'
-      <> OA.help "Output grid style layout which are filled with comma as possible"
+  switch $
+    short 'm'
+      <> help "Output grid style layout which are filled with comma as possible"
 
-ctimeParser :: OA.Parser Bool
+ctimeParser :: Parser Bool
 ctimeParser =
-  OA.switch $
-    OA.short 'c'
-      <> OA.help "Sort by ctime and show it when '-t' and long style (e.g. '-l', '-o' and so on) options are passed; sort by name and show ctime when long style option is passed; sort by ctime otherwise"
+  switch $
+    short 'c'
+      <> help "Sort by ctime and show it when '-t' and long style (e.g. '-l', '-o' and so on) options are passed; sort by name and show ctime when long style option is passed; sort by ctime otherwise"
 
-directoryParser :: OA.Parser Bool
+directoryParser :: Parser Bool
 directoryParser =
-  OA.switch $
-    OA.long "directory"
-      <> OA.short 'd'
-      <> OA.help "Treats directory as normal file, does not lookup contents in it"
+  switch $
+    long "directory"
+      <> short 'd'
+      <> help "Treats directory as normal file, does not lookup contents in it"
 
-noneSortExtraParser :: OA.Parser Bool
+noneSortExtraParser :: Parser Bool
 noneSortExtraParser =
-  OA.switch $
-    OA.short 'f'
-      <> OA.help "Do not sort and enable '-a' and '--color=disable' options"
+  switch $
+    short 'f'
+      <> help "Do not sort and enable '-a' and '--color=disable' options"
 
-atimeParser :: OA.Parser Bool
+atimeParser :: Parser Bool
 atimeParser =
-  OA.switch $
-    OA.short 'u'
-      <> OA.help "Sort by access time and show it when '-t' and long style (e.g. '-l', '-o' and so on) options are passed; sort by name and show access time when long style option is passed; sort by access time otherwise"
+  switch $
+    short 'u'
+      <> help "Sort by access time and show it when '-t' and long style (e.g. '-l', '-o' and so on) options are passed; sort by name and show access time when long style option is passed; sort by access time otherwise"
 
-tabSizeParser :: OA.Parser Int
+tabSizeParser :: Parser Int
 tabSizeParser =
-  OA.option reader $
-    OA.long "tabsize"
-      <> OA.short 'T'
-      <> OA.metavar "COLS"
-      <> OA.value 8
-      <> OA.help "Specify tab stop size; default is 8"
+  option reader $
+    long "tabsize"
+      <> short 'T'
+      <> metavar "COLS"
+      <> value 8
+      <> help "Specify tab stop size; default is 8"
   where
     reader =
-      OA.str >>= \cols ->
+      str >>= \cols ->
         case readMaybe cols of
           Just n -> pure n
-          Nothing -> OA.readerError "COLS must be a natural number"
+          Nothing -> readerError "COLS must be a natural number"
 
-tabSeparatorParser :: OA.Parser Bool
+tabSeparatorParser :: Parser Bool
 tabSeparatorParser =
-  OA.switch $
-    OA.long "tab-separator"
-      <> OA.help "Use tab charactors and some spaces to separate grid divisions when grid layout style; like dir"
+  switch $
+    long "tab-separator"
+      <> help "Use tab charactors and some spaces to separate grid divisions when grid layout style; like dir"
 
-quoteNameParser :: OA.Parser Bool
+quoteNameParser :: Parser Bool
 quoteNameParser =
-  OA.switch $
-    OA.long "quote-name"
-      <> OA.short 'Q'
-      <> OA.help "Quote file name and link name with double quote (\")"
+  switch $
+    long "quote-name"
+      <> short 'Q'
+      <> help "Quote file name and link name with double quote (\")"
 
-contextParser :: OA.Parser Bool
+contextParser :: Parser Bool
 contextParser =
-  OA.switch $
-    OA.long "context"
-      <> OA.short 'Z'
-      <> OA.help "Output security context information of each files"
+  switch $
+    long "context"
+      <> short 'Z'
+      <> help "Output security context information of each files"
 
-literalParser :: OA.Parser Bool
+literalParser :: Parser Bool
 literalParser =
-  OA.switch $
-    OA.long "literal"
-      <> OA.short 'N'
-      <> OA.help "Output file name and link name without quoting; and replace all non printable characters to '?'"
+  switch $
+    long "literal"
+      <> short 'N'
+      <> help "Output file name and link name without quoting; and replace all non printable characters to '?'"
 
-hideControlCharsParser :: OA.Parser Bool
+hideControlCharsParser :: Parser Bool
 hideControlCharsParser =
-  OA.switch $
-    OA.long "hide-control-chars"
-      <> OA.short 'q'
-      <> OA.help "Output '?' instead of control characters"
+  switch $
+    long "hide-control-chars"
+      <> short 'q'
+      <> help "Output '?' instead of control characters"
 
-showControlCharsParser :: OA.Parser Bool
+showControlCharsParser :: Parser Bool
 showControlCharsParser =
-  OA.switch $
-    OA.long "show-control-chars"
-      <> OA.help "Output control characters 'as is'"
+  switch $
+    long "show-control-chars"
+      <> help "Output control characters 'as is'"
 
-kibibytesParser :: OA.Parser Bool
+kibibytesParser :: Parser Bool
 kibibytesParser =
-  OA.switch $
-    OA.long "kibibytes"
-      <> OA.short 'k'
-      <> OA.help "Use 1024 byte as one block size; This overrides values of some environment variables such as 'LS_BLOCK_SIZE' and 'BLOCK_SIZE'"
+  switch $
+    long "kibibytes"
+      <> short 'k'
+      <> help "Use 1024 byte as one block size; This overrides values of some environment variables such as 'LS_BLOCK_SIZE' and 'BLOCK_SIZE'"
 
-escapeParser :: OA.Parser Bool
+escapeParser :: Parser Bool
 escapeParser =
-  OA.switch $
-    OA.long "escape"
-      <> OA.short 'b'
-      <> OA.help "Escape file name and link name by C lang style"
+  switch $
+    long "escape"
+      <> short 'b'
+      <> help "Escape file name and link name by C lang style"
 
-versionParser :: OA.Parser Bool
+versionParser :: Parser Bool
 versionParser =
-  OA.switch $
-    OA.long "version"
-      <> OA.help "Show version info"
+  switch $
+    long "version"
+      <> help "Show version info"
 
-argParser :: OA.Parser [String]
-argParser = OA.many . OA.strArgument $ OA.metavar "[FILE]..." <> OA.action "file"
+argParser :: Parser [String]
+argParser = many . strArgument $ metavar "[FILE]..." <> action "file"
 
-header :: T.Text
+header :: String
 header =
-  T.unlines
+  unlines
     [ " _   _           _        _ _            _     ",
       "| | | |         | |      | | |          | |    ",
       "| |_| | __ _ ___| | _____| | | ___  _ __| |___ ",
