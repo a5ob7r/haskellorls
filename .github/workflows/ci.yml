@@ -57,12 +57,18 @@ jobs:
               ;;
           esac
 
-      - name: Build
+      - name: Configure
         run: |
           rm cabal.project.freeze
-          cabal install --overwrite-policy=always --jobs --flags=pedantic
+          cabal configure --jobs --flags=pedantic
+
+      - name: Build
+        run: cabal install --overwrite-policy=always
 
       - name: Run tests
+        run: cabal test
+
+      - name: Run golden tests
         run: goldplate --pretty-diff golden-test
 
   cabal-format:

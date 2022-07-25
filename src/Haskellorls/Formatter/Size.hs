@@ -1,10 +1,142 @@
 -- |
--- Derive block size parameter
--- 1. Use '--block-size=SIZE' option value if it is passed.
--- 2. Use 1024 as block size if '-k / --kibibyte' is passed.
--- 3. Use 'LS_BLOCK_SIZE' environment variables as block size if it is defined.
--- 4. Use 'BLOCK_SIZE' environment variables as block size if it is defined.
--- 5. Use default value if does not match above any condition.
+-- = Format for @BLOCK_SIZE@, @LS_BLOCK_SIZE@ and @--block-size=SIZE@
+--
+-- * Any positive decimal, octal or hexadecimal number, these allow any
+-- character sequence as suffix. And only octals allow any number of @0@ as
+-- prefix.
+--
+--     These are valid.
+--
+--     * 1
+--     * 02
+--     * 0x3
+--     * 00002000
+--     * 3K
+--     * 03foo
+--     * 0x4Kfoo
+--
+--     But these are invalid.
+--
+--     * 0
+--     * 0000
+--     * 00bar
+--     * -1
+--     * -10bar
+--     * 00x4
+--     * 0xx2
+--
+-- * Binary prefixes or metric prefixes, but these allow any character sequence
+-- as suffix.
+--
+--     These are all of valid prefixes, even if the first character is
+--     lowercase.
+--
+--     * K
+--     * KiB
+--     * KB
+--     * M
+--     * MiB
+--     * MB
+--     * G
+--     * GiB
+--     * GB
+--     * T
+--     * TiB
+--     * TB
+--     * P
+--     * PiB
+--     * PB
+--     * E
+--     * EiB
+--     * EB
+--     * Z
+--     * ZiB
+--     * ZB
+--     * Y
+--     * YiB
+--     * YB
+--
+--     These are valid.
+--
+--     * K
+--     * miB
+--     * gfoo
+--     * TiBfoo
+--     * pBfoo
+--
+-- * Constants for human readable.
+--
+--     * h
+--     * hu
+--     * hum
+--     * huma
+--     * human
+--
+-- = Scale size parameter
+--
+-- == How to determine the parameter
+--
+-- The scale size parameter is determined as below.
+--
+-- 1. Determined dymanically for autoscale if @-h@ / @--human-readable@ or
+-- @--si@ are passed.
+--
+-- 2. Use @--block-size=SIZE@ option value if it is passed.
+--
+-- 3. Use @1024@ as block size if @-k@ / @--kibibyte@ is passed. This is
+-- applied for block size only.
+--
+-- 4. Use @LS_BLOCK_SIZE@ environment variables as the scale size if it is
+-- defined.
+--
+-- 5. Use @BLOCK_SIZE@ environment variables as the scale size if it is
+-- defined.
+--
+-- 6. Use default value if does not match above any condition.
+--
+-- == How to interpret
+--
+-- The scale size parameter is interpreted as below.
+--
+-- 1. The scale size is changed dynamically for human readable according to
+-- each file sizes if the parameter is one of below.
+--
+--     * h
+--     * hu
+--     * hum
+--     * huma
+--     * human
+--
+-- 2. The scale size is @n@ if the determined block size @n@ is just a decimal,
+-- octal or hexadecimal number.
+--
+-- 3. The scale size is @n@ * @scale@ if the determined block size is
+-- constructed with just a decimal, octal or hexadecimal number @n@ and a
+-- binary or a metric prefix @scale@ and any string.
+--
+-- 4. The scale size is @scale@ if the determined block size is just a binary
+-- or a metric prefix @scale@ and any string.
+--
+-- 5. The scale size must be a default size in other cases.
+--
+-- = Binary prefix or Metric prefix
+--
+-- These rules are for both file size and block size.
+--
+-- 1. Append a binary prefix as a size suffix if @--si@.
+--
+--     In this case, @K@ must be lowercase. This is for compatibility with ls
+--     (GNU coreutils) 9.1.
+--
+-- 2. Append a binary prefix as a size suffix if @-h@ or @--human-readable@.
+--
+-- 3. Append a the value as a size suffix if the determined block size is just
+-- a binary prefix or a metric suffix.
+--
+--     In this case, @KB@ must be @kB@ when appends it as a size suffix. This
+--     is for compatibility with ls (GNU coreutils) 9.1.
+--
+-- 4. Nothing append a prefix as a size suffix in other cases.
 module Haskellorls.Formatter.Size
   ( toTotalBlockSize,
     fileBlockSize,
@@ -16,9 +148,11 @@ module Haskellorls.Formatter.Size
   )
 where
 
+import Data.List (foldl')
 import qualified Data.Text as T
 import qualified Haskellorls.Config as Config
 import Haskellorls.Config.Size
+import Haskellorls.Humanize.FileSize
 import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.WrappedText as WT
@@ -31,8 +165,6 @@ data FileSizeComponent = FileSizeComponent
     fileSizeKibi :: Bool
   }
 
-newtype UnitSize = UnitSize {getUnitSize :: Int}
-
 toWrappedText :: FileSizeComponent -> [WT.WrappedText]
 toWrappedText FileSizeComponent {..} =
   [ WT.deserialize fileSizeNumber,
@@ -43,13 +175,13 @@ toTotalBlockSize :: Config.Config -> [Types.FileOffset] -> [WT.WrappedText]
 toTotalBlockSize config = toWrappedText . toTotalBlockSize' config
 
 toTotalBlockSize' :: Config.Config -> [Types.FileOffset] -> FileSizeComponent
-toTotalBlockSize' config = fileSize' config' . sum . map toFileBlockSize
+toTotalBlockSize' config = fileSize' config size . foldl' (\acc o -> acc + toBlockSize o) 0
   where
-    config' = case Config.blockSize config of
+    size = case Config.blockSize config of
       DefaultSize
-        | Config.si config -> config {Config.blockSize = HumanReadable}
-        | otherwise -> config {Config.blockSize = defaultForFileBlockSize}
-      _ -> config
+        | Config.si config -> HumanReadable
+        | otherwise -> BlockSize 1024
+      sz -> sz
 
 fileBlockSize :: Config.Config -> Node.NodeInfo -> [WT.WrappedText]
 fileBlockSize config node = toTotalBlockSize config [fileBlockSizeOf node]
@@ -65,44 +197,87 @@ normalColoredFileBlockSize lscolors config node = [Color.toWrappedText lscolors 
 coloredFileBlockSize :: Color.LsColors -> Config.Config -> Node.NodeInfo -> [WT.WrappedText]
 coloredFileBlockSize lscolors config node = coloredFileSize' lscolors $ toTotalBlockSize' config [fileBlockSizeOf node]
 
-toFileBlockSize :: Types.FileOffset -> Types.FileOffset
-toFileBlockSize size = a' * unitBlockSize
+-- | Calculate a block size of a file.
+--
+-- prop> (toBlockSize n) `mod` (1024 * 4) == 0
+toBlockSize :: Integral a => a -> a
+toBlockSize i
+  | i < 0 = negate . toBlockSize $ negate i
+  | otherwise = i `ceilingBy` (1024 * 4)
+
+-- | Ceil @i@ to the value which is multiple of @n@, and is equal to @i@ or is
+-- greater than @i@.
+--
+-- prop> (i `ceilingBy` d) `mod` d == 0
+--
+-- prop> (i `ceilingBy` d) >= i
+--
+-- >>> 1 `ceilingBy` 1
+-- 1
+--
+-- >>> 1 `ceilingBy` 2
+-- 2
+--
+-- >>> 2 `ceilingBy` 2
+-- 2
+--
+-- >>> 3 `ceilingBy` 2
+-- 4
+ceilingBy :: Integral a => a -> a -> a
+ceilingBy i d = (i `ceilingDiv` d) * d
+
+-- | 'div' @i@ by @d@, but add @1@ to the @quosient@ if the @remainder@ is not
+-- @0@.
+--
+-- prop> i `div` d <= i `ceilingDiv` d
+ceilingDiv :: Integral a => a -> a -> a
+ceilingDiv i d = q + abs (signum r)
   where
-    (a, b) = size `divMod` unitBlockSize
-    a' = a + abs (signum b)
-    unitBlockSize = sizeKi * 4
+    (q, r) = i `divMod` d
 
 fileSize :: Config.Config -> Node.NodeInfo -> [WT.WrappedText]
-fileSize config = toWrappedText . fileSize' config . Node.fileSize
+fileSize config = toWrappedText . fileSize' config (Config.fileSize config) . Node.fileSize
 
-fileSize' :: Config.Config -> Types.FileOffset -> FileSizeComponent
-fileSize' config size = case Config.blockSize config of
-  DefaultSize
-    | Config.si config -> siHumanReadableFileSize size
-    | otherwise -> fileSize' config {Config.blockSize = defaultForFileSize} size
-  HumanReadable
-    | Config.si config -> siHumanReadableFileSize size
-    | otherwise -> kibiHumanReadableFileSize size
-  blockSize@BlockSize {..} -> FileSizeComponent {..}
-    where
-      fileSizeNumber = asInt $ fromIntegral fileSizeRawNumber / fromIntegral (getUnitSize unitSize)
-      fileSizeUnit = case scale of
-        NoScale -> fileSizeUnitSelector scaleSuffix baseScale
-        _ -> ""
-      fileSizeRawNumber = size
-      unitSize = calcUnitSize blockSize
-      fileSizeKibi = case scaleSuffix of
-        SI -> False
-        _ -> True
+fileSize' :: Config.Config -> BlockSize -> Types.FileOffset -> FileSizeComponent
+fileSize' config size offset = case size of
+  _ | Config.si config -> humanize config offset
+  DefaultSize -> fileSize' config (BlockSize 1) offset
+  HumanReadable -> humanize config offset
+  KiloKibi -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1024 ^ (1 :: Int)) "K" True
+  KiloKibii -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1024 ^ (1 :: Int)) "KiB" True
+  -- NOTE: This lowercased "k" is intended for compatibility with GNU ls.
+  KiloSi -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1000 ^ (1 :: Int)) "kB" True
+  MegaKibi -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1024 ^ (2 :: Int)) "M" True
+  MegaKibii -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1024 ^ (2 :: Int)) "MiB" True
+  MegaSi -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1000 ^ (2 :: Int)) "MB" True
+  GigaKibi -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1024 ^ (3 :: Int)) "G" True
+  GigaKibii -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1024 ^ (3 :: Int)) "GiB" True
+  GigaSi -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1000 ^ (3 :: Int)) "GB" True
+  TeraKibi -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1024 ^ (4 :: Int)) "T" True
+  TeraKibii -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1024 ^ (4 :: Int)) "TiB" True
+  TeraSi -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1000 ^ (4 :: Int)) "TB" True
+  PetaKibi -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1024 ^ (5 :: Int)) "P" True
+  PetaKibii -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1024 ^ (5 :: Int)) "PiB" True
+  PetaSi -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1000 ^ (5 :: Int)) "PB" True
+  ExaKibi -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1024 ^ (6 :: Int)) "E" True
+  ExaKibii -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1024 ^ (6 :: Int)) "EiB" True
+  ExaSi -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1000 ^ (6 :: Int)) "EB" True
+  ZettaKibi -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1024 ^ (7 :: Int)) "Z" True
+  ZettaKibii -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1024 ^ (7 :: Int)) "ZiB" True
+  ZettaSi -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1000 ^ (7 :: Int)) "ZB" True
+  YottaKibi -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1024 ^ (8 :: Int)) "Y" True
+  YottaKibii -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1024 ^ (8 :: Int)) "YiB" True
+  YottaSi -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1000 ^ (8 :: Int)) "YB" True
+  BlockSize n -> FileSizeComponent offset (T.pack . show $ fromIntegral offset `ceilingDiv` n) "" True
 
 -- | A node file size formatter for the @no@ parameter of the @LS_COLORS@.
 normalColoredFileSize :: Color.LsColors -> Config.Config -> Node.NodeInfo -> [WT.WrappedText]
 normalColoredFileSize lscolors config node = [Color.toWrappedText lscolors Color.normal (fileSizeNumber <> fileSizeUnit)]
   where
-    FileSizeComponent {..} = fileSize' config $ Node.fileSize node
+    FileSizeComponent {..} = fileSize' config (Config.fileSize config) $ Node.fileSize node
 
 coloredFileSize :: Color.LsColors -> Config.Config -> Node.NodeInfo -> [WT.WrappedText]
-coloredFileSize lscolors config = coloredFileSize' lscolors . fileSize' config . Node.fileSize
+coloredFileSize lscolors config = coloredFileSize' lscolors . fileSize' config (Config.fileSize config) . Node.fileSize
 
 coloredFileSize' :: Color.LsColors -> FileSizeComponent -> [WT.WrappedText]
 coloredFileSize' lscolors FileSizeComponent {..} =
@@ -110,298 +285,62 @@ coloredFileSize' lscolors FileSizeComponent {..} =
     Color.toWrappedText lscolors unitSelector fileSizeUnit
   ]
   where
-    sizeSelector = Color.lookup $ SizeNumberScale bScale
-    unitSelector = Color.lookup $ SizeUnitScale bScale
+    sizeSelector = Color.lookup . SizeNumberScale $ unwrap bScale
+    unitSelector = Color.lookup . SizeUnitScale $ unwrap bScale
     bScale
-      | fileSizeKibi = detectKibiBlockSizeType fileSizeRawNumber
-      | otherwise = detectSiBlockSizeType fileSizeRawNumber
+      | fileSizeKibi = humanizeBI fileSizeRawNumber
+      | otherwise = humanizeSI fileSizeRawNumber
+    unwrap = \case
+      BI scaled -> scaled
+      SI scaled -> scaled
 
-kibiHumanReadableFileSize :: Types.FileOffset -> FileSizeComponent
-kibiHumanReadableFileSize size = FileSizeComponent {..}
+humanize :: Config.Config -> Types.FileOffset -> FileSizeComponent
+humanize config size = case size' of
+  BI (NoScale (ISize n)) -> FileSizeComponent size (T.pack $ show n) "" True
+  BI (NoScale (DSize d)) -> FileSizeComponent size (T.pack $ show d) "" True
+  BI (Kilo (ISize n)) -> FileSizeComponent size (T.pack $ show n) "K" True
+  BI (Kilo (DSize d)) -> FileSizeComponent size (T.pack $ show d) "K" True
+  BI (Mega (ISize n)) -> FileSizeComponent size (T.pack $ show n) "M" True
+  BI (Mega (DSize d)) -> FileSizeComponent size (T.pack $ show d) "M" True
+  BI (Giga (ISize n)) -> FileSizeComponent size (T.pack $ show n) "G" True
+  BI (Giga (DSize d)) -> FileSizeComponent size (T.pack $ show d) "G" True
+  BI (Tera (ISize n)) -> FileSizeComponent size (T.pack $ show n) "T" True
+  BI (Tera (DSize d)) -> FileSizeComponent size (T.pack $ show d) "T" True
+  BI (Peta (ISize n)) -> FileSizeComponent size (T.pack $ show n) "P" True
+  BI (Peta (DSize d)) -> FileSizeComponent size (T.pack $ show d) "P" True
+  BI (Exa (ISize n)) -> FileSizeComponent size (T.pack $ show n) "E" True
+  BI (Exa (DSize d)) -> FileSizeComponent size (T.pack $ show d) "E" True
+  BI (Zetta (ISize n)) -> FileSizeComponent size (T.pack $ show n) "Z" True
+  BI (Zetta (DSize d)) -> FileSizeComponent size (T.pack $ show d) "Z" True
+  BI (Yotta (ISize n)) -> FileSizeComponent size (T.pack $ show n) "Y" True
+  BI (Yotta (DSize d)) -> FileSizeComponent size (T.pack $ show d) "Y" True
+  SI (NoScale (ISize n)) -> FileSizeComponent size (T.pack $ show n) "" True
+  SI (NoScale (DSize d)) -> FileSizeComponent size (T.pack $ show d) "" True
+  -- NOTE: Both or lowercased "k" are intended for compatibility with GNU ls.
+  SI (Kilo (ISize n)) -> FileSizeComponent size (T.pack $ show n) "k" True
+  SI (Kilo (DSize d)) -> FileSizeComponent size (T.pack $ show d) "k" True
+  SI (Mega (ISize n)) -> FileSizeComponent size (T.pack $ show n) "M" True
+  SI (Mega (DSize d)) -> FileSizeComponent size (T.pack $ show d) "M" True
+  SI (Giga (ISize n)) -> FileSizeComponent size (T.pack $ show n) "G" True
+  SI (Giga (DSize d)) -> FileSizeComponent size (T.pack $ show d) "G" True
+  SI (Tera (ISize n)) -> FileSizeComponent size (T.pack $ show n) "T" True
+  SI (Tera (DSize d)) -> FileSizeComponent size (T.pack $ show d) "T" True
+  SI (Peta (ISize n)) -> FileSizeComponent size (T.pack $ show n) "P" True
+  SI (Peta (DSize d)) -> FileSizeComponent size (T.pack $ show d) "P" True
+  SI (Exa (ISize n)) -> FileSizeComponent size (T.pack $ show n) "E" True
+  SI (Exa (DSize d)) -> FileSizeComponent size (T.pack $ show d) "E" True
+  SI (Zetta (ISize n)) -> FileSizeComponent size (T.pack $ show n) "Z" True
+  SI (Zetta (DSize d)) -> FileSizeComponent size (T.pack $ show d) "Z" True
+  SI (Yotta (ISize n)) -> FileSizeComponent size (T.pack $ show n) "Y" True
+  SI (Yotta (DSize d)) -> FileSizeComponent size (T.pack $ show d) "Y" True
   where
-    fileSizeRawNumber = size
-    fileSizeNumber = kibiFileSizeAs baseScale fileSizeRawNumber
-    fileSizeUnit = fileSizeUnitSelector KIBI baseScale
-    fileSizeKibi = True
-    baseScale = detectKibiBlockSizeType fileSizeRawNumber
-
-siHumanReadableFileSize :: Types.FileOffset -> FileSizeComponent
-siHumanReadableFileSize size = FileSizeComponent {..}
-  where
-    fileSizeRawNumber = size
-    fileSizeNumber = siFileSizeAs baseScale fileSizeRawNumber
-    fileSizeUnit = fileSizeUnitSelector KIBI baseScale
-    fileSizeKibi = False
-    baseScale = detectSiBlockSizeType fileSizeRawNumber
+    size' =
+      if Config.si config
+        then humanizeSI size
+        else humanizeBI size
 
 -- | Treat symbolic link block size as zero.
 fileBlockSizeOf :: Node.NodeInfo -> Types.FileOffset
 fileBlockSizeOf node = case Node.getNodeLinkInfo node of
   Nothing -> Node.fileSize node
   _ -> Types.COff 0
-
-fileSizeUnitSelector :: ScaleSuffix -> BaseScale -> T.Text
-fileSizeUnitSelector ss = case ss of
-  NONE -> const ""
-  KIBI -> kibiUnit
-  KIBII -> kibiiUnit
-  SI -> siUnit
-
-defaultForFileBlockSize :: BlockSize
-defaultForFileBlockSize = BlockSize {scale = Scale 1, baseScale = KILO, scaleSuffix = KIBI}
-
-defaultForFileSize :: BlockSize
-defaultForFileSize = BlockSize {scale = Scale 1, baseScale = BYTE, scaleSuffix = NONE}
-
-calcUnitSize :: BlockSize -> UnitSize
-calcUnitSize DefaultSize = calcUnitSize defaultForFileSize
-calcUnitSize HumanReadable = UnitSize 1
-calcUnitSize BlockSize {..} = UnitSize $ scale' * sizeGetter baseScale
-  where
-    scale' = case scale of
-      NoScale -> 1
-      Scale n -> n
-    sizeGetter = case scaleSuffix of
-      NONE -> const 1
-      KIBI -> kibiSize
-      KIBII -> kibiSize
-      SI -> siSize
-
-kibiSize :: (Num a) => BaseScale -> a
-kibiSize bScale = case bScale of
-  BYTE -> 1
-  KILO -> sizeKi
-  MEGA -> sizeMi
-  GIGA -> sizeGi
-  TERA -> sizeTi
-  PETA -> sizePi
-  EXA -> sizeEi
-  ZETTA -> sizeZi
-  YOTTA -> sizeYi
-
-siSize :: (Num a) => BaseScale -> a
-siSize bScale = case bScale of
-  BYTE -> 1
-  KILO -> sizeK
-  MEGA -> sizeM
-  GIGA -> sizeG
-  TERA -> sizeT
-  PETA -> sizeP
-  EXA -> sizeE
-  ZETTA -> sizeZ
-  YOTTA -> sizeY
-
-detectSiBlockSizeType :: Types.FileOffset -> BaseScale
-detectSiBlockSizeType offset
-  | offset < sizeK = BYTE
-  | offset < sizeM = KILO
-  | offset < sizeG = MEGA
-  | offset < sizeT = GIGA
-  | offset < sizeP = TERA
-  | offset < sizeE = PETA
-  | offset < sizeZ = EXA
-  | offset < sizeY = ZETTA
-  | otherwise = YOTTA
-
-detectKibiBlockSizeType :: Types.FileOffset -> BaseScale
-detectKibiBlockSizeType offset
-  | offset < sizeKi = BYTE
-  | offset < sizeMi = KILO
-  | offset < sizeGi = MEGA
-  | offset < sizeTi = GIGA
-  | offset < sizePi = TERA
-  | offset < sizeEi = PETA
-  | offset < sizeZi = EXA
-  | offset < sizeYi = ZETTA
-  | otherwise = YOTTA
-
-kibiUnit :: BaseScale -> T.Text
-kibiUnit bScale = case bScale of
-  BYTE -> ""
-  KILO -> "K"
-  MEGA -> "M"
-  GIGA -> "G"
-  TERA -> "T"
-  PETA -> "P"
-  EXA -> "E"
-  ZETTA -> "Z"
-  YOTTA -> "Y"
-
-kibiiUnit :: BaseScale -> T.Text
-kibiiUnit bScale = case bScale of
-  BYTE -> ""
-  KILO -> "KiB"
-  MEGA -> "MiB"
-  GIGA -> "GiB"
-  TERA -> "TiB"
-  PETA -> "PiB"
-  EXA -> "EiB"
-  ZETTA -> "ZiB"
-  YOTTA -> "YiB"
-
-siUnit :: BaseScale -> T.Text
-siUnit bScale = case bScale of
-  BYTE -> ""
-  KILO -> "KB"
-  MEGA -> "MB"
-  GIGA -> "GB"
-  TERA -> "TB"
-  PETA -> "PB"
-  EXA -> "EB"
-  ZETTA -> "ZB"
-  YOTTA -> "YB"
-
-normalizeLength :: T.Text -> T.Text
-normalizeLength t
-  | T.length t < 4 = t
-  | otherwise = T.takeWhile (/= '.') t
-
-kibiFileSizeAs :: BaseScale -> Types.FileOffset -> T.Text
-kibiFileSizeAs bScale = normalizeLength . kibiFileSizeAs' bScale
-
-kibiFileSizeAs' :: BaseScale -> Types.FileOffset -> T.Text
-kibiFileSizeAs' bScale = case bScale of
-  BYTE -> asB
-  KILO -> asKi
-  MEGA -> asMi
-  GIGA -> asGi
-  TERA -> asTi
-  PETA -> asPi
-  EXA -> asEi
-  ZETTA -> asZi
-  YOTTA -> asYi
-
-siFileSizeAs :: BaseScale -> Types.FileOffset -> T.Text
-siFileSizeAs bScale = normalizeLength . siFileSizeAs' bScale
-
-siFileSizeAs' :: BaseScale -> Types.FileOffset -> T.Text
-siFileSizeAs' bScale = case bScale of
-  BYTE -> asB
-  KILO -> asK
-  MEGA -> asM
-  GIGA -> asG
-  TERA -> asT
-  PETA -> asP
-  EXA -> asE
-  ZETTA -> asZ
-  YOTTA -> asY
-
-sizeK :: Num a => a
-sizeK = 1000
-
-sizeKi :: Num a => a
-sizeKi = 1024
-
-sizeM :: Num a => a
-sizeM = sizeK * sizeK
-
-sizeMi :: Num a => a
-sizeMi = sizeKi * sizeKi
-
-sizeG :: Num a => a
-sizeG = sizeM * sizeK
-
-sizeGi :: Num a => a
-sizeGi = sizeMi * sizeKi
-
-sizeT :: Num a => a
-sizeT = sizeG * sizeK
-
-sizeTi :: Num a => a
-sizeTi = sizeGi * sizeKi
-
-sizeP :: Num a => a
-sizeP = sizeT * sizeK
-
-sizePi :: Num a => a
-sizePi = sizeTi * sizeKi
-
-sizeE :: Num a => a
-sizeE = sizeP * sizeK
-
-sizeEi :: Num a => a
-sizeEi = sizePi * sizeKi
-
-sizeZ :: Num a => a
-sizeZ = sizeE * sizeK
-
-sizeZi :: Num a => a
-sizeZi = sizeEi * sizeKi
-
-sizeY :: Num a => a
-sizeY = sizeZ * sizeK
-
-sizeYi :: Num a => a
-sizeYi = sizeZi * sizeKi
-
-asDouble :: Double -> T.Text
-asDouble = T.pack . show . asDouble'
-
-asDouble' :: Double -> Double
-asDouble' r
-  | r <= 9.9 = ceiling' r 1
-  | otherwise = realToFrac $ ceilingAsInt r
-
-asInt :: Double -> T.Text
-asInt = T.pack . show . ceilingAsInt . asDouble'
-
-ceilingAsInt :: RealFrac a => a -> Int
-ceilingAsInt = ceiling
-
-ceiling' :: Double -> Int -> Double
-ceiling' r digitNum = fromIntegral upScaledCeil / scale
-  where
-    upScaledCeil = ceiling r' :: Int
-    r' = r * scale
-    scale = 10 ^ digitNum :: Double
-
-asB :: Types.FileOffset -> T.Text
-asB = T.pack . show
-
-asK :: Types.FileOffset -> T.Text
-asK offset = asDouble $ fromIntegral offset / sizeK
-
-asKi :: Types.FileOffset -> T.Text
-asKi offset = asDouble $ fromIntegral offset / sizeKi
-
-asM :: Types.FileOffset -> T.Text
-asM offset = asDouble $ fromIntegral offset / sizeM
-
-asMi :: Types.FileOffset -> T.Text
-asMi offset = asDouble $ fromIntegral offset / sizeMi
-
-asG :: Types.FileOffset -> T.Text
-asG offset = asDouble $ fromIntegral offset / sizeG
-
-asGi :: Types.FileOffset -> T.Text
-asGi offset = asDouble $ fromIntegral offset / sizeGi
-
-asT :: Types.FileOffset -> T.Text
-asT offset = asDouble $ fromIntegral offset / sizeT
-
-asTi :: Types.FileOffset -> T.Text
-asTi offset = asDouble $ fromIntegral offset / sizeTi
-
-asP :: Types.FileOffset -> T.Text
-asP offset = asDouble $ fromIntegral offset / sizeP
-
-asPi :: Types.FileOffset -> T.Text
-asPi offset = asDouble $ fromIntegral offset / sizePi
-
-asE :: Types.FileOffset -> T.Text
-asE offset = asDouble $ fromIntegral offset / sizeE
-
-asEi :: Types.FileOffset -> T.Text
-asEi offset = asDouble $ fromIntegral offset / sizeEi
-
-asZ :: Types.FileOffset -> T.Text
-asZ offset = asDouble $ fromIntegral offset / sizeZ
-
-asZi :: Types.FileOffset -> T.Text
-asZi offset = asDouble $ fromIntegral offset / sizeZi
-
-asY :: Types.FileOffset -> T.Text
-asY offset = asDouble $ fromIntegral offset / sizeY
-
-asYi :: Types.FileOffset -> T.Text
-asYi offset = asDouble $ fromIntegral offset / sizeYi

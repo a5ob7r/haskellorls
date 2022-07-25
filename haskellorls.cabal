@@ -34,10 +34,10 @@ common common-options
   if flag(pedantic)
     ghc-options: -Werror
 
-library
+library haskellorls-internal
   import:             common-options
-  exposed-modules:    Haskellorls
-  other-modules:
+  exposed-modules:
+    Haskellorls
     Haskellorls.Class
     Haskellorls.Config
     Haskellorls.Config.Context
@@ -87,6 +87,7 @@ library
     Haskellorls.Formatter.SymbolicLink
     Haskellorls.Formatter.Time
     Haskellorls.Formatter.Tree
+    Haskellorls.Humanize.FileSize
     Haskellorls.LsColor
     Haskellorls.LsColor.Class
     Haskellorls.LsColor.Color
@@ -99,8 +100,8 @@ library
     Haskellorls.Sort
     Haskellorls.Utils
     Haskellorls.WrappedText
-    Paths_haskellorls
 
+  other-modules:      Paths_haskellorls
   autogen-modules:    Paths_haskellorls
   hs-source-dirs:     src
   default-extensions:
@@ -146,7 +147,24 @@ executable haskellorls
   import:         common-options
   main-is:        Main.hs
   hs-source-dirs: app
-  build-depends:  haskellorls
+  build-depends:  haskellorls-internal
 
   if flag(rtsopts)
     ghc-options: -rtsopts
+
+test-suite test
+  import:             common-options
+  type:               exitcode-stdio-1.0
+  main-is:            Spec.hs
+  hs-source-dirs:     test
+  build-depends:
+    , haskellorls-internal
+    , QuickCheck            ^>=2.14.2
+    , sydtest               ^>=0.11.0.0
+
+  other-modules:
+    Test.Haskellorls.Config.Option.SizeSpec
+    Test.Haskellorls.Humanize.FileSizeSpec
+
+  build-tool-depends: sydtest-discover:sydtest-discover -any
+  ghc-options:        -threaded -rtsopts -with-rtsopts=-N

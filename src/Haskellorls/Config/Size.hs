@@ -1,49 +1,42 @@
--- K : K, none
--- k : K, none
--- KiB : K, kibi
--- kiB : K, kibi
--- KB : K, si
--- kB : K, si
 module Haskellorls.Config.Size
-  ( SizeNumberScale (..),
+  ( BlockSize (..),
+    SizeNumberScale (..),
     SizeUnitScale (..),
-    Scale (..),
-    BaseScale (..),
-    ScaleSuffix (..),
-    BlockSize (..),
   )
 where
 
-newtype SizeNumberScale = SizeNumberScale {unSizeNumberScale :: BaseScale}
+import Haskellorls.Humanize.FileSize
 
-newtype SizeUnitScale = SizeUnitScale {unSizeUnitScale :: BaseScale}
+newtype SizeNumberScale a = SizeNumberScale {unSizeNumberScale :: Scale a}
 
-data Scale
-  = NoScale
-  | Scale Int
-
-data BaseScale
-  = BYTE
-  | KILO
-  | MEGA
-  | GIGA
-  | TERA
-  | PETA
-  | EXA
-  | ZETTA
-  | YOTTA
-
-data ScaleSuffix
-  = NONE
-  | KIBI
-  | KIBII
-  | SI
+newtype SizeUnitScale a = SizeUnitScale {unSizeUnitScale :: Scale a}
 
 data BlockSize
   = DefaultSize
   | HumanReadable
-  | BlockSize
-      { scale :: Scale,
-        baseScale :: BaseScale,
-        scaleSuffix :: ScaleSuffix
-      }
+  | KiloKibi
+  | MegaKibi
+  | GigaKibi
+  | TeraKibi
+  | PetaKibi
+  | ExaKibi
+  | ZettaKibi
+  | YottaKibi
+  | KiloKibii
+  | MegaKibii
+  | GigaKibii
+  | TeraKibii
+  | PetaKibii
+  | ExaKibii
+  | ZettaKibii
+  | YottaKibii
+  | KiloSi
+  | MegaSi
+  | GigaSi
+  | TeraSi
+  | PetaSi
+  | ExaSi
+  | ZettaSi
+  | YottaSi
+  | BlockSize Int
+  deriving (Show)

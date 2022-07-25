@@ -25,7 +25,7 @@ mkEnvironment :: IO Environment
 mkEnvironment = do
   toTerminal <- hIsTerminalDevice stdout
 
-  blockSize <- lookupEnv "LS_BLOCK_SIZE" <|> lookupEnv "BLOCK_SIZE"
+  blockSize <- liftA2 (<|>) (lookupEnv "LS_BLOCK_SIZE") (lookupEnv "BLOCK_SIZE")
 
   quotingStyle <- lookupEnv "QUOTING_STYLE"
 

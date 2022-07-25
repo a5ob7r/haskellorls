@@ -40,6 +40,7 @@ data Config = Config
     hyperlink :: Bool,
     indicatorStyle :: IndicatorStyle,
     listing :: ListingStyle,
+    fileSize :: Size.BlockSize,
     blockSize :: Size.BlockSize,
     ignoreBackups :: Bool,
     directory :: Bool,
@@ -114,10 +115,16 @@ mkConfig env Option {..} = Config {..}
       | otherwise = NoHidden
     -- Probably we should throw a runtime error or output an error message if
     -- fail to parse the block size come from the environment variable.
-    blockSize = case fromMaybe oBlockSize $ Env.blockSize env >>= Size.parseBlockSize . T.pack of
+    fileSize = case oBlockSize of
+      DefaultSize
+        | oHumanReadable -> HumanReadable
+        | otherwise -> fromMaybe DefaultSize $ Env.blockSize env >>= Size.parseBlockSize
+      blocksize -> blocksize
+    blockSize = case oBlockSize of
       DefaultSize
         | oHumanReadable -> HumanReadable
         | oKibibyte -> DefaultSize
+        | otherwise -> fromMaybe DefaultSize $ Env.blockSize env >>= Size.parseBlockSize
       blocksize -> blocksize
     ignoreBackups = oIgnoreBackups
     format

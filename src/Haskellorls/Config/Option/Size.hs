@@ -8,9 +8,9 @@ module Haskellorls.Config.Option.Size
 where
 
 import Data.Char
-import qualified Data.List as L
-import qualified Data.Text as T
+import Data.List (isPrefixOf)
 import Haskellorls.Config.Size
+import Numeric
 import Options.Applicative
 
 humanReadableParser :: Parser Bool
@@ -36,53 +36,89 @@ blockSizeParser =
   where
     reader = str >>= blockSizeReader
 
-blockSizeReader :: T.Text -> ReadM BlockSize
+blockSizeReader :: String -> ReadM BlockSize
 blockSizeReader s = case parseBlockSize s of
   Just size -> return size
   Nothing -> readerError "Invalid unit"
 
-parseBlockSize :: T.Text -> Maybe BlockSize
-parseBlockSize s | s `L.elem` T.inits "human" = Just HumanReadable
-parseBlockSize s = case parseLabel $ normalizeUnit unit of
-  Just (baseScale, scaleSuffix) -> Just $ BlockSize {..}
-  _ -> Nothing
-  where
-    scale = toScale sVal
-    (sVal, unit) = T.span isDigit s
+-- FIXME: This doesn't handle any overflow.
+parseBlockSize :: String -> Maybe BlockSize
+parseBlockSize s = case readNum s of
+  [(n, "")]
+    | n == 0 -> Nothing
+    | otherwise -> Just . BlockSize $ n
+  [(n, c : 'B' : _)] -> case toUpper c of
+    'K' -> Just . BlockSize $ n * 1000 ^ (1 :: Int)
+    'M' -> Just . BlockSize $ n * 1000 ^ (2 :: Int)
+    'G' -> Just . BlockSize $ n * 1000 ^ (3 :: Int)
+    'T' -> Just . BlockSize $ n * 1000 ^ (4 :: Int)
+    'P' -> Just . BlockSize $ n * 1000 ^ (5 :: Int)
+    'E' -> Just . BlockSize $ n * 1000 ^ (6 :: Int)
+    'Z' -> Just . BlockSize $ n * 1000 ^ (7 :: Int)
+    'Y' -> Just . BlockSize $ n * 1000 ^ (8 :: Int)
+    _ -> Just . BlockSize $ n
+  [(n, c : _)] -> case toUpper c of
+    'K' -> Just . BlockSize $ n * 1024 ^ (1 :: Int)
+    'M' -> Just . BlockSize $ n * 1024 ^ (2 :: Int)
+    'G' -> Just . BlockSize $ n * 1024 ^ (3 :: Int)
+    'T' -> Just . BlockSize $ n * 1024 ^ (4 :: Int)
+    'P' -> Just . BlockSize $ n * 1024 ^ (5 :: Int)
+    'E' -> Just . BlockSize $ n * 1024 ^ (6 :: Int)
+    'Z' -> Just . BlockSize $ n * 1024 ^ (7 :: Int)
+    'Y' -> Just . BlockSize $ n * 1024 ^ (8 :: Int)
+    _ -> Just . BlockSize $ n
+  _
+    | null s -> Nothing
+    | s `isPrefixOf` "human" -> Just HumanReadable
+    | otherwise -> case s of
+        c : "B" -> case toUpper c of
+          'K' -> Just KiloSi
+          'M' -> Just MegaSi
+          'G' -> Just GigaSi
+          'T' -> Just TeraSi
+          'P' -> Just PetaSi
+          'E' -> Just ExaSi
+          'Z' -> Just ZettaSi
+          'Y' -> Just YottaSi
+          _ -> Nothing
+        c : "iB" -> case toUpper c of
+          'K' -> Just KiloKibii
+          'M' -> Just MegaKibii
+          'G' -> Just GigaKibii
+          'T' -> Just TeraKibii
+          'P' -> Just PetaKibii
+          'E' -> Just ExaKibii
+          'Z' -> Just ZettaKibii
+          'Y' -> Just YottaKibii
+          _ -> Nothing
+        [c] -> case toUpper c of
+          'K' -> Just KiloKibi
+          'M' -> Just MegaKibi
+          'G' -> Just GigaKibi
+          'T' -> Just TeraKibi
+          'P' -> Just PetaKibi
+          'E' -> Just ExaKibi
+          'Z' -> Just ZettaKibi
+          'Y' -> Just YottaKibi
+          _ -> Nothing
+        _ -> Nothing
 
-normalizeUnit :: T.Text -> T.Text
-normalizeUnit = maybe "" (\(c, cs) -> toUpper c `T.cons` cs) . T.uncons
-
-parseLabel :: T.Text -> Maybe (BaseScale, ScaleSuffix)
-parseLabel t
-  | T.length t > 3 = Nothing
-  | T.null t = Just (BYTE, NONE)
-  | otherwise = bScale >>= \bs -> sSuffix >>= \ss -> Just (bs, ss)
-  where
-    bScale = toBaseScale . T.singleton $ T.head t
-    sSuffix = toScaleSuffix $ T.tail t
-
-toScale :: T.Text -> Scale
-toScale t
-  | T.null t = NoScale
-  | otherwise = Scale . read $ T.unpack t
-
-toBaseScale :: T.Text -> Maybe BaseScale
-toBaseScale s = case s of
-  "" -> Just BYTE
-  "K" -> Just KILO
-  "M" -> Just MEGA
-  "G" -> Just GIGA
-  "T" -> Just TERA
-  "P" -> Just PETA
-  "E" -> Just EXA
-  "Z" -> Just ZETTA
-  "Y" -> Just YOTTA
-  _ -> Nothing
-
-toScaleSuffix :: T.Text -> Maybe ScaleSuffix
-toScaleSuffix s = case s of
-  "iB" -> Just KIBII
-  "B" -> Just SI
-  "" -> Just KIBI
-  _ -> Nothing
+-- | Composed version of 'readDec', 'readOct' and 'readHex'.
+--
+-- >>> readNum "0"
+-- [(0, "")]
+--
+-- >>> readNum "007"
+-- [(7, "")]
+--
+-- >>> readNum "0xff"
+-- [(255, "")]
+--
+-- >>> readNum "00xff"
+-- [(0, "xff")]
+readNum :: (Eq a, Num a) => ReadS a
+readNum ('0' : '0' : s) = readOct $ '0' : s
+readNum ('0' : c : s) = case toUpper c of
+  'X' -> readHex s
+  _ -> readOct $ c : s
+readNum s = readDec s

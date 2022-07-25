@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- Improve compatibility with GNU ls about formatting file size and block size.
+
 ## 0.5.3.0 -- 2022-07-23
 
 ### Added

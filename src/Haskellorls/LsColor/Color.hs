@@ -26,6 +26,7 @@ import Haskellorls.Config.Ownership
 import Haskellorls.Config.Size
 import Haskellorls.Config.Time
 import Haskellorls.Config.Tree
+import Haskellorls.Humanize.FileSize
 import Haskellorls.LsColor.Config
 import Haskellorls.NodeInfo
 import System.Environment
@@ -148,10 +149,10 @@ instance Dictionary GroupID Sequence LsColors where
 instance Dictionary FileContext Sequence LsColors where
   lookup c (Options {..}) = extension >>= lookup c
 
-instance Dictionary SizeNumberScale Sequence LsColors where
+instance Dictionary (SizeNumberScale a) Sequence LsColors where
   lookup s (Options {..}) = extension >>= lookup s
 
-instance Dictionary SizeUnitScale Sequence LsColors where
+instance Dictionary (SizeUnitScale a) Sequence LsColors where
   lookup s (Options {..}) = extension >>= lookup s
 
 instance Dictionary Datetime Sequence LsColors where
@@ -190,10 +191,10 @@ instance Dictionary GroupID Sequence Extensions where
 instance Dictionary FileContext Sequence Extensions where
   lookup c (Extensions {..}) = c `lookup` extraLsColors
 
-instance Dictionary SizeNumberScale Sequence Extensions where
+instance Dictionary (SizeNumberScale a) Sequence Extensions where
   lookup s (Extensions {..}) = s `lookup` extraLsColors
 
-instance Dictionary SizeUnitScale Sequence Extensions where
+instance Dictionary (SizeUnitScale a) Sequence Extensions where
   lookup s (Extensions {..}) = s `lookup` extraLsColors
 
 instance Dictionary Datetime Sequence Extensions where
@@ -293,29 +294,29 @@ instance Dictionary GroupID a (ExtraOptions a) where
 instance Dictionary FileContext a (ExtraOptions a) where
   lookup _ (ExtraOptions {..}) = fileContext
 
-instance Dictionary SizeNumberScale a (ExtraOptions a) where
+instance Dictionary (SizeNumberScale a) b (ExtraOptions b) where
   lookup (SizeNumberScale s) (ExtraOptions {..}) = case s of
-    BYTE -> fileSizeNumber
-    KILO -> fileSizeNumberKilo
-    MEGA -> fileSizeNumberMega
-    GIGA -> fileSizeNumberGiga
-    TERA -> fileSizeNumberTera
-    PETA -> fileSizeNumberPeta
-    EXA -> fileSizeNumberExa
-    ZETTA -> fileSizeNumberZetta
-    YOTTA -> fileSizeNumberYotta
+    NoScale _ -> fileSizeNumber
+    Kilo _ -> fileSizeNumberKilo
+    Mega _ -> fileSizeNumberMega
+    Giga _ -> fileSizeNumberGiga
+    Tera _ -> fileSizeNumberTera
+    Peta _ -> fileSizeNumberPeta
+    Exa _ -> fileSizeNumberExa
+    Zetta _ -> fileSizeNumberZetta
+    Yotta _ -> fileSizeNumberYotta
 
-instance Dictionary SizeUnitScale a (ExtraOptions a) where
+instance Dictionary (SizeUnitScale a) b (ExtraOptions b) where
   lookup (SizeUnitScale s) (ExtraOptions {..}) = case s of
-    BYTE -> fileSizeUnitByte
-    KILO -> fileSizeUnitKilo
-    MEGA -> fileSizeUnitMega
-    GIGA -> fileSizeUnitGiga
-    TERA -> fileSizeUnitTera
-    PETA -> fileSizeUnitPeta
-    EXA -> fileSizeUnitExa
-    ZETTA -> fileSizeUnitZetta
-    YOTTA -> fileSizeUnitYotta
+    NoScale _ -> fileSizeUnitByte
+    Kilo _ -> fileSizeUnitKilo
+    Mega _ -> fileSizeUnitMega
+    Giga _ -> fileSizeUnitGiga
+    Tera _ -> fileSizeUnitTera
+    Peta _ -> fileSizeUnitPeta
+    Exa _ -> fileSizeUnitExa
+    Zetta _ -> fileSizeUnitZetta
+    Yotta _ -> fileSizeUnitYotta
 
 instance Dictionary Datetime a (ExtraOptions a) where
   lookup _ (ExtraOptions {..}) = date
