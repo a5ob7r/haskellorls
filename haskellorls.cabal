@@ -6,7 +6,7 @@ license:            BSD-3-Clause
 license-file:       LICENSE
 maintainer:         12132068+a5ob7r@users.noreply.github.com
 author:             a5ob7r
-tested-with:        GHC ==8.10.7 || ==9.0.2 || ==9.2.3
+tested-with:        GHC ==8.10.7 || ==9.0.2 || ==9.2.4
 extra-source-files:
   CHANGELOG.md
   README.md
