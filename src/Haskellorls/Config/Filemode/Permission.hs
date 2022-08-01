@@ -7,7 +7,7 @@ module Haskellorls.Config.Filemode.Permission
 where
 
 import Haskellorls.Class
-import qualified System.Posix.Files as Files
+import qualified System.Posix.Files.ByteString as Files
 import qualified System.Posix.Types as Types
 import Prelude hiding (lookup)
 

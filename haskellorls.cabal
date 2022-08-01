@@ -29,7 +29,7 @@ flag selinux
 common common-options
   build-depends:    base >=4.14 && <4.17
   default-language: Haskell2010
-  ghc-options:      -W -Wall -Wcompat
+  ghc-options:      -W -Wall -Wcompat -Wredundant-constraints
 
   if flag(pedantic)
     ghc-options: -Werror

@@ -26,7 +26,7 @@ import qualified Haskellorls.Config.Time as Time
 import qualified Haskellorls.Config.Tree as Tree
 import qualified Haskellorls.Utils as Utils
 import System.FilePath.Posix.ByteString
-import qualified System.Posix.Files as Files
+import qualified System.Posix.Files.ByteString as Files
 import qualified System.Posix.Types as Types
 
 #ifdef SELINUX
@@ -159,12 +159,12 @@ data NodeInfo = NodeInfo
 -- | Create a filenode infomation from a filepath.
 mkNodeInfo :: (MonadCatch m, MonadIO m) => Config.Config -> RawFilePath -> RawFilePath -> m NodeInfo
 mkNodeInfo config dirname basename = do
-  status <- Utils.getSymbolicLinkStatus path
+  status <- liftIO $ Files.getSymbolicLinkStatus path
   context <- fileContext path
 
   if Files.isSymbolicLink status
     then do
-      linkPath <- tryIO $ Utils.readSymbolicLink path
+      linkPath <- tryIO . liftIO $ Files.readSymbolicLink path
 
       destStatus <- do
         case linkPath of
