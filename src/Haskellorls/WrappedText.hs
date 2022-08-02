@@ -7,7 +7,6 @@ where
 
 import qualified Data.Text as T
 import Haskellorls.Class
-import qualified Haskellorls.Utils as Utils
 
 data WrappedText = WrappedText
   { wtPrefix :: T.Text,
@@ -25,8 +24,8 @@ instance From T.Text WrappedText where
 
 instance Deserialize WrappedText
 
-instance Length WrappedText where
-  len = Utils.textLengthForDisplay . wtWord
+instance TerminalLength WrappedText where
+  termLength = termLength . wtWord
 
 -- | Modify only 'wtWord' in 'WrappedText'.
 modify :: (T.Text -> T.Text) -> WrappedText -> WrappedText

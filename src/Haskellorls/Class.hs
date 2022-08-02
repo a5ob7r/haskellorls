@@ -2,11 +2,12 @@ module Haskellorls.Class
   ( Deserialize (..),
     Dictionary (..),
     From (..),
-    Length (..),
     Serialize (..),
+    TerminalLength (..),
   )
 where
 
+import Data.Char
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import qualified Data.Text as T
@@ -49,12 +50,20 @@ class (From T.Text a) => Deserialize a where
   deserialize :: T.Text -> a
   deserialize = from
 
--- | It has length.
-class Length a where
-  len :: a -> Int
+-- | A instance of "TerminalLength" has a length to dipslay it on a terminal.
+class TerminalLength a where
+  -- | When display @a@ on a terminal, it consumes columns of @termLength a@.
+  termLength :: a -> Int
 
-instance Length [a] where
-  len = length
+instance TerminalLength Char where
+  -- FIXME: We assume non-Latin1 charactor has double in width of any Latin1
+  -- charactor to display it on a terminal. However this is a very naive
+  -- approach, a lot of icon glyphs in @Nerd Fonts@ doesn't match this
+  -- assumption. For example, maybe we should detect whether or not the
+  -- character is one of CJK.
+  --
+  -- [@Nerd Fonts@]: https://www.nerdfonts.com/
+  termLength c = if isLatin1 c then 1 else 2
 
-instance Length T.Text where
-  len = T.length
+instance TerminalLength T.Text where
+  termLength = T.foldl' (\acc c -> acc + termLength c) 0

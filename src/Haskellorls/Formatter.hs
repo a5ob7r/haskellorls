@@ -280,7 +280,7 @@ buildColumn nodes printers pType = map alignmenter nodes'
   where
     printer = printerSelectorFor pType printers
     nodes' = map printer nodes
-    maxLen = maximum $ map (sum . map WT.len) nodes'
+    maxLen = maximum $ map (sum . map termLength) nodes'
     aType = alignmentTypeFor pType
     aBuilder = alignmenterBuilderSelectorFor aType
     alignmenter = aBuilder " " maxLen
@@ -308,7 +308,7 @@ padding c n ys
   | otherwise = ys
   where
     n' = abs n
-    l = sum $ map WT.len ys
+    l = sum $ map termLength ys
     padSize = signum n * (n' - l)
 
 padding' :: AlignmenterBuilder

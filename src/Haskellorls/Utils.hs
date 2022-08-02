@@ -3,15 +3,12 @@ module Haskellorls.Utils
     linkDestPath,
     listContents,
     exclude,
-    textLengthForDisplay,
   )
 where
 
 import Control.Monad.IO.Class
 import qualified Data.ByteString as B
-import Data.Char
 import Data.Functor
-import qualified Data.Text as T
 import qualified Haskellorls.Config as Config
 import Haskellorls.Config.Listing
 import RawFilePath.Directory
@@ -84,7 +81,3 @@ exclude :: String -> [RawFilePath] -> [RawFilePath]
 exclude ptn = map encodeFilePath . filter (not . match ptn') . map decodeFilePath
   where
     ptn' = compile ptn
-
--- | Assumes not Latin1 charactor has double width of Latin1 charactor for display.
-textLengthForDisplay :: T.Text -> Int
-textLengthForDisplay = T.foldr (\c acc -> acc + if isLatin1 c then 1 else 2) 0
