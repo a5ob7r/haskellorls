@@ -6,6 +6,10 @@
 
 - Improve compatibility with GNU ls about formatting file size and block size.
 
+### Fixed
+
+- Remove a trailing space of each line for `-m`.
+
 ## 0.5.3.0 -- 2022-07-23
 
 ### Added
