@@ -34,7 +34,7 @@ data Option = Option
     oClassify :: W.WHEN,
     oExtraColor :: Bool,
     oFileType :: Bool,
-    oFormat :: Format.Format,
+    oFormat :: Maybe Format.Format,
     oFullTime :: Bool,
     oLongWithoutOwner :: Bool,
     oGroupDirectoriesFirst :: Bool,

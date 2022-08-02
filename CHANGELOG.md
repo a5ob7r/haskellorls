@@ -2,9 +2,14 @@
 
 ## Unreleased
 
+### Added
+
+- Lookup `COLUMNS` environment variable to determine a column size if no terminal size.
+
 ### Changed
 
 - Improve compatibility with GNU ls about formatting file size and block size.
+- The default column size is 80.
 
 ### Fixed
 

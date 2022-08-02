@@ -133,7 +133,12 @@ mkConfig env Option {..} = Config {..}
       | oFillWidth = COMMAS
       | oOneline = SINGLECOLUMN
       | or [oLong, oLongWithoutGroup, oLongWithoutOwner, oFullTime] = LONG
-      | otherwise = oFormat
+      | otherwise =
+          case oFormat of
+            Just fmt -> fmt
+            Nothing
+              | toTTY -> VERTICAL
+              | otherwise -> SINGLECOLUMN
     directory = oDirectory
     groupDirectoriesFirst = oGroupDirectoriesFirst
     si = oSi
@@ -178,7 +183,7 @@ mkConfig env Option {..} = Config {..}
     width = case format of
       Format.SINGLECOLUMN -> 1
       Format.LONG -> 1
-      _ -> fromMaybe 1 $ oWidth <|> Env.columnSize env
+      _ -> fromMaybe 80 $ oWidth <|> Env.columnSize env
     noQuote = False
     toTTY = Env.toTerminal env
     currentWorkingDirectory = Env.cwd env

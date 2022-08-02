@@ -1,6 +1,6 @@
 {
   "command": "haskellorls",
-  "arguments": ["--recursive", "--width=80", "files/examples02"],
+  "arguments": ["-C", "--recursive", "--width=80", "files/examples02"],
   "environment": {"LS_COLORS": ""},
   "asserts": [
     {"exit_code": 0},

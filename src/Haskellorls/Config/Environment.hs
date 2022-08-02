@@ -6,6 +6,7 @@ where
 
 import Control.Applicative
 import Network.HostName
+import Numeric
 import System.Console.Terminal.Size
 import System.Environment
 import System.FilePath.Posix.ByteString
@@ -33,6 +34,12 @@ mkEnvironment = do
 
   hostname <- getHostName
 
-  columnSize <- fmap width <$> size
+  columnSize <-
+    liftA2 (<|>) (fmap width <$> size) $
+      lookupEnv "COLUMNS" >>= \e ->
+        return $
+          e >>= \cols -> case readDec cols of
+            [(n, "")] -> Just n
+            _ -> Nothing
 
   return $ Environment {..}

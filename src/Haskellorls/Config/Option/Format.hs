@@ -7,21 +7,21 @@ where
 import Haskellorls.Config.Format
 import Options.Applicative
 
-formatParser :: Parser Format
+formatParser :: Parser (Maybe Format)
 formatParser =
   option reader $
     long "format"
       <> metavar "WORD"
-      <> value VERTICAL
+      <> value Nothing
       <> completeWith ["across", "commas", "horizontal", "long", "single-column", "verbose", "vertical"]
   where
     reader =
       str @String >>= \case
-        "across" -> pure HORIZONTAL
-        "commas" -> pure COMMAS
-        "horizontal" -> pure HORIZONTAL
-        "long" -> pure LONG
-        "single-column" -> pure SINGLECOLUMN
-        "verbose" -> pure LONG
-        "vertical" -> pure VERTICAL
+        "across" -> pure $ Just HORIZONTAL
+        "commas" -> pure $ Just COMMAS
+        "horizontal" -> pure $ Just HORIZONTAL
+        "long" -> pure $ Just LONG
+        "single-column" -> pure $ Just SINGLECOLUMN
+        "verbose" -> pure $ Just LONG
+        "vertical" -> pure $ Just VERTICAL
         _ -> readerError "Avairable values are only 'across', 'commas', 'horizontal', 'long', 'single-column', 'verbose' and 'vertical'"

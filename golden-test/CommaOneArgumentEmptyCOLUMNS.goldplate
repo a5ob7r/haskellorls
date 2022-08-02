@@ -1,7 +1,7 @@
 {
   "command": "haskellorls",
-  "arguments": ["-C", "--width=80", "--tabsize=16", "files/examples01"],
-  "environment": {"LS_COLORS": ""},
+  "arguments": ["-m", "files/examples01"],
+  "environment": {"LS_COLORS": "", "COLUMNS": ""},
   "asserts": [
     {"exit_code": 0},
     {"stdout": "${GOLDPLATE_NAME}.stdout"}
