@@ -5,6 +5,7 @@
 ### Added
 
 - Lookup `COLUMNS` environment variable to determine a column size if no terminal size.
+- `--zero` option.
 
 ### Changed
 

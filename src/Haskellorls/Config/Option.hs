@@ -80,6 +80,7 @@ data Option = Option
     oHorihontal :: Bool,
     oExtensionSort :: Bool,
     oContext :: Bool,
+    oZero :: Bool,
     oOneline :: Bool,
     oVersion :: Bool,
     oTargets :: [FilePath]
@@ -151,6 +152,7 @@ optionParser =
     <*> horihontalParser
     <*> Sort.extensionSortParser
     <*> contextParser
+    <*> zeroParser
     <*> onelineParser
     <*> versionParser
     <*> argParser
@@ -181,6 +183,9 @@ reverseParser =
     short 'r'
       <> long "reverse"
       <> help "Reverse outputs order"
+
+zeroParser :: Parser Bool
+zeroParser = switch $ long "zero" <> help "Each line is terminated with NUL, not newline."
 
 onelineParser :: Parser Bool
 onelineParser =

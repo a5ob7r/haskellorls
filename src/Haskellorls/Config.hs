@@ -66,6 +66,7 @@ data Config = Config
     tree :: Bool,
     width :: Int,
     noQuote :: Bool,
+    zero :: Bool,
     toTTY :: Bool,
     currentWorkingDirectory :: RawFilePath,
     hostname :: T.Text
@@ -137,7 +138,7 @@ mkConfig env Option {..} = Config {..}
           case oFormat of
             Just fmt -> fmt
             Nothing
-              | toTTY -> VERTICAL
+              | toTTY && not zero -> VERTICAL
               | otherwise -> SINGLECOLUMN
     directory = oDirectory
     groupDirectoriesFirst = oGroupDirectoriesFirst
@@ -185,6 +186,7 @@ mkConfig env Option {..} = Config {..}
       Format.LONG -> 1
       _ -> fromMaybe 80 $ oWidth <|> Env.columnSize env
     noQuote = False
+    zero = oZero
     toTTY = Env.toTerminal env
     currentWorkingDirectory = Env.cwd env
     hostname = T.pack $ Env.hostname env

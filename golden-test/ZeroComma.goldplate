@@ -1,0 +1,9 @@
+{
+  "command": "haskellorls",
+  "arguments": ["--zero", "-m", "files/examples01"],
+  "environment": {"COLUMNS": ""},
+  "asserts": [
+    {"exit_code": 0},
+    {"stdout": "${GOLDPLATE_NAME}.stdout"}
+  ]
+}

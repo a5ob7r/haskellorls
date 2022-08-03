@@ -14,7 +14,7 @@ import Data.Bifunctor
 import qualified Data.ByteString.Char8 as C
 import Data.Either
 import Data.Functor
-import qualified Data.List as L
+import Data.List (intersperse, partition)
 import qualified Data.Sequence as Seq
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -93,7 +93,7 @@ run c s = runLs c s go
                 return (PrintTree $ Tree {treeNodes = nodes, ..}, errs)
               _ -> return (op, mempty)
 
-            T.putStrLn $ printer op'
+            T.putStr $ printer op'
 
             return errs
 
@@ -112,7 +112,7 @@ newLsState c@(LsConf (config, _)) (LsState (op : ops, inodes, errors)) = case op
             paths = map (\node -> entryPath </> Node.getNodePath node) nodes
         (errs, ops') <- partitionEithers <$> mapM (tryIO . pathToOp c (Depth.increaseDepth entryDepth)) paths
         mapM_ printErr errs
-        let entries = (\es -> if null es then es else Newline : es) $ L.intersperse Newline ops'
+        let entries = (\es -> if null es then es else Newline : es) $ intersperse Newline ops'
         pure $ LsState (entries <> ops, newInodes, (toException <$> errs) <> errors)
   _ -> pure $ LsState (ops, inodes, errors)
 
@@ -147,20 +147,20 @@ mkInitialOperations c@(LsConf (config@Config.Config {tree}, _)) paths = do
   mapM_ (liftIO . printErr) errs
 
   let (nodes, inodes) = runState (Recursive.updateAlreadySeenInode $ Sort.sorter config nodeinfos) mempty
-  let (dirs, files) = L.partition isDirectory nodes
+  let (dirs, files) = partition isDirectory nodes
       fileOp = [PrintEntry (Entry FILES "" files config depth) | not (null files)]
 
   if tree
     then do
       let ops = dirs <&> \node -> PrintTree $ Tree (Node.getNodePath node) node mempty config
-      return (L.intersperse Newline $ fileOp <> ops, inodes, errs)
+      return (intersperse Newline $ fileOp <> ops, inodes, errs)
     else do
       dirOps <-
         mapM (pathToOp c depth . Node.getNodePath) dirs <&> \case
           -- Considers no argument to be also a single directory.
           [PrintEntry e] | null files && length paths < 2 -> [PrintEntry (e {entryType = SINGLEDIR})]
           ops -> ops
-      return (L.intersperse Newline $ fileOp <> dirOps, inodes, errs)
+      return (intersperse Newline $ fileOp <> dirOps, inodes, errs)
   where
     depth = Depth.increaseDepth Depth.makeZero
     isDirectory
@@ -168,11 +168,13 @@ mkInitialOperations c@(LsConf (config@Config.Config {tree}, _)) paths = do
       | otherwise = Node.isDirectory . Node.nodeType
 
 buildPrinter :: Config.Config -> Formatter.Printers -> Printer
-buildPrinter config printers = Printer $ (TL.toStrict . TL.toLazyText . mconcat . L.intersperse (TL.fromText "\n")) . generateEntryLines config printers
+buildPrinter config printers = Printer $ TL.toStrict . TL.toLazyText . foldr (\x acc -> x <> eol <> acc) mempty . generateEntryLines config printers
+  where
+    eol = TL.fromText $ if Config.zero config then "\0" else "\n"
 
 generateEntryLines :: Config.Config -> Formatter.Printers -> Operation -> [TL.Builder]
 generateEntryLines config printers op = case op of
-  Newline -> []
+  Newline -> [TL.fromText ""]
   PrintEntry (Entry {..}) ->
     addHeader . addTotalBlockSize . Grid.renderGrid $ Grid.buildValidGrid config (Config.width config) nodes'
     where
