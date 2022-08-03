@@ -4,9 +4,9 @@ import Data.Version (showVersion)
 import Haskellorls.Config
 import Haskellorls.Config.Environment
 import qualified Haskellorls.Config.Option as Option
-import Haskellorls.Exception
+import Haskellorls.Control.Exception.Safe
 import qualified Haskellorls.Formatter as Formatter
-import qualified Haskellorls.Recursive as Recursive
+import qualified Haskellorls.Walk as Walk
 import Options.Applicative
 import Paths_haskellorls (version)
 import System.Exit
@@ -45,16 +45,16 @@ run opt = do
       config' = mkConfig env opt'
 
   printers <- Formatter.buildPrinters config'
-  let printer = Recursive.buildPrinter config' printers
-      c = Recursive.LsConf (config, printer)
+  let printer = Walk.buildPrinter config' printers
+      c = Walk.LsConf (config, printer)
 
-  (ops, inodes, errs) <- Recursive.mkInitialOperations c targets
+  (ops, inodes, errs) <- Walk.mkInitialOperations c targets
 
   mapM_ printErr errs
 
-  let s = Recursive.LsState (ops, inodes, [])
+  let s = Walk.LsState (ops, inodes, [])
 
-  (_, Recursive.LsState (_, _, errors)) <- Recursive.run c s
+  (_, Walk.LsState (_, _, errors)) <- Walk.run c s
 
   return $
     if

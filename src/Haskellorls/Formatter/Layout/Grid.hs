@@ -11,7 +11,7 @@ import qualified Data.Text.Lazy.Builder as TL
 import Haskellorls.Class
 import qualified Haskellorls.Config as Config
 import qualified Haskellorls.Config.Format as Format
-import qualified Haskellorls.WrappedText as WT
+import qualified Haskellorls.Formatter.WrappedText as WT
 
 -- | 'horizontalSplitInto' @n xs@ returns a list which are sliced @xs@ into @n@ elements vertically.
 --

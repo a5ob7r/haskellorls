@@ -24,9 +24,8 @@ import Data.Time.Clock.POSIX
 import qualified Haskellorls.Config as Config
 import qualified Haskellorls.Config.Time as Time
 import qualified Haskellorls.Config.Tree as Tree
-import qualified Haskellorls.Utils as Utils
+import qualified Haskellorls.System.Posix.Files.ByteString as Files
 import System.FilePath.Posix.ByteString
-import qualified System.Posix.Files.ByteString as Files
 import qualified System.Posix.Types as Types
 
 #ifdef SELINUX
@@ -169,7 +168,7 @@ mkNodeInfo config dirname basename = do
       destStatus <- do
         case linkPath of
           -- Dereference file status if a status presents symbolic link.
-          Right p -> tryIO (Utils.destFileStatusRecursive path p) <&> eitherToMaybe
+          Right p -> tryIO (Files.destFileStatusRecursive path p) <&> eitherToMaybe
           _ -> pure Nothing
 
       destContext <- do

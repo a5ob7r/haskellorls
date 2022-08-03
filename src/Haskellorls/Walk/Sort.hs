@@ -1,4 +1,4 @@
-module Haskellorls.Sort (sorter) where
+module Haskellorls.Walk.Sort (sorter) where
 
 import qualified Algorithms.NaturalSort as NSort
 import qualified Data.List as L

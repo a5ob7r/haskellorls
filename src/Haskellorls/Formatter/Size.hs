@@ -152,10 +152,10 @@ import Data.List (foldl')
 import qualified Data.Text as T
 import qualified Haskellorls.Config as Config
 import Haskellorls.Config.Size
+import qualified Haskellorls.Formatter.WrappedText as WT
 import Haskellorls.Humanize.FileSize
 import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
-import qualified Haskellorls.WrappedText as WT
 import qualified System.Posix.Types as Types
 
 data FileSizeComponent = FileSizeComponent
@@ -188,7 +188,7 @@ fileBlockSize config node = toTotalBlockSize config [fileBlockSizeOf node]
 
 -- | A node block size formatter for the @no@ parameter of @LS_COLORS@.
 normalColoredFileBlockSize :: Color.LsColors -> Config.Config -> Node.NodeInfo -> [WT.WrappedText]
-normalColoredFileBlockSize lscolors config node = [Color.toWrappedText lscolors getter (fileSizeNumber <> fileSizeUnit)]
+normalColoredFileBlockSize lscolors config node = [WT.wrap lscolors getter (fileSizeNumber <> fileSizeUnit)]
   where
     blocksize = fileBlockSizeOf node
     getter = Color.normal
@@ -272,7 +272,7 @@ fileSize' config size offset = case size of
 
 -- | A node file size formatter for the @no@ parameter of the @LS_COLORS@.
 normalColoredFileSize :: Color.LsColors -> Config.Config -> Node.NodeInfo -> [WT.WrappedText]
-normalColoredFileSize lscolors config node = [Color.toWrappedText lscolors Color.normal (fileSizeNumber <> fileSizeUnit)]
+normalColoredFileSize lscolors config node = [WT.wrap lscolors Color.normal (fileSizeNumber <> fileSizeUnit)]
   where
     FileSizeComponent {..} = fileSize' config (Config.fileSize config) $ Node.fileSize node
 
@@ -281,8 +281,8 @@ coloredFileSize lscolors config = coloredFileSize' lscolors . fileSize' config (
 
 coloredFileSize' :: Color.LsColors -> FileSizeComponent -> [WT.WrappedText]
 coloredFileSize' lscolors FileSizeComponent {..} =
-  [ Color.toWrappedText lscolors sizeSelector fileSizeNumber,
-    Color.toWrappedText lscolors unitSelector fileSizeUnit
+  [ WT.wrap lscolors sizeSelector fileSizeNumber,
+    WT.wrap lscolors unitSelector fileSizeUnit
   ]
   where
     sizeSelector = Color.lookup . SizeNumberScale $ unwrap bScale

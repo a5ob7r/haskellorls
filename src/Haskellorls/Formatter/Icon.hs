@@ -4,9 +4,9 @@ module Haskellorls.Formatter.Icon
 where
 
 import qualified Data.Text as T
+import qualified Haskellorls.Formatter.WrappedText as WT
 import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
-import qualified Haskellorls.WrappedText as WT
 
 lookupIcon :: Node.NodeInfo -> Color.LsIcons -> [WT.WrappedText]
 lookupIcon node lsicons =

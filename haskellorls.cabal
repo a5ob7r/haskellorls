@@ -43,6 +43,7 @@ library haskellorls-internal
     Haskellorls.Class
     Haskellorls.Config
     Haskellorls.Config.Context
+    Haskellorls.Config.Depth
     Haskellorls.Config.Environment
     Haskellorls.Config.Filemode
     Haskellorls.Config.Filemode.Entry
@@ -69,8 +70,7 @@ library haskellorls-internal
     Haskellorls.Config.Time
     Haskellorls.Config.Tree
     Haskellorls.Config.When
-    Haskellorls.Depth
-    Haskellorls.Exception
+    Haskellorls.Control.Exception.Safe
     Haskellorls.Formatter
     Haskellorls.Formatter.Context
     Haskellorls.Formatter.Escape
@@ -89,6 +89,7 @@ library haskellorls-internal
     Haskellorls.Formatter.SymbolicLink
     Haskellorls.Formatter.Time
     Haskellorls.Formatter.Tree
+    Haskellorls.Formatter.WrappedText
     Haskellorls.Humanize.FileSize
     Haskellorls.LsColor
     Haskellorls.LsColor.Class
@@ -96,12 +97,13 @@ library haskellorls-internal
     Haskellorls.LsColor.Config
     Haskellorls.LsColor.Icon
     Haskellorls.NodeInfo
-    Haskellorls.Recursive
-    Haskellorls.Recursive.Tree
-    Haskellorls.Recursive.Utils
-    Haskellorls.Sort
-    Haskellorls.Utils
-    Haskellorls.WrappedText
+    Haskellorls.System.Posix.Files.ByteString
+    Haskellorls.Walk
+    Haskellorls.Walk.Listing
+    Haskellorls.Walk.Recursive
+    Haskellorls.Walk.Sort
+    Haskellorls.Walk.Tree
+    Haskellorls.Walk.Utils
 
   other-modules:      Paths_haskellorls
   autogen-modules:    Paths_haskellorls

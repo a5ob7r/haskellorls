@@ -4,6 +4,7 @@ module Haskellorls.Config.Option
   )
 where
 
+import qualified Haskellorls.Config.Depth as Depth
 import qualified Haskellorls.Config.Option.Color as Color
 import qualified Haskellorls.Config.Option.Format as Format
 import qualified Haskellorls.Config.Option.Hyperlink as Hyperlink
@@ -13,7 +14,6 @@ import qualified Haskellorls.Config.Option.Size as Size
 import qualified Haskellorls.Config.Option.Sort as Sort
 import qualified Haskellorls.Config.Option.Time as Time
 import qualified Haskellorls.Config.When as W
-import qualified Haskellorls.Depth as Depth
 import Options.Applicative hiding (header)
 import Options.Applicative.Help.Pretty
 import Text.Read

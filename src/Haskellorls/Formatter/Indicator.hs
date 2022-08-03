@@ -3,8 +3,8 @@ module Haskellorls.Formatter.Indicator (buildIndicatorPrinter) where
 import qualified Data.Text as T
 import qualified Haskellorls.Config as Config
 import Haskellorls.Config.Indicator
+import qualified Haskellorls.Formatter.WrappedText as WT
 import qualified Haskellorls.NodeInfo as Node
-import qualified Haskellorls.WrappedText as WT
 
 data Indicators = Indicators
   { indicatorsDirectory :: T.Text,

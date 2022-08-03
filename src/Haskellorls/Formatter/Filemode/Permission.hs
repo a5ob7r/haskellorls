@@ -8,8 +8,8 @@ where
 
 import qualified Data.Text as T
 import Haskellorls.Config.Filemode.Permission
+import qualified Haskellorls.Formatter.WrappedText as WT
 import Haskellorls.LsColor
-import qualified Haskellorls.WrappedText as WT
 import Prelude hiding (lookup)
 
 userLetterWithColor :: LsColors -> PermissionClass -> WT.WrappedText
@@ -22,7 +22,7 @@ otherLetterWithColor :: LsColors -> PermissionClass -> WT.WrappedText
 otherLetterWithColor lscolors c = letterWithColor lscolors $ OtherPerm c
 
 letterWithColor :: LsColors -> Permission -> WT.WrappedText
-letterWithColor lscolors p = toWrappedText lscolors getter letter
+letterWithColor lscolors p = WT.wrap lscolors getter letter
   where
     letter = T.singleton $ from p
     getter = lookup p

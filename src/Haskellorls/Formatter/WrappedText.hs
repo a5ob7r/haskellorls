@@ -1,12 +1,14 @@
-module Haskellorls.WrappedText
+module Haskellorls.Formatter.WrappedText
   ( WrappedText (..),
     modify,
+    wrap,
     module Haskellorls.Class,
   )
 where
 
 import qualified Data.Text as T
 import Haskellorls.Class
+import qualified Haskellorls.LsColor.Config as Config
 
 data WrappedText = WrappedText
   { wtPrefix :: T.Text,
@@ -30,3 +32,10 @@ instance TerminalLength WrappedText where
 -- | Modify only 'wtWord' in 'WrappedText'.
 modify :: (T.Text -> T.Text) -> WrappedText -> WrappedText
 modify f WrappedText {..} = WrappedText wtPrefix (f wtWord) wtSuffix
+
+-- | A wrapper utility to generate wrapped text using 'LS_COLORS' or similar
+-- extension configurations.
+wrap :: (Semigroup a, Serialize a) => Config.Options a e -> (Config.Options a e -> Maybe a) -> T.Text -> WrappedText
+wrap o@(Config.Options {..}) getter t = case getter o of
+  Just esc -> WrappedText (serialize $ Config.wrap o esc) t $ maybe "" (serialize . Config.wrap o) reset
+  _ -> WrappedText "" t ""

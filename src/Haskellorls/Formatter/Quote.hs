@@ -12,7 +12,7 @@ import qualified Data.Text as T
 import qualified Haskellorls.Config as Config
 import Haskellorls.Config.Option.Quote
 import Haskellorls.Config.Quote
-import qualified Haskellorls.WrappedText as WT
+import qualified Haskellorls.Formatter.WrappedText as WT
 
 -- filename:
 --   - double quote (-Q / --quote-name)

@@ -1,4 +1,4 @@
-module Haskellorls.Recursive
+module Haskellorls.Walk.Recursive
   ( buildPrinter,
     mkInitialOperations,
     run,
@@ -23,19 +23,19 @@ import qualified Data.Text.IO as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as TL
 import qualified Haskellorls.Config as Config
+import qualified Haskellorls.Config.Depth as Depth
 import Haskellorls.Config.Listing
-import qualified Haskellorls.Depth as Depth
-import Haskellorls.Exception
+import Haskellorls.Control.Exception.Safe
 import qualified Haskellorls.Formatter as Formatter
 import qualified Haskellorls.Formatter.Layout.Grid as Grid
 import qualified Haskellorls.Formatter.Quote as Quote
 import qualified Haskellorls.Formatter.Size as Size
+import qualified Haskellorls.Formatter.WrappedText as WT
 import qualified Haskellorls.NodeInfo as Node
-import qualified Haskellorls.Recursive.Tree as Tree
-import qualified Haskellorls.Recursive.Utils as Recursive
-import qualified Haskellorls.Sort as Sort
-import qualified Haskellorls.Utils as Utils
-import qualified Haskellorls.WrappedText as WT
+import qualified Haskellorls.Walk.Listing as Listing
+import qualified Haskellorls.Walk.Sort as Sort
+import qualified Haskellorls.Walk.Tree as Tree
+import qualified Haskellorls.Walk.Utils as Walk
 import System.FilePath.Posix.ByteString
 
 data EntryType = FILES | SINGLEDIR | DIRECTORY
@@ -64,14 +64,14 @@ newtype Printer = Printer (Operation -> T.Text)
 
 newtype LsConf = LsConf (Config.Config, Printer)
 
-newtype LsState = LsState ([Operation], Recursive.AlreadySeenInodes, [SomeException])
+newtype LsState = LsState ([Operation], Walk.AlreadySeenInodes, [SomeException])
 
 -- | A central piece monad of haskellorls.
 --
 -- NOTE: This is inspired from XMonad.
 -- <https://github.com/xmonad/xmonad/blob/a902fefaf1f27f1a21dc35ece15e7dbb573f3d95/src/XMonad/Core.hs#L158>
 newtype Ls a = Ls (ReaderT LsConf (StateT LsState IO) a)
-  deriving (Functor, Applicative, Monad, MonadIO, MonadReader LsConf, MonadState LsState)
+  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch, MonadReader LsConf, MonadState LsState)
 
 runLs :: LsConf -> LsState -> Ls a -> IO (a, LsState)
 runLs c s (Ls a) = runStateT (runReaderT a c) s
@@ -85,30 +85,30 @@ run c s = runLs c s go
         s'@(LsState (op : _, _, _)) -> do
           c'@(LsConf (config, Printer printer)) <- ask
 
-          errs <- liftIO $ do
+          errs <- do
             (op', errs) <- case op of
               (PrintTree (Tree {..})) -> do
-                -- TODO: Move directory traversing into an appropriate place.
+                -- FIXME: Move directory traversing into an appropriate place.
                 (nodes, errs) <- Tree.mkTreeNodeInfos config treeNode
                 return (PrintTree $ Tree {treeNodes = nodes, ..}, errs)
               _ -> return (op, mempty)
 
-            T.putStr $ printer op'
+            liftIO . T.putStr $ printer op'
 
             return errs
 
           modify (\(LsState (ops, inodes, errors)) -> LsState (ops, inodes, errs <> errors))
 
-          put =<< liftIO (newLsState c' s')
+          put =<< newLsState c' s'
 
           go
 
-newLsState :: LsConf -> LsState -> IO LsState
+newLsState :: (MonadCatch m, MonadIO m) => LsConf -> LsState -> m LsState
 newLsState _ s@(LsState ([], _, _)) = pure s
 newLsState c@(LsConf (config, _)) (LsState (op : ops, inodes, errors)) = case op of
   PrintEntry (Entry {..})
     | Config.recursive config && entryDepth < Config.level config -> do
-        let (nodes, newInodes) = runState (Recursive.updateAlreadySeenInode $ filter (Node.isDirectory . Node.nodeType) entryNodes) inodes
+        let (nodes, newInodes) = runState (Walk.updateAlreadySeenInode $ filter (Node.isDirectory . Node.nodeType) entryNodes) inodes
             paths = map (\node -> entryPath </> Node.getNodePath node) nodes
         (errs, ops') <- partitionEithers <$> mapM (tryIO . pathToOp c (Depth.increaseDepth entryDepth)) paths
         mapM_ printErr errs
@@ -124,7 +124,7 @@ pathToOp (LsConf (config, _)) depth path = do
 -- | With error message output.
 buildDirectoryNodes :: (MonadCatch m, MonadIO m) => Config.Config -> RawFilePath -> m [Node.NodeInfo]
 buildDirectoryNodes config path = do
-  contents <- Utils.listContents config path
+  contents <- Listing.listContents config path
   Sort.sorter config <$> (mapM (Node.mkNodeInfo config path) . excluder) contents
   where
     excluder = ignoreExcluder . hideExcluder
@@ -135,18 +135,18 @@ buildDirectoryNodes config path = do
       _ -> True
     ignoreExcluder
       | null ignorePtn = id
-      | otherwise = Utils.exclude ignorePtn
+      | otherwise = Listing.exclude ignorePtn
     hideExcluder
       | null hidePtn || isShowHiddenEntries = id
-      | otherwise = Utils.exclude hidePtn
+      | otherwise = Listing.exclude hidePtn
 
-mkInitialOperations :: (MonadCatch m, MonadIO m) => LsConf -> [RawFilePath] -> m ([Operation], Recursive.AlreadySeenInodes, [SomeException])
+mkInitialOperations :: (MonadCatch m, MonadIO m) => LsConf -> [RawFilePath] -> m ([Operation], Walk.AlreadySeenInodes, [SomeException])
 mkInitialOperations c@(LsConf (config@Config.Config {tree}, _)) paths = do
   (errs, nodeinfos) <- first (map toException) . partitionEithers <$> mapM (tryIO . Node.mkNodeInfo config "") paths
 
-  mapM_ (liftIO . printErr) errs
+  mapM_ printErr errs
 
-  let (nodes, inodes) = runState (Recursive.updateAlreadySeenInode $ Sort.sorter config nodeinfos) mempty
+  let (nodes, inodes) = runState (Walk.updateAlreadySeenInode $ Sort.sorter config nodeinfos) mempty
   let (dirs, files) = partition isDirectory nodes
       fileOp = [PrintEntry (Entry FILES "" files config depth) | not (null files)]
 

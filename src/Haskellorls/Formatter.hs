@@ -29,9 +29,9 @@ import qualified Haskellorls.Formatter.Size as Size
 import qualified Haskellorls.Formatter.SymbolicLink as SymbolicLink
 import qualified Haskellorls.Formatter.Time as Time
 import qualified Haskellorls.Formatter.Tree as Tree
+import qualified Haskellorls.Formatter.WrappedText as WT
 import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
-import qualified Haskellorls.WrappedText as WT
 
 data PrinterType
   = FILEINODE

@@ -1,43 +1,20 @@
-module Haskellorls.Utils
-  ( destFileStatusRecursive,
-    linkDestPath,
-    listContents,
+module Haskellorls.Walk.Listing
+  ( listContents,
     exclude,
   )
 where
 
 import Control.Monad.IO.Class
 import qualified Data.ByteString as B
-import Data.Functor
 import qualified Haskellorls.Config as Config
 import Haskellorls.Config.Listing
 import RawFilePath.Directory
 import System.FilePath.Glob
 import System.FilePath.Posix.ByteString
-import qualified System.Posix.Files.ByteString as Files
-
--- | A useful version of 'getFileStatus', to get a resolved destination file's
--- status, but not a symbolic link self.
-destFileStatusRecursive :: MonadIO m => RawFilePath -> RawFilePath -> m Files.FileStatus
-destFileStatusRecursive dirPath basePath = do
-  s <- liftIO . Files.getFileStatus $ linkDestPath dirPath basePath
-
-  if Files.isSymbolicLink s
-    then do
-      link <- liftIO . Files.readSymbolicLink $ linkDestPath dirPath basePath
-      destFileStatusRecursive dirPath link
-    else pure s
-
--- | Create a symlink's filepath from symlink's parent directory path and a
--- filepath written in symlink self.
-linkDestPath :: RawFilePath -> RawFilePath -> RawFilePath
-linkDestPath parPath linkPath
-  | isAbsolute linkPath = linkPath
-  | otherwise = takeDirectory parPath </> linkPath
 
 -- | List contents in a directory in accordance with @Config@.
 listContents :: MonadIO m => Config.Config -> RawFilePath -> m [RawFilePath]
-listContents config path = list path <&> ignoreExcluder . hideExcluder . ignoreFilter
+listContents config path = ignoreExcluder . hideExcluder . ignoreFilter <$> list path
   where
     list = case Config.listing config of
       All -> listAllEntries
@@ -70,7 +47,7 @@ listSemiAllEntries = liftIO . listDirectory
 
 -- | Return contents in a directory. They contains only all of normal files.
 listEntries :: MonadIO m => RawFilePath -> m [RawFilePath]
-listEntries path = listSemiAllEntries path <&> filter (\s -> not $ "." `B.isPrefixOf` s)
+listEntries path = filter (\s -> not $ "." `B.isPrefixOf` s) <$> listSemiAllEntries path
 
 -- | Exclude backup files, which have @~@ as a suffix.
 ignoreBackupsFilter :: [RawFilePath] -> [RawFilePath]

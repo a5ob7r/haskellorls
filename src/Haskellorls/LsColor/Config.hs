@@ -1,7 +1,6 @@
 -- | This is a base module to construst 'LS_COLORS' or similar extensions.
 module Haskellorls.LsColor.Config
-  ( toWrappedText,
-    wrap,
+  ( wrap,
     Options (..),
     Sources (..),
     module Haskellorls.LsColor.Class,
@@ -15,7 +14,6 @@ import Data.Maybe
 import qualified Data.Text as T
 import Haskellorls.Class
 import Haskellorls.LsColor.Class
-import qualified Haskellorls.WrappedText as WT
 import Prelude hiding (lookup)
 
 -- | A dictionary, which contains raw parsed results of 'LS_COLORS' or similar
@@ -105,17 +103,6 @@ instance (Deserialize a, From Sources e, Default (Options a e)) => From Sources 
       Options {..} = def
       lookup' :: T.Text -> Sources -> Maybe T.Text
       lookup' = lookup
-
--- | A wrapper utility to generate wrapped text using 'LS_COLORS' or similar
--- extension configurations.
-toWrappedText :: (Semigroup a, Serialize a) => Options a e -> (Options a e -> Maybe a) -> T.Text -> WT.WrappedText
-toWrappedText o@(Options {..}) getter t = case getter o of
-  Just esc -> WT.WrappedText (serialize $ wrap o esc) t suffix
-  _ -> WT.WrappedText "" t ""
-  where
-    suffix = case reset of
-      Just reset' -> serialize $ wrap o reset'
-      _ -> ""
 
 -- | Wrap an escape sequence parameter with 'left' aka 'LEFTCODE' and 'right'
 -- aka 'RIGHTCODE'. Expected outputs are such as '\033[0m' and '\e[38;5;81m'.

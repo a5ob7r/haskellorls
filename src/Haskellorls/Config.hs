@@ -8,6 +8,7 @@ where
 import Control.Applicative
 import Data.Maybe
 import qualified Data.Text as T
+import qualified Haskellorls.Config.Depth as Depth
 import qualified Haskellorls.Config.Environment as Env
 import Haskellorls.Config.Format
 import Haskellorls.Config.Indicator
@@ -23,7 +24,6 @@ import Haskellorls.Config.Size (BlockSize (..))
 import Haskellorls.Config.Sort
 import Haskellorls.Config.Time
 import qualified Haskellorls.Config.When as W
-import qualified Haskellorls.Depth as Depth
 import System.FilePath.Posix.ByteString
 import Prelude hiding (reverse)
 

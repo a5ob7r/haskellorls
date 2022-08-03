@@ -1,4 +1,4 @@
-module Haskellorls.Recursive.Utils
+module Haskellorls.Walk.Utils
   ( AlreadySeenInodes,
     singletonInodes,
     updateAlreadySeenInode,

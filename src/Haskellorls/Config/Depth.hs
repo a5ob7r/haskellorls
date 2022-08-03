@@ -1,4 +1,4 @@
-module Haskellorls.Depth
+module Haskellorls.Config.Depth
   ( Depth,
     makeDepth,
     makeInf,

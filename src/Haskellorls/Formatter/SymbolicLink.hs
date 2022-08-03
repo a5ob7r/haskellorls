@@ -9,9 +9,9 @@ import qualified Haskellorls.Config as Config
 import qualified Haskellorls.Formatter.Escape as Escape
 import qualified Haskellorls.Formatter.Name as Name
 import qualified Haskellorls.Formatter.Quote as Quote
+import qualified Haskellorls.Formatter.WrappedText as WT
 import qualified Haskellorls.LsColor.Color as Color
 import qualified Haskellorls.NodeInfo as Node
-import qualified Haskellorls.WrappedText as WT
 
 linkName :: Config.Config -> Node.NodeInfo -> [WT.WrappedText]
 linkName config node = case Node.getNodeLinkInfo node of
