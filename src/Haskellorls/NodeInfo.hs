@@ -8,6 +8,7 @@ module Haskellorls.NodeInfo
     userID,
     groupID,
     fileTime,
+    specialDeviceID,
     nodeType,
     isDirectory,
     mkNodeInfo,
@@ -126,6 +127,7 @@ data ProxyFileStatus = ProxyFileStatus
     pfsGroupID :: Types.GroupID,
     pfsFileSize :: Types.FileOffset,
     pfsFileTime :: POSIXTime,
+    pfsSpecialDeviceID :: Types.DeviceID,
     pfsNodeType :: NodeType
   }
 
@@ -142,6 +144,7 @@ mkProxyFileStatus config status =
         Time.MODIFICATION -> Files.modificationTimeHiRes status
         Time.ACCESS -> Files.accessTimeHiRes status
         Time.CHANGE -> Files.statusChangeTimeHiRes status,
+      pfsSpecialDeviceID = Files.specialDeviceID status,
       pfsNodeType = mkNodeType status
     }
 
@@ -255,6 +258,9 @@ fileSize = pfsFileSize . getNodeStatus
 
 fileTime :: NodeInfo -> POSIXTime
 fileTime = pfsFileTime . getNodeStatus
+
+specialDeviceID :: NodeInfo -> Types.DeviceID
+specialDeviceID = pfsSpecialDeviceID . getNodeStatus
 
 nodeType :: NodeInfo -> NodeType
 nodeType = pfsNodeType . getNodeStatus

@@ -16,6 +16,7 @@ import Data.Time.Format
 import Data.Time.LocalTime
 import Haskellorls.Class
 import qualified Haskellorls.Config as Config
+import Haskellorls.Config.DeviceNumber
 import qualified Haskellorls.Config.Indicator as Indicator
 import qualified Haskellorls.Formatter.Context as Context
 import qualified Haskellorls.Formatter.Filemode as Filemode
@@ -88,15 +89,6 @@ buildNodeNamePrinter config printers node = concatMap (\npType -> nodeNamePrinte
 
 type Printer = Node.NodeInfo -> [WT.WrappedText]
 
-type Alignmenter = [WT.WrappedText] -> [WT.WrappedText]
-
-type AlignmenterBuilder = T.Text -> Int -> Alignmenter
-
-data AlighmentType
-  = NONE
-  | LEFT
-  | RIGHT
-
 data Printers = Printers
   { fileInodePrinter :: Printer,
     fileBlockPrinter :: Printer,
@@ -105,47 +97,11 @@ data Printers = Printers
     fileOwnerPrinter :: Printer,
     fileGroupPrinter :: Printer,
     fileContextPrinter :: Printer,
-    fileSizePrinter :: Printer,
+    fileSizePrinter :: (Int, Int) -> Printer,
     fileTimePrinter :: Printer,
     fileNamePrinter :: Printer,
     fileNameWithDQuotePrinter :: Printer
   }
-
-alignmentTypeFor :: PrinterType -> AlighmentType
-alignmentTypeFor dType = case dType of
-  FILEINODE -> RIGHT
-  FILEBLOCK -> RIGHT
-  FILEFIELD -> NONE
-  FILELINK -> RIGHT
-  FILEOWNER -> LEFT
-  FILEGROUP -> LEFT
-  FILEAUTHOR -> LEFT
-  FILECONTEXT -> LEFT
-  FILESIZE -> RIGHT
-  FILETIME -> LEFT
-  FILENAME -> NONE
-  FILENAMEWITHDQUOTE -> NONE
-
-printerSelectorFor :: PrinterType -> Printers -> Printer
-printerSelectorFor pType = case pType of
-  FILEINODE -> fileInodePrinter
-  FILEBLOCK -> fileBlockPrinter
-  FILEFIELD -> fileFieldPrinter
-  FILELINK -> fileLinkPrinter
-  FILEOWNER -> fileOwnerPrinter
-  FILEGROUP -> fileGroupPrinter
-  FILEAUTHOR -> fileOwnerPrinter
-  FILECONTEXT -> fileContextPrinter
-  FILESIZE -> fileSizePrinter
-  FILETIME -> fileTimePrinter
-  FILENAME -> fileNamePrinter
-  FILENAMEWITHDQUOTE -> fileNameWithDQuotePrinter
-
-alignmenterBuilderSelectorFor :: AlighmentType -> AlignmenterBuilder
-alignmenterBuilderSelectorFor aType = case aType of
-  NONE -> noPadding
-  LEFT -> rightPadding
-  RIGHT -> leftPadding
 
 buildPrinters :: Config.Config -> IO Printers
 buildPrinters config = do
@@ -204,9 +160,9 @@ buildPrinters config = do
 
       fileSizePrinter =
         case (shouldColorize, isEnableExtraColor) of
-          (True, True) -> Size.coloredFileSize lscolors config
-          (True, _) -> Size.normalColoredFileSize lscolors config
-          _ -> Size.fileSize config
+          (True, True) -> \w -> Size.coloredFileSize w lscolors config
+          (True, _) -> \w -> Size.normalColoredFileSize w lscolors config
+          _ -> (`Size.fileSize` config)
 
       fileTimePrinter =
         case (shouldColorize, isEnableExtraColor) of
@@ -276,45 +232,44 @@ neededBy pType config = case pType of
     noQuote = Config.noQuote config
 
 buildColumn :: [Node.NodeInfo] -> Printers -> PrinterType -> [[WT.WrappedText]]
-buildColumn nodes printers pType = map alignmenter nodes'
+buildColumn nodes printers pType = justify <$> nodes'
   where
-    printer = printerSelectorFor pType printers
-    nodes' = map printer nodes
-    maxLen = maximum $ map (sum . map termLength) nodes'
-    aType = alignmentTypeFor pType
-    aBuilder = alignmenterBuilderSelectorFor aType
-    alignmenter = aBuilder " " maxLen
+    format =
+      case pType of
+        FILEINODE -> fileInodePrinter printers
+        FILEBLOCK -> fileBlockPrinter printers
+        FILEFIELD -> fileFieldPrinter printers
+        FILELINK -> fileLinkPrinter printers
+        FILEOWNER -> fileOwnerPrinter printers
+        FILEGROUP -> fileGroupPrinter printers
+        FILEAUTHOR -> fileOwnerPrinter printers
+        FILECONTEXT -> fileContextPrinter printers
+        FILESIZE ->
+          let majorWidth = maximum $ 0 : (length . show . unMajorID . from . Node.specialDeviceID <$> nodes)
+              minorWidth = maximum $ 0 : (length . show . unMinorID . from . Node.specialDeviceID <$> nodes)
+           in fileSizePrinter printers (majorWidth, minorWidth)
+        FILETIME -> fileTimePrinter printers
+        FILENAME -> fileNamePrinter printers
+        FILENAMEWITHDQUOTE -> fileNameWithDQuotePrinter printers
+    nodes' = format <$> nodes
+    l = maximum $ 0 : (sum . map termLength <$> nodes')
+    justify =
+      case pType of
+        FILEINODE -> WT.justifyRight l ' '
+        FILEBLOCK -> WT.justifyRight l ' '
+        FILEFIELD -> id
+        FILELINK -> WT.justifyRight l ' '
+        FILEOWNER -> WT.justifyLeft l ' '
+        FILEGROUP -> WT.justifyLeft l ' '
+        FILEAUTHOR -> WT.justifyLeft l ' '
+        FILECONTEXT -> WT.justifyLeft l ' '
+        FILESIZE -> WT.justifyRight l ' '
+        FILETIME -> WT.justifyLeft l ' '
+        FILENAME -> id
+        FILENAMEWITHDQUOTE -> id
 
 buildGrid :: [Node.NodeInfo] -> Printers -> [PrinterType] -> [[[WT.WrappedText]]]
 buildGrid nodes printers = L.transpose . map (buildColumn nodes printers)
 
 buildLines :: Foldable t => t Node.NodeInfo -> Printers -> [PrinterType] -> [[WT.WrappedText]]
 buildLines nodes printers types = L.intercalate [WT.deserialize " "] <$> buildGrid (toList nodes) printers types
-
-leftPadding :: AlignmenterBuilder
-leftPadding c n | n > -1 = padding c (-n)
-leftPadding c n = noPadding c n
-
-rightPadding :: AlignmenterBuilder
-rightPadding c n | n > -1 = padding c n
-rightPadding c n = noPadding c n
-
-noPadding :: AlignmenterBuilder
-noPadding _ _ = id
-
-padding :: AlignmenterBuilder
-padding c n ys
-  | n' > l = padding' c padSize ys
-  | otherwise = ys
-  where
-    n' = abs n
-    l = sum $ map termLength ys
-    padSize = signum n * (n' - l)
-
-padding' :: AlignmenterBuilder
-padding' c n t = case n `compare` 0 of
-  GT -> t <> pad
-  LT -> pad <> t
-  EQ -> t
-  where
-    pad = (: []) . WT.deserialize $ T.replicate (abs n) c

@@ -2,6 +2,8 @@ module Haskellorls.Formatter.WrappedText
   ( WrappedText (..),
     modify,
     wrap,
+    justifyLeft,
+    justifyRight,
     module Haskellorls.Class,
   )
 where
@@ -39,3 +41,23 @@ wrap :: (Semigroup a, Serialize a) => Config.Options a e -> (Config.Options a e 
 wrap o@(Config.Options {..}) getter t = case getter o of
   Just esc -> WrappedText (serialize $ Config.wrap o esc) t $ maybe "" (serialize . Config.wrap o) reset
   _ -> WrappedText "" t ""
+
+-- | Left-justify a list of 'WrappedText' to the given length, using the given
+-- character.
+justifyLeft :: Int -> Char -> [WrappedText] -> [WrappedText]
+justifyLeft n c wt =
+  case n - l of
+    n' | n' > 0 -> wt <> [deserialize (T.replicate n' $ T.singleton c)]
+    _ -> wt
+  where
+    l = sum $ termLength <$> wt
+
+-- | Right-justify a list of 'WrappedText' to the given length, using the given
+-- character.
+justifyRight :: Int -> Char -> [WrappedText] -> [WrappedText]
+justifyRight n c wt =
+  case n - l of
+    n' | n' > 0 -> deserialize (T.replicate n' $ T.singleton c) : wt
+    _ -> wt
+  where
+    l = sum $ termLength <$> wt

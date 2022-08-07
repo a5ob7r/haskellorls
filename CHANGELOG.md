@@ -11,6 +11,7 @@
 
 - Improve compatibility with GNU ls about formatting file size and block size.
 - The default column size is 80.
+- Show major numbers and minor numbers for block devices and character devices instead of each file size.
 
 ### Fixed
 

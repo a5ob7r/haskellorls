@@ -18,6 +18,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import Haskellorls.Class
 import Haskellorls.Config.Context
+import Haskellorls.Config.DeviceNumber
 import Haskellorls.Config.Filemode.Entry
 import Haskellorls.Config.Filemode.Permission
 import Haskellorls.Config.Inode
@@ -155,6 +156,12 @@ instance Dictionary (SizeNumberScale a) Sequence LsColors where
 instance Dictionary (SizeUnitScale a) Sequence LsColors where
   lookup s (Options {..}) = extension >>= lookup s
 
+instance Dictionary MajorID Sequence LsColors where
+  lookup s Options {..} = extension >>= lookup s
+
+instance Dictionary MinorID Sequence LsColors where
+  lookup s Options {..} = extension >>= lookup s
+
 instance Dictionary Datetime Sequence LsColors where
   lookup d (Options {..}) = extension >>= lookup d
 
@@ -196,6 +203,12 @@ instance Dictionary (SizeNumberScale a) Sequence Extensions where
 
 instance Dictionary (SizeUnitScale a) Sequence Extensions where
   lookup s (Extensions {..}) = s `lookup` extraLsColors
+
+instance Dictionary MajorID Sequence Extensions where
+  lookup s Extensions {..} = s `lookup` extraLsColors
+
+instance Dictionary MinorID Sequence Extensions where
+  lookup s Extensions {..} = s `lookup` extraLsColors
 
 instance Dictionary Datetime Sequence Extensions where
   lookup d (Extensions {..}) = d `lookup` extraLsColors
@@ -267,6 +280,8 @@ data ExtraOptions a = ExtraOptions
     fileSizeUnitExa :: Maybe a,
     fileSizeUnitZetta :: Maybe a,
     fileSizeUnitYotta :: Maybe a,
+    deviceMajorID :: Maybe a,
+    deviceMinorID :: Maybe a,
     date :: Maybe a,
     fileLink :: Maybe a,
     fileInode :: Maybe a,
@@ -318,6 +333,12 @@ instance Dictionary (SizeUnitScale a) b (ExtraOptions b) where
     Zetta _ -> fileSizeUnitZetta
     Yotta _ -> fileSizeUnitYotta
 
+instance Dictionary MajorID a (ExtraOptions a) where
+  lookup _ ExtraOptions {..} = deviceMajorID
+
+instance Dictionary MinorID a (ExtraOptions a) where
+  lookup _ ExtraOptions {..} = deviceMinorID
+
 instance Dictionary Datetime a (ExtraOptions a) where
   lookup _ (ExtraOptions {..}) = date
 
@@ -365,6 +386,8 @@ instance Default ExtraLsColors where
         fileSizeUnitExa = Just "32",
         fileSizeUnitZetta = Just "32",
         fileSizeUnitYotta = Just "32",
+        deviceMajorID = Just "1;32",
+        deviceMinorID = Just "32",
         date = Just "34",
         fileLink = Just "36",
         fileInode = Just "36",
@@ -411,6 +434,8 @@ instance From Sources ExtraLsColors where
         fileSizeUnitExa = Sequence <$> "ue" `lookup'` s <|> fileSizeUnitExa,
         fileSizeUnitZetta = Sequence <$> "uz" `lookup'` s <|> fileSizeUnitZetta,
         fileSizeUnitYotta = Sequence <$> "uy" `lookup'` s <|> fileSizeUnitYotta,
+        deviceMajorID = Sequence <$> "df" `lookup'` s <|> deviceMajorID,
+        deviceMinorID = Sequence <$> "ds" `lookup'` s <|> deviceMinorID,
         date = Sequence <$> "da" `lookup'` s <|> date,
         fileLink = Sequence <$> "lc'" `lookup'` s <|> fileLink,
         fileInode = Sequence <$> "in" `lookup'` s <|> fileInode,

@@ -44,6 +44,7 @@ library haskellorls-internal
     Haskellorls.Config
     Haskellorls.Config.Context
     Haskellorls.Config.Depth
+    Haskellorls.Config.DeviceNumber
     Haskellorls.Config.Environment
     Haskellorls.Config.Filemode
     Haskellorls.Config.Filemode.Entry
