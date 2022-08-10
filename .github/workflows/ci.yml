@@ -17,11 +17,11 @@ jobs:
           - ubuntu-latest
           - macOS-latest
         ghc:
+          - '9.4.1'
           - '9.2.4'
           - '9.0.2'
           - '8.10.7'
         cabal:
-          - '3.6.2.0'
           - '3.8.1.0'
 
     steps:
@@ -80,6 +80,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         ghc: ['8.10.7']
+        cabal: ['3.8.1.0']
 
     steps:
       - uses: actions/checkout@v3
@@ -88,14 +89,14 @@ jobs:
         id: setup-haskell
         with:
           ghc-version: ${{ matrix.ghc }}
-          cabal-version: 3.6.2.0
+          cabal-version: ${{ matrix.cabal }}
 
       - uses: actions/cache@v3
         with:
           path: ${{ steps.setup-haskell.outputs.cabal-store }}
-          key: format-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project') }}
+          key: format-${{ runner.os }}-${{ matrix.cabal }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project') }}
           restore-keys: |
-            format-${{ runner.os }}-${{ matrix.ghc }}-
+            format-${{ runner.os }}-${{ matrix.cabal }}-${{ matrix.ghc }}-
 
       - name: Add path
         run: echo ~/.cabal/bin >> "$GITHUB_PATH"

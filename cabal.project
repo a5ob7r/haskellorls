@@ -1,3 +1,9 @@
 packages: ./
 
-index-state: 2022-08-10T00:24:49Z
+index-state: 2022-08-12T07:42:14Z
+
+-- For GHC >=9.4.
+allow-newer:
+  -- This package is deprecated, so probably no longer its dependencies are
+  -- updated.
+  , filepath-bytestring:base
