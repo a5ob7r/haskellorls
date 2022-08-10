@@ -65,7 +65,7 @@ mkTreeNodeInfos' inodes config (node S.:<| nodeSeq) errors = do
 
   let (nodes, newInodes) = runState (Walk.updateAlreadySeenInode nodeinfos) inodes
       pList = makeSomeNewPositionsList (length nodes) $ Node.getTreeNodePositions node
-      nodes' = zipWith (\nd p -> nd {Node.getTreeNodePositions = p}) (Sort.sorter config nodes) pList
+      nodes' = zipWith (\nd p -> nd {Node.getTreeNodePositions = p}) (Sort.sort config nodes) pList
       newNodeSeq = S.fromList nodes' <> nodeSeq
 
   mkTreeNodeInfos' newInodes config' newNodeSeq (errs' <> errors) <&> first (node S.<|)

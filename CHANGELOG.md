@@ -16,6 +16,7 @@
 ### Fixed
 
 - Remove a trailing space of each line for `-m`.
+- Doesn't ignore any punctuation when sorts using flename.
 
 ## 0.5.3.0 -- 2022-07-23
 
