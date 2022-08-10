@@ -141,6 +141,7 @@ library haskellorls-internal
     , safe-exceptions       ^>=0.1.7
     , terminal-size         ^>=0.3.2
     , text                  ^>=2.0
+    , text-icu              ^>=0.8.0.2
     , time                  ^>=1.12.2
     , unix                  ^>=2.7.2
 
