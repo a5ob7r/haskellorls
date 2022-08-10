@@ -1,73 +1,68 @@
-module Haskellorls.Walk.Sort (sorter) where
+module Haskellorls.Walk.Sort (sort) where
 
 import qualified Algorithms.NaturalSort as NSort
-import qualified Data.List as L
+import Data.Char (isPunctuation)
+import Data.List (partition, sortOn)
 import Data.Ord
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
+import qualified Data.Text.ICU as T
 import qualified Haskellorls.Config as Config
 import Haskellorls.Config.Sort
 import qualified Haskellorls.NodeInfo as Node
-import System.FilePath.Posix.ByteString
 
-sorter :: Config.Config -> [Node.NodeInfo] -> [Node.NodeInfo]
-sorter config = merger . separater . sorter' config
+-- | Compare naturally.
+newtype NaturalS a = NaturalS a
+  deriving (Eq)
+
+instance (Eq a, NSort.NaturalSort a) => Ord (NaturalS a) where
+  compare (NaturalS x) (NaturalS y) = x `NSort.compare` y
+
+-- | Compare using ICU.
+newtype ICUS a = ICUS a
+  deriving (Eq)
+
+instance Ord (ICUS T.Text) where
+  compare (ICUS x) (ICUS y) = T.collate (T.collator T.Current) x y
+
+sort :: Config.Config -> [Node.NodeInfo] -> [Node.NodeInfo]
+sort config =
+  merge . separate . case Config.sort config of
+    NONE -> id
+    NAME -> sortByName
+    SIZE -> sortBySize
+    TIME -> sortByTime
+    VERSION -> sortByVersion
+    EXTENSION -> sortByExtension
   where
-    merger (dirs, files) = order config dirs <> order config files
-    separater =
+    separate =
       if Config.groupDirectoriesFirst config && Config.sort config /= NONE
-        then partitionDirectoriesAndFiles
+        then partition $ Node.isDirectory . Node.nodeType . Node.toFileInfo
         else ([],)
+    merge (dirs, files) = order dirs <> order files
+    order = if Config.reverse config then reverse else id
 
-sorter' :: Config.Config -> [Node.NodeInfo] -> [Node.NodeInfo]
-sorter' config = case Config.sort config of
-  NONE -> sortWithNone
-  NAME -> sortWithName
-  SIZE -> sortWithSize
-  TIME -> sortWithTime
-  VERSION -> sortWithVersion
-  EXTENSION -> sortWithExtension
+-- FIXME: Probably this sort isn't compatible with GNU ls. First of all, GNU ls
+-- compares names using @strcoll@, and then fallbacks to @strcmp@ if fails.
+sortByName :: [Node.NodeInfo] -> [Node.NodeInfo]
+sortByName = sortOn $ \node -> let path = toText node in (ICUS $ normalize path, ICUS path)
 
-order :: Config.Config -> [a] -> [a]
-order config
-  | Config.reverse config = reverse
-  | otherwise = id
+sortBySize :: [Node.NodeInfo] -> [Node.NodeInfo]
+sortBySize = sortOn $ Down . Node.fileSize
 
-sortWithNone :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithNone = id
+sortByTime :: [Node.NodeInfo] -> [Node.NodeInfo]
+sortByTime = sortOn $ Down . Node.fileTime
 
-sortWithName :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithName = L.sortBy (\a b -> toPath a `compareName` toPath b)
-  where
-    toPath = T.decodeUtf8 . Node.getNodePath
-    compareName a b
-      | a' == b' = a `compare` b
-      | otherwise = a' `compare` b'
-      where
-        a' = norm a
-        b' = norm b
-    norm =
-      T.toUpper . \s -> case T.uncons s of
-        Just ('.', s') -> s'
-        _ -> s
+sortByVersion :: [Node.NodeInfo] -> [Node.NodeInfo]
+sortByVersion = sortOn $ NaturalS . toText
 
-sortWithSize :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithSize = L.sortOn $ Down . Node.fileSize
+sortByExtension :: [Node.NodeInfo] -> [Node.NodeInfo]
+sortByExtension = sortOn $ \node -> let path = toText node in (ICUS . normalize $ T.takeWhileEnd (/= '.') path, ICUS $ normalize path, ICUS path)
 
-sortWithTime :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithTime = L.sortOn $ Down . Node.fileTime
+-- | Create a "Text" for name comparison from "NodeInfo".
+toText :: Node.NodeInfo -> T.Text
+toText = T.decodeUtf8 . Node.getNodePath
 
-sortWithVersion :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithVersion = L.sortBy (\a b -> toPath a `NSort.compare` toPath b)
-  where
-    toPath = T.decodeUtf8 . Node.getNodePath
-
-sortWithExtension :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortWithExtension = L.sortBy (\a b -> takeExtension (Node.getNodePath a) `compare` takeExtension (Node.getNodePath b))
-
-partitionDirectoriesAndFiles :: [Node.NodeInfo] -> ([Node.NodeInfo], [Node.NodeInfo])
-partitionDirectoriesAndFiles = L.partition isDirectory
-
--- For GNU ls compatibility about `--group-directories-first` option.
-isDirectory :: Node.NodeInfo -> Bool
-isDirectory = Node.isDirectory . Node.nodeType . Node.toFileInfo
+-- | Normalize a "Text" for name comparison.
+normalize :: T.Text -> T.Text
+normalize = T.filter (not . isPunctuation)

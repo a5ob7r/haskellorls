@@ -125,7 +125,7 @@ pathToOp (LsConf (config, _)) depth path = do
 buildDirectoryNodes :: (MonadCatch m, MonadIO m) => Config.Config -> RawFilePath -> m [Node.NodeInfo]
 buildDirectoryNodes config path = do
   contents <- Listing.listContents config path
-  Sort.sorter config <$> (mapM (Node.mkNodeInfo config path) . excluder) contents
+  Sort.sort config <$> (mapM (Node.mkNodeInfo config path) . excluder) contents
   where
     excluder = ignoreExcluder . hideExcluder
     ignorePtn = Config.ignore config
@@ -146,7 +146,7 @@ mkInitialOperations c@(LsConf (config@Config.Config {tree}, _)) paths = do
 
   mapM_ printErr errs
 
-  let (nodes, inodes) = runState (Walk.updateAlreadySeenInode $ Sort.sorter config nodeinfos) mempty
+  let (nodes, inodes) = runState (Walk.updateAlreadySeenInode $ Sort.sort config nodeinfos) mempty
   let (dirs, files) = partition isDirectory nodes
       fileOp = [PrintEntry (Entry FILES "" files config depth) | not (null files)]
 
