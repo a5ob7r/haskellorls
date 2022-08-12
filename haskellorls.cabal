@@ -31,7 +31,7 @@ common common-options
   default-language: Haskell2010
   ghc-options:
     -W -Wall -Wcompat -Wredundant-constraints -Wpartial-fields
-    -Wunused-packages
+    -Wunused-packages -Widentities
 
   if flag(pedantic)
     ghc-options: -Werror
