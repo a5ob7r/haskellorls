@@ -11,6 +11,7 @@ import Data.Time.Clock
 import Data.Time.Format
 import Data.Time.LocalTime
 import Haskellorls.Config.Time
+import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.WrappedText as WT
 import qualified Haskellorls.LsColor as Color
 
@@ -22,15 +23,15 @@ timeStyleFunc zone locale time = \case
   ISO -> timeStyleFunc' ('+' : isoFormat) zone locale time
   FORMAT fmt -> timeStyleFunc' fmt zone locale time
 
-normalColoredTimeStyleFunc :: Color.LsColors -> TimeZone -> TimeLocale -> UTCTime -> TimeStyle -> UTCTime -> [WT.WrappedText]
-normalColoredTimeStyleFunc lscolors zone locale time style fTime = [WT.wrap lscolors getter timeAsT]
+normalColoredTimeStyleFunc :: Color.LsColors -> TimeZone -> TimeLocale -> UTCTime -> TimeStyle -> UTCTime -> [Attr.Attribute WT.WrappedText]
+normalColoredTimeStyleFunc lscolors zone locale time style fTime = [Attr.Other $ WT.wrap lscolors getter timeAsT]
   where
     timeAsT = timeStyleFunc zone locale time style fTime
     getter = Color.normal
 
 -- | A node misc time formatter with the @no@ parameter of the @LS_COLORS@.
-coloredTimeStyleFunc :: Color.LsColors -> TimeZone -> TimeLocale -> UTCTime -> TimeStyle -> UTCTime -> [WT.WrappedText]
-coloredTimeStyleFunc lscolors zone locale time style fTime = [WT.wrap lscolors getter timeAsT]
+coloredTimeStyleFunc :: Color.LsColors -> TimeZone -> TimeLocale -> UTCTime -> TimeStyle -> UTCTime -> [Attr.Attribute WT.WrappedText]
+coloredTimeStyleFunc lscolors zone locale time style fTime = [Attr.Other $ WT.wrap lscolors getter timeAsT]
   where
     timeAsT = timeStyleFunc zone locale time style fTime
     -- TODO: We have no time type information such as modification, access and

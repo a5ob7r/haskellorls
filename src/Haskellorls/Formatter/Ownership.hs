@@ -28,6 +28,7 @@ import Data.Maybe
 import qualified Data.Text as T
 import Haskellorls.Class
 import Haskellorls.Config.Ownership
+import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.WrappedText as WT
 import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
@@ -67,19 +68,19 @@ numericOwnerName :: Node.NodeInfo -> T.Text
 numericOwnerName = T.pack . show . Node.userID
 
 -- | A node owner name formatter for the @no@ parameter of @LS_COLORS@.
-normalColoredOwnerName :: UserIdSubstTable -> Color.LsColors -> Node.NodeInfo -> [WT.WrappedText]
-normalColoredOwnerName table lscolors node = [WT.wrap lscolors Color.normal name]
+normalColoredOwnerName :: UserIdSubstTable -> Color.LsColors -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
+normalColoredOwnerName table lscolors node = [Attr.Other $ WT.wrap lscolors Color.normal name]
   where
     name = ownerName table node
 
-coloredOwnerName :: UserIdSubstTable -> Color.LsColors -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
+coloredOwnerName :: UserIdSubstTable -> Color.LsColors -> UserInfo -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 coloredOwnerName table = coloredOwnerAs (ownerName table)
 
-coloredNumericOwnerName :: Color.LsColors -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
+coloredNumericOwnerName :: Color.LsColors -> UserInfo -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 coloredNumericOwnerName = coloredOwnerAs numericOwnerName
 
-coloredOwnerAs :: (Node.NodeInfo -> T.Text) -> Color.LsColors -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
-coloredOwnerAs f lscolors user node = [WT.wrap lscolors getter (f node)]
+coloredOwnerAs :: (Node.NodeInfo -> T.Text) -> Color.LsColors -> UserInfo -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
+coloredOwnerAs f lscolors user node = [Attr.Other $ WT.wrap lscolors getter (f node)]
   where
     getter
       | currentUserID == nodeOwnerID = Color.lookup $ Myself nodeOwnerID
@@ -99,19 +100,19 @@ numericGroupName :: Node.NodeInfo -> T.Text
 numericGroupName = T.pack . show . Node.groupID
 
 -- | A node group name formatter for the @no@ parameter of @LS_COLORS@.
-normalColoredGroupName :: GroupIdSubstTable -> Color.LsColors -> Node.NodeInfo -> [WT.WrappedText]
-normalColoredGroupName table lscolors node = [WT.wrap lscolors Color.normal name]
+normalColoredGroupName :: GroupIdSubstTable -> Color.LsColors -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
+normalColoredGroupName table lscolors node = [Attr.Other $ WT.wrap lscolors Color.normal name]
   where
     name = groupName table node
 
-coloredGroupName :: GroupIdSubstTable -> Color.LsColors -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
+coloredGroupName :: GroupIdSubstTable -> Color.LsColors -> UserInfo -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 coloredGroupName table = coloredGroupAs (groupName table)
 
-coloredNumericGroupName :: Color.LsColors -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
+coloredNumericGroupName :: Color.LsColors -> UserInfo -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 coloredNumericGroupName = coloredGroupAs numericGroupName
 
-coloredGroupAs :: (Node.NodeInfo -> T.Text) -> Color.LsColors -> UserInfo -> Node.NodeInfo -> [WT.WrappedText]
-coloredGroupAs f lscolors user node = [WT.wrap lscolors getter (f node)]
+coloredGroupAs :: (Node.NodeInfo -> T.Text) -> Color.LsColors -> UserInfo -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
+coloredGroupAs f lscolors user node = [Attr.Other $ WT.wrap lscolors getter (f node)]
   where
     getter
       | nodeGroupID `elem` groupIDs = Color.lookup $ Belongs nodeGroupID

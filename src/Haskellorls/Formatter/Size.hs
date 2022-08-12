@@ -154,6 +154,7 @@ import Haskellorls.Class
 import qualified Haskellorls.Config as Config
 import Haskellorls.Config.DeviceNumber
 import Haskellorls.Config.Size
+import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.WrappedText as WT
 import Haskellorls.Humanize.FileSize
 import qualified Haskellorls.LsColor as Color
@@ -168,13 +169,13 @@ data FileSizeComponent = FileSizeComponent
     fileSizeKibi :: Bool
   }
 
-toWrappedText :: FileSizeComponent -> [WT.WrappedText]
+toWrappedText :: FileSizeComponent -> [Attr.Attribute WT.WrappedText]
 toWrappedText FileSizeComponent {..} =
-  [ WT.deserialize fileSizeNumber,
-    WT.deserialize fileSizeUnit
+  [ Attr.Other $ WT.deserialize fileSizeNumber,
+    Attr.Other $ WT.deserialize fileSizeUnit
   ]
 
-toTotalBlockSize :: Config.Config -> [Types.FileOffset] -> [WT.WrappedText]
+toTotalBlockSize :: Config.Config -> [Types.FileOffset] -> [Attr.Attribute WT.WrappedText]
 toTotalBlockSize config = toWrappedText . toTotalBlockSize' config
 
 toTotalBlockSize' :: Config.Config -> [Types.FileOffset] -> FileSizeComponent
@@ -186,18 +187,18 @@ toTotalBlockSize' config = fileSize' config size . foldl' (\acc o -> acc + toBlo
         | otherwise -> BlockSize 1024
       sz -> sz
 
-fileBlockSize :: Config.Config -> Node.NodeInfo -> [WT.WrappedText]
+fileBlockSize :: Config.Config -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 fileBlockSize config node = toTotalBlockSize config [fileBlockSizeOf node]
 
 -- | A node block size formatter for the @no@ parameter of @LS_COLORS@.
-normalColoredFileBlockSize :: Color.LsColors -> Config.Config -> Node.NodeInfo -> [WT.WrappedText]
-normalColoredFileBlockSize lscolors config node = [WT.wrap lscolors getter (fileSizeNumber <> fileSizeUnit)]
+normalColoredFileBlockSize :: Color.LsColors -> Config.Config -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
+normalColoredFileBlockSize lscolors config node = [Attr.Other $ WT.wrap lscolors getter (fileSizeNumber <> fileSizeUnit)]
   where
     blocksize = fileBlockSizeOf node
     getter = Color.normal
     FileSizeComponent {..} = toTotalBlockSize' config [blocksize]
 
-coloredFileBlockSize :: Color.LsColors -> Config.Config -> Node.NodeInfo -> [WT.WrappedText]
+coloredFileBlockSize :: Color.LsColors -> Config.Config -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 coloredFileBlockSize lscolors config node = coloredFileSize' lscolors $ toTotalBlockSize' config [fileBlockSizeOf node]
 
 -- | Calculate a block size of a file.
@@ -238,7 +239,7 @@ ceilingDiv i d = q + abs (signum r)
   where
     (q, r) = i `divMod` d
 
-fileSize :: (Int, Int) -> Config.Config -> Node.NodeInfo -> [WT.WrappedText]
+fileSize :: (Int, Int) -> Config.Config -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 fileSize widths config node =
   case Node.nodeType node of
     Node.BlockDevise -> deviceNumbers widths Nothing config node
@@ -278,26 +279,26 @@ fileSize' config size offset = case size of
   BlockSize n -> FileSizeComponent offset (T.pack . show $ fromIntegral offset `ceilingDiv` n) "" True
 
 -- | A node file size formatter for the @no@ parameter of the @LS_COLORS@.
-normalColoredFileSize :: (Int, Int) -> Color.LsColors -> Config.Config -> Node.NodeInfo -> [WT.WrappedText]
+normalColoredFileSize :: (Int, Int) -> Color.LsColors -> Config.Config -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 normalColoredFileSize widths lscolors config node =
   case Node.nodeType node of
     Node.BlockDevise -> deviceNumbers widths (Just lscolors) config node
     Node.CharDevise -> deviceNumbers widths (Just lscolors) config node
-    _ -> [WT.wrap lscolors Color.normal (fileSizeNumber <> fileSizeUnit)]
+    _ -> [Attr.Other $ WT.wrap lscolors Color.normal (fileSizeNumber <> fileSizeUnit)]
   where
     FileSizeComponent {..} = fileSize' config (Config.fileSize config) $ Node.fileSize node
 
-coloredFileSize :: (Int, Int) -> Color.LsColors -> Config.Config -> Node.NodeInfo -> [WT.WrappedText]
+coloredFileSize :: (Int, Int) -> Color.LsColors -> Config.Config -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 coloredFileSize widths lscolors config node =
   case Node.nodeType node of
     Node.BlockDevise -> deviceNumbers widths (Just lscolors) config node
     Node.CharDevise -> deviceNumbers widths (Just lscolors) config node
     _ -> coloredFileSize' lscolors . fileSize' config (Config.fileSize config) $ Node.fileSize node
 
-coloredFileSize' :: Color.LsColors -> FileSizeComponent -> [WT.WrappedText]
+coloredFileSize' :: Color.LsColors -> FileSizeComponent -> [Attr.Attribute WT.WrappedText]
 coloredFileSize' lscolors FileSizeComponent {..} =
-  [ WT.wrap lscolors sizeSelector fileSizeNumber,
-    WT.wrap lscolors unitSelector fileSizeUnit
+  [ Attr.Other $ WT.wrap lscolors sizeSelector fileSizeNumber,
+    Attr.Other $ WT.wrap lscolors unitSelector fileSizeUnit
   ]
   where
     sizeSelector = Color.lookup . SizeNumberScale $ unwrap bScale
@@ -309,23 +310,26 @@ coloredFileSize' lscolors FileSizeComponent {..} =
       BI scaled -> scaled
       SI scaled -> scaled
 
-deviceNumbers :: (Int, Int) -> Maybe Color.LsColors -> Config.Config -> Node.NodeInfo -> [WT.WrappedText]
+deviceNumbers :: (Int, Int) -> Maybe Color.LsColors -> Config.Config -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 deviceNumbers widths@(majorWidth, minorWidth) lscolors config node =
   case lscolors of
     Nothing ->
-      WT.justifyRight majorWidth ' ' [deserialize major]
-        <> delimiter
-        <> WT.justifyRight minorWidth ' ' [deserialize minor]
+      Attr.Other
+        <$> WT.justifyRight majorWidth ' ' [deserialize major]
+          <> delimiter
+          <> WT.justifyRight minorWidth ' ' [deserialize minor]
     Just lc ->
       case (Config.colorize config, Config.extraColor config) of
         (True, True) ->
-          WT.justifyRight majorWidth ' ' [WT.wrap lc (lookup majorID) major]
-            <> delimiter
-            <> WT.justifyRight minorWidth ' ' [WT.wrap lc (lookup minorID) minor]
+          Attr.Other
+            <$> WT.justifyRight majorWidth ' ' [WT.wrap lc (lookup majorID) major]
+              <> delimiter
+              <> WT.justifyRight minorWidth ' ' [WT.wrap lc (lookup minorID) minor]
         (True, _) ->
-          WT.justifyRight majorWidth ' ' [WT.wrap lc Color.normal major]
-            <> delimiter
-            <> WT.justifyRight minorWidth ' ' [WT.wrap lc Color.normal minor]
+          Attr.Other
+            <$> WT.justifyRight majorWidth ' ' [WT.wrap lc Color.normal major]
+              <> delimiter
+              <> WT.justifyRight minorWidth ' ' [WT.wrap lc Color.normal minor]
         _ -> deviceNumbers widths Nothing config node
   where
     delimiter = [deserialize ", "]

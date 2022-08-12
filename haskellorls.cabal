@@ -73,6 +73,7 @@ library haskellorls-internal
     Haskellorls.Config.When
     Haskellorls.Control.Exception.Safe
     Haskellorls.Formatter
+    Haskellorls.Formatter.Attribute
     Haskellorls.Formatter.Context
     Haskellorls.Formatter.Escape
     Haskellorls.Formatter.Filemode
@@ -100,6 +101,7 @@ library haskellorls-internal
     Haskellorls.NodeInfo
     Haskellorls.System.Posix.Files.ByteString
     Haskellorls.Walk
+    Haskellorls.Walk.Dired
     Haskellorls.Walk.Listing
     Haskellorls.Walk.Recursive
     Haskellorls.Walk.Sort

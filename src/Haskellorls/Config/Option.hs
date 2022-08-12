@@ -30,6 +30,7 @@ data Option = Option
     oVertical :: Bool,
     oColor :: W.WHEN,
     oDirectory :: Bool,
+    oDired :: Bool,
     oNoneSortExtra :: Bool,
     oClassify :: W.WHEN,
     oExtraColor :: Bool,
@@ -102,6 +103,7 @@ optionParser =
     <*> verticalParser
     <*> Color.colorParser
     <*> directoryParser
+    <*> diredParser
     <*> noneSortExtraParser
     <*> Indicator.classifyParser
     <*> Color.extraColorParser
@@ -385,6 +387,13 @@ directoryParser =
     long "directory"
       <> short 'd'
       <> help "Treats directory as normal file, does not lookup contents in it"
+
+diredParser :: Parser Bool
+diredParser =
+  switch $
+    long "dired"
+      <> short 'D'
+      <> help "Append metadata for Emacs' dired mode."
 
 noneSortExtraParser :: Parser Bool
 noneSortExtraParser =

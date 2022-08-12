@@ -11,6 +11,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import Haskellorls.Class
 import qualified Haskellorls.Config as Config
+import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.Escape as Escape
 import qualified Haskellorls.Formatter.Quote as Quote
 import qualified Haskellorls.Formatter.WrappedText as WT
@@ -18,28 +19,26 @@ import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
 import System.FilePath.Posix.ByteString
 
-colorizedNodeNameWrapper :: Config.Config -> Color.LsColors -> Node.NodeInfo -> [WT.WrappedText]
+colorizedNodeNameWrapper :: Config.Config -> Color.LsColors -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 colorizedNodeNameWrapper config lc nd = Quote.quote (Quote.quoteStyle config) $ colorizedNodeName config lc nd
 
-colorizedNodeName :: Config.Config -> Color.LsColors -> Node.NodeInfo -> WT.WrappedText
-colorizedNodeName config c@(Color.Options {..}) nd = WT.WrappedText (left' <> l <> right' <> wtPrefix) wtWord (wtSuffix <> left' <> r <> right')
+colorizedNodeName :: Config.Config -> Color.LsColors -> Node.NodeInfo -> Attr.Attribute WT.WrappedText
+colorizedNodeName config c@(Color.Options {..}) nd = Attr.Name $ WT.WrappedText (left' <> l <> right' <> wtPrefix) wtWord (wtSuffix <> left' <> r <> right')
   where
-    WT.WrappedText {..} = WT.modify (Escape.escapeFormatter config) $ nodeName config nd
+    WT.WrappedText {..} = Attr.unwrap $ WT.modify (Escape.escapeFormatter config) <$> nodeName config nd
     left' = Color.unSequence $ fromMaybe "" left
     right' = Color.unSequence $ fromMaybe "" right
     l = maybe "" Color.unSequence $ nd `Color.lookup` c
     r = Color.unSequence $ fromMaybe "" reset
 
-nodeNameWrapper :: Config.Config -> Node.NodeInfo -> [WT.WrappedText]
-nodeNameWrapper config = Quote.quote style . WT.modify (Escape.escapeFormatter config) . nodeName config
-  where
-    style = Quote.quoteStyle config
+nodeNameWrapper :: Config.Config -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
+nodeNameWrapper config node = Quote.quote (Quote.quoteStyle config) $ WT.modify (Escape.escapeFormatter config) <$> nodeName config node
 
-nodeName :: Config.Config -> Node.NodeInfo -> WT.WrappedText
+nodeName :: Config.Config -> Node.NodeInfo -> Attr.Attribute WT.WrappedText
 nodeName config@(Config.Config {hyperlink, hostname}) node =
   if hyperlink
-    then WT.WrappedText (left <> uri <> right) (rawNodeName node) (left <> right)
-    else deserialize $ rawNodeName node
+    then Attr.Name $ WT.WrappedText (left <> uri <> right) (rawNodeName node) (left <> right)
+    else Attr.Name $ deserialize $ rawNodeName node
   where
     left = "\^[]8;;"
     right = "\^G"

@@ -67,6 +67,7 @@ data Config = Config
     width :: Int,
     noQuote :: Bool,
     zero :: Bool,
+    dired :: Bool,
     toTTY :: Bool,
     currentWorkingDirectory :: RawFilePath,
     hostname :: T.Text
@@ -187,6 +188,7 @@ mkConfig env Option {..} = Config {..}
       _ -> fromMaybe 80 $ oWidth <|> Env.columnSize env
     noQuote = False
     zero = oZero
+    dired = oDired && format == LONG
     toTTY = Env.toTerminal env
     currentWorkingDirectory = Env.cwd env
     hostname = T.pack $ Env.hostname env

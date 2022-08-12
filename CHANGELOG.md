@@ -6,6 +6,7 @@
 
 - Lookup `COLUMNS` environment variable to determine a column size if no terminal size.
 - `--zero` option.
+- `-D / --dired` option.
 
 ### Changed
 
@@ -17,6 +18,7 @@
 
 - Remove a trailing space of each line for `-m`.
 - Doesn't ignore any punctuation when sorts using flename.
+- Return no error status even if errors occur in directory traversing with `--tree`.
 
 ## 0.5.3.0 -- 2022-07-23
 

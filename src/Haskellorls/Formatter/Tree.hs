@@ -9,6 +9,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as TL
 import Haskellorls.Config.Tree
+import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.WrappedText as WT
 import qualified Haskellorls.LsColor as Color
 
@@ -17,9 +18,9 @@ treeBranch [] = ""
 treeBranch [x] = toTextOnLast x
 treeBranch (x : xs) = TL.toStrict . TL.toLazyText $ L.foldl' (\acc a -> TL.fromText (toTextOnInit a) <> acc) (TL.fromText $ toTextOnLast x) xs
 
-treeBranchWithColor :: Color.LsColors -> [TreeNodePosition] -> [WT.WrappedText]
+treeBranchWithColor :: Color.LsColors -> [TreeNodePosition] -> [Attr.Attribute WT.WrappedText]
 treeBranchWithColor _ [] = []
-treeBranchWithColor lscolors xs@(x : _) = [WT.wrap lscolors getter branch]
+treeBranchWithColor lscolors xs@(x : _) = [Attr.Other $ WT.wrap lscolors getter branch]
   where
     branch = treeBranch xs
     getter = Color.lookup x

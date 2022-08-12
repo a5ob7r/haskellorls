@@ -7,6 +7,7 @@ import qualified Haskellorls.Config.Option as Option
 import Haskellorls.Control.Exception.Safe
 import qualified Haskellorls.Formatter as Formatter
 import qualified Haskellorls.Walk as Walk
+import qualified Haskellorls.Walk.Dired as Dired
 import Options.Applicative
 import Paths_haskellorls (version)
 import System.Exit
@@ -45,16 +46,15 @@ run opt = do
       config' = mkConfig env opt'
 
   printers <- Formatter.buildPrinters config'
-  let printer = Walk.buildPrinter config' printers
-      c = Walk.LsConf (config, printer)
+  let c = Walk.LsConf (config, printers)
 
   (ops, inodes, errs) <- Walk.mkInitialOperations c targets
 
   mapM_ printErr errs
 
-  let s = Walk.LsState (ops, inodes, [])
+  let s = Walk.LsState (ops, inodes, Dired.empty, [])
 
-  (_, Walk.LsState (_, _, errors)) <- Walk.run c s
+  (_, Walk.LsState (_, _, _, errors)) <- Walk.run c s
 
   return $
     if

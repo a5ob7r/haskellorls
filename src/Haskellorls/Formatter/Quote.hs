@@ -12,6 +12,7 @@ import qualified Data.Text as T
 import qualified Haskellorls.Config as Config
 import Haskellorls.Config.Option.Quote
 import Haskellorls.Config.Quote
+import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.WrappedText as WT
 
 -- filename:
@@ -29,12 +30,12 @@ import qualified Haskellorls.Formatter.WrappedText as WT
 --     - no quote (when no filename which need to quote)
 --     - single quote (when a filename have some charactors which are need to quote)
 --     - double quote (when a filename have some single quotes)
-quote :: QuoteStyle -> WT.WrappedText -> [WT.WrappedText]
-quote style wt@WT.WrappedText {..} = case style of
+quote :: QuoteStyle -> Attr.Attribute WT.WrappedText -> [Attr.Attribute WT.WrappedText]
+quote style wt = case style of
   NoQuote -> [wt]
-  SpacePadding -> [WT.deserialize " ", wt]
-  SingleQuote -> [wt {WT.wtWord = "'" <> wtWord <> "'"}]
-  DoubleQuote -> [wt {WT.wtWord = "\"" <> escapeDoubleQuote wtWord <> "\""}]
+  SpacePadding -> [Attr.Other $ WT.deserialize " ", wt]
+  SingleQuote -> [WT.modify (\t -> "'" <> t <> "'") <$> wt]
+  DoubleQuote -> [WT.modify (\t -> "\"" <> escapeDoubleQuote t <> "\"") <$> wt]
   _
     | '\'' `S.member` setA -> quote DoubleQuote wt
     | not $ S.disjoint setA setB -> quote SingleQuote wt
@@ -42,7 +43,8 @@ quote style wt@WT.WrappedText {..} = case style of
         DynamicQuote -> quote SpacePadding wt
         _ -> quote NoQuote wt
     where
-      setA = T.foldl' (flip S.insert) mempty wtWord
+      t = WT.wtWord $ Attr.unwrap wt
+      setA = T.foldl' (flip S.insert) mempty t
       setB = S.fromList charactorsNeedQuote
 
 -- WIP: Should implement singole quote version. Also need to change printer

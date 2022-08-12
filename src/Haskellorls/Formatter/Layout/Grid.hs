@@ -1,8 +1,4 @@
-module Haskellorls.Formatter.Layout.Grid
-  ( buildValidGrid,
-    renderGrid,
-  )
-where
+module Haskellorls.Formatter.Layout.Grid (buildValidGrid) where
 
 import Data.List (intersperse, transpose)
 import qualified Data.Text as T
@@ -11,6 +7,7 @@ import qualified Data.Text.Lazy.Builder as TL
 import Haskellorls.Class
 import qualified Haskellorls.Config as Config
 import qualified Haskellorls.Config.Format as Format
+import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.WrappedText as WT
 
 -- | 'horizontalSplitInto' @n xs@ returns a list which are sliced @xs@ into @n@ elements vertically.
@@ -64,11 +61,11 @@ takeWhileAccumL p accumulator acc (x : xs) =
     then x : takeWhileAccumL p accumulator (accumulator acc x) xs
     else []
 
-buildValidCommaSeparatedGrid :: Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
-buildValidCommaSeparatedGrid n sss = intersperse [WT.deserialize " "] <$> splitsAt validLengths sss'
+buildValidCommaSeparatedGrid :: Int -> [[Attr.Attribute WT.WrappedText]] -> [[[Attr.Attribute WT.WrappedText]]]
+buildValidCommaSeparatedGrid n sss = intersperse [Attr.Other $ WT.deserialize " "] <$> splitsAt validLengths sss'
   where
-    sss' = mapToInit (<> [WT.deserialize ","]) sss
-    lengths = sum . map termLength <$> sss'
+    sss' = mapToInit (<> [Attr.Other $ WT.deserialize ","]) sss
+    lengths = sum . map (termLength . Attr.unwrap) <$> sss'
     validLengths = length <$> f lengths
 
     f [] = []
@@ -88,7 +85,7 @@ splitsAt (n : nx) xs = ys : splitsAt nx xs'
   where
     (ys, xs') = splitAt n xs
 
-buildValidGrid :: Config.Config -> Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
+buildValidGrid :: Config.Config -> Int -> [[Attr.Attribute WT.WrappedText]] -> [[[Attr.Attribute WT.WrappedText]]]
 buildValidGrid _ _ [] = []
 buildValidGrid config columnLength sss =
   case Config.format config of
@@ -106,32 +103,23 @@ buildValidGrid config columnLength sss =
         then buildGridWithTab
         else buildGridWithSpace
 
-renderGrid :: [[[WT.WrappedText]]] -> [TL.Builder]
-renderGrid = map renderLine
-
-renderGridAsPlain :: [[[WT.WrappedText]]] -> [TL.Builder]
+renderGridAsPlain :: [[[Attr.Attribute WT.WrappedText]]] -> [TL.Builder]
 renderGridAsPlain = map renderLineAsPlain
 
-renderLine :: [[WT.WrappedText]] -> TL.Builder
-renderLine = foldMap renderWTList
-
-renderLineAsPlain :: [[WT.WrappedText]] -> TL.Builder
+renderLineAsPlain :: [[Attr.Attribute WT.WrappedText]] -> TL.Builder
 renderLineAsPlain = foldMap renderWTListAsPlain
 
-renderWTList :: [WT.WrappedText] -> TL.Builder
-renderWTList = foldMap (TL.fromText . WT.serialize)
+renderWTListAsPlain :: [Attr.Attribute WT.WrappedText] -> TL.Builder
+renderWTListAsPlain = foldMap (TL.fromText . WT.wtWord . Attr.unwrap)
 
-renderWTListAsPlain :: [WT.WrappedText] -> TL.Builder
-renderWTListAsPlain = foldMap (TL.fromText . WT.wtWord)
-
-validateGrid :: Int -> [[[WT.WrappedText]]] -> Bool
+validateGrid :: Int -> [[[Attr.Attribute WT.WrappedText]]] -> Bool
 validateGrid n grid
   | n >= maxLen = True
   | otherwise = False
   where
     maxLen = maximum . map (termLength . TL.toStrict . TL.toLazyText) $ renderGridAsPlain grid
 
-buildGridWithTab :: Config.Config -> Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
+buildGridWithTab :: Config.Config -> Int -> [[Attr.Attribute WT.WrappedText]] -> [[[Attr.Attribute WT.WrappedText]]]
 buildGridWithTab config n wtss = map (buildRow (Config.tabSize config) maxLengths) $ transpose grid
   where
     grid = splitter n wtss
@@ -140,12 +128,12 @@ buildGridWithTab config n wtss = map (buildRow (Config.tabSize config) maxLength
       Format.HORIZONTAL -> verticalSplitInto
       _ -> horizontalSplitInto
 
-buildRow :: Int -> [Int] -> [[WT.WrappedText]] -> [[WT.WrappedText]]
+buildRow :: Int -> [Int] -> [[Attr.Attribute WT.WrappedText]] -> [[Attr.Attribute WT.WrappedText]]
 buildRow _ [] _ = []
 buildRow _ _ [] = []
-buildRow tabSize ns wtss = interpolate wtss $ map (\t -> [WT.deserialize t]) paddings
+buildRow tabSize ns wtss = interpolate wtss $ map (\t -> [Attr.Other $ WT.deserialize t]) paddings
   where
-    lengths = map (sum . map termLength) wtss
+    lengths = map (sum . map (termLength . Attr.unwrap)) wtss
     paddings = buildPaddings tabSize ns lengths
 
 interpolate :: [a] -> [a] -> [a]
@@ -173,12 +161,12 @@ buildPaddings' tabSize len (n : ns) (m : ms) = T.replicate nTabs "\t" <> T.repli
     nTabs = a - a'
     nSps = if a == a' then b - b' else b
 
-buildRowWithSpace :: [Int] -> [[WT.WrappedText]] -> [[WT.WrappedText]]
+buildRowWithSpace :: [Int] -> [[Attr.Attribute WT.WrappedText]] -> [[Attr.Attribute WT.WrappedText]]
 buildRowWithSpace [] _ = []
 buildRowWithSpace _ [] = []
-buildRowWithSpace ns wtss = interpolate wtss $ map (\t -> [WT.deserialize t]) paddings
+buildRowWithSpace ns wtss = interpolate wtss $ map (\t -> [Attr.Other $ WT.deserialize t]) paddings
   where
-    lengths = map (sum . map termLength) wtss
+    lengths = map (sum . map (termLength . Attr.unwrap)) wtss
     paddings = buildPaddingsWithSpace 0 ns lengths
 
 buildPaddingsWithSpace :: Int -> [Int] -> [Int] -> [T.Text]
@@ -189,7 +177,7 @@ buildPaddingsWithSpace len (n : ns) (m : ms) = T.replicate (nLen - mLen) " " : b
     nLen = len + n
     mLen = len + m
 
-buildGridWithSpace :: Config.Config -> Int -> [[WT.WrappedText]] -> [[[WT.WrappedText]]]
+buildGridWithSpace :: Config.Config -> Int -> [[Attr.Attribute WT.WrappedText]] -> [[[Attr.Attribute WT.WrappedText]]]
 buildGridWithSpace config n wtss = map (buildRowWithSpace maxLengths) $ transpose grid
   where
     grid = splitter n wtss
@@ -205,5 +193,5 @@ buildGridWithSpace config n wtss = map (buildRowWithSpace maxLengths) $ transpos
 mapToInit :: (a -> a) -> [a] -> [a]
 mapToInit f = foldr (\x acc -> if null acc then [x] else f x : acc) mempty
 
-calcEachRowMaxWTLength :: [[[WT.WrappedText]]] -> [Int]
-calcEachRowMaxWTLength = map $ maximum . (0 :) . map (sum . map termLength)
+calcEachRowMaxWTLength :: [[[Attr.Attribute WT.WrappedText]]] -> [Int]
+calcEachRowMaxWTLength = map $ maximum . (0 :) . map (sum . map (termLength . Attr.unwrap))

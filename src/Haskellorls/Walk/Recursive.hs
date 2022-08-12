@@ -1,6 +1,5 @@
 module Haskellorls.Walk.Recursive
-  ( buildPrinter,
-    mkInitialOperations,
+  ( mkInitialOperations,
     run,
     LsConf (..),
     LsState (..),
@@ -14,7 +13,7 @@ import Data.Bifunctor
 import qualified Data.ByteString.Char8 as C
 import Data.Either
 import Data.Functor
-import Data.List (intersperse, partition)
+import Data.List (foldl', intersperse, partition)
 import qualified Data.Sequence as Seq
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -22,16 +21,19 @@ import qualified Data.Text.Encoding as T
 import qualified Data.Text.IO as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as TL
+import Haskellorls.Class
 import qualified Haskellorls.Config as Config
 import qualified Haskellorls.Config.Depth as Depth
 import Haskellorls.Config.Listing
 import Haskellorls.Control.Exception.Safe
 import qualified Haskellorls.Formatter as Formatter
+import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.Layout.Grid as Grid
 import qualified Haskellorls.Formatter.Quote as Quote
 import qualified Haskellorls.Formatter.Size as Size
 import qualified Haskellorls.Formatter.WrappedText as WT
 import qualified Haskellorls.NodeInfo as Node
+import qualified Haskellorls.Walk.Dired as Dired
 import qualified Haskellorls.Walk.Listing as Listing
 import qualified Haskellorls.Walk.Sort as Sort
 import qualified Haskellorls.Walk.Tree as Tree
@@ -60,11 +62,9 @@ data Operation
   | PrintEntry Entry
   | PrintTree Tree
 
-newtype Printer = Printer (Operation -> T.Text)
+newtype LsConf = LsConf (Config.Config, Formatter.Printers)
 
-newtype LsConf = LsConf (Config.Config, Printer)
-
-newtype LsState = LsState ([Operation], Walk.AlreadySeenInodes, [SomeException])
+newtype LsState = LsState ([Operation], Walk.AlreadySeenInodes, Dired.NameIndeces, [SomeException])
 
 -- | A central piece monad of haskellorls.
 --
@@ -77,35 +77,55 @@ runLs :: LsConf -> LsState -> Ls a -> IO (a, LsState)
 runLs c s (Ls a) = runStateT (runReaderT a c) s
 
 run :: LsConf -> LsState -> IO ((), LsState)
-run c s = runLs c s go
+run conf st = runLs conf st go
   where
     go =
       get >>= \case
-        LsState ([], _, _) -> pure ()
-        s'@(LsState (op : _, _, _)) -> do
-          c'@(LsConf (config, Printer printer)) <- ask
+        LsState ([], _, indeces, _) -> do
+          c <- asks $ \(LsConf (c, _)) -> c
 
-          errs <- do
-            (op', errs) <- case op of
-              (PrintTree (Tree {..})) -> do
-                -- FIXME: Move directory traversing into an appropriate place.
-                (nodes, errs) <- Tree.mkTreeNodeInfos config treeNode
-                return (PrintTree $ Tree {treeNodes = nodes, ..}, errs)
-              _ -> return (op, mempty)
+          when (Config.dired c) $ do
+            unless (null $ Dired.dired indeces) $
+              liftIO . T.putStrLn . TL.toStrict . TL.toLazyText $
+                "//DIRED//" <> foldl' (\acc (x, y) -> foldr (\t acc' -> TL.fromText t <> acc') acc [" ", T.pack (show x), " ", T.pack (show y)]) mempty (Dired.dired indeces)
 
-            liftIO . T.putStr $ printer op'
+            unless (null $ Dired.subdired indeces) $
+              liftIO . T.putStrLn . TL.toStrict . TL.toLazyText $
+                "//SUBDIRED//" <> foldl' (\acc (x, y) -> foldr (\t acc' -> TL.fromText t <> acc') acc [" ", T.pack (show x), " ", T.pack (show y)]) mempty (Dired.subdired indeces)
 
-            return errs
+            liftIO . T.putStrLn $
+              "//DIRED-OPTIONS// --quoting-style="
+                <> case Config.quotingStyle c of
+                  Quote.NoStyle -> "shell-escape"
+                  Quote.Literal -> "literal"
+                  Quote.Shell -> "shell"
+                  Quote.ShellAlways -> "shell-always"
+                  Quote.ShellEscape -> "shell-escape"
+                  Quote.ShellEscapeAlways -> "shell-escape-always"
+                  Quote.C -> "c"
+                  Quote.Escape -> "escape"
+        LsState (op : ops, inodes, indeces, errors) -> do
+          c@(LsConf (config, printers)) <- ask
 
-          modify (\(LsState (ops, inodes, errors)) -> LsState (ops, inodes, errs <> errors))
+          (op', errs) <- case op of
+            (PrintTree (Tree {..})) -> do
+              -- FIXME: Move directory traversing into an appropriate place.
+              (nodes, errs) <- Tree.mkTreeNodeInfos config treeNode
+              return (PrintTree $ Tree {treeNodes = nodes, ..}, errs)
+            _ -> return (op, mempty)
 
-          put =<< newLsState c' s'
+          let divs = mkDivisions config printers op'
+              indeces' = foldl' (\acc wt -> Dired.update (T.encodeUtf8 . WT.wtWord <$> wt) acc) indeces divs
+
+          liftIO . T.putStr . TL.toStrict . TL.toLazyText $ foldr (\x acc -> (TL.fromText . serialize $ Attr.unwrap x) <> acc) mempty divs
+
+          put =<< updateLsState c (LsState (op' : ops, inodes, indeces', errs <> errors))
 
           go
 
-newLsState :: (MonadCatch m, MonadIO m) => LsConf -> LsState -> m LsState
-newLsState _ s@(LsState ([], _, _)) = pure s
-newLsState c@(LsConf (config, _)) (LsState (op : ops, inodes, errors)) = case op of
+updateLsState :: (MonadCatch m, MonadIO m) => LsConf -> LsState -> m LsState
+updateLsState _ s@(LsState ([], _, _, _)) = pure s
+updateLsState c@(LsConf (config, _)) (LsState (op : ops, inodes, indeces, errors)) = case op of
   PrintEntry (Entry {..})
     | Config.recursive config && entryDepth < Config.level config -> do
         let (nodes, newInodes) = runState (Walk.updateAlreadySeenInode $ filter (Node.isDirectory . Node.nodeType) entryNodes) inodes
@@ -113,8 +133,8 @@ newLsState c@(LsConf (config, _)) (LsState (op : ops, inodes, errors)) = case op
         (errs, ops') <- partitionEithers <$> mapM (tryIO . pathToOp c (Depth.increaseDepth entryDepth)) paths
         mapM_ printErr errs
         let entries = (\es -> if null es then es else Newline : es) $ intersperse Newline ops'
-        pure $ LsState (entries <> ops, newInodes, (toException <$> errs) <> errors)
-  _ -> pure $ LsState (ops, inodes, errors)
+        pure $ LsState (entries <> ops, newInodes, indeces, (toException <$> errs) <> errors)
+  _ -> pure $ LsState (ops, inodes, indeces, errors)
 
 pathToOp :: (MonadCatch m, MonadIO m) => LsConf -> Depth.Depth -> RawFilePath -> m Operation
 pathToOp (LsConf (config, _)) depth path = do
@@ -167,41 +187,36 @@ mkInitialOperations c@(LsConf (config@Config.Config {tree}, _)) paths = do
       | Config.directory config = const False
       | otherwise = Node.isDirectory . Node.nodeType
 
-buildPrinter :: Config.Config -> Formatter.Printers -> Printer
-buildPrinter config printers = Printer $ TL.toStrict . TL.toLazyText . foldr (\x acc -> x <> eol <> acc) mempty . generateEntryLines config printers
-  where
-    eol = TL.fromText $ if Config.zero config then "\0" else "\n"
+mkDivisions :: Config.Config -> Formatter.Printers -> Operation -> [Attr.Attribute WT.WrappedText]
+mkDivisions config printers =
+  foldr (\x acc -> [Attr.Other $ deserialize "  " | Config.dired config && not (null x)] <> x <> [Attr.Other . deserialize $ if Config.zero config then "\0" else "\n"] <> acc) mempty . \case
+    Newline -> [[]]
+    PrintEntry (Entry {..}) -> filter (not . null) ([header] <> [totalBlockSize]) <> (mconcat <$> Grid.buildValidGrid config (Config.width config) nodes')
+      where
+        config' =
+          if shouldQuote entryNodes
+            then config
+            else config {Config.noQuote = True}
 
-generateEntryLines :: Config.Config -> Formatter.Printers -> Operation -> [TL.Builder]
-generateEntryLines config printers op = case op of
-  Newline -> [TL.fromText ""]
-  PrintEntry (Entry {..}) ->
-    addHeader . addTotalBlockSize . Grid.renderGrid $ Grid.buildValidGrid config (Config.width config) nodes'
-    where
-      config' =
-        if shouldQuote entryNodes
-          then config
-          else config {Config.noQuote = True}
-      nodes' = Formatter.buildLines entryNodes printers $ Formatter.buildPrinterTypes config'
-      addHeader = case entryType of
-        FILES -> id
-        SINGLEDIR | not (Config.recursive config) -> id
-        _ -> \ss -> TL.fromText (T.decodeUtf8 entryPath `T.snoc` ':') : ss
+        nodes' = Formatter.buildLines entryNodes printers $ Formatter.buildPrinterTypes config'
 
-      -- Add total block size header only about directries when long style
-      -- layout or `-s / --size` is passed.
-      addTotalBlockSize = case entryType of
-        _ | Config.size config -> (builder :)
-        FILES -> id
-        _
-          | Config.isLongStyle config -> (builder :)
-          | otherwise -> id
-        where
-          builder = TL.fromText . T.concat . ("total " :) . map WT.serialize . Size.toTotalBlockSize config $ map Node.fileSize entryNodes
-  PrintTree (Tree {..}) ->
-    map (foldMap $ TL.fromText . WT.serialize) . Formatter.buildLines treeNodes printers $ Formatter.buildPrinterTypes config'
-    where
-      config' =
+        header = case entryType of
+          FILES -> []
+          SINGLEDIR | not (Config.recursive config) -> []
+          _ -> [Attr.Dir . deserialize $ T.decodeUtf8 entryPath, Attr.Other $ deserialize ":"]
+
+        -- Add total block size header only about directries when long style
+        -- layout or @-s / --size@ is passed.
+        totalBlockSize = case entryType of
+          _ | Config.size config -> [size]
+          FILES -> []
+          _
+            | Config.isLongStyle config -> [size]
+            | otherwise -> []
+          where
+            size = Attr.Other . deserialize . T.concat . ("total " :) . map (WT.serialize . Attr.unwrap) . Size.toTotalBlockSize config $ Node.fileSize <$> entryNodes
+    PrintTree (Tree {..}) ->
+      Formatter.buildLines treeNodes printers . Formatter.buildPrinterTypes $
         if shouldQuote treeNodes
           then config
           else config {Config.noQuote = True}
