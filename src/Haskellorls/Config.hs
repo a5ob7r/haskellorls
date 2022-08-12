@@ -188,7 +188,7 @@ mkConfig env Option {..} = Config {..}
       _ -> fromMaybe 80 $ oWidth <|> Env.columnSize env
     noQuote = False
     zero = oZero
-    dired = oDired && format == LONG
+    dired = oDired && format == LONG && not tree
     toTTY = Env.toTerminal env
     currentWorkingDirectory = Env.cwd env
     hostname = T.pack $ Env.hostname env

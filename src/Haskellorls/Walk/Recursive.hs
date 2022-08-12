@@ -115,7 +115,10 @@ run conf st = runLs conf st go
             _ -> return (op, mempty)
 
           let divs = mkDivisions config printers op'
-              indeces' = foldl' (\acc wt -> Dired.update (T.encodeUtf8 . WT.wtWord <$> wt) acc) indeces divs
+              indeces' =
+                if Config.dired config
+                  then foldl' (\acc wt -> Dired.update (T.encodeUtf8 . WT.wtWord <$> wt) acc) indeces divs
+                  else indeces
 
           liftIO . T.putStr . TL.toStrict . TL.toLazyText $ foldr (\x acc -> (TL.fromText . serialize $ Attr.unwrap x) <> acc) mempty divs
 
