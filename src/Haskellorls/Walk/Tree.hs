@@ -8,10 +8,10 @@ import Data.Functor
 import qualified Data.Sequence as S
 import GHC.IO.Exception
 import qualified Haskellorls.Config as Config
-import qualified Haskellorls.Config.Depth as Depth
 import Haskellorls.Config.Listing
 import Haskellorls.Config.Tree
 import Haskellorls.Control.Exception.Safe
+import Haskellorls.Data.Infinitable
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Walk.Listing as Listing
 import qualified Haskellorls.Walk.Sort as Sort
@@ -43,7 +43,7 @@ mkTreeNodeInfos' _ _ S.Empty _ = pure mempty
 mkTreeNodeInfos' inodes config (node S.:<| nodeSeq) errors = do
   let path = Node.getNodeDirName node </> Node.getNodePath node
   contents <- case Config.listing config of
-    _ | Depth.isDepthZero depth || not (Node.isDirectory $ Node.nodeType node) -> pure []
+    _ | depth <= Only 0 || not (Node.isDirectory $ Node.nodeType node) -> pure []
     -- Force hide '.' and '..' to avoid infinite loop.
     All ->
       tryIO (Listing.listContents config {Config.listing = AlmostAll} path) >>= \case
@@ -70,5 +70,5 @@ mkTreeNodeInfos' inodes config (node S.:<| nodeSeq) errors = do
 
   mkTreeNodeInfos' newInodes config' newNodeSeq (errs' <> errors) <&> first (node S.<|)
   where
-    config' = config {Config.level = Depth.decreaseDepth depth}
+    config' = config {Config.level = pred <$> depth}
     depth = Config.level config

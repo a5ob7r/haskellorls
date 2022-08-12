@@ -43,7 +43,6 @@ library haskellorls-internal
     Haskellorls.Class
     Haskellorls.Config
     Haskellorls.Config.Context
-    Haskellorls.Config.Depth
     Haskellorls.Config.DeviceNumber
     Haskellorls.Config.Environment
     Haskellorls.Config.Filemode
@@ -72,6 +71,7 @@ library haskellorls-internal
     Haskellorls.Config.Tree
     Haskellorls.Config.When
     Haskellorls.Control.Exception.Safe
+    Haskellorls.Data.Infinitable
     Haskellorls.Formatter
     Haskellorls.Formatter.Attribute
     Haskellorls.Formatter.Context
@@ -171,6 +171,7 @@ test-suite test
 
   other-modules:
     Test.Haskellorls.Config.Option.SizeSpec
+    Test.Haskellorls.Data.InfinitableSpec
     Test.Haskellorls.Humanize.FileSizeSpec
 
   build-tool-depends: sydtest-discover:sydtest-discover -any

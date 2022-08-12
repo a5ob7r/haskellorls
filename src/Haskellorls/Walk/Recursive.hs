@@ -23,9 +23,9 @@ import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as TL
 import Haskellorls.Class
 import qualified Haskellorls.Config as Config
-import qualified Haskellorls.Config.Depth as Depth
 import Haskellorls.Config.Listing
 import Haskellorls.Control.Exception.Safe
+import Haskellorls.Data.Infinitable
 import qualified Haskellorls.Formatter as Formatter
 import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.Layout.Grid as Grid
@@ -47,7 +47,7 @@ data Entry = Entry
     entryPath :: RawFilePath,
     entryNodes :: [Node.NodeInfo],
     entryConfig :: Config.Config,
-    entryDepth :: Depth.Depth
+    entryDepth :: Infinitable Int
   }
 
 data Tree = Tree
@@ -133,13 +133,13 @@ updateLsState c@(LsConf (config, _)) (LsState (op : ops, inodes, indeces, errors
     | Config.recursive config && entryDepth < Config.level config -> do
         let (nodes, newInodes) = runState (Walk.updateAlreadySeenInode $ filter (Node.isDirectory . Node.nodeType) entryNodes) inodes
             paths = map (\node -> entryPath </> Node.getNodePath node) nodes
-        (errs, ops') <- partitionEithers <$> mapM (tryIO . pathToOp c (Depth.increaseDepth entryDepth)) paths
+        (errs, ops') <- partitionEithers <$> mapM (tryIO . pathToOp c (succ <$> entryDepth)) paths
         mapM_ printErr errs
         let entries = (\es -> if null es then es else Newline : es) $ intersperse Newline ops'
         pure $ LsState (entries <> ops, newInodes, indeces, (toException <$> errs) <> errors)
   _ -> pure $ LsState (ops, inodes, indeces, errors)
 
-pathToOp :: (MonadCatch m, MonadIO m) => LsConf -> Depth.Depth -> RawFilePath -> m Operation
+pathToOp :: (MonadCatch m, MonadIO m) => LsConf -> Infinitable Int -> RawFilePath -> m Operation
 pathToOp (LsConf (config, _)) depth path = do
   nodes <- buildDirectoryNodes config path
   pure . PrintEntry $ Entry DIRECTORY path nodes config depth
@@ -185,7 +185,7 @@ mkInitialOperations c@(LsConf (config@Config.Config {tree}, _)) paths = do
           ops -> ops
       return (intersperse Newline $ fileOp <> dirOps, inodes, errs)
   where
-    depth = Depth.increaseDepth Depth.makeZero
+    depth = Only 1
     isDirectory
       | Config.directory config = const False
       | otherwise = Node.isDirectory . Node.nodeType
