@@ -8,6 +8,7 @@ module Haskellorls.Formatter
   )
 where
 
+import Data.Default.Class
 import Data.Foldable
 import qualified Data.List as L
 import qualified Data.Text as T
@@ -17,6 +18,7 @@ import Data.Time.LocalTime
 import Haskellorls.Class
 import qualified Haskellorls.Config as Config
 import Haskellorls.Config.DeviceNumber
+import qualified Haskellorls.Config.Format as Format
 import qualified Haskellorls.Config.Indicator as Indicator
 import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.Context as Context
@@ -106,10 +108,22 @@ data Printers = Printers
 
 buildPrinters :: Config.Config -> IO Printers
 buildPrinters config = do
-  lscolors <- Color.lsColors
-  lsicons <- Color.lsIcons
-  uidSubstTable <- if Config.numericUidGid config then pure mempty else Ownership.getUserIdSubstTable
-  gidSubstTable <- if Config.numericUidGid config then pure mempty else Ownership.getGroupIdSubstTable
+  lscolors <-
+    if Config.colorize config
+      then Color.lsColors
+      else return def
+  lsicons <-
+    if Config.icon config
+      then Color.lsIcons
+      else return def
+  uidSubstTable <-
+    if Config.format config == Format.LONG && not (Config.numericUidGid config) && (Config.owner config || Config.author config)
+      then Ownership.getUserIdSubstTable
+      else pure mempty
+  gidSubstTable <-
+    if Config.format config == Format.LONG && not (Config.numericUidGid config) && Config.group config
+      then Ownership.getGroupIdSubstTable
+      else pure mempty
   userInfo <- Ownership.userInfo
   currentTime <- getCurrentTime
   timeZone <- getCurrentTimeZone
