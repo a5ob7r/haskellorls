@@ -59,10 +59,9 @@ data Option = Option
     oLiteral :: Bool,
     oLongWithoutGroup :: Bool,
     oDirectoryIndicator :: Bool,
-    oHideControlChars :: Bool,
-    oShowControlChars :: Bool,
+    oShowControlChars :: Maybe Bool,
     oQuoteName :: Bool,
-    oQuotingStyle :: Quote.QuotingStyle,
+    oQuotingStyle :: Maybe Quote.QuotingStyle,
     oReverse :: Bool,
     oRecursive :: Bool,
     oSize :: Bool,
@@ -132,7 +131,6 @@ optionParser =
     <*> literalParser
     <*> longWithoutGroupParser
     <*> directoryIndicatorParser
-    <*> hideControlCharsParser
     <*> showControlCharsParser
     <*> quoteNameParser
     <*> Quote.quotingStyleParser
@@ -448,18 +446,18 @@ literalParser =
       <> short 'N'
       <> help "Output file name and link name without quoting; and replace all non printable characters to '?'"
 
-hideControlCharsParser :: Parser Bool
-hideControlCharsParser =
-  switch $
-    long "hide-control-chars"
-      <> short 'q'
-      <> help "Output '?' instead of control characters"
-
-showControlCharsParser :: Parser Bool
-showControlCharsParser =
-  switch $
-    long "show-control-chars"
-      <> help "Output control characters 'as is'"
+showControlCharsParser :: Parser (Maybe Bool)
+showControlCharsParser = sParser <|> hParser
+  where
+    sParser =
+      flag' (Just True) $
+        long "show-control-chars"
+          <> help "Output control characters 'as is'"
+    hParser =
+      flag Nothing (Just False) $
+        long "hide-control-chars"
+          <> short 'q'
+          <> help "Output '?' instead of control characters"
 
 kibibytesParser :: Parser Bool
 kibibytesParser =

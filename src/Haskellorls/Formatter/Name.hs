@@ -19,20 +19,22 @@ import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
 import System.FilePath.Posix.ByteString
 
+-- FIXME: Quote with double quotes even if doesn't contain any double quote.
 colorizedNodeNameWrapper :: Config.Config -> Color.LsColors -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 colorizedNodeNameWrapper config lc nd = Quote.quote (Quote.quoteStyle config) $ colorizedNodeName config lc nd
 
 colorizedNodeName :: Config.Config -> Color.LsColors -> Node.NodeInfo -> Attr.Attribute WT.WrappedText
 colorizedNodeName config c@(Color.Options {..}) nd = Attr.Name $ WT.WrappedText (left' <> l <> right' <> wtPrefix) wtWord (wtSuffix <> left' <> r <> right')
   where
-    WT.WrappedText {..} = Attr.unwrap $ WT.modify (Escape.escapeFormatter config) <$> nodeName config nd
+    WT.WrappedText {..} = Attr.unwrap $ WT.modify (Escape.escape config) <$> nodeName config nd
     left' = Color.unSequence $ fromMaybe "" left
     right' = Color.unSequence $ fromMaybe "" right
     l = maybe "" Color.unSequence $ nd `Color.lookup` c
     r = Color.unSequence $ fromMaybe "" reset
 
+-- FIXME: Quote with double quotes even if doesn't contain any double quote.
 nodeNameWrapper :: Config.Config -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
-nodeNameWrapper config node = Quote.quote (Quote.quoteStyle config) $ WT.modify (Escape.escapeFormatter config) <$> nodeName config node
+nodeNameWrapper config node = Quote.quote (Quote.quoteStyle config) $ WT.modify (Escape.escape config) <$> nodeName config node
 
 nodeName :: Config.Config -> Node.NodeInfo -> Attr.Attribute WT.WrappedText
 nodeName config@(Config.Config {hyperlink, hostname}) node =

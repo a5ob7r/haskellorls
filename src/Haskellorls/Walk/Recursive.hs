@@ -96,7 +96,6 @@ run conf st = runLs conf st go
             liftIO . T.putStrLn $
               "//DIRED-OPTIONS// --quoting-style="
                 <> case Config.quotingStyle c of
-                  Quote.NoStyle -> "shell-escape"
                   Quote.Literal -> "literal"
                   Quote.Shell -> "shell"
                   Quote.ShellAlways -> "shell-always"

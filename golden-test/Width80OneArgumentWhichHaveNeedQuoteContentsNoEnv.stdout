@@ -1,3 +1,3 @@
 'double_quote01"".txt'   file02.txt             'space01 .txt'
 'double_quote02"".txt'  "single_quote01'.txt"   'space02  .txt'
- file01.txt             "single_quote02''.txt"   tab	.txt
+ file01.txt             "single_quote02''.txt"  "tab'$'\t''.txt"

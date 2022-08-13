@@ -14,8 +14,6 @@ data QuoteStyle
 
 -- | For option parsing.
 --
--- 'NoStyle':
---   no specified
 -- 'Literal':
 --   same to @--literal@
 -- 'Shell':
@@ -33,8 +31,7 @@ data QuoteStyle
 --
 -- WIP: Add 'Locale' for @locale@
 data QuotingStyle
-  = NoStyle
-  | Literal
+  = Literal
   | Shell
   | ShellAlways
   | ShellEscape

@@ -1,6 +1,6 @@
 {
   "command": "haskellorls",
-  "arguments": ["-C", "--quoting-style=shell-escape", "--width=80", "files/examples05"],
+  "arguments": ["-C", "--width=80", "--escape", "files/examples05"],
   "environment": {"LS_COLORS": ""},
   "asserts": [
     {"exit_code": 0},

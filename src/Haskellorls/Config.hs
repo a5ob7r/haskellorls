@@ -6,7 +6,7 @@ module Haskellorls.Config
 where
 
 import Control.Applicative
-import Data.Maybe
+import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import qualified Haskellorls.Config.Environment as Env
 import Haskellorls.Config.Format
@@ -54,8 +54,17 @@ data Config = Config
     level :: Infinitable Int,
     dereference :: Bool,
     numericUidGid :: Bool,
-    quoteName :: Bool,
+    -- | How quote and escape each filename. If no any command-line option for
+    -- this option, the environment variable @QUOTING_STYLE@ is used as this
+    -- option's value. If the value is unset or an invalid value, then it is
+    -- ignored. In that case, this value is 'ShellEscape' when the stdout is
+    -- connected to a terminl, otherwise 'Literal'.
     quotingStyle :: Quote.QuotingStyle,
+    -- | Whether or not to show any control (or non-printable) charaster as is,
+    -- or to replace them by @?@, when the 'quotingStyle' is 'Literal'. By
+    -- default this value is 'True' unless the stdout is connected to a
+    -- terminal, otherwise 'False'.
+    showControlChars :: Bool,
     reverse :: Bool,
     recursive :: Bool,
     sort :: Sort.SortType,
@@ -151,15 +160,16 @@ mkConfig env Option {..} = Config {..}
     level = oLevel
     dereference = oDereference
     numericUidGid = oNumericUidGid
-    quoteName = oQuoteName
-    -- Probably we should throw a runtime error or output an error message if
-    -- fail to parse the block size come from the environment variable.
-    quotingStyle = case fromMaybe oQuotingStyle $ Env.quotingStyle env >>= Quote.parseQuotingStyle . T.pack of
-      style
-        | oLiteral -> Literal
-        | oEscape -> Escape
-        | oHideControlChars && not oShowControlChars -> Literal
-        | otherwise -> style
+    quotingStyle
+      | oLiteral = Literal
+      | oQuoteName = C
+      | oEscape = Escape
+      | otherwise = case (Env.quotingStyle env >>= (Quote.parseQuotingStyle . T.pack)) <|> oQuotingStyle of
+          Just style -> style
+          Nothing
+            | toTTY -> ShellEscape
+            | otherwise -> Literal
+    showControlChars = fromMaybe (not toTTY) oShowControlChars
     reverse = oReverse
     recursive = oRecursive
     sort = case oSort of

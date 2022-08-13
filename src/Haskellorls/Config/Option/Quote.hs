@@ -9,18 +9,18 @@ import qualified Data.Text as T
 import Haskellorls.Config.Quote
 import Options.Applicative
 
-quotingStyleParser :: Parser QuotingStyle
+quotingStyleParser :: Parser (Maybe QuotingStyle)
 quotingStyleParser =
   option reader $
     long "quoting-style"
       <> metavar "WORD"
-      <> value NoStyle
+      <> value Nothing
       <> help "Specify file name and link name quoting style; this also effects to file name and link name escape style"
       <> completeWith ["literal", "shell", "shell-always", "shell-escape", "shell-escape-always", "c", "escape"]
   where
     reader =
       str >>= \t -> case parseQuotingStyle t of
-        Just s -> pure s
+        Just s -> return $ Just s
         Nothing -> readerError ""
 
 parseQuotingStyle :: T.Text -> Maybe QuotingStyle

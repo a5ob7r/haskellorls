@@ -1,6 +1,6 @@
 {
   "command": "haskellorls",
-  "arguments": ["--literal", "files/examples05"],
+  "arguments": ["--literal", "--hide-control-chars", "files/examples05"],
   "environment": {"LS_COLORS": ""},
   "asserts": [
     {"exit_code": 0},

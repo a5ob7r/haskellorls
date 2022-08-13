@@ -17,7 +17,7 @@ import qualified Haskellorls.NodeInfo as Node
 linkName :: Config.Config -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 linkName config node = case Node.getNodeLinkInfo node of
   Nothing -> []
-  _ -> prefix' : Quote.quote style (WT.modify (Escape.escapeFormatter config) <$> link)
+  _ -> prefix' : Quote.quote style (WT.modify (Escape.escape config) <$> link)
   where
     style = Quote.quoteStyleForLink config
     link = Name.nodeName config $ Node.toFileInfo node

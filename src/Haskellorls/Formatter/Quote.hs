@@ -51,17 +51,14 @@ quote style wt = case style of
 -- architecture.
 quoteStyle :: Config.Config -> QuoteStyle
 quoteStyle config = case Config.quotingStyle config of
-  _ | Config.quoteName config -> DoubleQuote
-  Literal -> NoQuote
-  Shell -> DynamicQuote
-  ShellAlways -> SingleQuote
-  ShellEscape -> DynamicQuote
-  ShellEscapeAlways -> SingleQuote
   C -> DoubleQuote
   Escape -> NoQuote
-  _
-    | Config.noQuote config -> NoQuote
-    | otherwise -> DynamicQuote
+  Literal -> NoQuote
+  ShellAlways -> SingleQuote
+  ShellEscapeAlways -> SingleQuote
+  _ | Config.noQuote config -> NoQuote
+  Shell -> DynamicQuote
+  ShellEscape -> DynamicQuote
 
 quoteStyleForLink :: Config.Config -> QuoteStyle
 quoteStyleForLink config = case style of

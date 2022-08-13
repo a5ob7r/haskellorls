@@ -13,12 +13,16 @@
 - Improve compatibility with GNU ls about formatting file size and block size.
 - The default column size is 80.
 - Show major numbers and minor numbers for block devices and character devices instead of each file size.
+- `--show-control-chars` and `-q / --hide-control-chars` are exclusive.
+- By default quoting-style is `shell-escape` if the stdout is connected to a terminal, otherwise `literal`.
+- By default implies `-q / --hide-control-chars` if the stdout is connected to a terminal, otherwise `--show-control-chars`.
 
 ### Fixed
 
 - Remove a trailing space of each line for `-m`.
 - Doesn't ignore any punctuation when sorts using flename.
 - Return no error status even if errors occur in directory traversing with `--tree`.
+- Quotation for `" |` by `--name-quote` and `--escape`.
 
 ## 0.5.3.0 -- 2022-07-23
 
