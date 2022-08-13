@@ -77,7 +77,6 @@ data Config = Config
     noQuote :: Bool,
     zero :: Bool,
     dired :: Bool,
-    toTTY :: Bool,
     currentWorkingDirectory :: RawFilePath,
     hostname :: T.Text
   }
