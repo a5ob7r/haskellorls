@@ -1,37 +1,23 @@
-module Haskellorls.Formatter.Layout.Grid (buildValidGrid) where
+module Haskellorls.Formatter.Layout.Grid (mkValidGrid) where
 
-import Data.List (intersperse, transpose)
+import Data.List (find, intersperse, transpose, unfoldr)
+import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
-import qualified Data.Text.Lazy as TL
-import qualified Data.Text.Lazy.Builder as TL
 import Haskellorls.Class
 import qualified Haskellorls.Config as Config
 import qualified Haskellorls.Config.Format as Format
 import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.WrappedText as WT
 
--- | 'horizontalSplitInto' @n xs@ returns a list which are sliced @xs@ into @n@ elements vertically.
---
--- > horizontalSplitInto 2 [1 .. 6] == [[1, 3, 5], [2, 4, 6]]
--- > horizontalSplitInto 3 [1 .. 10] == [[1, 4, 7, 10], [2, 5, 8], [3, 6, 9]]
-verticalSplitInto :: Int -> [a] -> [[a]]
-verticalSplitInto n = transpose . slice n
-
-horizontalSplitInto :: Int -> [a] -> [[a]]
-horizontalSplitInto = splitInto
-
 -- | 'splitInto' @n xs@ returns a list which are sliced @xs@ into @n@ elements:
 --
 -- > splitInto 2 [1..6] == [[1, 2, 3], [4, 5, 6]]
 -- > splitInto 4 [1..8] == [[1, 2], [3, 4], [5, 6], [7, 8]]
--- > splitInto 3 [1..10] == [[1, 2, 3, 4], [5, 6, 7], [8, 9, 10]]
+-- > splitInto 3 [1..10] == [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10]]
 splitInto :: Int -> [a] -> [[a]]
-splitInto _ [] = []
-splitInto n xs
-  | n < 1 = splitInto 1 xs
-  | otherwise = slice m xs
+splitInto n xs = slice m xs
   where
-    (a, b) = length xs `divMod` n
+    (a, b) = length xs `divMod` max n 1
     m = a + abs (signum b)
 
 -- | 'slice' @n xs@ returns a list which have @n@ length lists as elements:
@@ -41,28 +27,10 @@ splitInto n xs
 -- > slice 2 [] == []
 -- > slice (-1) [1..5] == []
 slice :: Int -> [a] -> [[a]]
-slice _ [] = []
-slice n xs
-  | n < 1 = []
-  | otherwise = h : slice n t
-  where
-    (h, t) = splitAt n xs
+slice n = unfoldr $ \xs -> let tpl = splitAt n xs in if null $ fst tpl then Nothing else Just tpl
 
--- | 'takeWhileAccumL' @predicate accumulator acc xs@ is similar 'takeWhile'.
--- In addition, this function has an accumulator and an accumulated value,
--- which can be used in predicate statement.
---
--- >>> takeWhileAccumL (\a b -> a + b <= n) (+) 10 [1 .. 10]
--- [1, 2, 3, 4]
-takeWhileAccumL :: (a -> b -> Bool) -> (a -> b -> a) -> a -> [b] -> [b]
-takeWhileAccumL _ _ _ [] = []
-takeWhileAccumL p accumulator acc (x : xs) =
-  if p acc x
-    then x : takeWhileAccumL p accumulator (accumulator acc x) xs
-    else []
-
-buildValidCommaSeparatedGrid :: Int -> [[Attr.Attribute WT.WrappedText]] -> [[[Attr.Attribute WT.WrappedText]]]
-buildValidCommaSeparatedGrid n sss = intersperse [Attr.Other $ WT.deserialize " "] <$> splitsAt validLengths sss'
+mkValidCommaSeparatedGrid :: Int -> [[Attr.Attribute WT.WrappedText]] -> [[[Attr.Attribute WT.WrappedText]]]
+mkValidCommaSeparatedGrid n sss = intersperse [Attr.Other $ WT.deserialize " "] <$> splitsAt validLengths sss'
   where
     sss' = mapToInit (<> [Attr.Other $ WT.deserialize ","]) sss
     lengths = sum . map (termLength . Attr.unwrap) <$> sss'
@@ -70,7 +38,13 @@ buildValidCommaSeparatedGrid n sss = intersperse [Attr.Other $ WT.deserialize " 
 
     f [] = []
     f (x : xs) =
-      let l = length $ takeWhileAccumL (\acc y -> acc + y + 1 <= n) (\acc y -> acc + y + 1) x xs
+      let l = length . flip unfoldr (x, xs) $ \case
+            (_, []) -> Nothing
+            (acc, y : ys) ->
+              let acc' = acc + y + 1
+               in if acc' <= n
+                    then Just (acc', (acc', ys))
+                    else Nothing
        in (x : take l xs) : f (drop l xs)
 
 -- | 'splitsAt' @ns xs@ returns splited list which has lists as elements. The
@@ -81,60 +55,23 @@ buildValidCommaSeparatedGrid n sss = intersperse [Attr.Other $ WT.deserialize " 
 splitsAt :: [Int] -> [a] -> [[a]]
 splitsAt [] _ = []
 splitsAt _ [] = []
-splitsAt (n : nx) xs = ys : splitsAt nx xs'
+splitsAt (n : ns) xs = ys : splitsAt ns xs'
   where
     (ys, xs') = splitAt n xs
 
-buildValidGrid :: Config.Config -> Int -> [[Attr.Attribute WT.WrappedText]] -> [[[Attr.Attribute WT.WrappedText]]]
-buildValidGrid _ _ [] = []
-buildValidGrid config columnLength sss =
-  case Config.format config of
-    Format.COMMAS -> buildValidCommaSeparatedGrid columnLength sss
-    _ -> case columnLength `compare` 0 of
-      EQ -> gridBuilder config (length sss) sss
-      LT -> singleColumnGrid
-      GT -> last $ singleColumnGrid : validGrids
-  where
-    singleColumnGrid = gridBuilder config 1 sss
-    validColNum = takeWhile (\n -> validateGrid columnLength $ buildGridWithSpace config n sss) [2 .. columnLength]
-    validGrids = map (\n -> gridBuilder config n sss) validColNum
-    gridBuilder =
-      if Config.tabSeparator config
-        then buildGridWithTab
-        else buildGridWithSpace
-
-renderGridAsPlain :: [[[Attr.Attribute WT.WrappedText]]] -> [TL.Builder]
-renderGridAsPlain = map renderLineAsPlain
-
-renderLineAsPlain :: [[Attr.Attribute WT.WrappedText]] -> TL.Builder
-renderLineAsPlain = foldMap renderWTListAsPlain
-
-renderWTListAsPlain :: [Attr.Attribute WT.WrappedText] -> TL.Builder
-renderWTListAsPlain = foldMap (TL.fromText . WT.wtWord . Attr.unwrap)
+mkValidGrid :: Config.Config -> Int -> [[Attr.Attribute WT.WrappedText]] -> [[[Attr.Attribute WT.WrappedText]]]
+mkValidGrid _ _ [] = []
+mkValidGrid config columnLength sss
+  | Config.format config == Format.COMMAS = mkValidCommaSeparatedGrid columnLength sss
+  | columnLength <= 0 = mkGrid config (length sss) sss
+  | otherwise =
+      let m = fromMaybe 1 . find (\n -> validateGrid columnLength $ mkGrid config n sss) $ reverse [2 .. length sss]
+       in mkGrid config m sss
 
 validateGrid :: Int -> [[[Attr.Attribute WT.WrappedText]]] -> Bool
-validateGrid n grid
-  | n >= maxLen = True
-  | otherwise = False
-  where
-    maxLen = maximum . map (termLength . TL.toStrict . TL.toLazyText) $ renderGridAsPlain grid
-
-buildGridWithTab :: Config.Config -> Int -> [[Attr.Attribute WT.WrappedText]] -> [[[Attr.Attribute WT.WrappedText]]]
-buildGridWithTab config n wtss = map (buildRow (Config.tabSize config) maxLengths) $ transpose grid
-  where
-    grid = splitter n wtss
-    maxLengths = mapToInit (+ 2) $ calcEachRowMaxWTLength grid
-    splitter = case Config.format config of
-      Format.HORIZONTAL -> verticalSplitInto
-      _ -> horizontalSplitInto
-
-buildRow :: Int -> [Int] -> [[Attr.Attribute WT.WrappedText]] -> [[Attr.Attribute WT.WrappedText]]
-buildRow _ [] _ = []
-buildRow _ _ [] = []
-buildRow tabSize ns wtss = interpolate wtss $ map (\t -> [Attr.Other $ WT.deserialize t]) paddings
-  where
-    lengths = map (sum . map (termLength . Attr.unwrap)) wtss
-    paddings = buildPaddings tabSize ns lengths
+validateGrid n grid =
+  let m = maximum . (0 :) $ (\sss -> sum $ (\ss -> sum $ termLength . Attr.unwrap <$> ss) <$> sss) <$> grid
+   in n >= m
 
 interpolate :: [a] -> [a] -> [a]
 interpolate [] _ = []
@@ -142,49 +79,49 @@ interpolate [x] _ = [x]
 interpolate _ [] = []
 interpolate (x : xs) (y : ys) = x : y : interpolate xs ys
 
-buildPaddings :: Int -> [Int] -> [Int] -> [T.Text]
-buildPaddings _ [] _ = []
-buildPaddings _ _ [] = []
-buildPaddings _ [_] _ = []
-buildPaddings _ _ [_] = []
-buildPaddings tabSize ns ms = buildPaddings' tabSize 0 ns ms
-
-buildPaddings' :: Int -> Int -> [Int] -> [Int] -> [T.Text]
-buildPaddings' _ _ _ [] = []
-buildPaddings' _ _ [] _ = []
-buildPaddings' tabSize len (n : ns) (m : ms) = T.replicate nTabs "\t" <> T.replicate nSps " " : buildPaddings' tabSize nLen ns ms
+mkRowWithTab :: Int -> [Int] -> [[Attr.Attribute WT.WrappedText]] -> [[Attr.Attribute WT.WrappedText]]
+mkRowWithTab _ [] _ = []
+mkRowWithTab _ _ [] = []
+mkRowWithTab tabSize ns wtss = interpolate wtss $ (\t -> [Attr.Other $ WT.deserialize t]) <$> paddings
   where
-    nLen = len + n
-    mLen = len + m
-    (a, b) = nLen `divMod` tabSize
-    (a', b') = mLen `divMod` tabSize
-    nTabs = a - a'
-    nSps = if a == a' then b - b' else b
+    lengths = sum . map (termLength . Attr.unwrap) <$> wtss
+    paddings = f 0 $ zip ns lengths
 
-buildRowWithSpace :: [Int] -> [[Attr.Attribute WT.WrappedText]] -> [[Attr.Attribute WT.WrappedText]]
-buildRowWithSpace [] _ = []
-buildRowWithSpace _ [] = []
-buildRowWithSpace ns wtss = interpolate wtss $ map (\t -> [Attr.Other $ WT.deserialize t]) paddings
-  where
-    lengths = map (sum . map (termLength . Attr.unwrap)) wtss
-    paddings = buildPaddingsWithSpace 0 ns lengths
+    f _ [] = []
+    f _ [_] = []
+    f l ((n, m) : nms) =
+      let nLen = l + n
+          mLen = l + m
+          (a, b) = nLen `divMod` tabSize
+          (a', b') = mLen `divMod` tabSize
+          nTabs = a - a'
+          nSps = if a == a' then b - b' else b
+       in T.replicate nTabs "\t" <> T.replicate nSps " " : f nLen nms
 
-buildPaddingsWithSpace :: Int -> [Int] -> [Int] -> [T.Text]
-buildPaddingsWithSpace _ [] _ = []
-buildPaddingsWithSpace _ _ [] = []
-buildPaddingsWithSpace len (n : ns) (m : ms) = T.replicate (nLen - mLen) " " : buildPaddingsWithSpace nLen ns ms
+mkRowWithSpace :: [Int] -> [[Attr.Attribute WT.WrappedText]] -> [[Attr.Attribute WT.WrappedText]]
+mkRowWithSpace [] _ = []
+mkRowWithSpace _ [] = []
+mkRowWithSpace ns wtss = interpolate wtss $ (\t -> [Attr.Other $ WT.deserialize t]) <$> paddings
   where
-    nLen = len + n
-    mLen = len + m
+    lengths = sum . map (termLength . Attr.unwrap) <$> wtss
+    paddings = zipWith (\n m -> T.replicate (n - m) " ") ns lengths
 
-buildGridWithSpace :: Config.Config -> Int -> [[Attr.Attribute WT.WrappedText]] -> [[[Attr.Attribute WT.WrappedText]]]
-buildGridWithSpace config n wtss = map (buildRowWithSpace maxLengths) $ transpose grid
+mkGrid :: Config.Config -> Int -> [[Attr.Attribute WT.WrappedText]] -> [[[Attr.Attribute WT.WrappedText]]]
+mkGrid config n wtss = case Config.format config of
+  Format.HORIZONTAL ->
+    let grid = slice n wtss
+        m = mapToInit (+ 2) $ maxColumnLength <$> transpose grid
+     in mkRow m <$> grid
+  _ ->
+    let grid = splitInto n wtss
+        m = mapToInit (+ 2) $ maxColumnLength <$> grid
+     in mkRow m <$> transpose grid
   where
-    grid = splitter n wtss
-    maxLengths = mapToInit (+ 2) $ calcEachRowMaxWTLength grid
-    splitter = case Config.format config of
-      Format.HORIZONTAL -> verticalSplitInto
-      _ -> horizontalSplitInto
+    mkRow m =
+      if Config.tabSeparator config
+        then mkRowWithTab (Config.tabSize config) m
+        else mkRowWithSpace m
+    maxColumnLength = maximum . (0 :) . map (sum . map (termLength . Attr.unwrap))
 
 -- | Apply a function to each elements in a list, but exclude the last one.
 --
@@ -192,6 +129,3 @@ buildGridWithSpace config n wtss = map (buildRowWithSpace maxLengths) $ transpos
 -- [1,2,2]
 mapToInit :: (a -> a) -> [a] -> [a]
 mapToInit f = foldr (\x acc -> if null acc then [x] else f x : acc) mempty
-
-calcEachRowMaxWTLength :: [[[Attr.Attribute WT.WrappedText]]] -> [Int]
-calcEachRowMaxWTLength = map $ maximum . (0 :) . map (sum . map (termLength . Attr.unwrap))

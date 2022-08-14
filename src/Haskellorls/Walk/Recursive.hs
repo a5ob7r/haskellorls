@@ -191,7 +191,7 @@ mkDivisions :: Config.Config -> Formatter.Printers -> Operation -> [Attr.Attribu
 mkDivisions config printers =
   foldr (\x acc -> [Attr.Other $ deserialize "  " | Config.dired config && not (null x)] <> x <> [Attr.Other . deserialize $ if Config.zero config then "\0" else "\n"] <> acc) mempty . \case
     Newline -> [[]]
-    PrintEntry (Entry {..}) -> filter (not . null) ([header] <> [totalBlockSize]) <> (mconcat <$> Grid.buildValidGrid config (Config.width config) nodes)
+    PrintEntry (Entry {..}) -> filter (not . null) ([header] <> [totalBlockSize]) <> (mconcat <$> Grid.mkValidGrid config (Config.width config) nodes)
       where
         nodes = Formatter.mkLines entryNodes config printers $ Formatter.mkPrinterTypes config
 
