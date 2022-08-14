@@ -62,6 +62,8 @@ data NodeNamePrinters = NodeNamePrinters
 data NodeNames = NodeNames
   { nodeTree :: [Attr.Attribute WT.WrappedText],
     nodeIcon :: [Attr.Attribute WT.WrappedText],
+    -- | A "Right" wrapped value is considered as the length is changed by
+    -- quotation, otherwise the value is wrapped by "Left".
     nodeName :: Either (Attr.Attribute WT.WrappedText) (Attr.Attribute WT.WrappedText),
     nodeLink :: [Attr.Attribute WT.WrappedText],
     nodeIndicator :: [Attr.Attribute WT.WrappedText]
@@ -81,14 +83,16 @@ mkNodeNamePrinter config NodeNamePrinters {..} node = NodeNames {..}
     nodeName =
       let name = nodeNamePrinter node
           quoted = Quote.quote config name
-       in case Config.quotingStyle config of
-            Quote.Literal -> Left quoted
-            Quote.Escape -> Left quoted
-            Quote.ShellAlways -> Right quoted
-            Quote.ShellEscapeAlways -> Right quoted
-            _
-              | T.length (WT.wtWord $ Attr.unwrap name) == T.length (WT.wtWord $ Attr.unwrap quoted) -> Left quoted
-              | otherwise -> Right quoted
+       in if Config.format config == Format.COMMAS
+            then Left quoted
+            else case Config.quotingStyle config of
+              Quote.Literal -> Left quoted
+              Quote.Escape -> Left quoted
+              Quote.ShellAlways -> Right quoted
+              Quote.ShellEscapeAlways -> Right quoted
+              _
+                | T.length (WT.wtWord $ Attr.unwrap name) == T.length (WT.wtWord $ Attr.unwrap quoted) -> Left quoted
+                | otherwise -> Right quoted
     nodeLink =
       if Config.isLongStyle config
         then nodeLinkPrinter node
@@ -238,7 +242,9 @@ mkPrinterTypes config = filter predicate [FILEINODE, FILEBLOCK, FILEFIELD, FILEL
     context = Config.context config
 
 mkColumn :: [Node.NodeInfo] -> Config.Config -> Printers -> PrinterType -> [[Attr.Attribute WT.WrappedText]]
-mkColumn nodes config printers pType = justify <$> column
+mkColumn nodes config printers pType
+  | Config.format config == Format.COMMAS = column
+  | otherwise = justify <$> column
   where
     column =
       case pType of

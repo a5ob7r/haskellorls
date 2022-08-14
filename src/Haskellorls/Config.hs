@@ -44,6 +44,8 @@ data Config = Config
     blockSize :: Size.BlockSize,
     ignoreBackups :: Bool,
     directory :: Bool,
+    -- | When this value is 'COMMAS', every column alignment in format is
+    -- disabled.
     format :: Format.Format,
     groupDirectoriesFirst :: Bool,
     si :: Bool,
