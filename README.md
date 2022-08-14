@@ -12,7 +12,7 @@ In addition, has some extra options like some ls alternatives or replacements ha
 
 ![screenshort01](etc/screenshots/screenshot01.png)
 
-With [trapd00r/LS_COLORS](https://github.com/trapd00r/LS_COLORS/blob/master/LICENSE)
+With [trapd00r/LS_COLORS](https://github.com/trapd00r/LS_COLORS/)
 
 ![screenshort02](etc/screenshots/screenshot02.png)
 
@@ -53,13 +53,11 @@ To fix them is also the goal of this project.
 - Options are parsed as no ordering.
   - `Haskellorls -t -v` and `Haskellorls -v -t` causes same results.
   - It may not be useful to override same category option (e.g. sort options).
-- Outputs with the column size which is specified by -w/--width even if output fd is stdout.
 - Outputs pico seconds instead of nano seconds after decimal point when uses full-iso as time style format.
   - (nano) 2021-02-19 13:09:58.575236532 +0000
   - (pico) 2021-02-19 13:09:58.575236532000 +0000
 - some options which takes string can not recognize shorten string which can be identified using completion.
   - e.g. `--format=WORD`
-- Quote a file name or a link name by double quote when the name have tab or newline.
 
 ## Config
 
@@ -93,7 +91,7 @@ $ cd haskellorls
 $ cabal install
 
 # Enable SELinux support
-$ cabal configure --flags='selinux'
+$ cabal configure --flags=selinux
 $ cabal install
 ```
 
@@ -103,6 +101,12 @@ Build and run.
 
 ```sh
 $ cabal run haskellorls
+```
+
+Run test.
+
+```sh
+$ cabal test
 ```
 
 Run golden tests using [goldplate](https://github.com/fugue/goldplate).
