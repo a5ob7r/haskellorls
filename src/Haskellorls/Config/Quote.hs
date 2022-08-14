@@ -1,16 +1,4 @@
-module Haskellorls.Config.Quote
-  ( QuoteStyle (..),
-    QuotingStyle (..),
-  )
-where
-
-data QuoteStyle
-  = NoQuote
-  | SpacePadding
-  | SingleQuote
-  | DoubleQuote
-  | DynamicQuote
-  | DynamicQuoteForLink
+module Haskellorls.Config.Quote (QuotingStyle (..)) where
 
 -- | For option parsing.
 --

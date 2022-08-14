@@ -1,76 +1,84 @@
 module Haskellorls.Formatter.Quote
   ( quote,
-    quoteStyle,
-    quoteStyleForLink,
-    charactorsNeedQuote,
     module Haskellorls.Config.Quote,
   )
 where
 
+import Data.Char (isPrint)
 import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Haskellorls.Config as Config
-import Haskellorls.Config.Option.Quote
 import Haskellorls.Config.Quote
 import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.WrappedText as WT
 
--- filename:
---   - double quote (-Q / --quote-name)
---   - no quote (-N / --literal)
---   - dynamic quote:
---     - no quote (when no filename which need to quote)
---     - pad space to head (when there are filename which need to quote)
---     - single quote (when a filename have some charactors which are need to quote)
---     - double quote (when a filename have some single quotes)
--- linkname:
---   - double quote (-Q / --quote-name)
---   - no quote (-N / --literal)
---   - dynamic quote:
---     - no quote (when no filename which need to quote)
---     - single quote (when a filename have some charactors which are need to quote)
---     - double quote (when a filename have some single quotes)
-quote :: QuoteStyle -> Attr.Attribute WT.WrappedText -> [Attr.Attribute WT.WrappedText]
-quote style wt = case style of
-  NoQuote -> [wt]
-  SpacePadding -> [Attr.Other $ WT.deserialize " ", wt]
-  SingleQuote -> [WT.modify (\t -> "'" <> t <> "'") <$> wt]
-  DoubleQuote -> [WT.modify (\t -> "\"" <> escapeDoubleQuote t <> "\"") <$> wt]
-  _
-    | '\'' `S.member` setA -> quote DoubleQuote wt
-    | not $ S.disjoint setA setB -> quote SingleQuote wt
-    | otherwise -> case style of
-        DynamicQuote -> quote SpacePadding wt
-        _ -> quote NoQuote wt
-    where
-      t = WT.wtWord $ Attr.unwrap wt
-      setA = T.foldl' (flip S.insert) mempty t
-      setB = S.fromList charactorsNeedQuote
+-- | Quote and Escape for filenames.
+quote :: Config.Config -> Attr.Attribute WT.WrappedText -> Attr.Attribute WT.WrappedText
+quote config wt = case Config.quotingStyle config of
+  Literal ->
+    if Config.showControlChars config
+      then wt
+      else WT.modify replaceControlCharsByQuestion <$> wt
+  Shell -> quoteForShell config False wt
+  ShellAlways -> quoteForShell config True wt
+  ShellEscape -> quoteForShellEscape False wt
+  ShellEscapeAlways -> quoteForShellEscape True wt
+  C -> WT.modify (\t -> "\"" <> escapeAsCLiteral True t <> "\"") <$> wt
+  Escape -> WT.modify (escapeAsCLiteral False) <$> wt
 
--- WIP: Should implement singole quote version. Also need to change printer
--- architecture.
-quoteStyle :: Config.Config -> QuoteStyle
-quoteStyle config = case Config.quotingStyle config of
-  C -> DoubleQuote
-  Escape -> NoQuote
-  Literal -> NoQuote
-  ShellAlways -> SingleQuote
-  ShellEscapeAlways -> SingleQuote
-  _ | Config.noQuote config -> NoQuote
-  Shell -> DynamicQuote
-  ShellEscape -> DynamicQuote
-
-quoteStyleForLink :: Config.Config -> QuoteStyle
-quoteStyleForLink config = case style of
-  DynamicQuote -> DynamicQuoteForLink
-  _ -> style
+quoteForShell :: Config.Config -> Bool -> Attr.Attribute WT.WrappedText -> Attr.Attribute WT.WrappedText
+quoteForShell config forceQuote wt
+  | not forceQuote && S.disjoint chars charactorsNeedQuote = WT.modify (const t) <$> wt
+  | '\'' `S.notMember` chars = WT.modify (const $ "'" <> t <> "'") <$> wt
+  | '"' `S.notMember` chars = WT.modify (const $ "\"" <> t <> "\"") <$> wt
+  | otherwise = WT.modify (const $ "'" <> T.concatMap (\c -> if c == '\'' then "'\\''" else T.singleton c) t <> "'") <$> wt
   where
-    style = quoteStyle config
+    escape =
+      if Config.showControlChars config
+        then id
+        else replaceControlCharsByQuestion
+    t = escape . WT.wtWord $ Attr.unwrap wt
+    chars = T.foldl' (flip S.insert) mempty t
 
-charactorsNeedQuote :: String
-charactorsNeedQuote = " !\"$&()*;<=>[^`|"
+quoteForShellEscape :: Bool -> Attr.Attribute WT.WrappedText -> Attr.Attribute WT.WrappedText
+quoteForShellEscape forceQuote wt
+  | not forceQuote && S.disjoint chars charactorsNeedQuote && isAllCharsPrintable = wt
+  | '\'' `S.notMember` chars = WT.modify (const $ "'" <> escape t <> "'") <$> wt
+  | '"' `S.notMember` chars && isAllCharsPrintable = WT.modify (const $ "\"" <> t <> "\"") <$> wt
+  | otherwise = WT.modify (const $ "'" <> escape t <> "'") <$> wt
+  where
+    t = WT.wtWord $ Attr.unwrap wt
+    chars = T.foldl' (flip S.insert) mempty t
+    isAllCharsPrintable = T.all isPrint t
+    escape = T.concatMap $ \case
+      '\r' -> "'$'\\r''"
+      '\n' -> "'$'\\n''"
+      '\t' -> "'$'\\t''"
+      '\'' -> "'\''"
+      c -> T.singleton c
 
-escapeDoubleQuote :: T.Text -> T.Text
-escapeDoubleQuote = T.concatMap $ \case
-  '"' -> "\\\""
+-- | The @'escapeAsCLiteral' b t@ function substitutes characters in 'Text'
+-- with C string literal expression. @b@ indicates whether or not the
+-- substituted string will be surrounded by double quotes. If it is 'True' this
+-- function also substitutes @"@ with an appropriate expression in addition to
+-- standard targets, otherwise also substitutes @ @ (a space) with an
+-- appropriate one too.
+--
+-- NOTE: Should we substitute other non-printable characters? And can these
+-- characters be contained in a valid filepath?
+escapeAsCLiteral :: Bool -> T.Text -> T.Text
+escapeAsCLiteral forceQuote = T.concatMap $ \case
+  '"' | forceQuote -> "\\\""
+  ' ' | not forceQuote -> "\\ "
+  '\t' -> "\\t"
+  '\r' -> "\\r"
+  '\n' -> "\\n"
+  '\\' -> "\\\\"
   c -> T.singleton c
+
+replaceControlCharsByQuestion :: T.Text -> T.Text
+replaceControlCharsByQuestion = T.map (\c -> if isPrint c then c else '?')
+
+-- | These characters should be quoted for shell.
+charactorsNeedQuote :: S.Set Char
+charactorsNeedQuote = S.fromList " !\"'$&()*;<=>[^`|\\"

@@ -23,6 +23,7 @@
 - Doesn't ignore any punctuation when sorts using flename.
 - Return no error status even if errors occur in directory traversing with `--tree`.
 - Quotation for `" |` by `--name-quote` and `--escape`.
+- Double quotation by `--quoting-style=shell-escape` and `--quoting-style=shell-escape-always` even if a filename contains no duoble quote.
 
 ## 0.5.3.0 -- 2022-07-23
 

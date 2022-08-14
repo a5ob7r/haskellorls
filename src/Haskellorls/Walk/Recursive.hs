@@ -10,12 +10,10 @@ import Control.Monad.IO.Class
 import Control.Monad.Reader
 import Control.Monad.State.Strict
 import Data.Bifunctor
-import qualified Data.ByteString.Char8 as C
 import Data.Either
 import Data.Functor
 import Data.List (foldl', intersperse, partition)
 import qualified Data.Sequence as Seq
-import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Data.Text.IO as T
@@ -193,14 +191,9 @@ mkDivisions :: Config.Config -> Formatter.Printers -> Operation -> [Attr.Attribu
 mkDivisions config printers =
   foldr (\x acc -> [Attr.Other $ deserialize "  " | Config.dired config && not (null x)] <> x <> [Attr.Other . deserialize $ if Config.zero config then "\0" else "\n"] <> acc) mempty . \case
     Newline -> [[]]
-    PrintEntry (Entry {..}) -> filter (not . null) ([header] <> [totalBlockSize]) <> (mconcat <$> Grid.buildValidGrid config (Config.width config) nodes')
+    PrintEntry (Entry {..}) -> filter (not . null) ([header] <> [totalBlockSize]) <> (mconcat <$> Grid.buildValidGrid config (Config.width config) nodes)
       where
-        config' =
-          if shouldQuote entryNodes
-            then config
-            else config {Config.noQuote = True}
-
-        nodes' = Formatter.buildLines entryNodes printers $ Formatter.buildPrinterTypes config'
+        nodes = Formatter.mkLines entryNodes config printers $ Formatter.mkPrinterTypes config
 
         header = case entryType of
           FILES -> []
@@ -218,12 +211,4 @@ mkDivisions config printers =
           where
             size = Attr.Other . deserialize . T.concat . ("total " :) . map (WT.serialize . Attr.unwrap) . Size.toTotalBlockSize config $ Node.fileSize <$> entryNodes
     PrintTree (Tree {..}) ->
-      Formatter.buildLines treeNodes printers . Formatter.buildPrinterTypes $
-        if shouldQuote treeNodes
-          then config
-          else config {Config.noQuote = True}
-
-shouldQuote :: Foldable t => t Node.NodeInfo -> Bool
-shouldQuote = not . all (S.null . S.intersection setNeedQuotes . C.foldr S.insert mempty . Node.getNodePath)
-  where
-    setNeedQuotes = S.fromList Quote.charactorsNeedQuote
+      Formatter.mkLines treeNodes config printers $ Formatter.mkPrinterTypes config

@@ -36,25 +36,27 @@ run :: Option.Option -> IO ExitCode
 run opt = do
   env <- mkEnvironment
 
-  -- Assumes that current directory path is passed as argument implicitly if no argument.
-  let targets = map encodeFilePath . (\ss -> if null ss then ["."] else ss) $ Option.oTargets opt
+  printers <-
+    Formatter.mkPrinters $
+      mkConfig
+        env
+        -- Only dereferences on command line arguments.
+        opt
+          { Option.oDereferenceCommandLine = False,
+            Option.oDereferenceCommandLineSymlinkToDir = False
+          }
 
-      -- Only dereferences on command line arguments.
-      opt' = opt {Option.oDereferenceCommandLine = False, Option.oDereferenceCommandLineSymlinkToDir = False}
+  let conf = Walk.LsConf (mkConfig env opt, printers)
 
-      config = mkConfig env opt
-      config' = mkConfig env opt'
-
-  printers <- Formatter.buildPrinters config'
-  let c = Walk.LsConf (config, printers)
-
-  (ops, inodes, errs) <- Walk.mkInitialOperations c targets
+  (ops, inodes, errs) <-
+    let targets = Option.oTargets opt
+     in -- Assume that the current directory's path is passed as an argument
+        -- implicitly if no argument.
+        Walk.mkInitialOperations conf $ encodeFilePath <$> if null targets then ["."] else targets
 
   mapM_ printErr errs
 
-  let s = Walk.LsState (ops, inodes, Dired.empty, [])
-
-  (_, Walk.LsState (_, _, _, errors)) <- Walk.run c s
+  (_, Walk.LsState (_, _, _, errors)) <- Walk.run conf $ Walk.LsState (ops, inodes, Dired.empty, [])
 
   return $
     if

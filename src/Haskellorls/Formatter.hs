@@ -1,16 +1,16 @@
 module Haskellorls.Formatter
-  ( Printer,
-    Printers (..),
-    PrinterType (..),
-    buildPrinters,
-    buildLines,
-    buildPrinterTypes,
+  ( Printers,
+    mkPrinters,
+    mkLines,
+    mkPrinterTypes,
   )
 where
 
 import Data.Default.Class
+import Data.Either (isLeft)
 import Data.Foldable
-import qualified Data.List as L
+import Data.Functor ((<&>))
+import Data.List (intercalate, transpose)
 import qualified Data.Text as T
 import Data.Time.Clock.POSIX
 import Data.Time.Format
@@ -29,6 +29,7 @@ import qualified Haskellorls.Formatter.Inode as Inode
 import qualified Haskellorls.Formatter.Link as Link
 import qualified Haskellorls.Formatter.Name as Name
 import qualified Haskellorls.Formatter.Ownership as Ownership
+import qualified Haskellorls.Formatter.Quote as Quote
 import qualified Haskellorls.Formatter.Size as Size
 import qualified Haskellorls.Formatter.SymbolicLink as SymbolicLink
 import qualified Haskellorls.Formatter.Time as Time
@@ -49,65 +50,69 @@ data PrinterType
   | FILESIZE
   | FILETIME
   | FILENAME
-  | FILENAMEWITHDQUOTE
-
-data NamePrinterType
-  = TREE
-  | ICON
-  | NAME
-  | LINK
-  | INDICATOR
 
 data NodeNamePrinters = NodeNamePrinters
-  { nodeTreePrinter :: Printer,
-    nodeIconPrinter :: Printer,
-    nodeNamePrinter :: Printer,
-    nodeLinkPrinter :: Printer,
-    nodeIndicatorPrinter :: Printer
+  { nodeTreePrinter :: Node.NodeInfo -> [Attr.Attribute WT.WrappedText],
+    nodeIconPrinter :: Node.NodeInfo -> [Attr.Attribute WT.WrappedText],
+    nodeNamePrinter :: Node.NodeInfo -> Attr.Attribute WT.WrappedText,
+    nodeLinkPrinter :: Node.NodeInfo -> [Attr.Attribute WT.WrappedText],
+    nodeIndicatorPrinter :: Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
   }
 
-nodeNamePrinterSelector :: NamePrinterType -> NodeNamePrinters -> Printer
-nodeNamePrinterSelector npType = selector
+data NodeNames = NodeNames
+  { nodeTree :: [Attr.Attribute WT.WrappedText],
+    nodeIcon :: [Attr.Attribute WT.WrappedText],
+    nodeName :: Either (Attr.Attribute WT.WrappedText) (Attr.Attribute WT.WrappedText),
+    nodeLink :: [Attr.Attribute WT.WrappedText],
+    nodeIndicator :: [Attr.Attribute WT.WrappedText]
+  }
+
+mkNodeNamePrinter :: Config.Config -> NodeNamePrinters -> Node.NodeInfo -> NodeNames
+mkNodeNamePrinter config NodeNamePrinters {..} node = NodeNames {..}
   where
-    selector = case npType of
-      TREE -> nodeTreePrinter
-      ICON -> nodeIconPrinter
-      NAME -> nodeNamePrinter
-      LINK -> nodeLinkPrinter
-      INDICATOR -> nodeIndicatorPrinter
-
-neededNamePrinterTypeBy :: NamePrinterType -> Config.Config -> Bool
-neededNamePrinterTypeBy npType config = case npType of
-  TREE -> Config.tree config
-  ICON -> Config.icon config
-  NAME -> True
-  LINK -> Config.isLongStyle config
-  INDICATOR -> Indicator.IndicatorNone < Config.indicatorStyle config
-
-buildNamePrinterTypes :: Config.Config -> [NamePrinterType]
-buildNamePrinterTypes config = filter (`neededNamePrinterTypeBy` config) [TREE, ICON, NAME, LINK, INDICATOR]
-
-buildNodeNamePrinter :: Config.Config -> NodeNamePrinters -> Printer
-buildNodeNamePrinter config printers node = concatMap (\npType -> nodeNamePrinterSelector npType printers node) $ buildNamePrinterTypes config
-
-type Printer = Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
+    nodeTree =
+      if Config.tree config
+        then nodeTreePrinter node
+        else []
+    nodeIcon =
+      if Config.icon config
+        then nodeIconPrinter node
+        else []
+    nodeName =
+      let name = nodeNamePrinter node
+          quoted = Quote.quote config name
+       in case Config.quotingStyle config of
+            Quote.Literal -> Left quoted
+            Quote.Escape -> Left quoted
+            Quote.ShellAlways -> Right quoted
+            Quote.ShellEscapeAlways -> Right quoted
+            _
+              | T.length (WT.wtWord $ Attr.unwrap name) == T.length (WT.wtWord $ Attr.unwrap quoted) -> Left quoted
+              | otherwise -> Right quoted
+    nodeLink =
+      if Config.isLongStyle config
+        then nodeLinkPrinter node
+        else []
+    nodeIndicator =
+      if Indicator.IndicatorNone < Config.indicatorStyle config
+        then nodeIndicatorPrinter node
+        else []
 
 data Printers = Printers
-  { fileInodePrinter :: Printer,
-    fileBlockPrinter :: Printer,
-    fileFieldPrinter :: Printer,
-    fileLinkPrinter :: Printer,
-    fileOwnerPrinter :: Printer,
-    fileGroupPrinter :: Printer,
-    fileContextPrinter :: Printer,
-    fileSizePrinter :: (Int, Int) -> Printer,
-    fileTimePrinter :: Printer,
-    fileNamePrinter :: Printer,
-    fileNameWithDQuotePrinter :: Printer
+  { fileInodePrinter :: Node.NodeInfo -> [Attr.Attribute WT.WrappedText],
+    fileBlockPrinter :: Node.NodeInfo -> [Attr.Attribute WT.WrappedText],
+    fileFieldPrinter :: Node.NodeInfo -> [Attr.Attribute WT.WrappedText],
+    fileLinkPrinter :: Node.NodeInfo -> [Attr.Attribute WT.WrappedText],
+    fileOwnerPrinter :: Node.NodeInfo -> [Attr.Attribute WT.WrappedText],
+    fileGroupPrinter :: Node.NodeInfo -> [Attr.Attribute WT.WrappedText],
+    fileContextPrinter :: Node.NodeInfo -> [Attr.Attribute WT.WrappedText],
+    fileSizePrinter :: (Int, Int) -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText],
+    fileTimePrinter :: Node.NodeInfo -> [Attr.Attribute WT.WrappedText],
+    fileNamePrinters :: NodeNamePrinters
   }
 
-buildPrinters :: Config.Config -> IO Printers
-buildPrinters config = do
+mkPrinters :: Config.Config -> IO Printers
+mkPrinters config = do
   lscolors <-
     if Config.colorize config
       then Color.lsColors
@@ -196,47 +201,34 @@ buildPrinters config = do
           then Tree.treeBranchWithColor lscolors . Node.getTreeNodePositions
           else (\t -> [Attr.Other $ WT.deserialize t]) . Tree.treeBranch . Node.getTreeNodePositions
       nodeIconPrinter = flip Icon.lookupIcon lsicons
-      buildNamePrinter conf =
+      nodeNamePrinter =
         if shouldColorize
-          then Name.colorizedNodeNameWrapper conf lscolors
-          else Name.nodeNameWrapper conf
-      nodeNamePrinter = buildNamePrinter config {Config.noQuote = True}
-      nodeNameWithDQuotePrinter = buildNamePrinter config
+          then Name.colorizedNodeName config lscolors
+          else Name.nodeName config
       nodeIndicatorPrinter = Indicator.buildIndicatorPrinter config
       nodeLinkPrinter =
         if shouldColorize
           then SymbolicLink.coloredLinkName config lscolors
           else SymbolicLink.linkName config
-      nodeNamePrinters = NodeNamePrinters {..}
-      nodeNameWithDQuotePrinters = NodeNamePrinters {nodeNamePrinter = nodeNameWithDQuotePrinter, ..}
+      fileNamePrinters = NodeNamePrinters {..}
 
-  return $
-    Printers
-      { fileFieldPrinter = filemodeFieldPrinter . from,
-        fileNamePrinter = buildNodeNamePrinter config nodeNamePrinters,
-        fileNameWithDQuotePrinter = buildNodeNamePrinter config nodeNameWithDQuotePrinters,
-        ..
-      }
+  return $ Printers {fileFieldPrinter = filemodeFieldPrinter . from, ..}
 
-buildPrinterTypes :: Config.Config -> [PrinterType]
-buildPrinterTypes config = filter (`neededBy` config) [FILEINODE, FILEBLOCK, FILEFIELD, FILELINK, FILEOWNER, FILEGROUP, FILEAUTHOR, FILECONTEXT, FILESIZE, FILETIME, FILENAME, FILENAMEWITHDQUOTE]
-
--- | Should the `PrinterType` value is needed by the options.
-neededBy :: PrinterType -> Config.Config -> Bool
-neededBy pType config = case pType of
-  FILEINODE -> inode
-  FILEBLOCK -> size
-  FILEFIELD -> long
-  FILELINK -> long
-  FILEOWNER -> long && owner
-  FILEGROUP -> long && group
-  FILEAUTHOR -> long && author
-  FILECONTEXT -> context
-  FILESIZE -> long
-  FILETIME -> long
-  FILENAME -> noQuote
-  FILENAMEWITHDQUOTE -> not noQuote
+mkPrinterTypes :: Config.Config -> [PrinterType]
+mkPrinterTypes config = filter predicate [FILEINODE, FILEBLOCK, FILEFIELD, FILELINK, FILEOWNER, FILEGROUP, FILEAUTHOR, FILECONTEXT, FILESIZE, FILETIME, FILENAME]
   where
+    predicate = \case
+      FILEINODE -> inode
+      FILEBLOCK -> size
+      FILEFIELD -> long
+      FILELINK -> long
+      FILEOWNER -> long && owner
+      FILEGROUP -> long && group
+      FILEAUTHOR -> long && author
+      FILECONTEXT -> context
+      FILESIZE -> long
+      FILETIME -> long
+      FILENAME -> True
     inode = Config.inode config
     size = Config.size config
     long = Config.isLongStyle config
@@ -244,30 +236,36 @@ neededBy pType config = case pType of
     group = Config.group config
     author = Config.author config
     context = Config.context config
-    noQuote = Config.noQuote config
 
-buildColumn :: [Node.NodeInfo] -> Printers -> PrinterType -> [[Attr.Attribute WT.WrappedText]]
-buildColumn nodes printers pType = justify <$> nodes'
+mkColumn :: [Node.NodeInfo] -> Config.Config -> Printers -> PrinterType -> [[Attr.Attribute WT.WrappedText]]
+mkColumn nodes config printers pType = justify <$> column
   where
-    format =
+    column =
       case pType of
-        FILEINODE -> fileInodePrinter printers
-        FILEBLOCK -> fileBlockPrinter printers
-        FILEFIELD -> fileFieldPrinter printers
-        FILELINK -> fileLinkPrinter printers
-        FILEOWNER -> fileOwnerPrinter printers
-        FILEGROUP -> fileGroupPrinter printers
-        FILEAUTHOR -> fileOwnerPrinter printers
-        FILECONTEXT -> fileContextPrinter printers
+        FILEINODE -> fileInodePrinter printers <$> nodes
+        FILEBLOCK -> fileBlockPrinter printers <$> nodes
+        FILEFIELD -> fileFieldPrinter printers <$> nodes
+        FILELINK -> fileLinkPrinter printers <$> nodes
+        FILEOWNER -> fileOwnerPrinter printers <$> nodes
+        FILEGROUP -> fileGroupPrinter printers <$> nodes
+        FILEAUTHOR -> fileOwnerPrinter printers <$> nodes
+        FILECONTEXT -> fileContextPrinter printers <$> nodes
         FILESIZE ->
           let majorWidth = maximum $ 0 : (length . show . unMajorID . from . Node.specialDeviceID <$> nodes)
               minorWidth = maximum $ 0 : (length . show . unMinorID . from . Node.specialDeviceID <$> nodes)
-           in fileSizePrinter printers (majorWidth, minorWidth)
-        FILETIME -> fileTimePrinter printers
-        FILENAME -> fileNamePrinter printers
-        FILENAMEWITHDQUOTE -> fileNameWithDQuotePrinter printers
-    nodes' = format <$> nodes
-    l = maximum $ 0 : (sum . map (termLength . Attr.unwrap) <$> nodes')
+           in fileSizePrinter printers (majorWidth, minorWidth) <$> nodes
+        FILETIME -> fileTimePrinter printers <$> nodes
+        FILENAME ->
+          let namePrinters = fileNamePrinters printers
+              names = mkNodeNamePrinter config namePrinters <$> nodes
+              f = \case
+                Right name -> [name]
+                Left name
+                  | all (isLeft . nodeName) names -> [name]
+                  | otherwise -> [Attr.Other $ deserialize " ", name]
+           in names <&> \NodeNames {..} ->
+                nodeTree <> nodeIcon <> f nodeName <> nodeLink <> nodeIndicator
+    l = maximum $ 0 : (sum . map (termLength . Attr.unwrap) <$> column)
     justify =
       case pType of
         FILEINODE -> justifyRight l ' '
@@ -281,13 +279,12 @@ buildColumn nodes printers pType = justify <$> nodes'
         FILESIZE -> justifyRight l ' '
         FILETIME -> justifyLeft l ' '
         FILENAME -> id
-        FILENAMEWITHDQUOTE -> id
 
-buildGrid :: [Node.NodeInfo] -> Printers -> [PrinterType] -> [[[Attr.Attribute WT.WrappedText]]]
-buildGrid nodes printers = L.transpose . map (buildColumn nodes printers)
+mkGrid :: [Node.NodeInfo] -> Config.Config -> Printers -> [PrinterType] -> [[[Attr.Attribute WT.WrappedText]]]
+mkGrid nodes config printers = transpose . map (mkColumn nodes config printers)
 
-buildLines :: Foldable t => t Node.NodeInfo -> Printers -> [PrinterType] -> [[Attr.Attribute WT.WrappedText]]
-buildLines nodes printers types = L.intercalate [Attr.Other $ WT.deserialize " "] <$> buildGrid (toList nodes) printers types
+mkLines :: Foldable t => t Node.NodeInfo -> Config.Config -> Printers -> [PrinterType] -> [[Attr.Attribute WT.WrappedText]]
+mkLines nodes config printers types = intercalate [Attr.Other $ WT.deserialize " "] <$> mkGrid (toList nodes) config printers types
 
 justifyLeft :: Int -> Char -> [Attr.Attribute WT.WrappedText] -> [Attr.Attribute WT.WrappedText]
 justifyLeft n c wt =

@@ -75,7 +75,6 @@ library haskellorls-internal
     Haskellorls.Formatter
     Haskellorls.Formatter.Attribute
     Haskellorls.Formatter.Context
-    Haskellorls.Formatter.Escape
     Haskellorls.Formatter.Filemode
     Haskellorls.Formatter.Filemode.Entry
     Haskellorls.Formatter.Filemode.Permission
