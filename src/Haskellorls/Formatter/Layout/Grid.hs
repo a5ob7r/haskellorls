@@ -61,12 +61,16 @@ splitsAt (n : ns) xs = ys : splitsAt ns xs'
 
 mkValidGrid :: Config.Config -> Int -> [[Attr.Attribute WT.WrappedText]] -> [[[Attr.Attribute WT.WrappedText]]]
 mkValidGrid _ _ [] = []
-mkValidGrid config columnLength sss
-  | Config.format config == Format.COMMAS = mkValidCommaSeparatedGrid columnLength sss
-  | columnLength <= 0 = mkGrid config (length sss) sss
-  | otherwise =
-      let m = fromMaybe 1 . find (\n -> validateGrid columnLength $ mkGrid config n sss) $ reverse [2 .. length sss]
-       in mkGrid config m sss
+mkValidGrid config columnLength sss =
+  case Config.format config of
+    Format.COMMAS -> mkValidCommaSeparatedGrid columnLength sss
+    Format.LONG -> mkGrid config 1 sss
+    Format.SINGLECOLUMN -> mkGrid config 1 sss
+    _
+      | columnLength <= 0 -> mkGrid config (length sss) sss
+      | otherwise ->
+          let m = fromMaybe 1 . find (\n -> validateGrid columnLength $ mkGrid config n sss) $ reverse [2 .. length sss]
+           in mkGrid config m sss
 
 validateGrid :: Int -> [[[Attr.Attribute WT.WrappedText]]] -> Bool
 validateGrid n grid =
