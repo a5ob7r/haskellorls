@@ -39,24 +39,26 @@ import Prelude hiding (lookup)
 newtype UserIdSubstTable = UserIdSubstTable (M.Map Types.UserID T.Text)
   deriving (Semigroup, Monoid)
 
+instance From [User.UserEntry] UserIdSubstTable where
+  from = UserIdSubstTable . M.fromList . map (\entry -> (User.userID entry, T.pack $ User.userName entry))
+
 instance Dictionary Types.UserID T.Text UserIdSubstTable where
   lookup k (UserIdSubstTable m) = k `M.lookup` m
 
 getUserIdSubstTable :: IO UserIdSubstTable
-getUserIdSubstTable = do
-  entries <- User.getAllUserEntries
-  pure . UserIdSubstTable . M.fromList $ map (\entry -> (User.userID entry, T.pack $ User.userName entry)) entries
+getUserIdSubstTable = from <$> User.getAllUserEntries
 
 newtype GroupIdSubstTable = GroupIdSubstTable (M.Map Types.GroupID T.Text)
   deriving (Semigroup, Monoid)
+
+instance From [User.GroupEntry] GroupIdSubstTable where
+  from = GroupIdSubstTable . M.fromList . map (\entry -> (User.groupID entry, T.pack $ User.groupName entry))
 
 instance Dictionary Types.GroupID T.Text GroupIdSubstTable where
   lookup k (GroupIdSubstTable m) = k `M.lookup` m
 
 getGroupIdSubstTable :: IO GroupIdSubstTable
-getGroupIdSubstTable = do
-  entries <- User.getAllGroupEntries
-  pure . GroupIdSubstTable . M.fromList $ map (\entry -> (User.groupID entry, T.pack $ User.groupName entry)) entries
+getGroupIdSubstTable = from <$> User.getAllGroupEntries
 
 -- Owner name {{{
 ownerName :: UserIdSubstTable -> Node.NodeInfo -> T.Text
