@@ -23,7 +23,7 @@ module Haskellorls.Formatter.Ownership
   )
 where
 
-import qualified Data.Map.Strict as M
+import qualified Data.IntMap.Strict as IM
 import Data.Maybe
 import qualified Data.Text as T
 import Haskellorls.Class
@@ -36,26 +36,26 @@ import qualified System.Posix.Types as Types
 import qualified System.Posix.User as User
 import Prelude hiding (lookup)
 
-newtype UserIdSubstTable = UserIdSubstTable (M.Map Types.UserID T.Text)
+newtype UserIdSubstTable = UserIdSubstTable (IM.IntMap T.Text)
   deriving (Semigroup, Monoid)
 
 instance From [User.UserEntry] UserIdSubstTable where
-  from = UserIdSubstTable . M.fromList . map (\entry -> (User.userID entry, T.pack $ User.userName entry))
+  from = UserIdSubstTable . IM.fromList . map (\entry -> (fromIntegral $ User.userID entry, T.pack $ User.userName entry))
 
 instance Dictionary Types.UserID T.Text UserIdSubstTable where
-  lookup k (UserIdSubstTable m) = k `M.lookup` m
+  lookup k (UserIdSubstTable m) = fromIntegral k `IM.lookup` m
 
 getUserIdSubstTable :: IO UserIdSubstTable
 getUserIdSubstTable = from <$> User.getAllUserEntries
 
-newtype GroupIdSubstTable = GroupIdSubstTable (M.Map Types.GroupID T.Text)
+newtype GroupIdSubstTable = GroupIdSubstTable (IM.IntMap T.Text)
   deriving (Semigroup, Monoid)
 
 instance From [User.GroupEntry] GroupIdSubstTable where
-  from = GroupIdSubstTable . M.fromList . map (\entry -> (User.groupID entry, T.pack $ User.groupName entry))
+  from = GroupIdSubstTable . IM.fromList . map (\entry -> (fromIntegral $ User.groupID entry, T.pack $ User.groupName entry))
 
 instance Dictionary Types.GroupID T.Text GroupIdSubstTable where
-  lookup k (GroupIdSubstTable m) = k `M.lookup` m
+  lookup k (GroupIdSubstTable m) = fromIntegral k `IM.lookup` m
 
 getGroupIdSubstTable :: IO GroupIdSubstTable
 getGroupIdSubstTable = from <$> User.getAllGroupEntries
