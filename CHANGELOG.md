@@ -25,6 +25,7 @@
 - Quotation for `" |` by `--name-quote` and `--escape`.
 - Double quotation by `--quoting-style=shell-escape` and `--quoting-style=shell-escape-always` even if a filename contains no duoble quote.
 - Align columns even if `-m / --format=commas` is enabled.
+- Ignore invalid `--time-style=FORMAT`s.
 
 ## 0.5.3.0 -- 2022-07-23
 

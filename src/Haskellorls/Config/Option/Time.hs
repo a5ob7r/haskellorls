@@ -5,6 +5,7 @@ module Haskellorls.Config.Option.Time
   )
 where
 
+import Data.List.Extra (split)
 import Haskellorls.Config.Time
 import Options.Applicative
 
@@ -38,9 +39,10 @@ timeStyleParser =
       <> completeWith ["full-iso", "long-iso", "iso"]
   where
     reader =
-      str >>= \s -> case s of
+      str >>= \case
         "full-iso" -> return FULLISO
         "long-iso" -> return LONGISO
         "iso" -> return ISO
         -- "locale" -> LOCALE
-        _ -> return $ FORMAT s
+        '+' : s -> return . FORMAT $ split (== '\n') s
+        _ -> readerError "Invalid time output format."

@@ -5,11 +5,10 @@ module Haskellorls.Formatter.Time
   )
 where
 
-import qualified Data.List.Extra as L
 import qualified Data.Text as T
-import Data.Time.Clock
-import Data.Time.Format
-import Data.Time.LocalTime
+import Data.Time.Clock (UTCTime, diffUTCTime, secondsToNominalDiffTime)
+import Data.Time.Format (TimeLocale, formatTime)
+import Data.Time.LocalTime (TimeZone, utcToZonedTime)
 import Haskellorls.Config.Time
 import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.WrappedText as WT
@@ -18,10 +17,10 @@ import qualified Haskellorls.LsColor as Color
 -- TODO: Reduce argument numbers
 timeStyleFunc :: TimeZone -> TimeLocale -> UTCTime -> TimeStyle -> UTCTime -> T.Text
 timeStyleFunc zone locale time = \case
-  FULLISO -> timeStyleFunc' ('+' : fullISOFormat) zone locale time
-  LONGISO -> timeStyleFunc' ('+' : longISOFormat) zone locale time
-  ISO -> timeStyleFunc' ('+' : isoFormat) zone locale time
-  FORMAT fmt -> timeStyleFunc' fmt zone locale time
+  FULLISO -> formatFiletime [fullISOFormat] zone locale time
+  LONGISO -> formatFiletime [longISOFormat] zone locale time
+  ISO -> formatFiletime isoFormat zone locale time
+  FORMAT formats -> formatFiletime formats zone locale time
 
 normalColoredTimeStyleFunc :: Color.LsColors -> TimeZone -> TimeLocale -> UTCTime -> TimeStyle -> UTCTime -> [Attr.Attribute WT.WrappedText]
 normalColoredTimeStyleFunc lscolors zone locale time style fTime = [Attr.Other $ WT.wrap lscolors getter timeAsT]
@@ -38,16 +37,21 @@ coloredTimeStyleFunc lscolors zone locale time style fTime = [Attr.Other $ WT.wr
     -- so on at this point. So assume that it is modification time.
     getter = Color.lookup $ Datatime fTime
 
-timeStyleFunc' :: String -> TimeZone -> TimeLocale -> UTCTime -> UTCTime -> T.Text
-timeStyleFunc' fmt zone locale now fTime = T.pack . formatTime locale format $ utcToZonedTime zone fTime
+-- FIXME: Maybe 'formatTime' is slow a little bit.
+formatFiletime :: [String] -> TimeZone -> TimeLocale -> UTCTime -> UTCTime -> T.Text
+formatFiletime formats zone locale now filetime = T.pack . formatTime locale format $ utcToZonedTime zone filetime
   where
-    format = if fTime `isRecentTimeFrom` now then recent else notRecent
-    recent = if not (null formats) then head formats else mainISOFormat
-    notRecent = if length formats == 2 then last formats else recent
-    formats = parseTimeStyleFormat fmt
+    format = case formats of
+      [] -> mainISOFormat
+      [fmt] -> fmt
+      fmt1 : fmt2 : _
+        | abs (now `diffUTCTime` filetime) < sixMonth -> fmt1
+        | otherwise -> fmt2
+    sixMonth = secondsToNominalDiffTime . fromIntegral $ oneYear `div` 2
+    oneYear = 31556952 :: Int -- 365.2425 * 24 * 60 * 60
 
-isoFormat :: String
-isoFormat = mainISOFormat ++ ['\n'] ++ subISOFormat
+isoFormat :: [String]
+isoFormat = [mainISOFormat, subISOFormat]
 
 mainISOFormat :: String
 mainISOFormat = "%m-%d %H:%M"
@@ -60,13 +64,3 @@ fullISOFormat = "%F %T.%q %z"
 
 longISOFormat :: String
 longISOFormat = "%F %R"
-
-isRecentTimeFrom :: UTCTime -> UTCTime -> Bool
-isRecentTimeFrom a b = b > a && diffUTCTime b a < sixMonth
-  where
-    sixMonth = secondsToNominalDiffTime . fromIntegral $ oneYear `div` 2
-    oneYear = 31556952 :: Int -- 365.2425 * 24 * 60 * 60
-
-parseTimeStyleFormat :: String -> [String]
-parseTimeStyleFormat ('+' : s') = L.split (== '\n') s'
-parseTimeStyleFormat _ = []

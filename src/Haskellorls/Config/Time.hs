@@ -29,7 +29,7 @@ data TimeStyle
   = FULLISO
   | LONGISO
   | ISO
-  | FORMAT String
+  | FORMAT [String]
 
 -- WIP: Birth(creation) time is not implemented yet.
 data TimeType
