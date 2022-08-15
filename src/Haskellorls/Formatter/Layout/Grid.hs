@@ -68,9 +68,7 @@ mkValidGrid config columnLength sss =
     Format.SINGLECOLUMN -> mkGrid config 1 sss
     _
       | columnLength <= 0 -> mkGrid config (length sss) sss
-      | otherwise ->
-          let m = fromMaybe 1 . find (\n -> validateGrid columnLength $ mkGrid config n sss) $ reverse [2 .. length sss]
-           in mkGrid config m sss
+      | otherwise -> fromMaybe (mkGrid config 1 sss) . find (validateGrid columnLength) $ (\n -> mkGrid config n sss) <$> reverse [2 .. length sss]
 
 validateGrid :: Int -> [[[Attr.Attribute WT.WrappedText]]] -> Bool
 validateGrid n grid =
