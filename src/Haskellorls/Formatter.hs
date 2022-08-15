@@ -90,9 +90,9 @@ mkNodeNamePrinter config NodeNamePrinters {..} node = NodeNames {..}
               Quote.Escape -> Left quoted
               Quote.ShellAlways -> Right quoted
               Quote.ShellEscapeAlways -> Right quoted
-              _
-                | T.length (WT.wtWord $ Attr.unwrap name) == T.length (WT.wtWord $ Attr.unwrap quoted) -> Left quoted
-                | otherwise -> Right quoted
+              _ -> case T.compareLength (WT.wtWord $ Attr.unwrap quoted) (T.length . WT.wtWord $ Attr.unwrap name) of
+                EQ -> Left quoted
+                _ -> Right quoted
     nodeLink =
       if Config.isLongStyle config
         then nodeLinkPrinter node
