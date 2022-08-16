@@ -21,7 +21,6 @@ import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as TL
 import Haskellorls.Class
 import qualified Haskellorls.Config as Config
-import Haskellorls.Config.Listing
 import Haskellorls.Control.Exception.Safe
 import Haskellorls.Data.Infinitable
 import qualified Haskellorls.Formatter as Formatter
@@ -39,6 +38,7 @@ import qualified Haskellorls.Walk.Utils as Walk
 import System.FilePath.Posix.ByteString
 
 data EntryType = FILES | SINGLEDIR | DIRECTORY
+  deriving (Eq)
 
 data Entry = Entry
   { entryType :: EntryType,
@@ -60,9 +60,13 @@ data Operation
   | PrintEntry Entry
   | PrintTree Tree
 
-newtype LsConf = LsConf (Config.Config, Formatter.Printers)
+data LsConf = LsConf Config.Config Formatter.Printers
 
-newtype LsState = LsState ([Operation], Walk.AlreadySeenInodes, Dired.NameIndeces, [SomeException])
+data LsState = LsState
+  { inodes :: Walk.AlreadySeenInodes,
+    indices :: Dired.NameIndeces,
+    errors :: [SomeException]
+  }
 
 -- | A central piece monad of haskellorls.
 --
@@ -72,96 +76,82 @@ newtype Ls a = Ls (ReaderT LsConf (StateT LsState IO) a)
   deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch, MonadReader LsConf, MonadState LsState)
 
 runLs :: LsConf -> LsState -> Ls a -> IO (a, LsState)
-runLs c s (Ls a) = runStateT (runReaderT a c) s
+runLs conf st (Ls a) = runStateT (runReaderT a conf) st
 
-run :: LsConf -> LsState -> IO ((), LsState)
-run conf st = runLs conf st go
+run :: LsConf -> LsState -> [Operation] -> IO ([Operation], LsState)
+run conf st operations = runLs conf st $ go operations
   where
-    go =
-      get >>= \case
-        LsState ([], _, indeces, _) -> do
-          c <- asks $ \(LsConf (c, _)) -> c
+    go [] = do
+      LsConf config _ <- ask
 
-          when (Config.dired c) $ do
-            unless (null $ Dired.dired indeces) $
-              liftIO . T.putStrLn . TL.toStrict . TL.toLazyText $
-                "//DIRED//" <> foldl' (\acc (x, y) -> foldr (\t acc' -> TL.fromText t <> acc') acc [" ", T.pack (show x), " ", T.pack (show y)]) mempty (Dired.dired indeces)
+      when (Config.dired config) $ do
+        indeces <- gets indices
 
-            unless (null $ Dired.subdired indeces) $
-              liftIO . T.putStrLn . TL.toStrict . TL.toLazyText $
-                "//SUBDIRED//" <> foldl' (\acc (x, y) -> foldr (\t acc' -> TL.fromText t <> acc') acc [" ", T.pack (show x), " ", T.pack (show y)]) mempty (Dired.subdired indeces)
+        unless (null $ Dired.dired indeces) $
+          liftIO . T.putStrLn . TL.toStrict . TL.toLazyText $
+            "//DIRED//" <> foldl' (\acc (x, y) -> foldr (\t acc' -> TL.fromText t <> acc') acc [" ", T.pack (show x), " ", T.pack (show y)]) mempty (Dired.dired indeces)
 
-            liftIO . T.putStrLn $
-              "//DIRED-OPTIONS// --quoting-style="
-                <> case Config.quotingStyle c of
-                  Quote.Literal -> "literal"
-                  Quote.Shell -> "shell"
-                  Quote.ShellAlways -> "shell-always"
-                  Quote.ShellEscape -> "shell-escape"
-                  Quote.ShellEscapeAlways -> "shell-escape-always"
-                  Quote.C -> "c"
-                  Quote.Escape -> "escape"
-        LsState (op : ops, inodes, indeces, errors) -> do
-          c@(LsConf (config, printers)) <- ask
+        unless (null $ Dired.subdired indeces) $
+          liftIO . T.putStrLn . TL.toStrict . TL.toLazyText $
+            "//SUBDIRED//" <> foldl' (\acc (x, y) -> foldr (\t acc' -> TL.fromText t <> acc') acc [" ", T.pack (show x), " ", T.pack (show y)]) mempty (Dired.subdired indeces)
 
-          (op', errs) <- case op of
-            (PrintTree (Tree {..})) -> do
-              -- FIXME: Move directory traversing into an appropriate place.
-              (nodes, errs) <- Tree.mkTreeNodeInfos config treeNode
-              return (PrintTree $ Tree {treeNodes = nodes, ..}, errs)
-            _ -> return (op, mempty)
+        liftIO . T.putStrLn $
+          "//DIRED-OPTIONS// --quoting-style="
+            <> case Config.quotingStyle config of
+              Quote.Literal -> "literal"
+              Quote.Shell -> "shell"
+              Quote.ShellAlways -> "shell-always"
+              Quote.ShellEscape -> "shell-escape"
+              Quote.ShellEscapeAlways -> "shell-escape-always"
+              Quote.C -> "c"
+              Quote.Escape -> "escape"
 
-          let divs = mkDivisions config printers op'
-              indeces' =
-                if Config.dired config
-                  then foldl' (\acc wt -> Dired.update (T.encodeUtf8 . WT.wtWord <$> wt) acc) indeces divs
-                  else indeces
+      return []
+    go (op : ops) = do
+      c@(LsConf config printers) <- ask
 
-          liftIO . T.putStr . TL.toStrict . TL.toLazyText $ foldr (\x acc -> (TL.fromText . serialize $ Attr.unwrap x) <> acc) mempty divs
+      op' <- case op of
+        (PrintTree (Tree {..})) -> do
+          -- FIXME: Move directory traversing into an appropriate place.
+          (nodes, errs) <- Tree.mkTreeNodeInfos config treeNode
 
-          put =<< updateLsState c (LsState (op' : ops, inodes, indeces', errs <> errors))
+          modify $ \s -> s {errors = errs <> errors s}
 
-          go
+          return . PrintTree $ Tree {treeNodes = nodes, ..}
+        _ -> return op
 
-updateLsState :: (MonadCatch m, MonadIO m) => LsConf -> LsState -> m LsState
-updateLsState _ s@(LsState ([], _, _, _)) = pure s
-updateLsState c@(LsConf (config, _)) (LsState (op : ops, inodes, indeces, errors)) = case op of
-  PrintEntry (Entry {..})
-    | Config.recursive config && entryDepth < Config.level config -> do
-        let (nodes, newInodes) = runState (Walk.updateAlreadySeenInode $ filter (Node.isDirectory . Node.nodeType) entryNodes) inodes
-            paths = map (\node -> entryPath </> Node.getNodePath node) nodes
-        (errs, ops') <- partitionEithers <$> mapM (tryIO . pathToOp c (succ <$> entryDepth)) paths
-        mapM_ printErr errs
-        let entries = (\es -> if null es then es else Newline : es) $ intersperse Newline ops'
-        pure $ LsState (entries <> ops, newInodes, indeces, (toException <$> errs) <> errors)
-  _ -> pure $ LsState (ops, inodes, indeces, errors)
+      let divs = mkDivisions config printers op'
+
+      modify $ \s ->
+        if Config.dired config
+          then s {indices = foldl' (\acc wt -> Dired.update (T.encodeUtf8 . WT.wtWord <$> wt) acc) (indices s) divs}
+          else s
+
+      liftIO . T.putStr . TL.toStrict . TL.toLazyText $ foldr (\x acc -> (TL.fromText . serialize $ Attr.unwrap x) <> acc) mempty divs
+
+      case op' of
+        PrintEntry (Entry {..}) | Config.recursive config && entryDepth < Config.level config -> do
+          (nodes, newInodes) <- gets $ runState (Walk.updateAlreadySeenInode $ filter (Node.isDirectory . Node.nodeType) entryNodes) . inodes
+          modify $ \s -> s {inodes = newInodes}
+
+          let paths = (\node -> entryPath </> Node.getNodePath node) <$> nodes
+
+          (errs, ops') <- partitionEithers <$> mapM (tryIO . pathToOp c (succ <$> entryDepth)) paths
+          mapM_ printErr errs
+          modify $ \s -> s {errors = (toException <$> errs) <> errors s}
+
+          let entries = (\es -> if null es then es else Newline : es) $ intersperse Newline ops'
+
+          go $ entries <> ops
+        _ -> go ops
 
 pathToOp :: (MonadCatch m, MonadIO m) => LsConf -> Infinitable Int -> RawFilePath -> m Operation
-pathToOp (LsConf (config, _)) depth path = do
-  nodes <- buildDirectoryNodes config path
-  pure . PrintEntry $ Entry DIRECTORY path nodes config depth
-
--- | With error message output.
-buildDirectoryNodes :: (MonadCatch m, MonadIO m) => Config.Config -> RawFilePath -> m [Node.NodeInfo]
-buildDirectoryNodes config path = do
-  contents <- Listing.listContents config path
-  Sort.sort config <$> (mapM (Node.mkNodeInfo config path) . excluder) contents
-  where
-    excluder = ignoreExcluder . hideExcluder
-    ignorePtn = Config.ignore config
-    hidePtn = Config.hide config
-    isShowHiddenEntries = case Config.listing config of
-      NoHidden -> False
-      _ -> True
-    ignoreExcluder
-      | null ignorePtn = id
-      | otherwise = Listing.exclude ignorePtn
-    hideExcluder
-      | null hidePtn || isShowHiddenEntries = id
-      | otherwise = Listing.exclude hidePtn
+pathToOp (LsConf config _) depth path = do
+  nodes <- Sort.sort config <$> (mapM (Node.mkNodeInfo config path) =<< Listing.listContents config path)
+  return . PrintEntry $ Entry DIRECTORY path nodes config depth
 
 mkInitialOperations :: (MonadCatch m, MonadIO m) => LsConf -> [RawFilePath] -> m ([Operation], Walk.AlreadySeenInodes, [SomeException])
-mkInitialOperations c@(LsConf (config@Config.Config {tree}, _)) paths = do
+mkInitialOperations c@(LsConf config _) paths = do
   (errs, nodeinfos) <- first (map toException) . partitionEithers <$> mapM (tryIO . Node.mkNodeInfo config "") paths
 
   mapM_ printErr errs
@@ -170,7 +160,7 @@ mkInitialOperations c@(LsConf (config@Config.Config {tree}, _)) paths = do
   let (dirs, files) = partition isDirectory nodes
       fileOp = [PrintEntry (Entry FILES "" files config depth) | not (null files)]
 
-  if tree
+  if Config.tree config
     then do
       let ops = dirs <&> \node -> PrintTree $ Tree (Node.getNodePath node) node mempty config
       return (intersperse Newline $ fileOp <> ops, inodes, errs)
@@ -191,24 +181,21 @@ mkDivisions :: Config.Config -> Formatter.Printers -> Operation -> [Attr.Attribu
 mkDivisions config printers =
   foldr (\x acc -> [Attr.Other $ deserialize "  " | Config.dired config && not (null x)] <> x <> [Attr.Other . deserialize $ if Config.zero config then "\0" else "\n"] <> acc) mempty . \case
     Newline -> [[]]
-    PrintEntry (Entry {..}) -> filter (not . null) ([header] <> [totalBlockSize]) <> (mconcat <$> Grid.mkValidGrid config (Config.width config) nodes)
-      where
-        nodes = Formatter.mkLines entryNodes config printers $ Formatter.mkPrinterTypes config
+    PrintEntry (Entry {..}) ->
+      let nodes = Formatter.mkLines entryNodes config printers $ Formatter.mkPrinterTypes config
 
-        header = case entryType of
-          FILES -> []
-          SINGLEDIR | not (Config.recursive config) -> []
-          _ -> [Attr.Dir . deserialize $ T.decodeUtf8 entryPath, Attr.Other $ deserialize ":"]
+          header = case entryType of
+            FILES -> []
+            SINGLEDIR | not (Config.recursive config) -> []
+            _ -> [Attr.Dir . deserialize $ T.decodeUtf8 entryPath, Attr.Other $ deserialize ":"]
 
-        -- Add total block size header only about directries when long style
-        -- layout or @-s / --size@ is passed.
-        totalBlockSize = case entryType of
-          _ | Config.size config -> [size]
-          FILES -> []
-          _
-            | Config.isLongStyle config -> [size]
-            | otherwise -> []
-          where
-            size = Attr.Other . deserialize . T.concat . ("total " :) . map (WT.serialize . Attr.unwrap) . Size.toTotalBlockSize config $ Node.fileSize <$> entryNodes
-    PrintTree (Tree {..}) ->
-      Formatter.mkLines treeNodes config printers $ Formatter.mkPrinterTypes config
+          -- Add total block size header only about directries when long style
+          -- layout or @-s / --size@ is passed.
+          size = Attr.Other . deserialize . T.concat . ("total " :) . map (WT.serialize . Attr.unwrap) . Size.toTotalBlockSize config $ Node.fileSize <$> entryNodes
+          totalBlockSize
+            | Config.size config = [size]
+            | entryType == FILES = []
+            | Config.isLongStyle config = [size]
+            | otherwise = []
+       in filter (not . null) ([header] <> [totalBlockSize]) <> (mconcat <$> Grid.mkValidGrid config (Config.width config) nodes)
+    PrintTree (Tree {..}) -> Formatter.mkLines treeNodes config printers $ Formatter.mkPrinterTypes config

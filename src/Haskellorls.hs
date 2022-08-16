@@ -4,7 +4,6 @@ import Data.Version (showVersion)
 import Haskellorls.Config
 import Haskellorls.Config.Environment
 import qualified Haskellorls.Config.Option as Option
-import Haskellorls.Control.Exception.Safe
 import qualified Haskellorls.Formatter as Formatter
 import qualified Haskellorls.Walk as Walk
 import qualified Haskellorls.Walk.Dired as Dired
@@ -46,7 +45,7 @@ run opt = do
             Option.oDereferenceCommandLineSymlinkToDir = False
           }
 
-  let conf = Walk.LsConf (mkConfig env opt, printers)
+  let conf = Walk.LsConf (mkConfig env opt) printers
 
   (ops, inodes, errs) <-
     let targets = Option.oTargets opt
@@ -54,9 +53,7 @@ run opt = do
         -- implicitly if no argument.
         Walk.mkInitialOperations conf $ encodeFilePath <$> if null targets then ["."] else targets
 
-  mapM_ printErr errs
-
-  (_, Walk.LsState (_, _, _, errors)) <- Walk.run conf $ Walk.LsState (ops, inodes, Dired.empty, [])
+  (_, Walk.LsState _ _ errors) <- Walk.run conf (Walk.LsState inodes Dired.empty []) ops
 
   return $
     if
