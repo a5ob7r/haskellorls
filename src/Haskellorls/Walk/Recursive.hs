@@ -21,6 +21,7 @@ import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as TL
 import Haskellorls.Class
 import qualified Haskellorls.Config as Config
+import qualified Haskellorls.Config.Format as Format
 import Haskellorls.Control.Exception.Safe
 import Haskellorls.Data.Infinitable
 import qualified Haskellorls.Formatter as Formatter
@@ -195,7 +196,7 @@ mkDivisions config printers =
           totalBlockSize
             | Config.size config = [size]
             | entryType == FILES = []
-            | Config.isLongStyle config = [size]
+            | Config.format config == Format.LONG = [size]
             | otherwise = []
        in filter (not . null) ([header] <> [totalBlockSize]) <> (mconcat <$> Grid.mkValidGrid config (Config.width config) nodes)
     PrintTree (Tree {..}) -> Formatter.mkLines treeNodes config printers $ Formatter.mkPrinterTypes config

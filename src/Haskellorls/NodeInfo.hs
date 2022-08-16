@@ -16,21 +16,20 @@ module Haskellorls.NodeInfo
   )
 where
 
-import Control.Exception.Safe
-import Control.Monad.IO.Class
-import Data.Either.Extra
-import Data.Functor
+import Control.Exception.Safe (MonadCatch, tryIO)
+import Control.Monad.IO.Class (MonadIO, liftIO)
+import Data.Either.Extra (eitherToMaybe)
 import qualified Data.Text as T
-import Data.Time.Clock.POSIX
+import Data.Time.Clock.POSIX (POSIXTime)
 import qualified Haskellorls.Config as Config
 import qualified Haskellorls.Config.Time as Time
 import qualified Haskellorls.Config.Tree as Tree
 import qualified Haskellorls.System.Posix.Files.ByteString as Files
-import System.FilePath.Posix.ByteString
+import System.FilePath.Posix.ByteString (RawFilePath, (</>))
 import qualified System.Posix.Types as Types
 
 #ifdef SELINUX
-import Data.Either
+import Data.Either (fromRight)
 import qualified System.Linux.SELinux as SELinux
 #endif
 
@@ -159,32 +158,32 @@ data NodeInfo = NodeInfo
   }
 
 -- | Create a filenode infomation from a filepath.
+--
+-- TODO: Handle missing files.
 mkNodeInfo :: (MonadCatch m, MonadIO m) => Config.Config -> RawFilePath -> RawFilePath -> m NodeInfo
 mkNodeInfo config dirname basename = do
-  status <- liftIO $ Files.getSymbolicLinkStatus path
-  context <- fileContext path
+  let filepath = dirname </> basename
+  filestatus <- liftIO $ Files.getSymbolicLinkStatus filepath
+  filecontext <- fileContext filepath
 
-  if Files.isSymbolicLink status
+  if Files.isSymbolicLink filestatus
     then do
-      linkPath <- tryIO . liftIO $ Files.readSymbolicLink path
+      linkpath <- tryIO . liftIO $ Files.readSymbolicLink filepath
 
-      destStatus <- do
-        case linkPath of
-          -- Dereference file status if a status presents symbolic link.
-          Right p -> tryIO (Files.destFileStatusRecursive path p) <&> eitherToMaybe
-          _ -> pure Nothing
+      linkstatus <- case linkpath of
+        Right _ -> eitherToMaybe <$> tryIO (liftIO $ Files.getFileStatus filepath)
+        _ -> return Nothing
 
-      destContext <- do
-        case linkPath of
-          Right p -> fileContext p
-          _ -> pure defaultContext
+      linkcontext <- case linkpath of
+        Right path -> fileContext path
+        _ -> return defaultContext
 
-      return $ case (linkPath, destStatus) of
+      return $ case (linkpath, linkstatus) of
         (Right p, Nothing) ->
           NodeInfo
             { getNodePath = basename,
-              getNodeStatus = mkProxyFileStatus config status,
-              getNodeContext = T.pack context,
+              getNodeStatus = mkProxyFileStatus config filestatus,
+              getNodeContext = T.pack filecontext,
               getNodeDirName = dirname,
               getNodeLinkInfo = Just . Left $ OrphanedLinkNodeInfo p,
               getTreeNodePositions = []
@@ -192,11 +191,11 @@ mkNodeInfo config dirname basename = do
         (Right p, Just s)
           | Config.dereference config
               || Config.dereferenceCommandLine config
-              || (Config.dereferenceCommandLineSymlinkToDir config && Files.isDirectory s) ->
+              || Config.dereferenceCommandLineSymlinkToDir config && Files.isDirectory s ->
               NodeInfo
                 { getNodePath = basename,
                   getNodeStatus = mkProxyFileStatus config s,
-                  getNodeContext = T.pack context,
+                  getNodeContext = T.pack filecontext,
                   getNodeDirName = dirname,
                   getNodeLinkInfo = Nothing,
                   getTreeNodePositions = []
@@ -204,23 +203,23 @@ mkNodeInfo config dirname basename = do
           | otherwise ->
               NodeInfo
                 { getNodePath = basename,
-                  getNodeStatus = mkProxyFileStatus config status,
-                  getNodeContext = T.pack context,
+                  getNodeStatus = mkProxyFileStatus config filestatus,
+                  getNodeContext = T.pack filecontext,
                   getNodeDirName = dirname,
                   getNodeLinkInfo =
                     Just . Right $
                       LinkNodeInfo
                         { getLinkNodePath = p,
                           getLinkNodeStatus = mkProxyFileStatus config s,
-                          getLinkNodeContext = T.pack destContext
+                          getLinkNodeContext = T.pack linkcontext
                         },
                   getTreeNodePositions = []
                 }
         _ ->
           NodeInfo
             { getNodePath = basename,
-              getNodeStatus = mkProxyFileStatus config status,
-              getNodeContext = T.pack context,
+              getNodeStatus = mkProxyFileStatus config filestatus,
+              getNodeContext = T.pack filecontext,
               getNodeDirName = dirname,
               getNodeLinkInfo = Nothing,
               getTreeNodePositions = []
@@ -229,14 +228,12 @@ mkNodeInfo config dirname basename = do
       return $
         NodeInfo
           { getNodePath = basename,
-            getNodeStatus = mkProxyFileStatus config status,
-            getNodeContext = T.pack context,
+            getNodeStatus = mkProxyFileStatus config filestatus,
+            getNodeContext = T.pack filecontext,
             getNodeDirName = dirname,
             getNodeLinkInfo = Nothing,
             getTreeNodePositions = []
           }
-  where
-    path = dirname </> basename
 
 fileMode :: NodeInfo -> Types.FileMode
 fileMode = pfsFileMode . getNodeStatus
@@ -292,16 +289,14 @@ toFileInfo node@NodeInfo {..} = case getNodeLinkInfo of
 
 {- ORMOLU_DISABLE -}
 -- |
--- NOTE: This is not tested on SELinux enabled environment so maybe break.
+-- NOTE: This is not tested on SELinux enabled environment, so this may be
+-- broken.
 -- NOTE: Disable ormolu because it does not support CPP extension.
 fileContext :: MonadIO m => RawFilePath -> m String
 #ifdef SELINUX
-fileContext path =
-  do
-    context <- tryIO (SELinux.getFileCon path)
-    pure $ fromRight defaultContext context
+fileContext path = fromRight defaultContext <$> tryIO (SELinux.getFileCon path)
 #else
-fileContext _ = pure defaultContext
+fileContext _ = return defaultContext
 #endif
 {- ORMOLU_ENABLE -}
 

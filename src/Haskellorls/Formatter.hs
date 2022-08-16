@@ -94,7 +94,7 @@ mkNodeNamePrinter config NodeNamePrinters {..} node = NodeNames {..}
                 EQ -> Left quoted
                 _ -> Right quoted
     nodeLink =
-      if Config.isLongStyle config
+      if Config.format config == Format.LONG
         then nodeLinkPrinter node
         else []
     nodeIndicator =
@@ -192,9 +192,8 @@ mkPrinters config = do
         case (shouldColorize, isEnableExtraColor) of
           (True, True) -> Time.coloredTimeStyleFunc lscolors timeZone defaultTimeLocale currentTime timeStyle . fileTime
           (True, _) -> Time.normalColoredTimeStyleFunc lscolors timeZone defaultTimeLocale currentTime timeStyle . fileTime
-          _ -> (\t -> [Attr.Other $ WT.deserialize t]) . timeStyleFunc . fileTime
+          _ -> (\t -> [Attr.Other $ WT.deserialize t]) . Time.timeStyleFunc timeZone defaultTimeLocale currentTime timeStyle . fileTime
         where
-          timeStyleFunc = Time.timeStyleFunc timeZone defaultTimeLocale currentTime timeStyle
           fileTime = posixSecondsToUTCTime . Node.fileTime
           timeStyle = Config.timeStyle config
 
@@ -235,7 +234,7 @@ mkPrinterTypes config = filter predicate [FILEINODE, FILEBLOCK, FILEFIELD, FILEL
       FILENAME -> True
     inode = Config.inode config
     size = Config.size config
-    long = Config.isLongStyle config
+    long = Config.format config == Format.LONG
     owner = Config.owner config
     group = Config.group config
     author = Config.author config
@@ -269,8 +268,7 @@ mkColumn nodes config printers pType
                 Left name
                   | all (isLeft . nodeName) names -> [name]
                   | otherwise -> [Attr.Other $ deserialize " ", name]
-           in names <&> \NodeNames {..} ->
-                nodeTree <> nodeIcon <> f nodeName <> nodeLink <> nodeIndicator
+           in names <&> \NodeNames {..} -> nodeTree <> nodeIcon <> f nodeName <> nodeLink <> nodeIndicator
     l = maximum $ 0 : (sum . map (termLength . Attr.unwrap) <$> column)
     justify =
       case pType of

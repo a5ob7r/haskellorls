@@ -1,7 +1,6 @@
 module Haskellorls.Config
   ( Config (..),
     mkConfig,
-    isLongStyle,
   )
 where
 
@@ -201,8 +200,3 @@ mkConfig env Option {..} = Config {..}
     toTTY = Env.toTerminal env
     currentWorkingDirectory = Env.cwd env
     hostname = T.pack $ Env.hostname env
-
-isLongStyle :: Config -> Bool
-isLongStyle config = case format config of
-  LONG -> True
-  _ -> False

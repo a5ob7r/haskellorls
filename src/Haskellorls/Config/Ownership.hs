@@ -16,13 +16,9 @@ data UserInfo = UserInfo
 
 userInfo :: IO UserInfo
 userInfo = do
-  uID <- User.getRealUserID
-  gIDs <- User.getGroups
-  return $
-    UserInfo
-      { userInfoUserID = uID,
-        userInfoGroupIDs = gIDs
-      }
+  userInfoUserID <- User.getRealUserID
+  userInfoGroupIDs <- User.getGroups
+  return $ UserInfo {..}
 
 data UserID = Myself Types.UserID | NotMyself Types.UserID
 

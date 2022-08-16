@@ -2,6 +2,7 @@ module Haskellorls.Formatter.Indicator (buildIndicatorPrinter) where
 
 import qualified Data.Text as T
 import qualified Haskellorls.Config as Config
+import qualified Haskellorls.Config.Format as Format
 import Haskellorls.Config.Indicator
 import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.WrappedText as WT
@@ -65,12 +66,12 @@ buildIndicatorPrinter config node = [Attr.Other $ WT.deserialize indicator | not
   where
     indicator = indicatorSelector node' $ buildIndicators config
     node' = case Node.getNodeLinkInfo node of
-      Just (Right _) | Config.isLongStyle config -> Node.toFileInfo node
+      Just (Right _) | Config.format config == Format.LONG -> Node.toFileInfo node
       _ -> node
 
 buildIndicators :: Config.Config -> Indicators
 buildIndicators config =
-  if Config.isLongStyle config
+  if Config.format config == Format.LONG
     then indicators {indicatorsLink = ""}
     else indicators
   where
