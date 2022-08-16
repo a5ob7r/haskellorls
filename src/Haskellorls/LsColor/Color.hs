@@ -105,10 +105,9 @@ instance Dictionary EntryType Sequence LsColors where
     BLOCK -> block
     CHAR -> char
     DIR -> directory
-    SYMLINK ->
-      if symlink == Just "target"
-        then Nothing
-        else symlink
+    SYMLINK
+      | symlink == Just "target" -> Nothing
+      | otherwise -> symlink
     FIFO -> pipe
     SOCK -> socket
     OTHER -> Nothing

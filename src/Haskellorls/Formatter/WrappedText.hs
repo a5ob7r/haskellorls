@@ -45,19 +45,17 @@ wrap o@(Config.Options {..}) getter t = case getter o of
 -- | Left-justify a list of 'WrappedText' to the given length, using the given
 -- character.
 justifyLeft :: Int -> Char -> [WrappedText] -> [WrappedText]
-justifyLeft n c wt =
-  case n - l of
-    n' | n' > 0 -> wt <> [deserialize (T.replicate n' $ T.singleton c)]
-    _ -> wt
+justifyLeft n c wt
+  | diff <- n - l, diff > 0 = wt <> [deserialize (T.replicate diff $ T.singleton c)]
+  | otherwise = wt
   where
     l = sum $ termLength <$> wt
 
 -- | Right-justify a list of 'WrappedText' to the given length, using the given
 -- character.
 justifyRight :: Int -> Char -> [WrappedText] -> [WrappedText]
-justifyRight n c wt =
-  case n - l of
-    n' | n' > 0 -> deserialize (T.replicate n' $ T.singleton c) : wt
-    _ -> wt
+justifyRight n c wt
+  | diff <- n - l, diff > 0 = deserialize (T.replicate diff $ T.singleton c) : wt
+  | otherwise = wt
   where
     l = sum $ termLength <$> wt

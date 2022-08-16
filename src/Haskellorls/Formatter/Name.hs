@@ -25,10 +25,9 @@ colorizedNodeName config c@(Color.Options {..}) nd = Attr.Name $ WT.WrappedText 
     r = Color.unSequence $ fromMaybe "" reset
 
 nodeName :: Config.Config -> Node.NodeInfo -> Attr.Attribute WT.WrappedText
-nodeName config@(Config.Config {hyperlink, hostname}) node =
-  if hyperlink
-    then Attr.Name $ WT.WrappedText (left <> uri <> right) (rawNodeName node) (left <> right)
-    else Attr.Name $ deserialize $ rawNodeName node
+nodeName config@(Config.Config {hyperlink, hostname}) node
+  | hyperlink = Attr.Name $ WT.WrappedText (left <> uri <> right) (rawNodeName node) (left <> right)
+  | otherwise = Attr.Name $ deserialize $ rawNodeName node
   where
     left = "\^[]8;;"
     right = "\^G"
@@ -39,9 +38,9 @@ rawNodeName = T.decodeUtf8 . Node.getNodePath
 
 -- | Make the absolute path from a node.
 mkAbsolutePath :: Config.Config -> Node.NodeInfo -> RawFilePath
-mkAbsolutePath Config.Config {currentWorkingDirectory} Node.NodeInfo {..} =
-  normalise $
-    if
-        | isAbsolute getNodePath -> getNodePath
-        | isAbsolute getNodeDirName -> getNodeDirName </> getNodePath
-        | otherwise -> currentWorkingDirectory </> getNodeDirName </> getNodePath
+mkAbsolutePath Config.Config {currentWorkingDirectory} Node.NodeInfo {..} = normalise path
+  where
+    path
+      | isAbsolute getNodePath = getNodePath
+      | isAbsolute getNodeDirName = getNodeDirName </> getNodePath
+      | otherwise = currentWorkingDirectory </> getNodeDirName </> getNodePath

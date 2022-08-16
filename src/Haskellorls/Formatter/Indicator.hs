@@ -66,14 +66,13 @@ buildIndicatorPrinter config node = [Attr.Other $ WT.deserialize indicator | not
   where
     indicator = indicatorSelector node' $ buildIndicators config
     node' = case Node.getNodeLinkInfo node of
-      Just (Right _) | Config.format config == Format.LONG -> Node.toFileInfo node
+      Just (Right _) | Format.LONG <- Config.format config -> Node.toFileInfo node
       _ -> node
 
 buildIndicators :: Config.Config -> Indicators
-buildIndicators config =
-  if Config.format config == Format.LONG
-    then indicators {indicatorsLink = ""}
-    else indicators
+buildIndicators config
+  | Format.LONG <- Config.format config = indicators {indicatorsLink = ""}
+  | otherwise = indicators
   where
     indicators = case Config.indicatorStyle config of
       IndicatorNone -> noneIndicators

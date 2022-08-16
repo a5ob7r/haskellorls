@@ -93,10 +93,9 @@ mkNodeNamePrinter config NodeNamePrinters {..} node = NodeNames {..}
               _ -> case T.compareLength (WT.wtWord $ Attr.unwrap quoted) (T.length . WT.wtWord $ Attr.unwrap name) of
                 EQ -> Left quoted
                 _ -> Right quoted
-    nodeLink =
-      if Config.format config == Format.LONG
-        then nodeLinkPrinter node
-        else []
+    nodeLink
+      | Format.LONG <- Config.format config = nodeLinkPrinter node
+      | otherwise = []
     nodeIndicator =
       if Indicator.IndicatorNone < Config.indicatorStyle config
         then nodeIndicatorPrinter node
@@ -242,7 +241,7 @@ mkPrinterTypes config = filter predicate [FILEINODE, FILEBLOCK, FILEFIELD, FILEL
 
 mkColumn :: [Node.NodeInfo] -> Config.Config -> Printers -> PrinterType -> [[Attr.Attribute WT.WrappedText]]
 mkColumn nodes config printers pType
-  | Config.format config == Format.COMMAS = column
+  | Format.COMMAS <- Config.format config = column
   | otherwise = justify <$> column
   where
     column =
@@ -291,17 +290,15 @@ mkLines :: Foldable t => t Node.NodeInfo -> Config.Config -> Printers -> [Printe
 mkLines nodes config printers types = intercalate [Attr.Other $ WT.deserialize " "] <$> mkGrid (toList nodes) config printers types
 
 justifyLeft :: Int -> Char -> [Attr.Attribute WT.WrappedText] -> [Attr.Attribute WT.WrappedText]
-justifyLeft n c wt =
-  case n - l of
-    n' | n' > 0 -> wt <> [Attr.Other . deserialize . T.replicate n' $ T.singleton c]
-    _ -> wt
+justifyLeft n c wt
+  | diff <- n - l, diff > 0 = wt <> [Attr.Other . deserialize . T.replicate diff $ T.singleton c]
+  | otherwise = wt
   where
     l = sum $ termLength . Attr.unwrap <$> wt
 
 justifyRight :: Int -> Char -> [Attr.Attribute WT.WrappedText] -> [Attr.Attribute WT.WrappedText]
-justifyRight n c wt =
-  case n - l of
-    n' | n' > 0 -> (Attr.Other . deserialize . T.replicate n' $ T.singleton c) : wt
-    _ -> wt
+justifyRight n c wt
+  | diff <- n - l, diff > 0 = (Attr.Other . deserialize . T.replicate diff $ T.singleton c) : wt
+  | otherwise = wt
   where
     l = sum $ termLength . Attr.unwrap <$> wt

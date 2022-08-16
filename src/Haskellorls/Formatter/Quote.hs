@@ -15,10 +15,9 @@ import qualified Haskellorls.Formatter.WrappedText as WT
 -- | Quote and Escape for filenames.
 quote :: Config.Config -> Attr.Attribute WT.WrappedText -> Attr.Attribute WT.WrappedText
 quote config wt = case Config.quotingStyle config of
-  Literal ->
-    if Config.showControlChars config
-      then wt
-      else WT.modify replaceControlCharsByQuestion <$> wt
+  Literal
+    | Config.showControlChars config -> wt
+    | otherwise -> WT.modify replaceControlCharsByQuestion <$> wt
   Shell -> quoteForShell config False wt
   ShellAlways -> quoteForShell config True wt
   ShellEscape -> quoteForShellEscape False wt
@@ -33,10 +32,9 @@ quoteForShell config forceQuote wt
   | '"' `S.notMember` chars = WT.modify (const $ "\"" <> t <> "\"") <$> wt
   | otherwise = WT.modify (const $ "'" <> T.concatMap (\c -> if c == '\'' then "'\\''" else T.singleton c) t <> "'") <$> wt
   where
-    escape =
-      if Config.showControlChars config
-        then id
-        else replaceControlCharsByQuestion
+    escape
+      | Config.showControlChars config = id
+      | otherwise = replaceControlCharsByQuestion
     t = escape . WT.wtWord $ Attr.unwrap wt
     chars = T.foldl' (flip S.insert) mempty t
 

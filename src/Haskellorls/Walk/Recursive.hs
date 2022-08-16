@@ -195,8 +195,8 @@ mkDivisions config printers =
           size = Attr.Other . deserialize . T.concat . ("total " :) . map (WT.serialize . Attr.unwrap) . Size.toTotalBlockSize config $ Node.fileSize <$> entryNodes
           totalBlockSize
             | Config.size config = [size]
-            | entryType == FILES = []
-            | Config.format config == Format.LONG = [size]
+            | FILES <- entryType = []
+            | Format.LONG <- Config.format config = [size]
             | otherwise = []
        in filter (not . null) ([header] <> [totalBlockSize]) <> (mconcat <$> Grid.mkValidGrid config (Config.width config) nodes)
     PrintTree (Tree {..}) -> Formatter.mkLines treeNodes config printers $ Formatter.mkPrinterTypes config

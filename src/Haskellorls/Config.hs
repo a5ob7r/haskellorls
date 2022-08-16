@@ -143,12 +143,9 @@ mkConfig env Option {..} = Config {..}
       | oFillWidth = COMMAS
       | oOneline = SINGLECOLUMN
       | or [oLong, oLongWithoutGroup, oLongWithoutOwner, oFullTime] = LONG
-      | otherwise =
-          case oFormat of
-            Just fmt -> fmt
-            Nothing
-              | toTTY && not zero -> VERTICAL
-              | otherwise -> SINGLECOLUMN
+      | Just fmt <- oFormat = fmt
+      | toTTY && not zero = VERTICAL
+      | otherwise = SINGLECOLUMN
     directory = oDirectory
     groupDirectoriesFirst = oGroupDirectoriesFirst
     si = oSi
@@ -163,11 +160,9 @@ mkConfig env Option {..} = Config {..}
       | oLiteral = Literal
       | oQuoteName = C
       | oEscape = Escape
-      | otherwise = case (Env.quotingStyle env >>= (Quote.parseQuotingStyle . T.pack)) <|> oQuotingStyle of
-          Just style -> style
-          Nothing
-            | toTTY -> ShellEscape
-            | otherwise -> Literal
+      | Just style <- (Env.quotingStyle env >>= (Quote.parseQuotingStyle . T.pack)) <|> oQuotingStyle = style
+      | toTTY = ShellEscape
+      | otherwise = Literal
     showControlChars = fromMaybe (not toTTY) oShowControlChars
     reverse = oReverse
     recursive = oRecursive
