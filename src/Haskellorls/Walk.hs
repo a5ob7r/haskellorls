@@ -1,29 +1,38 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Haskellorls.Walk
   ( mkInitialOperations,
-    run,
-    LsConf (..),
     LsState (..),
+    LsConf (..),
+    runLs,
+    run,
   )
 where
 
 import Control.Exception.Safe (MonadCatch, MonadThrow, SomeException, toException, tryIO)
-import Control.Monad.IO.Class
-import Control.Monad.Reader
-import Control.Monad.State.Strict
-import Data.Bifunctor
-import Data.Either
-import Data.Functor
+import Control.Monad (foldM, unless, when)
+import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.Reader (MonadReader, ReaderT (..), ask)
+import Control.Monad.State.Strict (MonadState, StateT (..), runState)
+import Data.Bifunctor (bimap)
+import Data.Default.Class (Default (..))
+import Data.Either (partitionEithers)
+import Data.Functor ((<&>))
 import Data.List (foldl', intersperse, partition)
 import Data.Maybe (fromMaybe)
+import Data.Sequence (Seq (Empty, (:<|)), fromList, singleton, (|>))
 import qualified Data.Sequence as Seq
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Data.Text.IO as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as TL
+import GHC.IO.Exception (IOErrorType (NoSuchThing), IOException (ioe_type))
 import Haskellorls.Class
 import qualified Haskellorls.Config as Config
 import qualified Haskellorls.Config.Format as Format
+import Haskellorls.Config.Listing
+import Haskellorls.Config.Tree
 import Haskellorls.Data.Infinitable
 import qualified Haskellorls.Formatter as Formatter
 import qualified Haskellorls.Formatter.Attribute as Attr
@@ -31,13 +40,41 @@ import qualified Haskellorls.Formatter.Layout.Grid as Grid
 import qualified Haskellorls.Formatter.Quote as Quote
 import qualified Haskellorls.Formatter.Size as Size
 import qualified Haskellorls.Formatter.WrappedText as WT
+import Haskellorls.Lens.Micro (makeLenses', use, view, (%=), (.=))
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Walk.Dired as Dired
 import qualified Haskellorls.Walk.Listing as Listing
 import qualified Haskellorls.Walk.Sort as Sort
-import qualified Haskellorls.Walk.Tree as Tree
 import qualified Haskellorls.Walk.Utils as Walk
-import System.FilePath.Posix.ByteString
+import System.FilePath.Posix.ByteString (RawFilePath, (</>))
+
+data LsConf = LsConf
+  { _config :: Config.Config,
+    printers :: Formatter.Printers
+  }
+
+$(makeLenses' ''LsConf)
+
+data LsState = LsState
+  { _inodes :: Walk.Inodes,
+    _indices :: Dired.NameIndeces,
+    _errors :: [SomeException]
+  }
+
+instance Default LsState where
+  def = LsState mempty Dired.empty []
+
+$(makeLenses' ''LsState)
+
+-- | A central piece monad of haskellorls.
+--
+-- NOTE: This is inspired from XMonad.
+-- <https://github.com/xmonad/xmonad/blob/a902fefaf1f27f1a21dc35ece15e7dbb573f3d95/src/XMonad/Core.hs#L158>
+newtype Ls a = Ls (ReaderT LsConf (StateT LsState IO) a)
+  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch, MonadReader LsConf, MonadState LsState)
+
+runLs :: LsConf -> LsState -> Ls a -> IO (a, LsState)
+runLs conf st (Ls a) = runStateT (runReaderT a conf) st
 
 data EntryType = FILES | SINGLEDIR | DIRECTORY
 
@@ -61,40 +98,22 @@ data Operation
   | PrintEntry Entry
   | PrintTree Tree
 
-data LsConf = LsConf Config.Config Formatter.Printers
-
-data LsState = LsState
-  { inodes :: Walk.Inodes,
-    indices :: Dired.NameIndeces,
-    errors :: [SomeException]
-  }
-
--- | A central piece monad of haskellorls.
---
--- NOTE: This is inspired from XMonad.
--- <https://github.com/xmonad/xmonad/blob/a902fefaf1f27f1a21dc35ece15e7dbb573f3d95/src/XMonad/Core.hs#L158>
-newtype Ls a = Ls (ReaderT LsConf (StateT LsState IO) a)
-  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch, MonadReader LsConf, MonadState LsState)
-
-runLs :: LsConf -> LsState -> Ls a -> IO (a, LsState)
-runLs conf st (Ls a) = runStateT (runReaderT a conf) st
-
 run :: LsConf -> LsState -> [Operation] -> IO ([Operation], LsState)
 run conf st operations = runLs conf st $ go operations
   where
     go [] = do
-      LsConf config _ <- ask
+      config <- view configL
 
       ([] <$) . when (Config.dired config) $ do
-        indeces <- gets indices
+        indices <- use indicesL
 
-        unless (null $ Dired.dired indeces) $
+        unless (null $ Dired.dired indices) $
           liftIO . T.putStrLn . TL.toStrict . TL.toLazyText $
-            "//DIRED//" <> foldl' (\acc (x, y) -> foldr (\t acc' -> TL.fromText t <> acc') acc [" ", T.pack (show x), " ", T.pack (show y)]) mempty (Dired.dired indeces)
+            "//DIRED//" <> foldl' (\acc (x, y) -> foldr (\t acc' -> TL.fromText t <> acc') acc [" ", T.pack (show x), " ", T.pack (show y)]) mempty (Dired.dired indices)
 
-        unless (null $ Dired.subdired indeces) $
+        unless (null $ Dired.subdired indices) $
           liftIO . T.putStrLn . TL.toStrict . TL.toLazyText $
-            "//SUBDIRED//" <> foldl' (\acc (x, y) -> foldr (\t acc' -> TL.fromText t <> acc') acc [" ", T.pack (show x), " ", T.pack (show y)]) mempty (Dired.subdired indeces)
+            "//SUBDIRED//" <> foldl' (\acc (x, y) -> foldr (\t acc' -> TL.fromText t <> acc') acc [" ", T.pack (show x), " ", T.pack (show y)]) mempty (Dired.subdired indices)
 
         liftIO . T.putStrLn $
           "//DIRED-OPTIONS// --quoting-style="
@@ -112,13 +131,10 @@ run conf st operations = runLs conf st $ go operations
       LsConf config printers <- ask
 
       op' <- case op of
-        (PrintTree (Tree {..})) -> do
-          -- FIXME: Move directory traversing into an appropriate place.
-          (nodes, errs) <- Tree.mkTreeNodeInfos config treeNode
+        PrintTree Tree {..} -> do
+          nodes <- mkTreeNodeInfos treeNode
 
-          modify $ \s -> s {errors = errs <> errors s}
-
-          return . PrintTree $ Tree {treeNodes = nodes, ..}
+          return $ PrintTree Tree {treeNodes = nodes, ..}
         _ -> return op
 
       let f acc d = do
@@ -129,55 +145,124 @@ run conf st operations = runLs conf st $ go operations
                 then Dired.update (T.encodeUtf8 . WT.wtWord <$> d) acc
                 else acc
           divs = mkDivisions config printers op'
-       in gets indices >>= \x -> foldM f x divs >>= \x' -> modify $ \s -> s {indices = x'}
+       in use indicesL >>= \indices -> foldM f indices divs >>= (indicesL .=)
 
       case op' of
-        PrintEntry (Entry {..}) | Config.recursive config && entryDepth < Config.level config -> do
-          (nodes, newInodes) <- gets $ runState (Walk.filterNodes $ filter (maybe False Node.isDirectory . Node.nodeType) entryNodes) . inodes
-          modify $ \s -> s {inodes = newInodes}
+        PrintEntry Entry {..} | Config.recursive config && entryDepth < Config.level config -> do
+          (nodes, inodes) <- do
+            let nodes = filter (maybe False Node.isDirectory . Node.nodeType) entryNodes
+            runState (Walk.filterNodes nodes) <$> use inodesL
+          inodesL .= inodes
 
           let paths = (\node -> entryPath </> Node.getNodePath node) <$> nodes
-
-          (errs, ops') <- partitionEithers <$> mapM (tryIO . pathToOp config (succ <$> entryDepth)) paths
-          mapM_ notify errs
-          modify $ \s -> s {errors = (toException <$> errs) <> errors s}
-
+          ops' <- mkOperations config (succ <$> entryDepth) paths
           let entries = (\es -> if null es then es else Newline : es) $ intersperse Newline ops'
 
           go $ entries <> ops
         _ -> go ops
 
-pathToOp :: (MonadCatch m, MonadIO m) => Config.Config -> Infinitable Int -> RawFilePath -> m Operation
-pathToOp config depth path = do
-  nodes <- Sort.sort config <$> (mapM (Node.mkNodeInfo config path) =<< Listing.listContents config path)
-  return . PrintEntry $ Entry DIRECTORY path nodes config depth
+-- NOTE: In this application, and probably almost all applications, traversing
+-- directory contents and getting each file statuses are non-atomic. So maybe
+-- causes looking up nonexistence filepaths. In such case, ignore nonexistence
+-- filepaths.
+ignorable :: Bool -> IOException -> Bool
+ignorable onCommandLine e = not onCommandLine && ioe_type e == NoSuchThing
 
-mkInitialOperations :: (MonadCatch m, MonadIO m) => Config.Config -> [RawFilePath] -> m ([Operation], Walk.Inodes, [SomeException])
-mkInitialOperations config paths = do
-  (errs, nodeinfos) <- first (map toException) . partitionEithers <$> mapM (tryIO . Node.mkNodeInfo config "") paths
+mkNodes :: Bool -> Config.Config -> RawFilePath -> [RawFilePath] -> Ls [Node.NodeInfo]
+mkNodes onCommandLine config parent paths = do
+  (errs, nodes) <-
+    bimap (foldr (\e acc -> if ignorable onCommandLine e then acc else toException e : acc) []) (Sort.sort config) . partitionEithers
+      <$> mapM (tryIO . Node.mkNodeInfo config parent) paths
 
+  errorsL %= (errs <>)
   mapM_ notify errs
+
+  return nodes
+
+mkOperations :: Config.Config -> Infinitable Int -> [RawFilePath] -> Ls [Operation]
+mkOperations _ _ [] = return []
+mkOperations config depth (parent : parents) =
+  tryIO (Listing.listContents config parent) >>= \case
+    Left e -> do
+      unless (ignorable False e) $ notify e >> errorsL %= (toException e :)
+      mkOperations config depth parents
+    Right paths -> do
+      nodes <- mkNodes False config parent paths
+      (PrintEntry (Entry DIRECTORY parent nodes config depth) :) <$> mkOperations config depth parents
+
+mkInitialOperations :: [RawFilePath] -> Ls [Operation]
+mkInitialOperations paths = do
+  config <- view configL
+  nodes <- do
+    nodes <- mkNodes True config "" paths
+    (_, inodes) <- runState (Walk.filterNodes nodes) <$> use inodesL
+    inodesL .= inodes
+    return nodes
 
   let depth = Only 1
       isDirectory
         | Config.directory config = const False
         | otherwise = maybe False Node.isDirectory . Node.nodeType
-
-      (nodes, inodes) = runState (Walk.filterNodes $ Sort.sort config nodeinfos) mempty
       (dirs, files) = partition isDirectory nodes
-      fileOp = [PrintEntry (Entry FILES "" files config depth) | not (null files)]
+      fileOp = [PrintEntry (Entry FILES "" files config depth) | not $ null files]
 
   if Config.tree config
     then do
       let ops = dirs <&> \node -> PrintTree $ Tree (Node.getNodePath node) node mempty config
-      return (intersperse Newline $ fileOp <> ops, inodes, errs)
+      return . intersperse Newline $ fileOp <> ops
     else do
       dirOps <-
-        mapM (pathToOp (Config.disableDereferenceOnCommandLine config) depth . Node.getNodePath) dirs <&> \case
+        mkOperations (Config.disableDereferenceOnCommandLine config) depth (Node.getNodePath <$> dirs) <&> \case
           -- Considers no argument to be also a single directory.
           [PrintEntry e] | null files && length paths < 2 -> [PrintEntry (e {entryType = SINGLEDIR})]
           ops -> ops
-      return (intersperse Newline $ fileOp <> dirOps, inodes, errs)
+      return . intersperse Newline $ fileOp <> dirOps
+
+mkTreeNodeInfos :: Node.NodeInfo -> Ls (Seq Node.NodeInfo)
+mkTreeNodeInfos nodeinfo = do
+  config <-
+    view configL <&> \config -> case Config.listing config of
+      -- Force hide @.@ and @..@ to avoid infinite loop.
+      All -> config {Config.listing = AlmostAll}
+      _ -> config
+  inodesL %= \inodes -> maybe inodes (\inode -> Walk.singleton inode <> inodes) $ Node.fileID nodeinfo
+
+  go config (singleton nodeinfo) mempty
+  where
+    go :: Config.Config -> Seq Node.NodeInfo -> Seq Node.NodeInfo -> Ls (Seq Node.NodeInfo)
+    go _ Empty nodes = return nodes
+    go config (node :<| nodeSeq) nodeSeq' = do
+      let path = Node.getNodeDirName node </> Node.getNodePath node
+          depth = Config.level config
+
+      contents <-
+        if depth <= Only 0 || not (maybe False Node.isDirectory $ Node.nodeType node)
+          then return []
+          else
+            tryIO (Listing.listContents config path) >>= \case
+              Left e -> notify e >> errorsL %= (toException e :) >> return []
+              Right contents -> return contents
+
+      nodes <- do
+        (nodes, inodes) <- do
+          nodes <- mkNodes False config path contents
+          runState (Walk.filterNodes nodes) <$> use inodesL
+        inodesL .= inodes
+        let pList = mkPositions (length nodes) $ Node.getTreeNodePositions node
+        return $ zipWith (\nd p -> nd {Node.getTreeNodePositions = p}) nodes pList
+
+      go config {Config.level = pred <$> depth} (fromList nodes <> nodeSeq) (nodeSeq' |> node)
+
+mkPositions :: Int -> [TreeNodePosition] -> [[TreeNodePosition]]
+mkPositions n _ | n < 1 = [[]]
+mkPositions 1 xs = [LAST : xs]
+mkPositions n xs = case replicate n xs of
+  [] -> []
+  (y : ys) -> (HEAD : y) : go ys
+  where
+    go [] = []
+    go [y] = [LAST : y]
+    go (y : ys) = (MID : y) : go ys
 
 mkDivisions :: Config.Config -> Formatter.Printers -> Operation -> [Attr.Attribute WT.WrappedText]
 mkDivisions config printers =

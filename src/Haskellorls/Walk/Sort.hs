@@ -29,7 +29,7 @@ sort config =
   where
     separate =
       if Config.groupDirectoriesFirst config && Config.sort config /= NONE
-        then partition $ maybe False Node.isDirectory . Node.nodeType . Node.toFileInfo
+        then partition $ maybe False Node.isDirectory . Node.nodeType . Node.dereference
         else ([],)
     merge (dirs, files) = order dirs <> order files
     order = if Config.reverse config then reverse else id

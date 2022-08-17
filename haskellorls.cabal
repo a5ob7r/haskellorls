@@ -88,6 +88,7 @@ library haskellorls-internal
     Haskellorls.Formatter.Tree
     Haskellorls.Formatter.WrappedText
     Haskellorls.Humanize.FileSize
+    Haskellorls.Lens.Micro
     Haskellorls.LsColor
     Haskellorls.LsColor.Class
     Haskellorls.LsColor.Color
@@ -99,7 +100,6 @@ library haskellorls-internal
     Haskellorls.Walk.Dired
     Haskellorls.Walk.Listing
     Haskellorls.Walk.Sort
-    Haskellorls.Walk.Tree
     Haskellorls.Walk.Utils
 
   other-modules:      Paths_haskellorls
@@ -133,12 +133,16 @@ library haskellorls-internal
     , Glob                  ^>=0.10.2
     , haskell-gettext       ^>=0.1.2.0
     , hostname              ^>=1.0
+    , microlens             ^>=0.4.13.0
+    , microlens-mtl         ^>=0.2.0.2
+    , microlens-th          ^>=0.4.3.10
     , mtl                   ^>=2.2.2
     , natural-sort          ^>=0.1.2
     , optparse-applicative  ^>=0.17.0
     , rawfilepath           ^>=1.0.1
     , safe-exceptions       ^>=0.1.7
     , setlocale             ^>=1.0.0.10
+    , template-haskell      >=2.16.0.0   && <2.20.0.0
     , terminal-size         ^>=0.3.2
     , text                  ^>=2.0
     , time                  ^>=1.12.2

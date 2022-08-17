@@ -77,7 +77,7 @@ instance Default LsColors where
 instance Dictionary NodeInfo Sequence LsColors where
   lookup n l@(Options {..}) = case getNodeStatus n of
     Nothing -> missing <|> orphan
-    Just _ | Just SymbolicLink <- nodeType n, Just "target" <- symlink -> toFileInfo n `lookup` l {symlink = Nothing}
+    Just _ | Just SymbolicLink <- nodeType n, Just "target" <- symlink -> dereference n `lookup` l {symlink = Nothing}
     _ -> case nodeType n of
       Just Directory -> directory
       Just SymbolicLink -> symlink

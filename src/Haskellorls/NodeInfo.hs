@@ -12,7 +12,7 @@ module Haskellorls.NodeInfo
     nodeType,
     isDirectory,
     mkNodeInfo,
-    toFileInfo,
+    dereference,
     dereferencedNodePath,
   )
 where
@@ -172,7 +172,7 @@ mkNodeInfo config dirname basename = do
       || Config.dereferenceCommandLine config
       || Config.dereferenceCommandLineSymlinkToDir config
         && maybe False (either (const False) (isDirectory . pfsNodeType . getLinkNodeStatus)) (getNodeLinkInfo node)
-      then toFileInfo node
+      then dereference node
       else node
 
 fileMode :: NodeInfo -> Maybe Types.FileMode
@@ -211,8 +211,8 @@ data LinkNodeInfo = LinkNodeInfo
 newtype OrphanedLinkNodeInfo = OrphanedLinkNodeInfo {getOrphanedNodeLinkPath :: RawFilePath}
 
 -- | Convert a 'NodeInfo' value to the dereferenced 'NodeInfo'.
-toFileInfo :: NodeInfo -> NodeInfo
-toFileInfo node = case getNodeLinkInfo node of
+dereference :: NodeInfo -> NodeInfo
+dereference node = case getNodeLinkInfo node of
   Nothing -> node
   Just (Right LinkNodeInfo {..}) ->
     node

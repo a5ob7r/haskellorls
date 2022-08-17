@@ -1,13 +1,13 @@
 module Haskellorls (haskellorls) where
 
 import Control.Monad (void)
+import Data.Default.Class (Default (..))
 import Data.Version (showVersion)
 import Haskellorls.Config
 import Haskellorls.Config.Environment
 import qualified Haskellorls.Config.Option as Option
 import qualified Haskellorls.Formatter as Formatter
 import qualified Haskellorls.Walk as Walk
-import qualified Haskellorls.Walk.Dired as Dired
 import Options.Applicative
 import Paths_haskellorls (version)
 import System.Exit
@@ -44,15 +44,17 @@ run opt = do
 
   printers <- Formatter.mkPrinters config
 
-  (ops, inodes, errors) <-
+  (ops, Walk.LsState inodes indices errors) <-
     let targets = Option.oTargets opt
+        conf = Walk.LsConf config printers
+        st = def
      in -- Assume that the current directory's path is passed as an argument
         -- implicitly if no argument.
-        Walk.mkInitialOperations config $ encodeFilePath <$> if null targets then ["."] else targets
+        Walk.runLs conf st . Walk.mkInitialOperations $ encodeFilePath <$> if null targets then ["."] else targets
 
   let -- Dereference only on command line arguments.
       conf = Walk.LsConf (disableDereferenceOnCommandLine config) printers
-      st = Walk.LsState inodes Dired.empty []
+      st = Walk.LsState inodes indices []
    in Walk.run conf st ops >>= \case
         -- Serious error.
         _ | not $ null errors -> return $ ExitFailure 2

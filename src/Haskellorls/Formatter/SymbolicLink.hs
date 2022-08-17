@@ -18,14 +18,14 @@ linkName :: Config.Config -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 linkName config node = case Node.getNodeLinkInfo node of
   Nothing -> []
   Just linkinfo ->
-    let link = Name.nodeName config $ (Node.toFileInfo node) {Node.getNodePath = Node.dereferencedNodePath linkinfo}
+    let link = Name.nodeName config $ (Node.dereference node) {Node.getNodePath = Node.dereferencedNodePath linkinfo}
      in Attr.Other (from prefix) : [Quote.quote config link]
 
 coloredLinkName :: Config.Config -> Color.LsColors -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 coloredLinkName config lc node = case Node.getNodeLinkInfo node of
   Nothing -> []
   Just linkinfo ->
-    let link = Name.colorizedNodeName config lc $ (Node.toFileInfo node) {Node.getNodePath = Node.dereferencedNodePath linkinfo}
+    let link = Name.colorizedNodeName config lc $ (Node.dereference node) {Node.getNodePath = Node.dereferencedNodePath linkinfo}
      in Attr.Other (from prefix) : [Quote.quote config link]
 
 prefix :: T.Text

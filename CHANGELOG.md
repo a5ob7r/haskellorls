@@ -24,6 +24,7 @@
 - No surrond a divition by any SGR parameter when no appropriate one found.
 - The default `TIME_STYLE` is `$'%b %e  %Y\n%b %e %H:%M'`.
 - Show `?` as missing file's information with long format.
+- Enable `--dereference-command-line-symlink-to-dir` when not long format or no `--classify`, `--directory`, `--dereference` or `--dereference-command-line` options.
 
 ### Fixed
 

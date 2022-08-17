@@ -107,7 +107,7 @@ mkConfig env Option {..} = Config {..}
       W.ALWAYS -> True
       W.AUTO -> toTTY
     indicatorStyle =
-      let classify = case oClassify of
+      let classify = case fromMaybe W.NEVER oClassify of
             W.NEVER -> IndicatorNone
             W.ALWAYS -> IndicatorClassify
             W.AUTO ->
@@ -155,7 +155,12 @@ mkConfig env Option {..} = Config {..}
     groupDirectoriesFirst = oGroupDirectoriesFirst
     si = oSi
     dereferenceCommandLine = oDereferenceCommandLine
-    dereferenceCommandLineSymlinkToDir = oDereferenceCommandLineSymlinkToDir
+    dereferenceCommandLineSymlinkToDir
+      | oDereferenceCommandLineSymlinkToDir = True
+      | LONG <- format = False
+      | Just _ <- oClassify = False
+      | directory || dereference || dereferenceCommandLine = False
+      | otherwise = True
     hide = compile <$> oHide
     ignore = compile <$> oIgnore
     level = oLevel

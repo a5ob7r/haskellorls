@@ -44,6 +44,6 @@ instance Dictionary Node.NodeInfo Indicator Config.Config where
 mkIndicatorPrinter :: Config.Config -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 mkIndicatorPrinter config =
   let f node = case Node.getNodeLinkInfo node of
-        Just (Right _) | Format.LONG <- Config.format config -> Node.toFileInfo node
+        Just (Right _) | Format.LONG <- Config.format config -> Node.dereference node
         _ -> node
    in \node -> maybe [] (\(Indicator c) -> [Attr.Other . from @T.Text $ T.singleton c]) $ f node `lookup` config

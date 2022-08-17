@@ -30,7 +30,7 @@ data Option = Option
     oDirectory :: Bool,
     oDired :: Bool,
     oNoneSortExtra :: Bool,
-    oClassify :: W.WHEN,
+    oClassify :: Maybe W.WHEN,
     oExtraColor :: Bool,
     oFileType :: Bool,
     oFormat :: Maybe Format.Format,
@@ -150,11 +150,11 @@ optionParser =
       short 'f'
         <> help "Do not sort and enable '-a' and '--color=disable' options"
     <*> do
-      let noArg = flag' W.ALWAYS $ long "classify" <> short 'F'
+      let noArg = flag' (Just W.ALWAYS) $ long "classify" <> short 'F'
           withArg =
-            option W.reader $
+            option (Just <$> W.reader) $
               long "classify"
-                <> value W.NEVER
+                <> value Nothing
                 <> metavar "WHEN"
                 <> help "Append a indicator follows filename"
                 <> completeWith ["never", "always", "auto"]
