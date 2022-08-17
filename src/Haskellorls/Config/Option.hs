@@ -44,12 +44,12 @@ data Option = Option
     oSi :: Bool,
     oDereferenceCommandLine :: Bool,
     oDereferenceCommandLineSymlinkToDir :: Bool,
-    oHide :: String,
+    oHide :: Maybe String,
     oHyperlink :: W.WHEN,
     oIcon :: Bool,
     oIndicatorStyle :: Indicator.IndicatorStyle,
     oInode :: Bool,
-    oIgnore :: String,
+    oIgnore :: Maybe String,
     oKibibyte :: Bool,
     oLevel :: Infinitable Int,
     oLong :: Bool,
@@ -260,21 +260,21 @@ numericUidGidParser =
       <> short 'n'
       <> help "Output numeric uid and gid instead of alphabetical them"
 
-ignoreParser :: Parser String
+ignoreParser :: Parser (Maybe String)
 ignoreParser =
-  strOption $
+  option (Just <$> str) $
     long "ignore"
       <> short 'I'
       <> metavar "PATTERN"
-      <> value ""
+      <> value Nothing
       <> help "Don't output file infos if the file name matches to glob 'PATTERN'"
 
-hideParser :: Parser String
+hideParser :: Parser (Maybe String)
 hideParser =
-  strOption $
+  option (Just <$> str) $
     long "hide"
       <> metavar "PATTERN"
-      <> value ""
+      <> value Nothing
       <> help "Don't output file infos if the file name matches to glob 'PATTERN', but this option is ignored when -a or -A is passed at same time"
 
 recursiveParser :: Parser Bool

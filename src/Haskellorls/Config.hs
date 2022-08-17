@@ -23,6 +23,7 @@ import Haskellorls.Config.Sort
 import Haskellorls.Config.Time
 import qualified Haskellorls.Config.When as W
 import Haskellorls.Data.Infinitable
+import System.FilePath.Glob (Pattern, compile)
 import System.FilePath.Posix.ByteString
 import Prelude hiding (reverse)
 
@@ -50,8 +51,8 @@ data Config = Config
     si :: Bool,
     dereferenceCommandLine :: Bool,
     dereferenceCommandLineSymlinkToDir :: Bool,
-    hide :: String,
-    ignore :: String,
+    hide :: Maybe Pattern,
+    ignore :: Maybe Pattern,
     level :: Infinitable Int,
     dereference :: Bool,
     numericUidGid :: Bool,
@@ -151,8 +152,8 @@ mkConfig env Option {..} = Config {..}
     si = oSi
     dereferenceCommandLine = oDereferenceCommandLine
     dereferenceCommandLineSymlinkToDir = oDereferenceCommandLineSymlinkToDir
-    hide = oHide
-    ignore = oIgnore
+    hide = compile <$> oHide
+    ignore = compile <$> oIgnore
     level = oLevel
     dereference = oDereference
     numericUidGid = oNumericUidGid

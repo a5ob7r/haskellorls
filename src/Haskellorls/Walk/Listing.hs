@@ -1,15 +1,11 @@
-module Haskellorls.Walk.Listing
-  ( listContents,
-    exclude,
-  )
-where
+module Haskellorls.Walk.Listing (listContents) where
 
 import Control.Monad.IO.Class
 import qualified Data.ByteString as B
 import qualified Haskellorls.Config as Config
 import Haskellorls.Config.Listing
 import RawFilePath.Directory
-import System.FilePath.Glob
+import System.FilePath.Glob (Pattern, match)
 import System.FilePath.Posix.ByteString
 
 -- | List contents in a directory in accordance with @Config@.
@@ -24,16 +20,10 @@ listContents config path = ignoreExcluder . hideExcluder . ignoreFilter <$> list
       if Config.ignoreBackups config
         then ignoreBackupsFilter
         else id
-    ignoreExcluder = case Config.ignore config of
-      "" -> id
-      ptn -> exclude ptn
+    ignoreExcluder = maybe id exclude $ Config.ignore config
     hideExcluder = case Config.hide config of
-      "" -> id
-      _ | isShowHiddenEntries -> id
-      ptn -> exclude ptn
-    isShowHiddenEntries = case Config.listing config of
-      NoHidden -> False
-      _ -> True
+      Just ptn | NoHidden <- Config.listing config -> exclude ptn
+      _ -> id
 
 -- | Return all of contents in a directory. They contains all of normal files
 -- and all of hidden files include @.@ and @..@.
@@ -54,7 +44,5 @@ ignoreBackupsFilter :: [RawFilePath] -> [RawFilePath]
 ignoreBackupsFilter = filter (\s -> not $ "~" `B.isSuffixOf` s)
 
 -- | TODO: Use "ByteString" native globbing instead of "String" one.
-exclude :: String -> [RawFilePath] -> [RawFilePath]
-exclude ptn = map encodeFilePath . filter (not . match ptn') . map decodeFilePath
-  where
-    ptn' = compile ptn
+exclude :: Pattern -> [RawFilePath] -> [RawFilePath]
+exclude ptn = map encodeFilePath . filter (not . match ptn) . map decodeFilePath
