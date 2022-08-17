@@ -122,7 +122,7 @@ run conf st operations = runLs conf st $ go operations
         _ -> return op
 
       let f acc d = do
-            liftIO . T.putStr . serialize $ Attr.unwrap d
+            liftIO . T.putStr . from $ Attr.unwrap d
 
             return $!
               if Config.dired config
@@ -181,7 +181,7 @@ mkInitialOperations c@(LsConf config _) paths = do
 
 mkDivisions :: Config.Config -> Formatter.Printers -> Operation -> [Attr.Attribute WT.WrappedText]
 mkDivisions config printers =
-  foldr (\x acc -> [Attr.Other $ deserialize "  " | Config.dired config && not (null x)] <> x <> [Attr.Other . deserialize $ if Config.zero config then "\0" else "\n"] <> acc) mempty . \case
+  foldr (\x acc -> [Attr.Other $ from @T.Text "  " | Config.dired config && not (null x)] <> x <> [Attr.Other . from @T.Text $ if Config.zero config then "\0" else "\n"] <> acc) mempty . \case
     Newline -> [[]]
     PrintEntry (Entry {..}) ->
       let nodes = Formatter.mkLines entryNodes config printers $ Formatter.mkPrinterTypes config
@@ -189,11 +189,11 @@ mkDivisions config printers =
           header = case entryType of
             FILES -> []
             SINGLEDIR | not (Config.recursive config) -> []
-            _ -> [Attr.Dir . deserialize $ T.decodeUtf8 entryPath, Attr.Other $ deserialize ":"]
+            _ -> [Attr.Dir . from $ T.decodeUtf8 entryPath, Attr.Other $ from @T.Text ":"]
 
           -- Add total block size header only about directries when long style
           -- layout or @-s / --size@ is passed.
-          size = Attr.Other . deserialize . T.concat . ("total " :) . map (WT.serialize . Attr.unwrap) . Size.toTotalBlockSize config $ Node.fileSize <$> entryNodes
+          size = Attr.Other . from . T.concat . ("total " :) . map (from . Attr.unwrap) . Size.toTotalBlockSize config $ Node.fileSize <$> entryNodes
           totalBlockSize
             | Config.size config = [size]
             | FILES <- entryType = []

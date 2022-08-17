@@ -10,7 +10,6 @@ where
 import Control.Applicative
 import Data.Bifunctor
 import Data.Default.Class
-import Data.Functor
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import Data.String
@@ -34,7 +33,7 @@ import System.Environment
 import Prelude hiding (lookup)
 
 lsColors :: IO LsColors
-lsColors = getLSCOLORS <> getEXACOLORS <&> deserialize
+lsColors = from <$> getLSCOLORS <> getEXACOLORS
 
 getLSCOLORS :: IO T.Text
 getLSCOLORS = maybe "" T.pack <$> lookupEnv "LS_COLORS"
@@ -232,9 +231,7 @@ instance From Sources Sequences where
         _ -> Nothing
 
 instance From T.Text Sequences where
-  from = from @Sources . deserialize
-
-instance Deserialize Sequences
+  from = from @Sources . from
 
 instance Dictionary Query Sequence Sequences where
   lookup k (Sequences m) = k `M.lookup` m
@@ -457,9 +454,5 @@ newtype Sequence = Sequence {unSequence :: T.Text}
 instance From Sequence T.Text where
   from = unSequence
 
-instance Serialize Sequence
-
 instance From T.Text Sequence where
   from = Sequence
-
-instance Deserialize Sequence

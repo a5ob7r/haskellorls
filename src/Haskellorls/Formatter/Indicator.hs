@@ -1,6 +1,7 @@
 module Haskellorls.Formatter.Indicator (buildIndicatorPrinter) where
 
 import qualified Data.Text as T
+import Haskellorls.Class (from)
 import qualified Haskellorls.Config as Config
 import qualified Haskellorls.Config.Format as Format
 import Haskellorls.Config.Indicator
@@ -62,7 +63,7 @@ indicatorSelector node = case Node.nodeType node of
   _ -> const ""
 
 buildIndicatorPrinter :: Config.Config -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
-buildIndicatorPrinter config node = [Attr.Other $ WT.deserialize indicator | not (T.null indicator)]
+buildIndicatorPrinter config node = [Attr.Other $ from @T.Text indicator | not (T.null indicator)]
   where
     indicator = indicatorSelector node' $ buildIndicators config
     node' = case Node.getNodeLinkInfo node of

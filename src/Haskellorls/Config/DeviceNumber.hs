@@ -18,8 +18,6 @@ instance From DeviceID MajorID where
 instance From MajorID T.Text where
   from = T.pack . show . unMajorID
 
-instance Serialize MajorID
-
 -- | The minor ID of a device.
 newtype MinorID = MinorID {unMinorID :: DeviceID}
 
@@ -28,5 +26,3 @@ instance From DeviceID MinorID where
 
 instance From MinorID T.Text where
   from = T.pack . show . unMinorID
-
-instance Serialize MinorID

@@ -10,7 +10,6 @@ where
 import Control.Applicative
 import Data.Bifunctor
 import Data.Default.Class
-import Data.Functor
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import Data.String
@@ -24,7 +23,7 @@ import System.FilePath.Posix.ByteString
 import Prelude hiding (lookup)
 
 lsIcons :: IO LsIcons
-lsIcons = getLSICONS <&> deserialize
+lsIcons = from <$> getLSICONS
 
 getLSICONS :: IO T.Text
 getLSICONS = maybe "" T.pack <$> lookupEnv "LS_ICONS"
@@ -96,8 +95,6 @@ instance From Sources Icons where
 instance From T.Text Icons where
   from = from @Sources . from
 
-instance Deserialize Icons
-
 instance Dictionary Query Icon Icons where
   lookup q (Icons i) = q `M.lookup` i
 
@@ -113,9 +110,5 @@ newtype Icon = Icon {unIcon :: T.Text}
 instance From Icon T.Text where
   from = unIcon
 
-instance Serialize Icon
-
 instance From T.Text Icon where
   from = Icon
-
-instance Deserialize Icon

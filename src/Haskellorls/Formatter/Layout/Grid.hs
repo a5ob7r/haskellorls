@@ -30,9 +30,9 @@ slice :: Int -> [a] -> [[a]]
 slice n = unfoldr $ \xs -> let tpl = splitAt n xs in if null $ fst tpl then Nothing else Just tpl
 
 mkValidCommaSeparatedGrid :: Int -> [[Attr.Attribute WT.WrappedText]] -> [[[Attr.Attribute WT.WrappedText]]]
-mkValidCommaSeparatedGrid n sss = intersperse [Attr.Other $ WT.deserialize " "] <$> splitsAt validLengths sss'
+mkValidCommaSeparatedGrid n sss = intersperse [Attr.Other $ from @T.Text " "] <$> splitsAt validLengths sss'
   where
-    sss' = mapToInit (<> [Attr.Other $ WT.deserialize ","]) sss
+    sss' = mapToInit (<> [Attr.Other $ from @T.Text ","]) sss
     lengths = sum . map (termLength . Attr.unwrap) <$> sss'
     validLengths = length <$> f lengths
 
@@ -84,7 +84,7 @@ interpolate (x : xs) (y : ys) = x : y : interpolate xs ys
 mkRowWithTab :: Int -> [Int] -> [[Attr.Attribute WT.WrappedText]] -> [[Attr.Attribute WT.WrappedText]]
 mkRowWithTab _ [] _ = []
 mkRowWithTab _ _ [] = []
-mkRowWithTab tabSize ns wtss = interpolate wtss $ (\t -> [Attr.Other $ WT.deserialize t]) <$> paddings
+mkRowWithTab tabSize ns wtss = interpolate wtss $ (\t -> [Attr.Other $ from t]) <$> paddings
   where
     lengths = sum . map (termLength . Attr.unwrap) <$> wtss
     paddings = f 0 $ zip ns lengths
@@ -103,7 +103,7 @@ mkRowWithTab tabSize ns wtss = interpolate wtss $ (\t -> [Attr.Other $ WT.deseri
 mkRowWithSpace :: [Int] -> [[Attr.Attribute WT.WrappedText]] -> [[Attr.Attribute WT.WrappedText]]
 mkRowWithSpace [] _ = []
 mkRowWithSpace _ [] = []
-mkRowWithSpace ns wtss = interpolate wtss $ (\t -> [Attr.Other $ WT.deserialize t]) <$> paddings
+mkRowWithSpace ns wtss = interpolate wtss $ (\t -> [Attr.Other $ from t]) <$> paddings
   where
     lengths = sum . map (termLength . Attr.unwrap) <$> wtss
     paddings = zipWith (\n m -> T.replicate (n - m) " ") ns lengths

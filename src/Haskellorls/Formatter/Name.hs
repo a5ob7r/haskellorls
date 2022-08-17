@@ -23,7 +23,7 @@ colorizedNodeName config lscolors node = Attr.Name $ WT.WrappedText (prefix' <> 
 nodeName :: Config.Config -> Node.NodeInfo -> Attr.Attribute WT.WrappedText
 nodeName config@(Config.Config {hyperlink, hostname}) node
   | hyperlink = Attr.Name $ WT.WrappedText (left <> uri <> right) (rawNodeName node) (left <> right)
-  | otherwise = Attr.Name $ deserialize $ rawNodeName node
+  | otherwise = Attr.Name . from $ rawNodeName node
   where
     left = "\^[]8;;"
     right = "\^G"

@@ -15,7 +15,7 @@ import qualified Data.Text as T
 import Data.Time.Clock.POSIX
 import Data.Time.Format
 import Data.Time.LocalTime
-import Haskellorls.Class
+import Haskellorls.Class (from, termLength)
 import qualified Haskellorls.Config as Config
 import Haskellorls.Config.DeviceNumber
 import qualified Haskellorls.Config.Format as Format
@@ -143,7 +143,7 @@ mkPrinters config = do
         case (shouldColorize, isEnableExtraColor) of
           (True, True) -> Inode.nodeInodeNumberWithColor lscolors
           (True, _) -> Inode.nodeInodeNumberWithNormalColor lscolors
-          _ -> (\t -> [Attr.Other $ WT.deserialize t]) . T.pack . show . Inode.nodeInodeNumber
+          _ -> (\t -> [Attr.Other $ from t]) . T.pack . show . Inode.nodeInodeNumber
 
       fileBlockPrinter =
         case (shouldColorize, isEnableExtraColor) of
@@ -161,25 +161,25 @@ mkPrinters config = do
         case (shouldColorize, isEnableExtraColor) of
           (True, True) -> Link.nodeLinksNumberWithColor lscolors
           (True, _) -> Link.nodeLinksNumberWithNormalColor lscolors
-          _ -> (\t -> [Attr.Other $ WT.deserialize t]) . T.pack . show . Link.nodeLinksNumber
+          _ -> (\t -> [Attr.Other $ from t]) . T.pack . show . Link.nodeLinksNumber
 
       fileOwnerPrinter =
         case (shouldColorize, isEnableExtraColor) of
           (True, True) -> Ownership.coloredOwnerName uidSubstTable lscolors userInfo
           (True, _) -> Ownership.normalColoredOwnerName uidSubstTable lscolors
-          _ -> (\t -> [Attr.Other $ WT.deserialize t]) . Ownership.ownerName uidSubstTable
+          _ -> (\t -> [Attr.Other $ from t]) . Ownership.ownerName uidSubstTable
 
       fileGroupPrinter =
         case (shouldColorize, isEnableExtraColor) of
           (True, True) -> Ownership.coloredGroupName gidSubstTable lscolors userInfo
           (True, _) -> Ownership.normalColoredGroupName gidSubstTable lscolors
-          _ -> (\t -> [Attr.Other $ WT.deserialize t]) . Ownership.groupName gidSubstTable
+          _ -> (\t -> [Attr.Other $ from t]) . Ownership.groupName gidSubstTable
 
       fileContextPrinter =
         case (shouldColorize, isEnableExtraColor) of
           (True, True) -> Context.colorizedContext lscolors
           (True, _) -> Context.normalColorizedContext lscolors
-          _ -> (\t -> [Attr.Other $ WT.deserialize t]) . Context.context
+          _ -> (\t -> [Attr.Other $ from t]) . Context.context
 
       fileSizePrinter =
         case (shouldColorize, isEnableExtraColor) of
@@ -191,7 +191,7 @@ mkPrinters config = do
         case (shouldColorize, isEnableExtraColor) of
           (True, True) -> Time.coloredTimeStyleFunc lscolors timeZone defaultTimeLocale currentTime timeStyle . fileTime
           (True, _) -> Time.normalColoredTimeStyleFunc lscolors timeZone defaultTimeLocale currentTime timeStyle . fileTime
-          _ -> (\t -> [Attr.Other $ WT.deserialize t]) . Time.timeStyleFunc timeZone defaultTimeLocale currentTime timeStyle . fileTime
+          _ -> (\t -> [Attr.Other $ from t]) . Time.timeStyleFunc timeZone defaultTimeLocale currentTime timeStyle . fileTime
         where
           fileTime = posixSecondsToUTCTime . Node.fileTime
           timeStyle = Config.timeStyle config
@@ -201,7 +201,7 @@ mkPrinters config = do
       nodeTreePrinter =
         if shouldColorize
           then Tree.treeBranchWithColor lscolors . Node.getTreeNodePositions
-          else (\t -> [Attr.Other $ WT.deserialize t]) . Tree.treeBranch . Node.getTreeNodePositions
+          else (\t -> [Attr.Other $ from t]) . Tree.treeBranch . Node.getTreeNodePositions
       nodeIconPrinter = flip Icon.lookupIcon lsicons
       nodeNamePrinter =
         if shouldColorize
@@ -266,7 +266,7 @@ mkColumn nodes config printers pType
                 Right name -> [name]
                 Left name
                   | all (isLeft . nodeName) names -> [name]
-                  | otherwise -> [Attr.Other $ deserialize " ", name]
+                  | otherwise -> [Attr.Other $ from @T.Text " ", name]
            in names <&> \NodeNames {..} -> nodeTree <> nodeIcon <> f nodeName <> nodeLink <> nodeIndicator
     l = maximum $ 0 : (sum . map (termLength . Attr.unwrap) <$> column)
     justify =
@@ -287,18 +287,18 @@ mkGrid :: [Node.NodeInfo] -> Config.Config -> Printers -> [PrinterType] -> [[[At
 mkGrid nodes config printers = transpose . map (mkColumn nodes config printers)
 
 mkLines :: Foldable t => t Node.NodeInfo -> Config.Config -> Printers -> [PrinterType] -> [[Attr.Attribute WT.WrappedText]]
-mkLines nodes config printers types = intercalate [Attr.Other $ WT.deserialize " "] <$> mkGrid (toList nodes) config printers types
+mkLines nodes config printers types = intercalate [Attr.Other $ from @T.Text " "] <$> mkGrid (toList nodes) config printers types
 
 justifyLeft :: Int -> Char -> [Attr.Attribute WT.WrappedText] -> [Attr.Attribute WT.WrappedText]
 justifyLeft n c wt
-  | diff <- n - l, diff > 0 = wt <> [Attr.Other . deserialize . T.replicate diff $ T.singleton c]
+  | diff <- n - l, diff > 0 = wt <> [Attr.Other . from . T.replicate diff $ T.singleton c]
   | otherwise = wt
   where
     l = sum $ termLength . Attr.unwrap <$> wt
 
 justifyRight :: Int -> Char -> [Attr.Attribute WT.WrappedText] -> [Attr.Attribute WT.WrappedText]
 justifyRight n c wt
-  | diff <- n - l, diff > 0 = (Attr.Other . deserialize . T.replicate diff $ T.singleton c) : wt
+  | diff <- n - l, diff > 0 = (Attr.Other . from . T.replicate diff $ T.singleton c) : wt
   | otherwise = wt
   where
     l = sum $ termLength . Attr.unwrap <$> wt

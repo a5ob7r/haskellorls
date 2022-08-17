@@ -30,8 +30,6 @@ instance From T.Text Sources where
       makePair [k, v] = Just (k, v)
       makePair _ = Nothing
 
-instance Deserialize Sources
-
 -- | An base data type to construct 'LS_COLORS' or similar extensions. This
 -- contains all constants in 'man 5 dir_colors' and has an extra field for an
 -- extension. Even if 'LS_COLORS', we should implement it by using the
@@ -65,38 +63,36 @@ data Options a e = Options
   }
   deriving (Show)
 
-instance (Deserialize a, From Sources e, Default (Options a e)) => From T.Text (Options a e) where
+instance (From T.Text a, From Sources e, Default (Options a e)) => From T.Text (Options a e) where
   from = from @Sources . from
 
-instance (Deserialize a, From Sources e, Default (Options a e)) => Deserialize (Options a e)
-
-instance (Deserialize a, From Sources e, Default (Options a e)) => From Sources (Options a e) where
+instance (From T.Text a, From Sources e, Default (Options a e)) => From Sources (Options a e) where
   from s =
     Options
-      { left = deserialize <$> "lc" `lookup'` s <|> left,
-        right = deserialize <$> "rc" `lookup'` s <|> right,
-        end = deserialize <$> "ec" `lookup'` s <|> end,
-        reset = deserialize <$> "rs" `lookup'` s <|> reset,
-        normal = deserialize <$> "no" `lookup'` s <|> normal,
-        file = deserialize <$> "fi" `lookup'` s <|> file,
-        directory = deserialize <$> "di" `lookup'` s <|> directory,
-        symlink = deserialize <$> "ln" `lookup'` s <|> symlink,
-        pipe = deserialize <$> "pi" `lookup'` s <|> pipe,
-        socket = deserialize <$> "so" `lookup'` s <|> socket,
-        block = deserialize <$> "bd" `lookup'` s <|> block,
-        char = deserialize <$> "cd" `lookup'` s <|> char,
-        missing = deserialize <$> "mi" `lookup'` s <|> missing,
-        orphan = deserialize <$> "or" `lookup'` s <|> orphan,
-        executable = deserialize <$> "ex" `lookup'` s <|> executable,
-        door = deserialize <$> "do" `lookup'` s <|> door,
-        setuid = deserialize <$> "su" `lookup'` s <|> setuid,
-        setgid = deserialize <$> "sg" `lookup'` s <|> setgid,
-        sticky = deserialize <$> "st" `lookup'` s <|> sticky,
-        otherWritable = deserialize <$> "ow" `lookup'` s <|> otherWritable,
-        stickyOtherWritable = deserialize <$> "tw" `lookup'` s <|> stickyOtherWritable,
-        capability = deserialize <$> "ca" `lookup'` s <|> capability,
-        multiHardlink = deserialize <$> "mh" `lookup'` s <|> multiHardlink,
-        clearLine = deserialize <$> "cl" `lookup'` s <|> clearLine,
+      { left = from <$> "lc" `lookup'` s <|> left,
+        right = from <$> "rc" `lookup'` s <|> right,
+        end = from <$> "ec" `lookup'` s <|> end,
+        reset = from <$> "rs" `lookup'` s <|> reset,
+        normal = from <$> "no" `lookup'` s <|> normal,
+        file = from <$> "fi" `lookup'` s <|> file,
+        directory = from <$> "di" `lookup'` s <|> directory,
+        symlink = from <$> "ln" `lookup'` s <|> symlink,
+        pipe = from <$> "pi" `lookup'` s <|> pipe,
+        socket = from <$> "so" `lookup'` s <|> socket,
+        block = from <$> "bd" `lookup'` s <|> block,
+        char = from <$> "cd" `lookup'` s <|> char,
+        missing = from <$> "mi" `lookup'` s <|> missing,
+        orphan = from <$> "or" `lookup'` s <|> orphan,
+        executable = from <$> "ex" `lookup'` s <|> executable,
+        door = from <$> "do" `lookup'` s <|> door,
+        setuid = from <$> "su" `lookup'` s <|> setuid,
+        setgid = from <$> "sg" `lookup'` s <|> setgid,
+        sticky = from <$> "st" `lookup'` s <|> sticky,
+        otherWritable = from <$> "ow" `lookup'` s <|> otherWritable,
+        stickyOtherWritable = from <$> "tw" `lookup'` s <|> stickyOtherWritable,
+        capability = from <$> "ca" `lookup'` s <|> capability,
+        multiHardlink = from <$> "mh" `lookup'` s <|> multiHardlink,
+        clearLine = from <$> "cl" `lookup'` s <|> clearLine,
         extension = Just (from s) <|> extension
       }
     where

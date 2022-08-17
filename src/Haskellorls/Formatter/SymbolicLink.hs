@@ -5,6 +5,7 @@ module Haskellorls.Formatter.SymbolicLink
 where
 
 import qualified Data.Text as T
+import Haskellorls.Class (from)
 import qualified Haskellorls.Config as Config
 import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.Name as Name
@@ -19,7 +20,7 @@ linkName config node = case Node.getNodeLinkInfo node of
   _ -> prefix' : [Quote.quote config link]
   where
     link = Name.nodeName config $ Node.toFileInfo node
-    prefix' = Attr.Other $ WT.deserialize prefix
+    prefix' = Attr.Other $ from prefix
 
 coloredLinkName :: Config.Config -> Color.LsColors -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 coloredLinkName config lc node = case Node.getNodeLinkInfo node of
@@ -27,7 +28,7 @@ coloredLinkName config lc node = case Node.getNodeLinkInfo node of
   _ -> prefix' : [Quote.quote config link]
   where
     link = Name.colorizedNodeName config lc $ Node.toFileInfo node
-    prefix' = Attr.Other $ WT.deserialize prefix
+    prefix' = Attr.Other $ from prefix
 
 prefix :: T.Text
 prefix = " -> "

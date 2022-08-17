@@ -15,7 +15,7 @@ import Haskellorls.LsColor
 import Prelude hiding (lookup)
 
 showFilemodeField :: Filemode -> [Attr.Attribute WT.WrappedText]
-showFilemodeField (Filemode {..}) = [Attr.Other . WT.deserialize . T.pack $ fType : permFields]
+showFilemodeField (Filemode {..}) = [Attr.Other . from . T.pack $ fType : permFields]
   where
     fType = from getFiletype
     permFields = from <$> [getUserRead, getUserWrite, getUserExec, getGroupRead, getGroupWrite, getGroupExec, getOtherRead, getOtherWrite, getOtherExec]
