@@ -121,14 +121,15 @@ run conf st operations = runLs conf st $ go operations
           return . PrintTree $ Tree {treeNodes = nodes, ..}
         _ -> return op
 
-      let divs = mkDivisions config printers op'
+      let f acc d = do
+            liftIO . T.putStr . serialize $ Attr.unwrap d
 
-      modify $ \s ->
-        if Config.dired config
-          then s {indices = foldl' (\acc wt -> Dired.update (T.encodeUtf8 . WT.wtWord <$> wt) acc) (indices s) divs}
-          else s
-
-      liftIO . T.putStr . TL.toStrict . TL.toLazyText $ foldr (\x acc -> (TL.fromText . serialize $ Attr.unwrap x) <> acc) mempty divs
+            return $!
+              if Config.dired config
+                then Dired.update (T.encodeUtf8 . WT.wtWord <$> d) acc
+                else acc
+          divs = mkDivisions config printers op'
+       in gets indices >>= \x -> foldM f x divs >>= \x' -> modify $ \s -> s {indices = x'}
 
       case op' of
         PrintEntry (Entry {..}) | Config.recursive config && entryDepth < Config.level config -> do
