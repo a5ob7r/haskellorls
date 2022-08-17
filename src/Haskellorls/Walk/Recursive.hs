@@ -64,7 +64,7 @@ data Operation
 data LsConf = LsConf Config.Config Formatter.Printers
 
 data LsState = LsState
-  { inodes :: Walk.AlreadySeenInodes,
+  { inodes :: Walk.Inodes,
     indices :: Dired.NameIndeces,
     errors :: [SomeException]
   }
@@ -133,7 +133,7 @@ run conf st operations = runLs conf st $ go operations
 
       case op' of
         PrintEntry (Entry {..}) | Config.recursive config && entryDepth < Config.level config -> do
-          (nodes, newInodes) <- gets $ runState (Walk.updateAlreadySeenInode $ filter (Node.isDirectory . Node.nodeType) entryNodes) . inodes
+          (nodes, newInodes) <- gets $ runState (Walk.filterNodes $ filter (Node.isDirectory . Node.nodeType) entryNodes) . inodes
           modify $ \s -> s {inodes = newInodes}
 
           let paths = (\node -> entryPath </> Node.getNodePath node) <$> nodes
@@ -152,13 +152,13 @@ pathToOp (LsConf config _) depth path = do
   nodes <- Sort.sort config <$> (mapM (Node.mkNodeInfo config path) =<< Listing.listContents config path)
   return . PrintEntry $ Entry DIRECTORY path nodes config depth
 
-mkInitialOperations :: (MonadCatch m, MonadIO m) => LsConf -> [RawFilePath] -> m ([Operation], Walk.AlreadySeenInodes, [SomeException])
+mkInitialOperations :: (MonadCatch m, MonadIO m) => LsConf -> [RawFilePath] -> m ([Operation], Walk.Inodes, [SomeException])
 mkInitialOperations c@(LsConf config _) paths = do
   (errs, nodeinfos) <- first (map toException) . partitionEithers <$> mapM (tryIO . Node.mkNodeInfo config "") paths
 
   mapM_ printErr errs
 
-  let (nodes, inodes) = runState (Walk.updateAlreadySeenInode $ Sort.sort config nodeinfos) mempty
+  let (nodes, inodes) = runState (Walk.filterNodes $ Sort.sort config nodeinfos) mempty
   let (dirs, files) = partition isDirectory nodes
       fileOp = [PrintEntry (Entry FILES "" files config depth) | not (null files)]
 

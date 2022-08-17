@@ -1,32 +1,30 @@
 module Haskellorls.Walk.Utils
-  ( AlreadySeenInodes,
-    singletonInodes,
-    updateAlreadySeenInode,
+  ( Inodes,
+    singleton,
+    filterNodes,
   )
 where
 
-import Control.Monad.State.Strict
-import qualified Data.Set as S
+import Control.Monad.State.Strict (State, gets, put)
+import qualified Data.IntSet as IS
+import Data.List (foldl')
 import qualified Haskellorls.NodeInfo as Node
-import qualified System.Posix.Types as Types
+import System.Posix.Types (FileID)
 
-newtype AlreadySeenInodes = AlreadySeenInodes (S.Set Types.FileID)
+-- | Already traversed 'FileID's.
+newtype Inodes = Inodes {unInodes :: IS.IntSet}
   deriving (Semigroup, Monoid)
 
-singletonInodes :: Types.FileID -> AlreadySeenInodes
-singletonInodes = AlreadySeenInodes . S.singleton
+singleton :: FileID -> Inodes
+singleton = Inodes . IS.singleton . fromIntegral
 
--- | Update already seen inode number set.
-updateAlreadySeenInode :: [Node.NodeInfo] -> State AlreadySeenInodes [Node.NodeInfo]
-updateAlreadySeenInode nodes = do
-  -- Get already seen inode numbers set from the environment.
-  AlreadySeenInodes inodes <- get
+-- | Filter a list of 'NodeInfo' to get newers which their 'FileID's haven't
+-- been seen yet and remember them as a state.
+filterNodes :: [Node.NodeInfo] -> State Inodes [Node.NodeInfo]
+filterNodes nodes = do
+  inodes <- gets unInodes
 
-  -- Select all node info which the inode number is not already seen.
-  let neverSeenNodes = filter ((`S.notMember` inodes) . Node.fileID) nodes
-      neverSeenInodes = map Node.fileID neverSeenNodes
+  let newers = filter ((`IS.notMember` inodes) . fromIntegral . Node.fileID) nodes
+  put . Inodes . foldl' (flip IS.insert) inodes $ fromIntegral . Node.fileID <$> newers
 
-  -- Update already seen inode numbers set.
-  put . AlreadySeenInodes . S.union inodes $ S.fromList neverSeenInodes
-
-  pure neverSeenNodes
+  return newers

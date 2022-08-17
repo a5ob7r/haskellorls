@@ -33,12 +33,12 @@ mkSomeNewPositionsList' (x : xs) = (MID : x) : mkSomeNewPositionsList' xs
 
 mkTreeNodeInfos :: (MonadCatch m, MonadIO m) => Config.Config -> Node.NodeInfo -> m (S.Seq Node.NodeInfo, [SomeException])
 mkTreeNodeInfos config node = do
-  let inodes = Walk.singletonInodes $ Node.fileID node
+  let inodes = Walk.singleton $ Node.fileID node
 
   mkTreeNodeInfos' inodes config (S.singleton node) []
 
 -- | With error message output.
-mkTreeNodeInfos' :: (MonadCatch m, MonadIO m) => Walk.AlreadySeenInodes -> Config.Config -> S.Seq Node.NodeInfo -> [SomeException] -> m (S.Seq Node.NodeInfo, [SomeException])
+mkTreeNodeInfos' :: (MonadCatch m, MonadIO m) => Walk.Inodes -> Config.Config -> S.Seq Node.NodeInfo -> [SomeException] -> m (S.Seq Node.NodeInfo, [SomeException])
 mkTreeNodeInfos' _ _ S.Empty _ = pure mempty
 mkTreeNodeInfos' inodes config (node S.:<| nodeSeq) errors = do
   let path = Node.getNodeDirName node </> Node.getNodePath node
@@ -63,7 +63,7 @@ mkTreeNodeInfos' inodes config (node S.:<| nodeSeq) errors = do
   -- case, ignore nonexistence filepaths.
   let errs' = toException <$> filter (\e -> ioe_type e /= NoSuchThing) errs
 
-  let (nodes, newInodes) = runState (Walk.updateAlreadySeenInode nodeinfos) inodes
+  let (nodes, newInodes) = runState (Walk.filterNodes nodeinfos) inodes
       pList = makeSomeNewPositionsList (length nodes) $ Node.getTreeNodePositions node
       nodes' = zipWith (\nd p -> nd {Node.getTreeNodePositions = p}) (Sort.sort config nodes) pList
       newNodeSeq = S.fromList nodes' <> nodeSeq
