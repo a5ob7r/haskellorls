@@ -16,6 +16,7 @@
 - `--show-control-chars` and `-q / --hide-control-chars` are exclusive.
 - By default quoting-style is `shell-escape` if the stdout is connected to a terminal, otherwise `literal`.
 - By default implies `-q / --hide-control-chars` if the stdout is connected to a terminal, otherwise `--show-control-chars`.
+- No surrond a divition by any SGR parameter when no appropriate one found.
 
 ### Fixed
 

@@ -4,7 +4,6 @@ module Haskellorls.Formatter.Name
   )
 where
 
-import Data.Maybe
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import Haskellorls.Class
@@ -16,13 +15,10 @@ import qualified Haskellorls.NodeInfo as Node
 import System.FilePath.Posix.ByteString
 
 colorizedNodeName :: Config.Config -> Color.LsColors -> Node.NodeInfo -> Attr.Attribute WT.WrappedText
-colorizedNodeName config c@(Color.Options {..}) nd = Attr.Name $ WT.WrappedText (left' <> l <> right' <> wtPrefix) wtWord (wtSuffix <> left' <> r <> right')
+colorizedNodeName config lscolors node = Attr.Name $ WT.WrappedText (prefix' <> prefix) t (suffix <> suffix')
   where
-    WT.WrappedText {..} = Attr.unwrap $ nodeName config nd
-    left' = Color.unSequence $ fromMaybe "" left
-    right' = Color.unSequence $ fromMaybe "" right
-    l = maybe "" Color.unSequence $ nd `Color.lookup` c
-    r = Color.unSequence $ fromMaybe "" reset
+    WT.WrappedText prefix t suffix = Attr.unwrap $ nodeName config node
+    WT.WrappedText prefix' _ suffix' = WT.wrap lscolors (node `Color.lookup`) t
 
 nodeName :: Config.Config -> Node.NodeInfo -> Attr.Attribute WT.WrappedText
 nodeName config@(Config.Config {hyperlink, hostname}) node
