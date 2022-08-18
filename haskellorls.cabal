@@ -125,7 +125,6 @@ library haskellorls-internal
     StrictData
     TupleSections
     TypeApplications
-    UndecidableInstances
 
   build-depends:
     , bytestring            ^>=0.11.3.1
