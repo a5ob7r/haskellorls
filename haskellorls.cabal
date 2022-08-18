@@ -121,6 +121,7 @@ library haskellorls-internal
     NamedFieldPuns
     OverloadedStrings
     RecordWildCards
+    ScopedTypeVariables
     StrictData
     TupleSections
     TypeApplications
