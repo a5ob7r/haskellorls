@@ -102,7 +102,6 @@ library haskellorls-internal
     Haskellorls.Walk
     Haskellorls.Walk.Dired
     Haskellorls.Walk.Listing
-    Haskellorls.Walk.Recursive
     Haskellorls.Walk.Sort
     Haskellorls.Walk.Tree
     Haskellorls.Walk.Utils
