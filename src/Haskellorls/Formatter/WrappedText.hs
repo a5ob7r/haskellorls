@@ -12,10 +12,20 @@ import qualified Data.Text as T
 import Haskellorls.Class
 import qualified Haskellorls.LsColor.Config as Config
 
+-- | A 'Text', which are surrounded with two 'Text's. We assume that these
+-- surround texts are invisible on a terminal, these usually are valid SGR
+-- sequences, so we should treat this value as just a 'Text' of 'wtWord' when
+-- determine the output layout, and should surround it with 'wtPreffix' and
+-- 'wtSuffix' when render this value.
+--
+-- No need to evaluate 'wtPreffix' and 'wtSuffix' until render it.
+--
+-- FIXME: Needless to say, this value stores thunks. We maybe need to change
+-- this application's architecture not to depend on these lazy evaluations.
 data WrappedText = WrappedText
-  { wtPrefix :: T.Text,
+  { wtPrefix :: ~T.Text,
     wtWord :: T.Text,
-    wtSuffix :: T.Text
+    wtSuffix :: ~T.Text
   }
 
 instance From WrappedText T.Text where
@@ -36,7 +46,7 @@ modify f WrappedText {..} = WrappedText wtPrefix (f wtWord) wtSuffix
 wrap :: (Semigroup a, From a T.Text) => Config.Options a e -> (Config.Options a e -> Maybe a) -> T.Text -> WrappedText
 wrap o@(Config.Options {..}) getter t = case getter o of
   Just esc -> WrappedText (from $ Config.wrap o esc) t $ maybe "" (from . Config.wrap o) reset
-  _ -> WrappedText "" t ""
+  _ -> from t
 
 -- | Left-justify a list of 'WrappedText' to the given length, using the given
 -- character.
