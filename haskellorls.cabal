@@ -76,8 +76,6 @@ library haskellorls-internal
     Haskellorls.Formatter.Attribute
     Haskellorls.Formatter.Context
     Haskellorls.Formatter.Filemode
-    Haskellorls.Formatter.Filemode.Entry
-    Haskellorls.Formatter.Filemode.Permission
     Haskellorls.Formatter.Icon
     Haskellorls.Formatter.Indicator
     Haskellorls.Formatter.Inode

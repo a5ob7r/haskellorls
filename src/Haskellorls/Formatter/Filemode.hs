@@ -8,8 +8,6 @@ where
 import qualified Data.Text as T
 import Haskellorls.Config.Filemode
 import qualified Haskellorls.Formatter.Attribute as Attr
-import Haskellorls.Formatter.Filemode.Entry
-import Haskellorls.Formatter.Filemode.Permission
 import qualified Haskellorls.Formatter.WrappedText as WT
 import Haskellorls.LsColor
 import Prelude hiding (lookup)
@@ -31,14 +29,17 @@ showFilemodeFieldWithNormalColor lscolors (Filemode {..}) = [Attr.Other $ WT.wra
 showFilemodeFieldWithColor :: LsColors -> Filemode -> [Attr.Attribute WT.WrappedText]
 showFilemodeFieldWithColor lscolors (Filemode {..}) =
   Attr.Other
-    <$> [ filetypeLetterWithColor lscolors getFiletype,
-          userLetterWithColor lscolors getUserRead,
-          userLetterWithColor lscolors getUserWrite,
-          userLetterWithColor lscolors getUserExec,
-          groupLetterWithColor lscolors getGroupRead,
-          groupLetterWithColor lscolors getGroupWrite,
-          groupLetterWithColor lscolors getGroupExec,
-          otherLetterWithColor lscolors getOtherRead,
-          otherLetterWithColor lscolors getOtherWrite,
-          otherLetterWithColor lscolors getOtherExec
+    <$> [ filetypeLetter getFiletype,
+          permLetter $ UserPerm getUserRead,
+          permLetter $ UserPerm getUserWrite,
+          permLetter $ UserPerm getUserExec,
+          permLetter $ GroupPerm getGroupRead,
+          permLetter $ GroupPerm getGroupWrite,
+          permLetter $ GroupPerm getGroupExec,
+          permLetter $ OtherPerm getOtherRead,
+          permLetter $ OtherPerm getOtherWrite,
+          permLetter $ OtherPerm getOtherExec
         ]
+  where
+    filetypeLetter entrytype = WT.wrap lscolors (lookup entrytype) . T.singleton $ from entrytype
+    permLetter perm = WT.wrap lscolors (lookup perm) . T.singleton $ from perm
