@@ -4,7 +4,6 @@ module Haskellorls.Formatter.Name
   )
 where
 
-import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import Haskellorls.Class
 import qualified Haskellorls.Config as Config
@@ -22,15 +21,13 @@ colorizedNodeName config lscolors node = Attr.Name $ WT.WrappedText (prefix' <> 
 
 nodeName :: Config.Config -> Node.NodeInfo -> Attr.Attribute WT.WrappedText
 nodeName config@(Config.Config {hyperlink, hostname}) node
-  | hyperlink = Attr.Name $ WT.WrappedText (left <> uri <> right) (rawNodeName node) (left <> right)
-  | otherwise = Attr.Name . from $ rawNodeName node
+  | hyperlink = Attr.Name $ WT.WrappedText (left <> uri <> right) name (left <> right)
+  | otherwise = Attr.Name $ from name
   where
+    name = T.decodeUtf8 $ Node.getNodePath node
     left = "\^[]8;;"
     right = "\^G"
     uri = "file://" <> hostname <> T.decodeUtf8 (mkAbsolutePath config node)
-
-rawNodeName :: Node.NodeInfo -> T.Text
-rawNodeName = T.decodeUtf8 . Node.getNodePath
 
 -- | Make the absolute path from a node.
 mkAbsolutePath :: Config.Config -> Node.NodeInfo -> RawFilePath
