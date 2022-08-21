@@ -145,10 +145,10 @@ mkPrinters config = do
         Just False -> Size.normalColoredFileBlockSize lscolors config
         _ -> Size.fileBlockSize config
 
-      filemodeFieldPrinter = case Config.colorize config of
-        Just True -> Filemode.showFilemodeFieldWithColor lscolors
-        Just False -> Filemode.showFilemodeFieldWithNormalColor lscolors
-        _ -> Filemode.showFilemodeField
+      fileFieldPrinter = case Config.colorize config of
+        Just True -> Filemode.showFilemodeFieldWithColor lscolors . from
+        Just False -> Filemode.showFilemodeFieldWithNormalColor lscolors . from
+        _ -> Filemode.showFilemodeField . from
 
       fileLinkPrinter = case Config.colorize config of
         Just True -> Link.nodeLinksNumberWithColor lscolors
@@ -196,9 +196,8 @@ mkPrinters config = do
       nodeLinkPrinter = case Config.colorize config of
         Just _ -> SymbolicLink.coloredLinkName config lscolors
         _ -> SymbolicLink.linkName config
-      fileNamePrinters = NodeNamePrinters {..}
 
-  return $ Printers {fileFieldPrinter = filemodeFieldPrinter . from, ..}
+  return $ Printers {fileNamePrinters = NodeNamePrinters {..}, ..}
 
 mkPrinterTypes :: Config.Config -> [PrinterType]
 mkPrinterTypes config = filter predicate [FILEINODE, FILEBLOCK, FILEFIELD, FILELINK, FILEOWNER, FILEGROUP, FILEAUTHOR, FILECONTEXT, FILESIZE, FILETIME, FILENAME]
