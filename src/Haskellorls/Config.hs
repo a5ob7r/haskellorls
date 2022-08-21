@@ -161,7 +161,7 @@ mkConfig env Option {..} = Config {..}
       | oLiteral = Literal
       | oQuoteName = C
       | oEscape = Escape
-      | Just style <- (Env.quotingStyle env >>= (Quote.parseQuotingStyle . T.pack)) <|> oQuotingStyle = style
+      | Just style <- (Env.quotingStyle env >>= Quote.parseQuotingStyle . T.pack) <|> oQuotingStyle = style
       | toTTY = ShellEscape
       | otherwise = Literal
     showControlChars = fromMaybe (not toTTY) oShowControlChars
