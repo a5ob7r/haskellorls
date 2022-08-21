@@ -157,7 +157,7 @@ mkInitialOperations c@(LsConf config _) paths = do
   mapM_ printErr errs
 
   let (nodes, inodes) = runState (Walk.filterNodes $ Sort.sort config nodeinfos) mempty
-  let (dirs, files) = partition isDirectory nodes
+      (dirs, files) = partition isDirectory nodes
       fileOp = [PrintEntry (Entry FILES "" files config depth) | not (null files)]
 
   if Config.tree config
