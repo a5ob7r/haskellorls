@@ -119,10 +119,7 @@ mkGrid config n wtss = case Config.format config of
         m = mapToInit (+ 2) $ maxColumnLength <$> grid
      in mkRow m <$> transpose grid
   where
-    mkRow m =
-      if Config.tabSeparator config
-        then mkRowWithTab (Config.tabSize config) m
-        else mkRowWithSpace m
+    mkRow = maybe mkRowWithSpace mkRowWithTab $ Config.tabSize config
     maxColumnLength = maximum . (0 :) . map (sum . map (termLength . Attr.unwrap))
 
 -- | Apply a function to each elements in a list, but exclude the last one.

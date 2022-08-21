@@ -72,8 +72,7 @@ data Config = Config
     sort :: Sort.SortType,
     time :: Time.TimeType,
     timeStyle :: Time.TimeStyle,
-    tabSeparator :: Bool,
-    tabSize :: Int,
+    tabSize :: Maybe Int,
     tree :: Bool,
     width :: Int,
     zero :: Bool,
@@ -184,8 +183,7 @@ mkConfig env Option {..} = Config {..}
     timeStyle
       | oFullTime = FULLISO
       | otherwise = oTimeStyle
-    tabSeparator = oTabSeparator
-    tabSize = oTabSize
+    tabSize = if oTabSeparator then Just oTabSize else Nothing
     tree = oTree
     width = case format of
       Format.SINGLECOLUMN -> 1
