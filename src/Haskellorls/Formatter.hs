@@ -116,10 +116,9 @@ data Printers = Printers
 
 mkPrinters :: Config.Config -> IO Printers
 mkPrinters config = do
-  lscolors <-
-    if Config.colorize config
-      then Color.lsColors
-      else return def
+  lscolors <- case Config.colorize config of
+    Just _ -> Color.lsColors
+    _ -> return def
   lsicons <-
     if Config.icon config
       then Color.lsIcons
@@ -136,82 +135,67 @@ mkPrinters config = do
   currentTime <- getCurrentTime
   timeZone <- getCurrentTimeZone
 
-  let shouldColorize = Config.colorize config
-      isEnableExtraColor = Config.extraColor config
+  let fileInodePrinter = case Config.colorize config of
+        Just True -> Inode.nodeInodeNumberWithColor lscolors
+        Just False -> Inode.nodeInodeNumberWithNormalColor lscolors
+        _ -> (\t -> [Attr.Other $ from t]) . T.pack . show . Inode.nodeInodeNumber
 
-      fileInodePrinter =
-        case (shouldColorize, isEnableExtraColor) of
-          (True, True) -> Inode.nodeInodeNumberWithColor lscolors
-          (True, _) -> Inode.nodeInodeNumberWithNormalColor lscolors
-          _ -> (\t -> [Attr.Other $ from t]) . T.pack . show . Inode.nodeInodeNumber
+      fileBlockPrinter = case Config.colorize config of
+        Just True -> Size.coloredFileBlockSize lscolors config
+        Just False -> Size.normalColoredFileBlockSize lscolors config
+        _ -> Size.fileBlockSize config
 
-      fileBlockPrinter =
-        case (shouldColorize, isEnableExtraColor) of
-          (True, True) -> Size.coloredFileBlockSize lscolors config
-          (True, _) -> Size.normalColoredFileBlockSize lscolors config
-          _ -> Size.fileBlockSize config
+      filemodeFieldPrinter = case Config.colorize config of
+        Just True -> Filemode.showFilemodeFieldWithColor lscolors
+        Just False -> Filemode.showFilemodeFieldWithNormalColor lscolors
+        _ -> Filemode.showFilemodeField
 
-      filemodeFieldPrinter =
-        case (shouldColorize, isEnableExtraColor) of
-          (True, True) -> Filemode.showFilemodeFieldWithColor lscolors
-          (True, _) -> Filemode.showFilemodeFieldWithNormalColor lscolors
-          _ -> Filemode.showFilemodeField
+      fileLinkPrinter = case Config.colorize config of
+        Just True -> Link.nodeLinksNumberWithColor lscolors
+        Just False -> Link.nodeLinksNumberWithNormalColor lscolors
+        _ -> (\t -> [Attr.Other $ from t]) . T.pack . show . Link.nodeLinksNumber
 
-      fileLinkPrinter =
-        case (shouldColorize, isEnableExtraColor) of
-          (True, True) -> Link.nodeLinksNumberWithColor lscolors
-          (True, _) -> Link.nodeLinksNumberWithNormalColor lscolors
-          _ -> (\t -> [Attr.Other $ from t]) . T.pack . show . Link.nodeLinksNumber
+      fileOwnerPrinter = case Config.colorize config of
+        Just True -> Ownership.coloredOwnerName uidSubstTable lscolors userInfo
+        Just False -> Ownership.normalColoredOwnerName uidSubstTable lscolors
+        _ -> (\t -> [Attr.Other $ from t]) . Ownership.ownerName uidSubstTable
 
-      fileOwnerPrinter =
-        case (shouldColorize, isEnableExtraColor) of
-          (True, True) -> Ownership.coloredOwnerName uidSubstTable lscolors userInfo
-          (True, _) -> Ownership.normalColoredOwnerName uidSubstTable lscolors
-          _ -> (\t -> [Attr.Other $ from t]) . Ownership.ownerName uidSubstTable
+      fileGroupPrinter = case Config.colorize config of
+        Just True -> Ownership.coloredGroupName gidSubstTable lscolors userInfo
+        Just False -> Ownership.normalColoredGroupName gidSubstTable lscolors
+        _ -> (\t -> [Attr.Other $ from t]) . Ownership.groupName gidSubstTable
 
-      fileGroupPrinter =
-        case (shouldColorize, isEnableExtraColor) of
-          (True, True) -> Ownership.coloredGroupName gidSubstTable lscolors userInfo
-          (True, _) -> Ownership.normalColoredGroupName gidSubstTable lscolors
-          _ -> (\t -> [Attr.Other $ from t]) . Ownership.groupName gidSubstTable
+      fileContextPrinter = case Config.colorize config of
+        Just True -> Context.colorizedContext lscolors
+        Just False -> Context.normalColorizedContext lscolors
+        _ -> (\t -> [Attr.Other $ from t]) . Context.context
 
-      fileContextPrinter =
-        case (shouldColorize, isEnableExtraColor) of
-          (True, True) -> Context.colorizedContext lscolors
-          (True, _) -> Context.normalColorizedContext lscolors
-          _ -> (\t -> [Attr.Other $ from t]) . Context.context
+      fileSizePrinter = case Config.colorize config of
+        Just True -> \w -> Size.coloredFileSize w lscolors config
+        Just False -> \w -> Size.normalColoredFileSize w lscolors config
+        _ -> (`Size.fileSize` config)
 
-      fileSizePrinter =
-        case (shouldColorize, isEnableExtraColor) of
-          (True, True) -> \w -> Size.coloredFileSize w lscolors config
-          (True, _) -> \w -> Size.normalColoredFileSize w lscolors config
-          _ -> (`Size.fileSize` config)
-
-      fileTimePrinter =
-        case (shouldColorize, isEnableExtraColor) of
-          (True, True) -> Time.coloredTimeStyleFunc lscolors timeZone defaultTimeLocale currentTime timeStyle . fileTime
-          (True, _) -> Time.normalColoredTimeStyleFunc lscolors timeZone defaultTimeLocale currentTime timeStyle . fileTime
-          _ -> (\t -> [Attr.Other $ from t]) . Time.timeStyleFunc timeZone defaultTimeLocale currentTime timeStyle . fileTime
+      fileTimePrinter = case Config.colorize config of
+        Just True -> Time.coloredTimeStyleFunc lscolors timeZone defaultTimeLocale currentTime timeStyle . fileTime
+        Just False -> Time.normalColoredTimeStyleFunc lscolors timeZone defaultTimeLocale currentTime timeStyle . fileTime
+        _ -> (\t -> [Attr.Other $ from t]) . Time.timeStyleFunc timeZone defaultTimeLocale currentTime timeStyle . fileTime
         where
           fileTime = posixSecondsToUTCTime . Node.fileTime
           timeStyle = Config.timeStyle config
 
       -- TODO: Should use colored icon? But, must consider charactor size and background color.
       -- e.g. $ echo -e '\e[48;5;196;38;5;232;1m\e[0m'
-      nodeTreePrinter =
-        if shouldColorize
-          then Tree.treeBranchWithColor lscolors . Node.getTreeNodePositions
-          else (\t -> [Attr.Other $ from t]) . Tree.treeBranch . Node.getTreeNodePositions
+      nodeTreePrinter = case Config.colorize config of
+        Just _ -> Tree.treeBranchWithColor lscolors . Node.getTreeNodePositions
+        _ -> (\t -> [Attr.Other $ from t]) . Tree.treeBranch . Node.getTreeNodePositions
       nodeIconPrinter = flip Icon.lookupIcon lsicons
-      nodeNamePrinter =
-        if shouldColorize
-          then Name.colorizedNodeName config lscolors
-          else Name.nodeName config
+      nodeNamePrinter = case Config.colorize config of
+        Just _ -> Name.colorizedNodeName config lscolors
+        _ -> Name.nodeName config
       nodeIndicatorPrinter = Indicator.buildIndicatorPrinter config
-      nodeLinkPrinter =
-        if shouldColorize
-          then SymbolicLink.coloredLinkName config lscolors
-          else SymbolicLink.linkName config
+      nodeLinkPrinter = case Config.colorize config of
+        Just _ -> SymbolicLink.coloredLinkName config lscolors
+        _ -> SymbolicLink.linkName config
       fileNamePrinters = NodeNamePrinters {..}
 
   return $ Printers {fileFieldPrinter = filemodeFieldPrinter . from, ..}

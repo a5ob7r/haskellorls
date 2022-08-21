@@ -314,19 +314,18 @@ deviceNumbers widths@(majorWidth, minorWidth) lscolors config node = case lscolo
       <$> WT.justifyRight majorWidth ' ' [from major]
         <> delimiter
         <> WT.justifyRight minorWidth ' ' [from minor]
-  Just lc ->
-    case (Config.colorize config, Config.extraColor config) of
-      (True, True) ->
-        Attr.Other
-          <$> WT.justifyRight majorWidth ' ' [WT.wrap lc (lookup majorID) major]
-            <> delimiter
-            <> WT.justifyRight minorWidth ' ' [WT.wrap lc (lookup minorID) minor]
-      (True, _) ->
-        Attr.Other
-          <$> WT.justifyRight majorWidth ' ' [WT.wrap lc Color.normal major]
-            <> delimiter
-            <> WT.justifyRight minorWidth ' ' [WT.wrap lc Color.normal minor]
-      _ -> deviceNumbers widths Nothing config node
+  Just lc -> case Config.colorize config of
+    Just True ->
+      Attr.Other
+        <$> WT.justifyRight majorWidth ' ' [WT.wrap lc (lookup majorID) major]
+          <> delimiter
+          <> WT.justifyRight minorWidth ' ' [WT.wrap lc (lookup minorID) minor]
+    Just False ->
+      Attr.Other
+        <$> WT.justifyRight majorWidth ' ' [WT.wrap lc Color.normal major]
+          <> delimiter
+          <> WT.justifyRight minorWidth ' ' [WT.wrap lc Color.normal minor]
+    _ -> deviceNumbers widths Nothing config node
   where
     delimiter = [from @T.Text ", "]
     majorID = from $ Node.specialDeviceID node

@@ -35,8 +35,9 @@ data Config = Config
     author :: Bool,
     context :: Bool,
     icon :: Bool,
-    colorize :: Bool,
-    extraColor :: Bool,
+    -- | Whether or not the color output mode is enabled. And if it is enabled,
+    -- whether or not the extra color output mode is enabled.
+    colorize :: Maybe Bool,
     hyperlink :: Bool,
     indicatorStyle :: IndicatorStyle,
     listing :: ListingStyle,
@@ -92,11 +93,10 @@ mkConfig env Option {..} = Config {..}
     context = oContext
     icon = oIcon
     colorize = case oColor of
-      _ | oNoneSortExtra -> False
-      W.NEVER -> False
-      W.ALWAYS -> True
-      W.AUTO -> toTTY
-    extraColor = oExtraColor
+      _ | oNoneSortExtra -> Nothing
+      W.NEVER -> Nothing
+      W.ALWAYS -> Just oExtraColor
+      W.AUTO -> if toTTY then Just oExtraColor else Nothing
     hyperlink = case oHyperlink of
       W.NEVER -> False
       W.ALWAYS -> True
