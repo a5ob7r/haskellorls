@@ -39,7 +39,6 @@ import qualified Haskellorls.Walk.Utils as Walk
 import System.FilePath.Posix.ByteString
 
 data EntryType = FILES | SINGLEDIR | DIRECTORY
-  deriving (Eq)
 
 data Entry = Entry
   { entryType :: EntryType,
