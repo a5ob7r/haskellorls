@@ -85,7 +85,7 @@ run conf st operations = runLs conf st $ go operations
     go [] = do
       LsConf config _ <- ask
 
-      when (Config.dired config) $ do
+      ([] <$) . when (Config.dired config) $ do
         indeces <- gets indices
 
         unless (null $ Dired.dired indeces) $
@@ -106,8 +106,6 @@ run conf st operations = runLs conf st $ go operations
               Quote.ShellEscapeAlways -> "shell-escape-always"
               Quote.C -> "c"
               Quote.Escape -> "escape"
-
-      return []
     go (op : ops) = do
       c@(LsConf config printers) <- ask
 
