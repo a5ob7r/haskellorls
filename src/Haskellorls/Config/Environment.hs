@@ -26,7 +26,7 @@ mkEnvironment :: IO Environment
 mkEnvironment = do
   toTerminal <- hIsTerminalDevice stdout
 
-  blockSize <- liftA2 (<|>) (lookupEnv "LS_BLOCK_SIZE") (lookupEnv "BLOCK_SIZE")
+  blockSize <- optional $ getEnv "LS_BLOCK_SIZE" <|> getEnv "BLOCK_SIZE"
 
   quotingStyle <- lookupEnv "QUOTING_STYLE"
 
@@ -35,11 +35,9 @@ mkEnvironment = do
   hostname <- getHostName
 
   columnSize <-
-    liftA2 (<|>) (fmap width <$> size) $
-      lookupEnv "COLUMNS" >>= \e ->
-        return $
-          e >>= \cols -> case readDec cols of
-            [(n, "")] -> Just n
-            _ -> Nothing
+    let f = \case
+          Just s | [(n, "")] <- readDec s -> Just n
+          _ -> Nothing
+     in liftA2 (<|>) (fmap width <$> size) $ f <$> lookupEnv "COLUMNS"
 
   return $ Environment {..}
