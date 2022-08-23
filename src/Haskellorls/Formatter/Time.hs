@@ -45,13 +45,13 @@ formatFiletime formats zone locale now filetime = T.pack . formatTime locale for
       [] -> mainISOFormat
       [fmt] -> fmt
       fmt1 : fmt2 : _
-        | abs (now `diffUTCTime` filetime) < sixMonth -> fmt1
-        | otherwise -> fmt2
+        | abs (now `diffUTCTime` filetime) < sixMonth -> fmt2
+        | otherwise -> fmt1
     sixMonth = secondsToNominalDiffTime . fromIntegral $ oneYear `div` 2
     oneYear = 31556952 :: Int -- 365.2425 * 24 * 60 * 60
 
 isoFormat :: [String]
-isoFormat = [mainISOFormat, subISOFormat]
+isoFormat = [subISOFormat, mainISOFormat]
 
 mainISOFormat :: String
 mainISOFormat = "%m-%d %H:%M"

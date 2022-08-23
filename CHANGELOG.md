@@ -28,6 +28,7 @@
 - Align columns even if `-m / --format=commas` is enabled.
 - Ignore invalid `--time-style=FORMAT`s.
 - Output error messages twice about command-line arguments.
+- Invert the format order about recent and non-recent in newline delimitted `TIME_STYLE`.
 
 ## 0.5.3.0 -- 2022-07-23
 
