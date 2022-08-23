@@ -17,6 +17,7 @@
 - By default quoting-style is `shell-escape` if the stdout is connected to a terminal, otherwise `literal`.
 - By default implies `-q / --hide-control-chars` if the stdout is connected to a terminal, otherwise `--show-control-chars`.
 - No surrond a divition by any SGR parameter when no appropriate one found.
+- The default `TIME_STYLE` is `$'%b %e  %Y\n%b %e %H:%M'`.
 
 ### Fixed
 

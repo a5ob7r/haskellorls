@@ -15,21 +15,22 @@ import qualified Haskellorls.Formatter.WrappedText as WT
 import qualified Haskellorls.LsColor as Color
 
 -- TODO: Reduce argument numbers
-timeStyleFunc :: TimeZone -> TimeLocale -> UTCTime -> TimeStyle -> UTCTime -> T.Text
+timeStyleFunc :: TimeZone -> TimeLocale -> UTCTime -> Maybe TimeStyle -> UTCTime -> T.Text
 timeStyleFunc zone locale time = \case
-  FULLISO -> formatFiletime [fullISOFormat] zone locale time
-  LONGISO -> formatFiletime [longISOFormat] zone locale time
-  ISO -> formatFiletime isoFormat zone locale time
-  FORMAT formats -> formatFiletime formats zone locale time
+  Just FULLISO -> formatFiletime ["%F %T.%q %z"] zone locale time
+  Just LONGISO -> formatFiletime ["%F %R"] zone locale time
+  Just ISO -> formatFiletime ["%F", "%m-%d %H:%M"] zone locale time
+  Just (FORMAT formats) -> formatFiletime formats zone locale time
+  Nothing -> formatFiletime ["%b %e  %Y", "%b %e %H:%M"] zone locale time
 
-normalColoredTimeStyleFunc :: Color.LsColors -> TimeZone -> TimeLocale -> UTCTime -> TimeStyle -> UTCTime -> [Attr.Attribute WT.WrappedText]
+normalColoredTimeStyleFunc :: Color.LsColors -> TimeZone -> TimeLocale -> UTCTime -> Maybe TimeStyle -> UTCTime -> [Attr.Attribute WT.WrappedText]
 normalColoredTimeStyleFunc lscolors zone locale time style fTime = [Attr.Other $ WT.wrap lscolors getter timeAsT]
   where
     timeAsT = timeStyleFunc zone locale time style fTime
     getter = Color.normal
 
 -- | A node misc time formatter with the @no@ parameter of the @LS_COLORS@.
-coloredTimeStyleFunc :: Color.LsColors -> TimeZone -> TimeLocale -> UTCTime -> TimeStyle -> UTCTime -> [Attr.Attribute WT.WrappedText]
+coloredTimeStyleFunc :: Color.LsColors -> TimeZone -> TimeLocale -> UTCTime -> Maybe TimeStyle -> UTCTime -> [Attr.Attribute WT.WrappedText]
 coloredTimeStyleFunc lscolors zone locale time style fTime = [Attr.Other $ WT.wrap lscolors getter timeAsT]
   where
     timeAsT = timeStyleFunc zone locale time style fTime
@@ -42,25 +43,10 @@ formatFiletime :: [String] -> TimeZone -> TimeLocale -> UTCTime -> UTCTime -> T.
 formatFiletime formats zone locale now filetime = T.pack . formatTime locale format $ utcToZonedTime zone filetime
   where
     format = case formats of
-      [] -> mainISOFormat
+      [] -> ""
       [fmt] -> fmt
       fmt1 : fmt2 : _
         | abs (now `diffUTCTime` filetime) < sixMonth -> fmt2
         | otherwise -> fmt1
     sixMonth = secondsToNominalDiffTime . fromIntegral $ oneYear `div` 2
     oneYear = 31556952 :: Int -- 365.2425 * 24 * 60 * 60
-
-isoFormat :: [String]
-isoFormat = [subISOFormat, mainISOFormat]
-
-mainISOFormat :: String
-mainISOFormat = "%m-%d %H:%M"
-
-subISOFormat :: String
-subISOFormat = "%F"
-
-fullISOFormat :: String
-fullISOFormat = "%F %T.%q %z"
-
-longISOFormat :: String
-longISOFormat = "%F %R"
