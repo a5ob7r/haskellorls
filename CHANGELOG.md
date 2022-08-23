@@ -8,6 +8,7 @@
 - `--zero` option.
 - `-D / --dired` option.
 - `posix-` prefixed values for `--time-style=TIME_STYLE`.
+- `locale` and `posix-locale` for `--time-style=TIME_STYLE`.
 
 ### Changed
 

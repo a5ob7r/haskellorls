@@ -72,7 +72,7 @@ data Config = Config
     recursive :: Bool,
     sort :: Sort.SortType,
     time :: Time.TimeType,
-    timeStyle :: Maybe Time.TimeStyle,
+    timeStyle :: Time.TimeStyle,
     tabSize :: Maybe Int,
     tree :: Bool,
     width :: Int,
@@ -181,7 +181,7 @@ mkConfig env Option {..} = Config {..}
       | oAtime = ACCESS
       | otherwise = oTime
     timeStyle
-      | oFullTime = Just FULLISO
+      | oFullTime = FULLISO
       | otherwise = oTimeStyle
     tabSize = if oTabSeparator then Just oTabSize else Nothing
     tree = oTree

@@ -24,7 +24,6 @@ import Data.Time.Clock
 newtype Datetime = Datatime UTCTime
   deriving (Eq, Ord, Show)
 
--- TODO: @LOCALE@ and @POSIXLOCALE@ are not implemented yet.
 data TimeStyle
   = FULLISO
   | POSIXFULLISO
@@ -32,6 +31,8 @@ data TimeStyle
   | POSIXLONGISO
   | ISO
   | POSIXISO
+  | LOCALE
+  | POSIXLOCALE
   | FORMAT [String]
 
 -- WIP: Birth(creation) time is not implemented yet.

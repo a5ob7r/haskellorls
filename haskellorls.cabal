@@ -128,6 +128,7 @@ library haskellorls-internal
     , bytestring            ^>=0.11.3.1
     , containers            ^>=0.6.5
     , data-default-class    ^>=0.1.2
+    , env-locale            ^>=1.0.0.1
     , extra                 ^>=1.7.10
     , filepath-bytestring   ^>=1.4.2.1.10
     , Glob                  ^>=0.10.2

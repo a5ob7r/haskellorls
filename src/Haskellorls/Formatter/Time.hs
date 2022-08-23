@@ -15,23 +15,23 @@ import qualified Haskellorls.Formatter.WrappedText as WT
 import qualified Haskellorls.LsColor as Color
 
 -- TODO: Reduce argument numbers
-timeStyleFunc :: TimeZone -> TimeLocale -> UTCTime -> Maybe TimeStyle -> UTCTime -> T.Text
+timeStyleFunc :: TimeZone -> TimeLocale -> UTCTime -> TimeStyle -> UTCTime -> T.Text
 timeStyleFunc zone locale time = \case
-  Just FULLISO -> formatFiletime ["%F %T.%q %z"] zone locale time
-  Just LONGISO -> formatFiletime ["%F %R"] zone locale time
-  Just ISO -> formatFiletime ["%F", "%m-%d %H:%M"] zone locale time
-  Just (FORMAT formats) -> formatFiletime formats zone locale time
+  FULLISO -> formatFiletime ["%F %T.%q %z"] zone locale time
+  LONGISO -> formatFiletime ["%F %R"] zone locale time
+  ISO -> formatFiletime ["%F", "%m-%d %H:%M"] zone locale time
+  FORMAT formats -> formatFiletime formats zone locale time
   -- These are POSIX-locale timestamp formats.
   _ -> formatFiletime ["%b %e  %Y", "%b %e %H:%M"] zone locale time
 
-normalColoredTimeStyleFunc :: Color.LsColors -> TimeZone -> TimeLocale -> UTCTime -> Maybe TimeStyle -> UTCTime -> [Attr.Attribute WT.WrappedText]
+normalColoredTimeStyleFunc :: Color.LsColors -> TimeZone -> TimeLocale -> UTCTime -> TimeStyle -> UTCTime -> [Attr.Attribute WT.WrappedText]
 normalColoredTimeStyleFunc lscolors zone locale time style fTime = [Attr.Other $ WT.wrap lscolors getter timeAsT]
   where
     timeAsT = timeStyleFunc zone locale time style fTime
     getter = Color.normal
 
 -- | A node misc time formatter with the @no@ parameter of the @LS_COLORS@.
-coloredTimeStyleFunc :: Color.LsColors -> TimeZone -> TimeLocale -> UTCTime -> Maybe TimeStyle -> UTCTime -> [Attr.Attribute WT.WrappedText]
+coloredTimeStyleFunc :: Color.LsColors -> TimeZone -> TimeLocale -> UTCTime -> TimeStyle -> UTCTime -> [Attr.Attribute WT.WrappedText]
 coloredTimeStyleFunc lscolors zone locale time style fTime = [Attr.Other $ WT.wrap lscolors getter timeAsT]
   where
     timeAsT = timeStyleFunc zone locale time style fTime

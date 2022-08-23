@@ -38,6 +38,7 @@ import qualified Haskellorls.Formatter.Tree as Tree
 import qualified Haskellorls.Formatter.WrappedText as WT
 import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
+import System.Locale.Current (currentLocale)
 import System.Locale.SetLocale (Category (LC_TIME), setLocale)
 
 data PrinterType
@@ -140,6 +141,10 @@ mkPrinters config = do
     if Config.format config == Format.LONG
       then setLocale LC_TIME Nothing
       else return Nothing
+  timeLocale <-
+    if Config.format config == Format.LONG
+      then currentLocale
+      else return defaultTimeLocale
 
   let fileInodePrinter = case Config.colorize config of
         Just True -> Inode.nodeInodeNumberWithColor lscolors
@@ -182,15 +187,16 @@ mkPrinters config = do
         _ -> (`Size.fileSize` config)
 
       fileTimePrinter = case Config.colorize config of
-        Just True -> Time.coloredTimeStyleFunc lscolors timeZone defaultTimeLocale currentTime timeStyle . fileTime
-        Just False -> Time.normalColoredTimeStyleFunc lscolors timeZone defaultTimeLocale currentTime timeStyle . fileTime
-        _ -> (\t -> [Attr.Other $ from t]) . Time.timeStyleFunc timeZone defaultTimeLocale currentTime timeStyle . fileTime
+        Just True -> Time.coloredTimeStyleFunc lscolors timeZone timeLocale currentTime timeStyle . fileTime
+        Just False -> Time.normalColoredTimeStyleFunc lscolors timeZone timeLocale currentTime timeStyle . fileTime
+        _ -> (\t -> [Attr.Other $ from t]) . Time.timeStyleFunc timeZone timeLocale currentTime timeStyle . fileTime
         where
           fileTime = posixSecondsToUTCTime . Node.fileTime
           timeStyle = case Config.timeStyle config of
-            Just Time.POSIXFULLISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> Just Time.FULLISO
-            Just Time.POSIXLONGISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> Just Time.LONGISO
-            Just Time.POSIXISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> Just Time.ISO
+            Time.POSIXFULLISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> Time.FULLISO
+            Time.POSIXLONGISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> Time.LONGISO
+            Time.POSIXISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> Time.ISO
+            Time.POSIXLOCALE | maybe True (`notElem` ["C", "POSIX"]) lcTime -> Time.LOCALE
             style -> style
 
       -- TODO: Should use colored icon? But, must consider charactor size and background color.

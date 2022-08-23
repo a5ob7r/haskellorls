@@ -68,7 +68,7 @@ data Option = Option
     oSizeSort :: Bool,
     oSort :: Sort.SortType,
     oTime :: Time.TimeType,
-    oTimeStyle :: Maybe Time.TimeStyle,
+    oTimeStyle :: Time.TimeStyle,
     oTimeSort :: Bool,
     oTabSeparator :: Bool,
     oTabSize :: Int,

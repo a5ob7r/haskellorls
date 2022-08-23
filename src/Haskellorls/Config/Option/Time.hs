@@ -29,23 +29,24 @@ timeParser =
         -- "creation" -> BIRTH
         _ -> readerError "Available values are only 'atime', 'access', 'use', 'ctime' and 'status'"
 
-timeStyleParser :: Parser (Maybe TimeStyle)
+timeStyleParser :: Parser TimeStyle
 timeStyleParser =
   option reader $
     long "time-style"
       <> metavar "TYPE_STYLE"
-      <> value Nothing
+      <> value LOCALE
       <> help "Specify time output format"
-      <> completeWith ["full-iso", "posix-full-iso", "long-iso", "posix-long-iso", "iso", "posix-iso"]
+      <> completeWith ["full-iso", "posix-full-iso", "long-iso", "posix-long-iso", "iso", "posix-iso", "locale", "posix-locale"]
   where
     reader =
       str >>= \case
-        "full-iso" -> return $ Just FULLISO
-        "posix-full-iso" -> return $ Just POSIXFULLISO
-        "long-iso" -> return $ Just LONGISO
-        "posix-long-iso" -> return $ Just POSIXLONGISO
-        "iso" -> return $ Just ISO
-        "posix-iso" -> return $ Just POSIXISO
-        -- "locale" -> LOCALE
-        '+' : s -> return . Just . FORMAT $ split (== '\n') s
+        "full-iso" -> return FULLISO
+        "posix-full-iso" -> return POSIXFULLISO
+        "long-iso" -> return LONGISO
+        "posix-long-iso" -> return POSIXLONGISO
+        "iso" -> return ISO
+        "posix-iso" -> return POSIXISO
+        "locale" -> return LOCALE
+        "posix-locale" -> return POSIXLOCALE
+        '+' : s -> return . FORMAT $ split (== '\n') s
         _ -> readerError "Invalid time output format."
