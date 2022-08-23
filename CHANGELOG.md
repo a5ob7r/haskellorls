@@ -7,6 +7,7 @@
 - Lookup `COLUMNS` environment variable to determine a column size if no terminal size.
 - `--zero` option.
 - `-D / --dired` option.
+- `posix-` prefixed values for `--time-style=TIME_STYLE`.
 
 ### Changed
 

@@ -137,6 +137,7 @@ library haskellorls-internal
     , optparse-applicative  ^>=0.17.0
     , rawfilepath           ^>=1.0.1
     , safe-exceptions       ^>=0.1.7
+    , setlocale             ^>=1.0.0.10
     , terminal-size         ^>=0.3.2
     , text                  ^>=2.0
     , time                  ^>=1.12.2

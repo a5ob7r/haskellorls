@@ -36,13 +36,16 @@ timeStyleParser =
       <> metavar "TYPE_STYLE"
       <> value Nothing
       <> help "Specify time output format"
-      <> completeWith ["full-iso", "long-iso", "iso"]
+      <> completeWith ["full-iso", "posix-full-iso", "long-iso", "posix-long-iso", "iso", "posix-iso"]
   where
     reader =
       str >>= \case
         "full-iso" -> return $ Just FULLISO
+        "posix-full-iso" -> return $ Just POSIXFULLISO
         "long-iso" -> return $ Just LONGISO
+        "posix-long-iso" -> return $ Just POSIXLONGISO
         "iso" -> return $ Just ISO
+        "posix-iso" -> return $ Just POSIXISO
         -- "locale" -> LOCALE
         '+' : s -> return . Just . FORMAT $ split (== '\n') s
         _ -> readerError "Invalid time output format."

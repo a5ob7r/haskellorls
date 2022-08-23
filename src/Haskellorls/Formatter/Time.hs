@@ -21,7 +21,8 @@ timeStyleFunc zone locale time = \case
   Just LONGISO -> formatFiletime ["%F %R"] zone locale time
   Just ISO -> formatFiletime ["%F", "%m-%d %H:%M"] zone locale time
   Just (FORMAT formats) -> formatFiletime formats zone locale time
-  Nothing -> formatFiletime ["%b %e  %Y", "%b %e %H:%M"] zone locale time
+  -- These are POSIX-locale timestamp formats.
+  _ -> formatFiletime ["%b %e  %Y", "%b %e %H:%M"] zone locale time
 
 normalColoredTimeStyleFunc :: Color.LsColors -> TimeZone -> TimeLocale -> UTCTime -> Maybe TimeStyle -> UTCTime -> [Attr.Attribute WT.WrappedText]
 normalColoredTimeStyleFunc lscolors zone locale time style fTime = [Attr.Other $ WT.wrap lscolors getter timeAsT]

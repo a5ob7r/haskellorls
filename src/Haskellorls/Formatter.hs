@@ -20,6 +20,7 @@ import qualified Haskellorls.Config as Config
 import Haskellorls.Config.DeviceNumber
 import qualified Haskellorls.Config.Format as Format
 import qualified Haskellorls.Config.Indicator as Indicator
+import qualified Haskellorls.Config.Time as Time
 import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.Context as Context
 import qualified Haskellorls.Formatter.Filemode as Filemode
@@ -37,6 +38,7 @@ import qualified Haskellorls.Formatter.Tree as Tree
 import qualified Haskellorls.Formatter.WrappedText as WT
 import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
+import System.Locale.SetLocale (Category (LC_TIME), setLocale)
 
 data PrinterType
   = FILEINODE
@@ -134,6 +136,10 @@ mkPrinters config = do
   userInfo <- Ownership.userInfo
   currentTime <- getCurrentTime
   timeZone <- getCurrentTimeZone
+  lcTime <-
+    if Config.format config == Format.LONG
+      then setLocale LC_TIME Nothing
+      else return Nothing
 
   let fileInodePrinter = case Config.colorize config of
         Just True -> Inode.nodeInodeNumberWithColor lscolors
@@ -181,7 +187,11 @@ mkPrinters config = do
         _ -> (\t -> [Attr.Other $ from t]) . Time.timeStyleFunc timeZone defaultTimeLocale currentTime timeStyle . fileTime
         where
           fileTime = posixSecondsToUTCTime . Node.fileTime
-          timeStyle = Config.timeStyle config
+          timeStyle = case Config.timeStyle config of
+            Just Time.POSIXFULLISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> Just Time.FULLISO
+            Just Time.POSIXLONGISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> Just Time.LONGISO
+            Just Time.POSIXISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> Just Time.ISO
+            style -> style
 
       -- TODO: Should use colored icon? But, must consider charactor size and background color.
       -- e.g. $ echo -e '\e[48;5;196;38;5;232;1m\e[0m'

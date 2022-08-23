@@ -24,11 +24,14 @@ import Data.Time.Clock
 newtype Datetime = Datatime UTCTime
   deriving (Eq, Ord, Show)
 
--- WIP: locale and Prefixed with 'posix-' is not implemented yet.
+-- TODO: @LOCALE@ and @POSIXLOCALE@ are not implemented yet.
 data TimeStyle
   = FULLISO
+  | POSIXFULLISO
   | LONGISO
+  | POSIXLONGISO
   | ISO
+  | POSIXISO
   | FORMAT [String]
 
 -- WIP: Birth(creation) time is not implemented yet.
