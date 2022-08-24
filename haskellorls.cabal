@@ -70,7 +70,6 @@ library haskellorls-internal
     Haskellorls.Config.Time
     Haskellorls.Config.Tree
     Haskellorls.Config.When
-    Haskellorls.Control.Exception.Safe
     Haskellorls.Data.Infinitable
     Haskellorls.Formatter
     Haskellorls.Formatter.Attribute

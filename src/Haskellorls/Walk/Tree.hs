@@ -1,14 +1,15 @@
 module Haskellorls.Walk.Tree (mkTreeNodeInfos) where
 
+import Control.Exception.Safe (MonadCatch, SomeException, toException, tryIO)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.State.Strict (runState)
 import Data.Either (partitionEithers)
 import Data.Sequence (Seq (Empty, (:<|)), fromList, singleton, (|>))
 import GHC.IO.Exception (IOErrorType (NoSuchThing), IOException (ioe_type))
+import Haskellorls.Class
 import qualified Haskellorls.Config as Config
 import Haskellorls.Config.Listing
 import Haskellorls.Config.Tree
-import Haskellorls.Control.Exception.Safe
 import Haskellorls.Data.Infinitable
 import qualified Haskellorls.NodeInfo as Node
 import qualified Haskellorls.Walk.Listing as Listing
@@ -45,7 +46,7 @@ mkTreeNodeInfos configuration nodeinfo =
           then return []
           else
             tryIO (Listing.listContents config path) >>= \case
-              Left e -> printErr e >> return []
+              Left e -> notify e >> return []
               Right contents -> return contents
 
       -- Maybe contain nodeinfos which the inode number is already seen.

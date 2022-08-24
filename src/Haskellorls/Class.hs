@@ -2,12 +2,16 @@ module Haskellorls.Class
   ( Dictionary (..),
     From (..),
     TerminalLength (..),
+    Notifiable (..),
   )
 where
 
+import Control.Exception (IOException, SomeException)
+import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Char (isLatin1)
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
+import System.IO (hPrint, stderr)
 
 class Dictionary k v d where
   lookup :: k -> d -> Maybe v
@@ -36,3 +40,13 @@ instance TerminalLength Char where
 
 instance TerminalLength T.Text where
   termLength = T.foldl' (\acc c -> acc + termLength c) 0
+
+-- | Notify a information to users by printing a message to stderr. This is
+-- similar to a shell command @echo message >&2@.
+class (Show a) => Notifiable a where
+  notify :: MonadIO m => a -> m ()
+  notify = liftIO . hPrint stderr
+
+instance Notifiable IOException
+
+instance Notifiable SomeException

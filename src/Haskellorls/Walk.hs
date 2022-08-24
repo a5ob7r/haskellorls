@@ -6,6 +6,7 @@ module Haskellorls.Walk
   )
 where
 
+import Control.Exception.Safe (MonadCatch, MonadThrow, SomeException, toException, tryIO)
 import Control.Monad.IO.Class
 import Control.Monad.Reader
 import Control.Monad.State.Strict
@@ -22,7 +23,6 @@ import qualified Data.Text.Lazy.Builder as TL
 import Haskellorls.Class
 import qualified Haskellorls.Config as Config
 import qualified Haskellorls.Config.Format as Format
-import Haskellorls.Control.Exception.Safe
 import Haskellorls.Data.Infinitable
 import qualified Haskellorls.Formatter as Formatter
 import qualified Haskellorls.Formatter.Attribute as Attr
@@ -136,7 +136,7 @@ run conf st operations = runLs conf st $ go operations
           let paths = (\node -> entryPath </> Node.getNodePath node) <$> nodes
 
           (errs, ops') <- partitionEithers <$> mapM (tryIO . pathToOp c (succ <$> entryDepth)) paths
-          mapM_ printErr errs
+          mapM_ notify errs
           modify $ \s -> s {errors = (toException <$> errs) <> errors s}
 
           let entries = (\es -> if null es then es else Newline : es) $ intersperse Newline ops'
@@ -153,7 +153,7 @@ mkInitialOperations :: (MonadCatch m, MonadIO m) => LsConf -> [RawFilePath] -> m
 mkInitialOperations c@(LsConf config _) paths = do
   (errs, nodeinfos) <- first (map toException) . partitionEithers <$> mapM (tryIO . Node.mkNodeInfo config "") paths
 
-  mapM_ printErr errs
+  mapM_ notify errs
 
   let (nodes, inodes) = runState (Walk.filterNodes $ Sort.sort config nodeinfos) mempty
       (dirs, files) = partition isDirectory nodes
