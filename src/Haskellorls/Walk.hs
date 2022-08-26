@@ -106,7 +106,7 @@ run conf st operations = runLs conf st $ go operations
               Quote.C -> "c"
               Quote.Escape -> "escape"
     go (op : ops) = do
-      c@(LsConf config printers) <- ask
+      LsConf config printers <- ask
 
       op' <- case op of
         (PrintTree (Tree {..})) -> do
@@ -135,7 +135,7 @@ run conf st operations = runLs conf st $ go operations
 
           let paths = (\node -> entryPath </> Node.getNodePath node) <$> nodes
 
-          (errs, ops') <- partitionEithers <$> mapM (tryIO . pathToOp c (succ <$> entryDepth)) paths
+          (errs, ops') <- partitionEithers <$> mapM (tryIO . pathToOp config (succ <$> entryDepth)) paths
           mapM_ notify errs
           modify $ \s -> s {errors = (toException <$> errs) <> errors s}
 
@@ -144,18 +144,23 @@ run conf st operations = runLs conf st $ go operations
           go $ entries <> ops
         _ -> go ops
 
-pathToOp :: (MonadCatch m, MonadIO m) => LsConf -> Infinitable Int -> RawFilePath -> m Operation
-pathToOp (LsConf config _) depth path = do
+pathToOp :: (MonadCatch m, MonadIO m) => Config.Config -> Infinitable Int -> RawFilePath -> m Operation
+pathToOp config depth path = do
   nodes <- Sort.sort config <$> (mapM (Node.mkNodeInfo config path) =<< Listing.listContents config path)
   return . PrintEntry $ Entry DIRECTORY path nodes config depth
 
-mkInitialOperations :: (MonadCatch m, MonadIO m) => LsConf -> [RawFilePath] -> m ([Operation], Walk.Inodes, [SomeException])
-mkInitialOperations c@(LsConf config _) paths = do
+mkInitialOperations :: (MonadCatch m, MonadIO m) => Config.Config -> [RawFilePath] -> m ([Operation], Walk.Inodes, [SomeException])
+mkInitialOperations config paths = do
   (errs, nodeinfos) <- first (map toException) . partitionEithers <$> mapM (tryIO . Node.mkNodeInfo config "") paths
 
   mapM_ notify errs
 
-  let (nodes, inodes) = runState (Walk.filterNodes $ Sort.sort config nodeinfos) mempty
+  let depth = Only 1
+      isDirectory
+        | Config.directory config = const False
+        | otherwise = Node.isDirectory . Node.nodeType
+
+      (nodes, inodes) = runState (Walk.filterNodes $ Sort.sort config nodeinfos) mempty
       (dirs, files) = partition isDirectory nodes
       fileOp = [PrintEntry (Entry FILES "" files config depth) | not (null files)]
 
@@ -165,16 +170,11 @@ mkInitialOperations c@(LsConf config _) paths = do
       return (intersperse Newline $ fileOp <> ops, inodes, errs)
     else do
       dirOps <-
-        mapM (pathToOp c depth . Node.getNodePath) dirs <&> \case
+        mapM (pathToOp (Config.disableDereferenceOnCommandLine config) depth . Node.getNodePath) dirs <&> \case
           -- Considers no argument to be also a single directory.
           [PrintEntry e] | null files && length paths < 2 -> [PrintEntry (e {entryType = SINGLEDIR})]
           ops -> ops
       return (intersperse Newline $ fileOp <> dirOps, inodes, errs)
-  where
-    depth = Only 1
-    isDirectory
-      | Config.directory config = const False
-      | otherwise = Node.isDirectory . Node.nodeType
 
 mkDivisions :: Config.Config -> Formatter.Printers -> Operation -> [Attr.Attribute WT.WrappedText]
 mkDivisions config printers =

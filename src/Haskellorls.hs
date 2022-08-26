@@ -40,34 +40,26 @@ run :: Option.Option -> IO ExitCode
 run opt = do
   env <- mkEnvironment
 
-  printers <-
-    Formatter.mkPrinters $
-      mkConfig
-        env
-        -- Only dereferences on command line arguments.
-        opt
-          { Option.oDereferenceCommandLine = False,
-            Option.oDereferenceCommandLineSymlinkToDir = False
-          }
+  let config = mkConfig env opt
 
-  let conf = Walk.LsConf (mkConfig env opt) printers
+  printers <- Formatter.mkPrinters config
 
-  (ops, inodes, errs) <-
+  (ops, inodes, errors) <-
     let targets = Option.oTargets opt
      in -- Assume that the current directory's path is passed as an argument
         -- implicitly if no argument.
-        Walk.mkInitialOperations conf $ encodeFilePath <$> if null targets then ["."] else targets
+        Walk.mkInitialOperations config $ encodeFilePath <$> if null targets then ["."] else targets
 
-  (_, Walk.LsState _ _ errors) <- Walk.run conf (Walk.LsState inodes Dired.empty []) ops
-
-  return $
-    if
+  let -- Dereference only on command line arguments.
+      conf = Walk.LsConf (disableDereferenceOnCommandLine config) printers
+      st = Walk.LsState inodes Dired.empty []
+   in Walk.run conf st ops >>= \case
         -- Serious error.
-        | not (null errs) -> ExitFailure 2
+        _ | not $ null errors -> return $ ExitFailure 2
         -- Minor error.
-        | not (null errors) -> ExitFailure 1
+        (_, Walk.LsState _ _ (_e : _errs)) -> return $ ExitFailure 1
         -- No error.
-        | otherwise -> ExitSuccess
+        _ -> return ExitSuccess
 
 argParser :: [String] -> IO Option.Option
 argParser args = handleParseResult presult

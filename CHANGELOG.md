@@ -32,6 +32,7 @@
 - Ignore invalid `--time-style=FORMAT`s.
 - Output error messages twice about command-line arguments.
 - Invert the format order about recent and non-recent in newline delimitted `TIME_STYLE`.
+- Dereference files and dirs in dirs on command-line arguments with `--dereference-command-line` or `--dereference-command-line-symlink-to-dir`.
 
 ## 0.5.3.0 -- 2022-07-23
 

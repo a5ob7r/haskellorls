@@ -1,6 +1,7 @@
 module Haskellorls.Config
   ( Config (..),
     mkConfig,
+    disableDereferenceOnCommandLine,
   )
 where
 
@@ -194,3 +195,8 @@ mkConfig env Option {..} = Config {..}
     toTTY = Env.toTerminal env
     currentWorkingDirectory = Env.cwd env
     hostname = T.pack $ Env.hostname env
+
+-- | Disable 'dereferenceCommandLine' and 'dereferenceCommandLineSymlinkToDir'
+-- of 'Config'.
+disableDereferenceOnCommandLine :: Config -> Config
+disableDereferenceOnCommandLine config = config {dereferenceCommandLine = False, dereferenceCommandLineSymlinkToDir = False}
