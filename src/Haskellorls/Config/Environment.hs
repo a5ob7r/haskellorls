@@ -6,12 +6,15 @@ where
 
 import Control.Applicative
 import Control.Monad.Trans.Maybe (MaybeT (..))
+import Data.Gettext (Catalog, loadCatalog)
+import Haskellorls.Data.Gettext.Extra (lookupMO)
 import Network.HostName
 import Numeric
 import System.Console.Terminal.Size
 import System.Environment
-import System.FilePath.Posix.ByteString
+import System.FilePath.Posix.ByteString (RawFilePath, decodeFilePath)
 import System.IO
+import System.Locale.SetLocale (Category (LC_MESSAGES), setLocale)
 import System.Posix.Directory.ByteString
 
 data Environment = Environment
@@ -21,7 +24,9 @@ data Environment = Environment
     timeStyle :: Maybe String,
     cwd :: RawFilePath,
     hostname :: String,
-    columnSize :: Maybe Int
+    columnSize :: Maybe Int,
+    lcMessages :: Maybe String,
+    catalog :: Maybe Catalog
   }
 
 mkEnvironment :: IO Environment
@@ -43,5 +48,12 @@ mkEnvironment = do
           Just s | [(n, "")] <- readDec s -> Just n
           _ -> Nothing
      in runMaybeT $ width <$> MaybeT size <|> MaybeT (f <$> lookupEnv "COLUMNS")
+
+  lcMessages <- setLocale LC_MESSAGES Nothing
+
+  catalog <- runMaybeT do
+    locale <- MaybeT $ return lcMessages
+    path <- MaybeT $ lookupMO "/usr/share/locale" locale "coreutils"
+    MaybeT . optional . loadCatalog $ decodeFilePath path
 
   return $ Environment {..}

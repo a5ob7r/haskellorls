@@ -17,7 +17,7 @@ quotingStyleParser = option
       <> metavar "WORD"
       <> value Nothing
       <> help "Specify file name and link name quoting style; this also effects to file name and link name escape style"
-      <> completeWith ["literal", "shell", "shell-always", "shell-escape", "shell-escape-always", "c", "escape"]
+      <> completeWith ["literal", "shell", "shell-always", "shell-escape", "shell-escape-always", "c", "escape", "clocale", "locale"]
 
 parseQuotingStyle :: T.Text -> Maybe QuotingStyle
 parseQuotingStyle = \case
@@ -28,4 +28,6 @@ parseQuotingStyle = \case
   "shell-escape-always" -> Just ShellEscapeAlways
   "c" -> Just C
   "escape" -> Just Escape
+  "clocale" -> Just $ CLocale '`' '\''
+  "locale" -> Just $ Locale '`' '\''
   _ -> Nothing

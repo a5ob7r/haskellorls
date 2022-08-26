@@ -106,6 +106,8 @@ run conf st operations = runLs conf st $ go operations
               Quote.ShellEscapeAlways -> "shell-escape-always"
               Quote.C -> "c"
               Quote.Escape -> "escape"
+              Quote.CLocale _ _ -> "clocale"
+              Quote.Locale _ _ -> "locale"
     go (op : ops) = do
       LsConf config printers <- ask
 

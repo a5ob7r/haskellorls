@@ -22,8 +22,10 @@ quote config wt = case Config.quotingStyle config of
   ShellAlways -> quoteForShell config True wt
   ShellEscape -> quoteForShellEscape False wt
   ShellEscapeAlways -> quoteForShellEscape True wt
-  C -> WT.modify (\t -> "\"" <> escapeAsCLiteral True t <> "\"") <$> wt
-  Escape -> WT.modify (escapeAsCLiteral False) <$> wt
+  C -> WT.modify (\t -> "\"" <> escapeAsCLiteral "\"" t <> "\"") <$> wt
+  Escape -> WT.modify (escapeAsCLiteral " ") <$> wt
+  CLocale l r -> WT.modify (\t -> T.singleton l <> escapeAsCLiteral [r] t <> T.singleton r) <$> wt
+  Locale l r -> WT.modify (\t -> T.singleton l <> escapeAsCLiteral [r] t <> T.singleton r) <$> wt
 
 quoteForShell :: Config.Config -> Bool -> Attr.Attribute WT.WrappedText -> Attr.Attribute WT.WrappedText
 quoteForShell config forceQuote wt
@@ -55,24 +57,21 @@ quoteForShellEscape forceQuote wt
       '\'' -> "'\''"
       c -> T.singleton c
 
--- | The @'escapeAsCLiteral' b t@ function substitutes characters in 'Text'
--- with C string literal expression. @b@ indicates whether or not the
--- substituted string will be surrounded by double quotes. If it is 'True' this
--- function also substitutes @"@ with an appropriate expression in addition to
--- standard targets, otherwise also substitutes @ @ (a space) with an
--- appropriate one too.
+-- | The @'escapeAsCLiteral' cs t@ function substitutes characters in 'Text'
+-- with C string literal expression. In addition to them, characters in @cs@
+-- are escaped too.
 --
 -- NOTE: Should we substitute other non-printable characters? And can these
 -- characters be contained in a valid filepath?
-escapeAsCLiteral :: Bool -> T.Text -> T.Text
-escapeAsCLiteral forceQuote = T.concatMap $ \case
-  '"' | forceQuote -> "\\\""
-  ' ' | not forceQuote -> "\\ "
+escapeAsCLiteral :: String -> T.Text -> T.Text
+escapeAsCLiteral chars = T.concatMap $ \case
   '\t' -> "\\t"
   '\r' -> "\\r"
   '\n' -> "\\n"
   '\\' -> "\\\\"
-  c -> T.singleton c
+  c
+    | c `elem` chars -> '\\' `T.cons` T.singleton c
+    | otherwise -> T.singleton c
 
 replaceControlCharsByQuestion :: T.Text -> T.Text
 replaceControlCharsByQuestion = T.map (\c -> if isPrint c then c else '?')

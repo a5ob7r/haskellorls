@@ -6,8 +6,12 @@ module Haskellorls.Config
 where
 
 import Control.Applicative
+import qualified Data.ByteString.Char8 as C
+import Data.Gettext (gettext)
+import Data.List (isSuffixOf)
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
 import qualified Haskellorls.Config.Environment as Env
 import Haskellorls.Config.Format
 import Haskellorls.Config.Indicator
@@ -26,7 +30,7 @@ import qualified Haskellorls.Config.When as W
 import Haskellorls.Data.Infinitable
 import System.FilePath.Glob (Pattern, compile)
 import System.FilePath.Posix.ByteString
-import Prelude hiding (reverse)
+import Prelude hiding (lookup, reverse)
 
 data Config = Config
   { inode :: Bool,
@@ -161,7 +165,21 @@ mkConfig env Option {..} = Config {..}
       | oLiteral = Literal
       | oQuoteName = C
       | oEscape = Escape
-      | Just style <- (Env.quotingStyle env >>= Quote.parseQuotingStyle . T.pack) <|> oQuotingStyle = style
+      | Just style <- (Env.quotingStyle env >>= Quote.parseQuotingStyle . T.pack) <|> oQuotingStyle =
+          let lookup l r catalog = do
+                (lh, lt) <- TL.uncons $ gettext catalog (C.singleton l)
+                (rh, rt) <- TL.uncons $ gettext catalog (C.singleton r)
+                if TL.null lt && TL.null rt then Just (lh, rh) else Nothing
+           in case style of
+                Quote.CLocale l r
+                  | Just catalog <- Env.catalog env, Just (lh, rh) <- lookup l r catalog -> Quote.CLocale lh rh
+                  | maybe False ("UTF-8" `isSuffixOf`) $ Env.lcMessages env -> Quote.CLocale '‘' '’'
+                  | otherwise -> Quote.CLocale '"' '"'
+                Quote.Locale l r
+                  | Just catalog <- Env.catalog env, Just (lh, rh) <- lookup l r catalog -> Quote.Locale lh rh
+                  | maybe False ("UTF-8" `isSuffixOf`) $ Env.lcMessages env -> Quote.Locale '‘' '’'
+                  | maybe False (`elem` ["C", "POSIX"]) $ Env.lcMessages env -> Quote.Locale '\'' '\''
+                _ -> style
       | toTTY = ShellEscape
       | otherwise = Literal
     showControlChars = fromMaybe (not toTTY) oShowControlChars

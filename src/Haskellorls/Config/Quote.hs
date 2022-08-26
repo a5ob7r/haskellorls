@@ -1,23 +1,5 @@
 module Haskellorls.Config.Quote (QuotingStyle (..)) where
 
--- | For option parsing.
---
--- 'Literal':
---   same to @--literal@
--- 'Shell':
---   quote according to default rule and replace control characters to '?'
--- 'ShellAlways':
---   force quote and replace control characters to '?'
--- 'ShellEscape':
---   default
--- 'ShellEscapeAlways':
---   force quote and default
--- 'C':
---   double quote and @--escape@
--- 'Escape':
---   same to @--escape@
---
--- WIP: Add 'Locale' for @locale@
 data QuotingStyle
   = Literal
   | Shell
@@ -26,3 +8,5 @@ data QuotingStyle
   | ShellEscapeAlways
   | C
   | Escape
+  | CLocale Char Char
+  | Locale Char Char
