@@ -4,15 +4,13 @@ module Haskellorls.Config.Option
   )
 where
 
-import qualified Haskellorls.Config.Option.Color as Color
 import qualified Haskellorls.Config.Option.Format as Format
-import qualified Haskellorls.Config.Option.Hyperlink as Hyperlink
 import qualified Haskellorls.Config.Option.Indicator as Indicator
 import qualified Haskellorls.Config.Option.Quote as Quote
 import qualified Haskellorls.Config.Option.Size as Size
 import qualified Haskellorls.Config.Option.Sort as Sort
 import qualified Haskellorls.Config.Option.Time as Time
-import qualified Haskellorls.Config.When as W
+import qualified Haskellorls.Config.Option.When as W
 import Haskellorls.Data.Infinitable
 import Options.Applicative hiding (header)
 import Options.Applicative.Help.Pretty
@@ -88,409 +86,268 @@ data Option = Option
 
 opts :: ParserInfo Option
 opts = info (optionParser <**> helper) $ fullDesc <> (headerDoc . Just . text) header
+  where
+    header =
+      unlines
+        [ " _   _           _        _ _            _     ",
+          "| | | |         | |      | | |          | |    ",
+          "| |_| | __ _ ___| | _____| | | ___  _ __| |___ ",
+          "|  _  |/ _` / __| |/ / _ \\ | |/ _ \\| '__| / __|",
+          "| | | | (_| \\__ \\   <  __/ | | (_) | |  | \\__ \\",
+          "\\_| |_/\\__,_|___/_|\\_\\___|_|_|\\___/|_|  |_|___/",
+          "",
+          "Haskellorls = Haskell color ls"
+        ]
 
 optionParser :: Parser Option
 optionParser =
   Option
-    <$> allParser
-    <*> almostAllParser
-    <*> authorParser
-    <*> escapeParser
+    <$> switch do
+      long "all"
+        <> short 'a'
+        <> help "Output hidden files contain '.' and '..'"
+    <*> switch do
+      long "almost-all"
+        <> short 'A'
+        <> help "Output hidden files doesn't contain '.' and '..'"
+    <*> switch do
+      long "author"
+        <> help "Output file author, but this is equal to file owner (for compatibiliy to GNU ls)"
+    <*> switch do
+      long "escape"
+        <> short 'b'
+        <> help "Escape file name and link name by C lang style"
     <*> Size.blockSizeParser
-    <*> ignoreBackupsParser
-    <*> ctimeParser
-    <*> verticalParser
-    <*> Color.colorParser
-    <*> directoryParser
-    <*> diredParser
-    <*> noneSortExtraParser
-    <*> Indicator.classifyParser
-    <*> Color.extraColorParser
-    <*> fileTypeParser
+    <*> switch do
+      long "ignore-backups"
+        <> short 'B'
+        <> help "Ignore backup files which have a suffix with '~'"
+    <*> switch do
+      short 'c'
+        <> help "Sort by ctime and show it when '-t' and long style (e.g. '-l', '-o' and so on) options are passed; sort by name and show ctime when long style option is passed; sort by ctime otherwise"
+    <*> switch do
+      short 'C'
+        <> help "Outputs files by columns"
+    <*> do
+      let noArg = flag' W.ALWAYS $ long "color"
+          withArg =
+            option W.reader $
+              long "color"
+                <> metavar "WHEN"
+                <> value W.NEVER
+                <> help "When use output with color. If omits =WHEN, then the value assumes 'always'. (default is 'never')."
+                <> completeWith ["never", "always", "auto"]
+       in noArg <|> withArg
+    <*> switch do
+      long "directory"
+        <> short 'd'
+        <> help "Treats directory as normal file, does not lookup contents in it"
+    <*> switch do
+      long "dired"
+        <> short 'D'
+        <> help "Append metadata for Emacs' dired mode."
+    <*> switch do
+      short 'f'
+        <> help "Do not sort and enable '-a' and '--color=disable' options"
+    <*> do
+      let noArg = flag' W.ALWAYS $ long "classify" <> short 'F'
+          withArg =
+            option W.reader $
+              long "classify"
+                <> value W.NEVER
+                <> metavar "WHEN"
+                <> help "Append a indicator follows filename"
+                <> completeWith ["never", "always", "auto"]
+       in noArg <|> withArg
+    <*> switch do
+      long "extra-color"
+        <> help "Enable extra coloring which is incompatible for GNU ls."
+    <*> switch do
+      long "file-type"
+        <> help "Append indicators without '*'"
     <*> Format.formatParser
-    <*> fullTimeParser
-    <*> longWithoutOwnerParser
-    <*> groupDirectoriesFirstParser
-    <*> noGroupParser
-    <*> Size.humanReadableParser
-    <*> Size.siParser
-    <*> dereferenceCommandLineParser
-    <*> dereferenceCommandLineSymlinkToDirParser
-    <*> hideParser
-    <*> Hyperlink.hyperlinkParser
-    <*> iconParser
+    <*> switch do
+      long "full-time"
+        <> help "Equals to specify '-l' and '--time-style=full-iso'"
+    <*> switch do
+      short 'g'
+        <> help "Enable long layout without file owner"
+    <*> switch do
+      long "group-directories-first"
+        <> help "Outputs directories firstly than files; can use with '--sort=WORD' option, but this is disabled when with '--sort=none or -U'"
+    <*> switch do
+      long "no-group"
+        <> short 'G'
+        <> help "Hide file group field"
+    <*> switch do
+      long "human-readable"
+        <> short 'h'
+        <> help "Enable human readable output about file size (e.g. 1K, 23M)"
+    <*> switch do
+      long "si"
+        <> help "Use 1000 as file size power instead of 1024"
+    <*> switch do
+      long "dereference-command-line"
+        <> short 'H'
+        <> help "Use symbolic link destination file instead of link itself on command line arguments"
+    <*> switch do
+      long "dereference-command-line-symlink-to-dir"
+        <> help "Use symbolic link destination file instead of link itself on command line arguments when destination is directory"
+    <*> option (Just <$> str) do
+      long "hide"
+        <> metavar "PATTERN"
+        <> value Nothing
+        <> help "Don't output file infos if the file name matches to glob 'PATTERN', but this option is ignored when -a or -A is passed at same time"
+    <*> do
+      let noArg = flag' W.ALWAYS $ long "hyperlink"
+          withArg =
+            option W.reader $
+              long "hyperlink"
+                <> metavar "WHEN"
+                <> value W.NEVER
+                <> help "When embed the hyperlink to the file into the filename."
+                <> completeWith ["never", "always", "auto"]
+       in noArg <|> withArg
+    <*> switch do
+      long "icons"
+        <> help "Output icon for each files"
     <*> Indicator.indicatorStyleParser
-    <*> inodeParser
-    <*> ignoreParser
-    <*> kibibytesParser
-    <*> levelParser
-    <*> longParser
-    <*> dereferenceParser
-    <*> fillWidthParser
-    <*> numericUidGidParser
-    <*> literalParser
-    <*> longWithoutGroupParser
-    <*> directoryIndicatorParser
-    <*> showControlCharsParser
-    <*> quoteNameParser
+    <*> switch do
+      long "inode"
+        <> short 'i'
+        <> help "Output inode number about each files"
+    <*> option (Just <$> str) do
+      long "ignore"
+        <> short 'I'
+        <> metavar "PATTERN"
+        <> value Nothing
+        <> help "Don't output file infos if the file name matches to glob 'PATTERN'"
+    <*> switch do
+      long "kibibytes"
+        <> short 'k'
+        <> help "Use 1024 byte as one block size; This overrides values of some environment variables such as 'LS_BLOCK_SIZE' and 'BLOCK_SIZE'"
+    <*> option
+      do
+        str >>= \s -> case readMaybe s of
+          Just n | n > -1 -> return $ Only n
+          _ -> readerError "DEPTH must be a non-negative integer."
+      do
+        long "level"
+          <> metavar "DEPTH"
+          <> value Infinity
+          <> help "Specify how much depth drills in directory"
+    <*> switch do
+      short 'l'
+        <> help "Enable long layout which provides informative outputs about files"
+    <*> switch do
+      long "dereference"
+        <> short 'L'
+        <> help "Use symbolic link destination file instead of link itself"
+    <*> switch do
+      short 'm'
+        <> help "Output grid style layout which are filled with comma as possible"
+    <*> switch do
+      long "numeric-uid-gid"
+        <> short 'n'
+        <> help "Output numeric uid and gid instead of alphabetical them"
+    <*> switch do
+      long "literal"
+        <> short 'N'
+        <> help "Output file name and link name without quoting; and replace all non printable characters to '?'"
+    <*> switch do
+      short 'o'
+        <> help "Enable long layout without file group"
+    <*> switch do
+      short 'p'
+        <> help "Append a indicator '/' to directories"
+    <*> do
+      let sParser =
+            flag' (Just True) $
+              long "show-control-chars"
+                <> help "Output control characters 'as is'"
+          hParser =
+            flag Nothing (Just False) $
+              long "hide-control-chars"
+                <> short 'q'
+                <> help "Output '?' instead of control characters"
+       in sParser <|> hParser
+    <*> switch do
+      long "quote-name"
+        <> short 'Q'
+        <> help "Quote file name and link name with double quote (\")"
     <*> Quote.quotingStyleParser
-    <*> reverseParser
-    <*> recursiveParser
-    <*> sizeParser
-    <*> Sort.sizeSortParser
+    <*> switch do
+      long "reverse"
+        <> short 'r'
+        <> help "Reverse outputs order"
+    <*> switch do
+      long "recursive"
+        <> short 'R'
+        <> help "Output infos about files in sub directories recursively"
+    <*> switch do
+      long "size"
+        <> short 's'
+        <> help "Output allocated block size of each files"
+    <*> switch do
+      short 'S'
+        <> help "Size sort, largest first"
     <*> Sort.sortParser
     <*> Time.timeParser
     <*> Time.timeStyleParser
-    <*> Sort.timeSortParser
-    <*> tabSeparatorParser
-    <*> tabSizeParser
-    <*> treeParser
-    <*> atimeParser
-    <*> Sort.noneSortParser
-    <*> Sort.naturalSortParser
-    <*> widthParser
-    <*> horihontalParser
-    <*> Sort.extensionSortParser
-    <*> contextParser
-    <*> zeroParser
-    <*> onelineParser
-    <*> versionParser
-    <*> argParser
-
-longParser :: Parser Bool
-longParser =
-  switch $
-    short 'l'
-      <> help "Enable long layout which provides informative outputs about files"
-
-allParser :: Parser Bool
-allParser =
-  switch $
-    short 'a'
-      <> long "all"
-      <> help "Output hidden files contain '.' and '..'"
-
-almostAllParser :: Parser Bool
-almostAllParser =
-  switch $
-    short 'A'
-      <> long "almost-all"
-      <> help "Output hidden files doesn't contain '.' and '..'"
-
-reverseParser :: Parser Bool
-reverseParser =
-  switch $
-    short 'r'
-      <> long "reverse"
-      <> help "Reverse outputs order"
-
-zeroParser :: Parser Bool
-zeroParser = switch $ long "zero" <> help "Each line is terminated with NUL, not newline."
-
-onelineParser :: Parser Bool
-onelineParser =
-  switch $
-    short '1'
-      <> help "Enable oneline layout which outputs one file by one line"
-
-noGroupParser :: Parser Bool
-noGroupParser =
-  switch $
-    short 'G'
-      <> long "no-group"
-      <> help "Hide file group field"
-
-longWithoutGroupParser :: Parser Bool
-longWithoutGroupParser =
-  switch $
-    short 'o'
-      <> help "Enable long layout without file group"
-
-longWithoutOwnerParser :: Parser Bool
-longWithoutOwnerParser =
-  switch $
-    short 'g'
-      <> help "Enable long layout without file owner"
-
-widthParser :: Parser (Maybe Int)
-widthParser =
-  option reader $
-    long "width"
-      <> short 'w'
-      <> metavar "COLS"
-      <> help "Specify output width. Assumes infinity width if 0."
-      <> value Nothing
-  where
-    reader =
-      auto >>= \n ->
-        if n >= 0
-          then return $ Just n
-          else readerError "COLS must be a natural number"
-
-inodeParser :: Parser Bool
-inodeParser =
-  switch $
-    long "inode"
-      <> short 'i'
-      <> help "Output inode number about each files"
-
-directoryIndicatorParser :: Parser Bool
-directoryIndicatorParser =
-  switch $
-    short 'p'
-      <> help "Append a indicator '/' to directories"
-
-fileTypeParser :: Parser Bool
-fileTypeParser =
-  switch $
-    long "file-type"
-      <> help "Append indicators without '*'"
-
-ignoreBackupsParser :: Parser Bool
-ignoreBackupsParser =
-  switch $
-    long "ignore-backups"
-      <> short 'B'
-      <> help "Ignore backup files which have a suffix with '~'"
-
-numericUidGidParser :: Parser Bool
-numericUidGidParser =
-  switch $
-    long "numeric-uid-gid"
-      <> short 'n'
-      <> help "Output numeric uid and gid instead of alphabetical them"
-
-ignoreParser :: Parser (Maybe String)
-ignoreParser =
-  option (Just <$> str) $
-    long "ignore"
-      <> short 'I'
-      <> metavar "PATTERN"
-      <> value Nothing
-      <> help "Don't output file infos if the file name matches to glob 'PATTERN'"
-
-hideParser :: Parser (Maybe String)
-hideParser =
-  option (Just <$> str) $
-    long "hide"
-      <> metavar "PATTERN"
-      <> value Nothing
-      <> help "Don't output file infos if the file name matches to glob 'PATTERN', but this option is ignored when -a or -A is passed at same time"
-
-recursiveParser :: Parser Bool
-recursiveParser =
-  switch $
-    long "recursive"
-      <> short 'R'
-      <> help "Output infos about files in sub directories recursively"
-
-levelParser :: Parser (Infinitable Int)
-levelParser =
-  option reader $
-    long "level"
-      <> metavar "DEPTH"
-      <> value Infinity
-      <> help "Specify how much depth drills in directory"
-  where
-    reader =
-      str >>= \s -> case readMaybe s of
-        Just n | n > -1 -> return $ Only n
-        _ -> readerError "DEPTH must be a non-negative integer."
-
-authorParser :: Parser Bool
-authorParser =
-  switch $
-    long "author"
-      <> help "Output file author, but this is equal to file owner (for compatibiliy to GNU ls)"
-
-sizeParser :: Parser Bool
-sizeParser =
-  switch $
-    long "size"
-      <> short 's'
-      <> help "Output allocated block size of each files"
-
-iconParser :: Parser Bool
-iconParser =
-  switch $
-    long "icons"
-      <> help "Output icon for each files"
-
-treeParser :: Parser Bool
-treeParser =
-  switch $
-    long "tree"
-      <> help "Output each files with tree style layout. If combines with '-a/--all', the option is disabled forcefully and '-A/--almost-all' is enabled instead."
-
-dereferenceParser :: Parser Bool
-dereferenceParser =
-  switch $
-    long "dereference"
-      <> short 'L'
-      <> help "Use symbolic link destination file instead of link itself"
-
-dereferenceCommandLineParser :: Parser Bool
-dereferenceCommandLineParser =
-  switch $
-    long "dereference-command-line"
-      <> short 'H'
-      <> help "Use symbolic link destination file instead of link itself on command line arguments"
-
-dereferenceCommandLineSymlinkToDirParser :: Parser Bool
-dereferenceCommandLineSymlinkToDirParser =
-  switch $
-    long "dereference-command-line-symlink-to-dir"
-      <> help "Use symbolic link destination file instead of link itself on command line arguments when destination is directory"
-
-fullTimeParser :: Parser Bool
-fullTimeParser =
-  switch $
-    long "full-time"
-      <> help "Equals to specify '-l' and '--time-style=full-iso'"
-
-groupDirectoriesFirstParser :: Parser Bool
-groupDirectoriesFirstParser =
-  switch $
-    long "group-directories-first"
-      <> help "Outputs directories firstly than files; can use with '--sort=WORD' option, but this is disabled when with '--sort=none or -U'"
-
-verticalParser :: Parser Bool
-verticalParser =
-  switch $
-    short 'C'
-      <> help "Outputs files by columns"
-
-horihontalParser :: Parser Bool
-horihontalParser =
-  switch $
-    short 'x'
-      <> help "Outputs files by rows instead of columns"
-
-fillWidthParser :: Parser Bool
-fillWidthParser =
-  switch $
-    short 'm'
-      <> help "Output grid style layout which are filled with comma as possible"
-
-ctimeParser :: Parser Bool
-ctimeParser =
-  switch $
-    short 'c'
-      <> help "Sort by ctime and show it when '-t' and long style (e.g. '-l', '-o' and so on) options are passed; sort by name and show ctime when long style option is passed; sort by ctime otherwise"
-
-directoryParser :: Parser Bool
-directoryParser =
-  switch $
-    long "directory"
-      <> short 'd'
-      <> help "Treats directory as normal file, does not lookup contents in it"
-
-diredParser :: Parser Bool
-diredParser =
-  switch $
-    long "dired"
-      <> short 'D'
-      <> help "Append metadata for Emacs' dired mode."
-
-noneSortExtraParser :: Parser Bool
-noneSortExtraParser =
-  switch $
-    short 'f'
-      <> help "Do not sort and enable '-a' and '--color=disable' options"
-
-atimeParser :: Parser Bool
-atimeParser =
-  switch $
-    short 'u'
-      <> help "Sort by access time and show it when '-t' and long style (e.g. '-l', '-o' and so on) options are passed; sort by name and show access time when long style option is passed; sort by access time otherwise"
-
-tabSizeParser :: Parser Int
-tabSizeParser =
-  option reader $
-    long "tabsize"
-      <> short 'T'
-      <> metavar "COLS"
-      <> value 8
-      <> help "Specify tab stop size; default is 8"
-  where
-    reader =
-      str >>= \cols ->
-        case readMaybe cols of
-          Just n -> pure n
-          Nothing -> readerError "COLS must be a natural number"
-
-tabSeparatorParser :: Parser Bool
-tabSeparatorParser =
-  switch $
-    long "tab-separator"
-      <> help "Use tab charactors and some spaces to separate grid divisions when grid layout style; like dir"
-
-quoteNameParser :: Parser Bool
-quoteNameParser =
-  switch $
-    long "quote-name"
-      <> short 'Q'
-      <> help "Quote file name and link name with double quote (\")"
-
-contextParser :: Parser Bool
-contextParser =
-  switch $
-    long "context"
-      <> short 'Z'
-      <> help "Output security context information of each files"
-
-literalParser :: Parser Bool
-literalParser =
-  switch $
-    long "literal"
-      <> short 'N'
-      <> help "Output file name and link name without quoting; and replace all non printable characters to '?'"
-
-showControlCharsParser :: Parser (Maybe Bool)
-showControlCharsParser = sParser <|> hParser
-  where
-    sParser =
-      flag' (Just True) $
-        long "show-control-chars"
-          <> help "Output control characters 'as is'"
-    hParser =
-      flag Nothing (Just False) $
-        long "hide-control-chars"
-          <> short 'q'
-          <> help "Output '?' instead of control characters"
-
-kibibytesParser :: Parser Bool
-kibibytesParser =
-  switch $
-    long "kibibytes"
-      <> short 'k'
-      <> help "Use 1024 byte as one block size; This overrides values of some environment variables such as 'LS_BLOCK_SIZE' and 'BLOCK_SIZE'"
-
-escapeParser :: Parser Bool
-escapeParser =
-  switch $
-    long "escape"
-      <> short 'b'
-      <> help "Escape file name and link name by C lang style"
-
-versionParser :: Parser Bool
-versionParser =
-  switch $
-    long "version"
-      <> help "Show version info"
-
-argParser :: Parser [String]
-argParser = many . strArgument $ metavar "[FILE]..." <> action "file"
-
-header :: String
-header =
-  unlines
-    [ " _   _           _        _ _            _     ",
-      "| | | |         | |      | | |          | |    ",
-      "| |_| | __ _ ___| | _____| | | ___  _ __| |___ ",
-      "|  _  |/ _` / __| |/ / _ \\ | |/ _ \\| '__| / __|",
-      "| | | | (_| \\__ \\   <  __/ | | (_) | |  | \\__ \\",
-      "\\_| |_/\\__,_|___/_|\\_\\___|_|_|\\___/|_|  |_|___/",
-      "",
-      "Haskellorls = Haskell color ls"
-    ]
+    <*> switch do
+      short 't'
+        <> help "Time sort, newest first"
+    <*> switch do
+      long "tab-separator"
+        <> help "Use tab charactors and some spaces to separate grid divisions when grid layout style; like dir"
+    <*> option
+      do str >>= maybe (readerError "COLS must be a natural number") return . readMaybe
+      do
+        long "tabsize"
+          <> short 'T'
+          <> metavar "COLS"
+          <> value 8
+          <> help "Specify tab stop size; default is 8"
+    <*> switch do
+      long "tree"
+        <> help "Output each files with tree style layout. If combines with '-a/--all', the option is disabled forcefully and '-A/--almost-all' is enabled instead."
+    <*> switch do
+      short 'u'
+        <> help "Sort by access time and show it when '-t' and long style (e.g. '-l', '-o' and so on) options are passed; sort by name and show access time when long style option is passed; sort by access time otherwise"
+    <*> switch do
+      short 'U'
+        <> help "Do not sort"
+    <*> switch do
+      short 'v'
+        <> help "Natural sort"
+    <*> option
+      do auto >>= \n -> if n >= 0 then return $ Just n else readerError "COLS must be a natural number"
+      do
+        long "width"
+          <> short 'w'
+          <> metavar "COLS"
+          <> value Nothing
+          <> help "Specify output width. Assumes infinity width if 0."
+    <*> switch do
+      short 'x'
+        <> help "Outputs files by rows instead of columns"
+    <*> switch do
+      short 'X'
+        <> help "Alphabetical sort by file extension"
+    <*> switch do
+      long "context"
+        <> short 'Z'
+        <> help "Output security context information of each files"
+    <*> switch do
+      long "zero"
+        <> help "Each line is terminated with NUL, not newline."
+    <*> switch do
+      short '1'
+        <> help "Enable oneline layout which outputs one file by one line"
+    <*> switch do
+      long "version"
+        <> help "Show version info"
+    <*> do
+      many . strArgument $
+        metavar "[FILE]..."
+          <> action "file"

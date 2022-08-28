@@ -54,9 +54,7 @@ library haskellorls-internal
     Haskellorls.Config.Link
     Haskellorls.Config.Listing
     Haskellorls.Config.Option
-    Haskellorls.Config.Option.Color
     Haskellorls.Config.Option.Format
-    Haskellorls.Config.Option.Hyperlink
     Haskellorls.Config.Option.Indicator
     Haskellorls.Config.Option.Quote
     Haskellorls.Config.Option.Size
@@ -107,6 +105,7 @@ library haskellorls-internal
   autogen-modules:    Paths_haskellorls
   hs-source-dirs:     src
   default-extensions:
+    BlockArguments
     CPP
     DeriveFunctor
     FlexibleContexts

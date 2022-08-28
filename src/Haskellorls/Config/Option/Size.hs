@@ -1,8 +1,6 @@
 module Haskellorls.Config.Option.Size
   ( blockSizeParser,
     parseBlockSize,
-    siParser,
-    humanReadableParser,
     module Haskellorls.Config.Size,
   )
 where
@@ -13,33 +11,14 @@ import Haskellorls.Config.Size
 import Numeric
 import Options.Applicative
 
-humanReadableParser :: Parser Bool
-humanReadableParser =
-  switch $
-    short 'h'
-      <> long "human-readable"
-      <> help "Enable human readable output about file size (e.g. 1K, 23M)"
-
-siParser :: Parser Bool
-siParser =
-  switch $
-    long "si"
-      <> help "Use 1000 as file size power instead of 1024"
-
 blockSizeParser :: Parser BlockSize
-blockSizeParser =
-  option reader $
+blockSizeParser = option
+  do str >>= maybe (readerError "Invalid unit") return . parseBlockSize
+  do
     long "block-size"
       <> metavar "SIZE"
       <> value DefaultSize
       <> help "Specify size unit when output file size"
-  where
-    reader = str >>= blockSizeReader
-
-blockSizeReader :: String -> ReadM BlockSize
-blockSizeReader s = case parseBlockSize s of
-  Just size -> return size
-  Nothing -> readerError "Invalid unit"
 
 -- FIXME: This doesn't handle any overflow.
 parseBlockSize :: String -> Maybe BlockSize
