@@ -76,27 +76,28 @@ instance Default LsColors where
 
 instance Dictionary NodeInfo Sequence LsColors where
   lookup n l@(Options {..}) = case getNodeLinkInfo n of
-    Just (Left _) -> orphan
-    Just (Right _) | symlink /= Just "target" -> symlink
-    _ -> case nodeType n' of
-      Directory -> directory
-      NamedPipe -> pipe
-      Socket -> socket
-      BlockDevise -> block
-      CharDevise -> char
-      DoorsDevise -> door
-      Setuid -> setuid
-      Setgid -> setgid
-      Sticky -> sticky
-      StickyOtherWritable -> stickyOtherWritable
-      OtherWritable -> otherWritable
-      Executable -> executable
-      File -> q `query` l <|> file <|> normal
-        where
-          q = Query . T.decodeUtf8 $ getNodePath n'
-      _ -> orphan
+    Just (Left _)
+      | File <- nodeType n -> missing <|> orphan
+      | otherwise -> orphan
+    Just (Right _) | Just "target" <- symlink -> f $ toFileInfo n
+    _ -> f n
     where
-      n' = toFileInfo n
+      f node = case nodeType node of
+        Directory -> directory
+        SymbolicLink -> symlink
+        NamedPipe -> pipe
+        Socket -> socket
+        BlockDevise -> block
+        CharDevise -> char
+        DoorsDevise -> door
+        Setuid -> setuid
+        Setgid -> setgid
+        Sticky -> sticky
+        StickyOtherWritable -> stickyOtherWritable
+        OtherWritable -> otherWritable
+        Executable -> executable
+        File -> (Query . T.decodeUtf8 $ getNodePath node) `query` l <|> file <|> normal
+        Orphan -> orphan
 
 instance Dictionary EntryType Sequence LsColors where
   lookup e (Options {..}) = case e of

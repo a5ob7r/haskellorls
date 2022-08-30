@@ -158,8 +158,6 @@ data NodeInfo = NodeInfo
   }
 
 -- | Create a filenode infomation from a filepath.
---
--- TODO: Handle missing files.
 mkNodeInfo :: (MonadCatch m, MonadIO m) => Config.Config -> RawFilePath -> RawFilePath -> m NodeInfo
 mkNodeInfo config dirname basename = do
   let filepath = dirname </> basename
@@ -272,19 +270,18 @@ newtype OrphanedLinkNodeInfo = OrphanedLinkNodeInfo {getOrphanedNodeLinkPath :: 
 
 -- | Convert a 'NodeInfo' value to the dereferenced 'NodeInfo'.
 toFileInfo :: NodeInfo -> NodeInfo
-toFileInfo node@NodeInfo {..} = case getNodeLinkInfo of
+toFileInfo node = case getNodeLinkInfo node of
   Nothing -> node
   Just (Right LinkNodeInfo {..}) ->
-    NodeInfo
+    node
       { getNodePath = getLinkNodePath,
         getNodeStatus = getLinkNodeStatus,
-        getNodeContext = getLinkNodeContext,
-        ..
+        getNodeContext = getLinkNodeContext
       }
   Just (Left OrphanedLinkNodeInfo {..}) ->
-    NodeInfo
+    node
       { getNodePath = getOrphanedNodeLinkPath,
-        ..
+        getNodeStatus = (getNodeStatus node) {pfsNodeType = File}
       }
 
 {- ORMOLU_DISABLE -}
