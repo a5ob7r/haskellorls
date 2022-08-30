@@ -20,49 +20,23 @@ data EntryType
   deriving (Show)
 
 instance From NodeInfo EntryType where
-  from node = case nType of
+  from node = case nodeType node of
     SymbolicLink -> SYMLINK
     NamedPipe -> FIFO
     Socket -> SOCK
     BlockDevise -> BLOCK
     CharDevise -> CHAR
-    _
+    nType
       | isDirectory nType -> DIR
       | otherwise -> REGULAR
-    where
-      nType = nodeType node
 
 instance From EntryType Char where
   from = \case
-    REGULAR -> regularFileLetter
-    BLOCK -> blockLetter
-    CHAR -> charLetter
-    DIR -> directoryLetter
-    SYMLINK -> symlinkLetter
-    FIFO -> fifoLetter
-    SOCK -> socketLetter
-    OTHER -> otherLetter
-
-regularFileLetter :: Char
-regularFileLetter = '-'
-
-blockLetter :: Char
-blockLetter = 'b'
-
-charLetter :: Char
-charLetter = 'c'
-
-directoryLetter :: Char
-directoryLetter = 'd'
-
-symlinkLetter :: Char
-symlinkLetter = 'l'
-
-fifoLetter :: Char
-fifoLetter = 'p'
-
-socketLetter :: Char
-socketLetter = 's'
-
-otherLetter :: Char
-otherLetter = '?'
+    REGULAR -> '-'
+    BLOCK -> 'b'
+    CHAR -> 'c'
+    DIR -> 'd'
+    SYMLINK -> 'l'
+    FIFO -> 'p'
+    SOCK -> 's'
+    OTHER -> '?'
