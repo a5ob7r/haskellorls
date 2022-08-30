@@ -208,7 +208,7 @@ mkPrinters config = do
       nodeNamePrinter = case Config.colorize config of
         Just _ -> Name.colorizedNodeName config lscolors
         _ -> Name.nodeName config
-      nodeIndicatorPrinter = Indicator.buildIndicatorPrinter config
+      nodeIndicatorPrinter = Indicator.mkIndicatorPrinter config
       nodeLinkPrinter = case Config.colorize config of
         Just _ -> SymbolicLink.coloredLinkName config lscolors
         _ -> SymbolicLink.linkName config
