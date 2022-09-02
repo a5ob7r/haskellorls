@@ -5,6 +5,7 @@ module Haskellorls.Config.Environment
 where
 
 import Control.Applicative
+import Control.Monad.Trans.Maybe (MaybeT (..))
 import Network.HostName
 import Numeric
 import System.Console.Terminal.Size
@@ -41,6 +42,6 @@ mkEnvironment = do
     let f = \case
           Just s | [(n, "")] <- readDec s -> Just n
           _ -> Nothing
-     in liftA2 (<|>) (fmap width <$> size) $ f <$> lookupEnv "COLUMNS"
+     in runMaybeT $ width <$> MaybeT size <|> MaybeT (f <$> lookupEnv "COLUMNS")
 
   return $ Environment {..}
