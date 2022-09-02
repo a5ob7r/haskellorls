@@ -17,6 +17,7 @@ data Environment = Environment
   { toTerminal :: Bool,
     blockSize :: Maybe String,
     quotingStyle :: Maybe String,
+    timeStyle :: Maybe String,
     cwd :: RawFilePath,
     hostname :: String,
     columnSize :: Maybe Int
@@ -29,6 +30,8 @@ mkEnvironment = do
   blockSize <- optional $ getEnv "LS_BLOCK_SIZE" <|> getEnv "BLOCK_SIZE"
 
   quotingStyle <- lookupEnv "QUOTING_STYLE"
+
+  timeStyle <- lookupEnv "TIME_STYLE"
 
   cwd <- getWorkingDirectory
 

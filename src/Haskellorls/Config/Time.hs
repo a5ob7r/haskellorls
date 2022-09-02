@@ -15,10 +15,12 @@
 module Haskellorls.Config.Time
   ( Datetime (..),
     TimeStyle (..),
+    parseTimeStyle,
     TimeType (..),
   )
 where
 
+import Data.List.Extra (split)
 import Data.Time.Clock
 
 newtype Datetime = Datatime UTCTime
@@ -34,6 +36,19 @@ data TimeStyle
   | LOCALE
   | POSIXLOCALE
   | FORMAT [String]
+
+parseTimeStyle :: String -> Maybe TimeStyle
+parseTimeStyle = \case
+  "full-iso" -> Just FULLISO
+  "posix-full-iso" -> Just POSIXFULLISO
+  "long-iso" -> Just LONGISO
+  "posix-long-iso" -> Just POSIXLONGISO
+  "iso" -> Just ISO
+  "posix-iso" -> Just POSIXISO
+  "locale" -> Just LOCALE
+  "posix-locale" -> Just POSIXLOCALE
+  '+' : s -> Just . FORMAT $ split (== '\n') s
+  _ -> Nothing
 
 -- WIP: Birth(creation) time is not implemented yet.
 data TimeType

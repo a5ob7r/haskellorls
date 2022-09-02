@@ -5,7 +5,6 @@ module Haskellorls.Config.Option.Time
   )
 where
 
-import Data.List.Extra (split)
 import Haskellorls.Config.Time
 import Options.Applicative
 
@@ -28,23 +27,12 @@ timeParser = option
       <> help "Specify a time kind which is used as file's time attribute"
       <> completeWith ["atime", "access", "use", "ctime", "status"]
 
-timeStyleParser :: Parser TimeStyle
+timeStyleParser :: Parser (Maybe TimeStyle)
 timeStyleParser = option
-  do
-    str >>= \case
-      "full-iso" -> return FULLISO
-      "posix-full-iso" -> return POSIXFULLISO
-      "long-iso" -> return LONGISO
-      "posix-long-iso" -> return POSIXLONGISO
-      "iso" -> return ISO
-      "posix-iso" -> return POSIXISO
-      "locale" -> return LOCALE
-      "posix-locale" -> return POSIXLOCALE
-      '+' : s -> return . FORMAT $ split (== '\n') s
-      _ -> readerError "Invalid time output format."
+  do str >>= maybe (readerError "Invalid time output format.") (return . Just) . parseTimeStyle
   do
     long "time-style"
       <> metavar "TYPE_STYLE"
-      <> value LOCALE
+      <> value Nothing
       <> help "Specify time output format"
       <> completeWith ["full-iso", "posix-full-iso", "long-iso", "posix-long-iso", "iso", "posix-iso", "locale", "posix-locale"]

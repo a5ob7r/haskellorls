@@ -183,7 +183,7 @@ mkConfig env Option {..} = Config {..}
       | otherwise = oTime
     timeStyle
       | oFullTime = FULLISO
-      | otherwise = oTimeStyle
+      | otherwise = fromMaybe LOCALE $ oTimeStyle <|> (Env.timeStyle env >>= Time.parseTimeStyle)
     tabSize = if oTabSeparator then Just oTabSize else Nothing
     tree = oTree
     width = case format of

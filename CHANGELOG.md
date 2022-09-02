@@ -10,6 +10,7 @@
 - `posix-` prefixed values for `--time-style=TIME_STYLE`.
 - `locale` and `posix-locale` for `--time-style=TIME_STYLE`.
 - Handle `mi` parameter of `$LS_COLORS`.
+- Lookup `TIME_STYLE` environment variable to determine the time format used.
 
 ### Changed
 
