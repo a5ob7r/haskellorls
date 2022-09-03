@@ -55,16 +55,15 @@ mkNodeType :: Files.FileStatus -> NodeType
 mkNodeType status
   | Files.isRegularFile status =
       if
-          | isSetuidMode mode -> Setuid
-          | isSetgidMode mode -> Setgid
-          | isExecutableMode mode -> Executable
+          | mode `Files.hasFileMode` Files.setUserIDMode -> Setuid
+          | mode `Files.hasFileMode` Files.setGroupIDMode -> Setgid
+          | mode `Files.hasFileModesOr` [Files.ownerExecuteMode, Files.groupExecuteMode, Files.otherExecuteMode] -> Executable
           | otherwise -> File
-  | Files.isDirectory status =
-      if
-          | isStickyOtherWrite mode -> StickyOtherWritable
-          | isOtherWriteMode mode -> OtherWritable
-          | isStickyMode mode -> Sticky
-          | otherwise -> Directory
+  | Files.isDirectory status = case (mode `Files.hasFileMode` Files.otherWriteMode, mode `Files.hasFileMode` Files.stickyMode) of
+      (True, True) -> StickyOtherWritable
+      (True, _) -> OtherWritable
+      (_, True) -> Sticky
+      _ -> Directory
   | Files.isSymbolicLink status = SymbolicLink
   | Files.isNamedPipe status = NamedPipe
   | Files.isSocket status = Socket
@@ -73,42 +72,6 @@ mkNodeType status
   | otherwise = Orphan
   where
     mode = Files.fileMode status
-
-hasFileMode :: Types.FileMode -> Types.FileMode -> Bool
-hasFileMode x y = x == Files.intersectFileModes x y
-
-isOwnerExecuteMode :: Types.FileMode -> Bool
-isOwnerExecuteMode = hasFileMode Files.ownerExecuteMode
-
-isGroupExecuteMode :: Types.FileMode -> Bool
-isGroupExecuteMode = hasFileMode Files.groupExecuteMode
-
-isOtherWriteMode :: Types.FileMode -> Bool
-isOtherWriteMode = hasFileMode Files.otherWriteMode
-
-isOtherExecuteMode :: Types.FileMode -> Bool
-isOtherExecuteMode = hasFileMode Files.otherExecuteMode
-
-isExecutableMode :: Types.FileMode -> Bool
-isExecutableMode = or . sequence [isOwnerExecuteMode, isGroupExecuteMode, isOtherExecuteMode]
-
-isSetuidMode :: Types.FileMode -> Bool
-isSetuidMode = hasFileMode Files.setUserIDMode
-
-isSetgidMode :: Types.FileMode -> Bool
-isSetgidMode = hasFileMode Files.setGroupIDMode
-
-isStickyMode :: Types.FileMode -> Bool
-isStickyMode = hasFileMode stickyMode
-
-isStickyOtherWrite :: Types.FileMode -> Bool
-isStickyOtherWrite = hasFileMode stickyOtherWriteMode
-
-stickyMode :: Types.FileMode
-stickyMode = 548
-
-stickyOtherWriteMode :: Types.FileMode
-stickyOtherWriteMode = Files.unionFileModes stickyMode Files.otherWriteMode
 
 isDirectory :: NodeType -> Bool
 isDirectory = \case

@@ -7,8 +7,8 @@ module Haskellorls.Config.Filemode.Permission
 where
 
 import Haskellorls.Class
-import qualified System.Posix.Files.ByteString as Files
-import qualified System.Posix.Types as Types
+import qualified Haskellorls.System.Posix.Files.ByteString as Files
+import System.Posix.Types (FileMode)
 import Prelude hiding (lookup)
 
 -- | Permission class with @user@, @group@ and @other@ context.
@@ -27,35 +27,32 @@ instance From (PermissionContext a) a where
   from (OtherPerm a) = a
 
 -- TODO: This usage is hacky.
-instance Dictionary Permission PermissionClass Types.FileMode where
+instance Dictionary Permission PermissionClass FileMode where
   lookup p mode = case p of
-    UserPerm READ | mode `hasFileMode` Files.ownerReadMode -> Just READ
-    UserPerm WRITE | mode `hasFileMode` Files.ownerWriteMode -> Just WRITE
-    UserPerm EXEC -> case (mode `hasFileMode` Files.setUserIDMode, mode `hasFileMode` Files.ownerExecuteMode) of
+    UserPerm READ | mode `Files.hasFileMode` Files.ownerReadMode -> Just READ
+    UserPerm WRITE | mode `Files.hasFileMode` Files.ownerWriteMode -> Just WRITE
+    UserPerm EXEC -> case (mode `Files.hasFileMode` Files.setUserIDMode, mode `Files.hasFileMode` Files.ownerExecuteMode) of
       (True, True) -> Just E_SETUID
       (True, _) -> Just SETUID
       (_, True) -> Just EXEC
       _ -> Nothing
-    GroupPerm READ | mode `hasFileMode` Files.groupReadMode -> Just READ
-    GroupPerm WRITE | mode `hasFileMode` Files.groupWriteMode -> Just WRITE
-    GroupPerm EXEC -> case (mode `hasFileMode` Files.setGroupIDMode, mode `hasFileMode` Files.groupExecuteMode) of
+    GroupPerm READ | mode `Files.hasFileMode` Files.groupReadMode -> Just READ
+    GroupPerm WRITE | mode `Files.hasFileMode` Files.groupWriteMode -> Just WRITE
+    GroupPerm EXEC -> case (mode `Files.hasFileMode` Files.setGroupIDMode, mode `Files.hasFileMode` Files.groupExecuteMode) of
       (True, True) -> Just E_SETGID
       (True, _) -> Just SETGID
       (_, True) -> Just EXEC
       _ -> Nothing
-    OtherPerm READ | mode `hasFileMode` Files.otherReadMode -> Just READ
-    OtherPerm WRITE | mode `hasFileMode` Files.otherWriteMode -> Just WRITE
-    OtherPerm EXEC -> case (mode `hasFileMode` stickyMode, mode `hasFileMode` Files.otherExecuteMode) of
+    OtherPerm READ | mode `Files.hasFileMode` Files.otherReadMode -> Just READ
+    OtherPerm WRITE | mode `Files.hasFileMode` Files.otherWriteMode -> Just WRITE
+    OtherPerm EXEC -> case (mode `Files.hasFileMode` Files.stickyMode, mode `Files.hasFileMode` Files.otherExecuteMode) of
       (True, True) -> Just E_STICKY
       (True, _) -> Just STICKY
       (_, True) -> Just EXEC
       _ -> Nothing
     _ -> Nothing
-    where
-      hasFileMode x y = y == Files.intersectFileModes x y
-      stickyMode = 548
 
-instance Dictionary Permission Permission Types.FileMode where
+instance Dictionary Permission Permission FileMode where
   lookup p mode = case p of
     UserPerm _ -> UserPerm <$> p `lookup` mode
     GroupPerm _ -> GroupPerm <$> p `lookup` mode
