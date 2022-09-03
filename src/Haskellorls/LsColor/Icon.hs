@@ -66,15 +66,16 @@ instance Dictionary NodeInfo Icon LsIcons where
     Just (Left _) -> orphan
     Just (Right _) -> symlink
     _ -> case nodeType n of
-      NamedPipe -> pipe
-      Socket -> socket
-      BlockDevise -> block
-      CharDevise -> char
-      Orphan -> orphan
-      Directory -> directory
-      _ -> Query filename `query` l <|> file
-      where
-        filename = T.decodeUtf8 . takeFileName $ getNodePath n
+      Nothing -> orphan
+      Just NamedPipe -> pipe
+      Just Socket -> socket
+      Just BlockDevise -> block
+      Just CharDevise -> char
+      Just Orphan -> orphan
+      Just Directory -> directory
+      _ ->
+        let filename = T.decodeUtf8 . takeFileName $ getNodePath n
+         in Query filename `query` l <|> file
 
 instance Dictionary Query Icon LsIcons where
   lookup q (Options {..}) = extension >>= \e -> q `lookup` e

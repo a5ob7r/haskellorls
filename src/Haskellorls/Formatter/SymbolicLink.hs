@@ -17,18 +17,16 @@ import qualified Haskellorls.NodeInfo as Node
 linkName :: Config.Config -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 linkName config node = case Node.getNodeLinkInfo node of
   Nothing -> []
-  _ -> prefix' : [Quote.quote config link]
-  where
-    link = Name.nodeName config $ Node.toFileInfo node
-    prefix' = Attr.Other $ from prefix
+  Just linkinfo ->
+    let link = Name.nodeName config $ (Node.toFileInfo node) {Node.getNodePath = Node.dereferencedNodePath linkinfo}
+     in Attr.Other (from prefix) : [Quote.quote config link]
 
 coloredLinkName :: Config.Config -> Color.LsColors -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 coloredLinkName config lc node = case Node.getNodeLinkInfo node of
   Nothing -> []
-  _ -> prefix' : [Quote.quote config link]
-  where
-    link = Name.colorizedNodeName config lc $ Node.toFileInfo node
-    prefix' = Attr.Other $ from prefix
+  Just linkinfo ->
+    let link = Name.colorizedNodeName config lc $ (Node.toFileInfo node) {Node.getNodePath = Node.dereferencedNodePath linkinfo}
+     in Attr.Other (from prefix) : [Quote.quote config link]
 
 prefix :: T.Text
 prefix = " -> "

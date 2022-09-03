@@ -14,27 +14,28 @@ newtype Indicator = Indicator Char
 
 instance Dictionary Node.NodeInfo Indicator Config.Config where
   lookup node config = case Node.nodeType node of
-    Node.SymbolicLink -> case Config.indicatorStyle config of
+    Nothing -> Nothing
+    Just Node.SymbolicLink -> case Config.indicatorStyle config of
       _ | Format.LONG <- Config.format config -> Nothing
       IndicatorFiletype -> Just $ Indicator '@'
       IndicatorClassify -> Just $ Indicator '@'
       _ -> Nothing
-    Node.NamedPipe -> case Config.indicatorStyle config of
+    Just Node.NamedPipe -> case Config.indicatorStyle config of
       IndicatorFiletype -> Just $ Indicator '|'
       IndicatorClassify -> Just $ Indicator '|'
       _ -> Nothing
-    Node.Socket -> case Config.indicatorStyle config of
+    Just Node.Socket -> case Config.indicatorStyle config of
       IndicatorFiletype -> Just $ Indicator '='
       IndicatorClassify -> Just $ Indicator '='
       _ -> Nothing
-    Node.DoorsDevise -> case Config.indicatorStyle config of
+    Just Node.DoorsDevise -> case Config.indicatorStyle config of
       IndicatorFiletype -> Just $ Indicator '>'
       IndicatorClassify -> Just $ Indicator '>'
       _ -> Nothing
-    Node.Executable -> case Config.indicatorStyle config of
+    Just Node.Executable -> case Config.indicatorStyle config of
       IndicatorClassify -> Just $ Indicator '*'
       _ -> Nothing
-    nType
+    Just nType
       | Node.isDirectory nType -> case Config.indicatorStyle config of
           IndicatorNone -> Nothing
           _ -> Just $ Indicator '/'

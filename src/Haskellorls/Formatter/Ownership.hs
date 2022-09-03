@@ -62,9 +62,7 @@ getGroupIdSubstTable = from <$> User.getAllGroupEntries
 
 -- Owner name {{{
 ownerName :: UserIdSubstTable -> Node.NodeInfo -> T.Text
-ownerName table node = fromMaybe (T.pack $ show ownerID) $ ownerID `lookup` table
-  where
-    ownerID = Node.userID node
+ownerName table = maybe "?" (\uid -> fromMaybe (T.pack $ show uid) $ uid `lookup` table) . Node.userID
 
 numericOwnerName :: Node.NodeInfo -> T.Text
 numericOwnerName = T.pack . show . Node.userID
@@ -84,19 +82,17 @@ coloredNumericOwnerName = coloredOwnerAs numericOwnerName
 coloredOwnerAs :: (Node.NodeInfo -> T.Text) -> Color.LsColors -> UserInfo -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 coloredOwnerAs f lscolors user node = [Attr.Other $ WT.wrap lscolors getter (f node)]
   where
-    getter
-      | currentUserID == nodeOwnerID = Color.lookup $ Myself nodeOwnerID
-      | otherwise = Color.lookup $ NotMyself nodeOwnerID
-    currentUserID = userInfoUserID user
-    nodeOwnerID = Node.userID node
+    getter = case Node.userID node of
+      Just uid
+        | uid == userInfoUserID user -> Color.lookup $ Myself uid
+        | otherwise -> Color.lookup $ NotMyself uid
+      _ -> const Nothing
 
 -- }}}
 
 -- Group name {{{
 groupName :: GroupIdSubstTable -> Node.NodeInfo -> T.Text
-groupName table node = fromMaybe (T.pack $ show groupID) $ groupID `lookup` table
-  where
-    groupID = Node.groupID node
+groupName table = maybe "?" (\gid -> fromMaybe (T.pack $ show gid) $ gid `lookup` table) . Node.groupID
 
 numericGroupName :: Node.NodeInfo -> T.Text
 numericGroupName = T.pack . show . Node.groupID
@@ -116,10 +112,10 @@ coloredNumericGroupName = coloredGroupAs numericGroupName
 coloredGroupAs :: (Node.NodeInfo -> T.Text) -> Color.LsColors -> UserInfo -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 coloredGroupAs f lscolors user node = [Attr.Other $ WT.wrap lscolors getter (f node)]
   where
-    getter
-      | nodeGroupID `elem` groupIDs = Color.lookup $ Belongs nodeGroupID
-      | otherwise = Color.lookup $ NotBelongs nodeGroupID
-    groupIDs = userInfoGroupIDs user
-    nodeGroupID = Node.groupID node
+    getter = case Node.groupID node of
+      Just gid
+        | gid `elem` userInfoGroupIDs user -> Color.lookup $ Belongs gid
+        | otherwise -> Color.lookup $ NotBelongs gid
+      Nothing -> const Nothing
 
 -- }}}

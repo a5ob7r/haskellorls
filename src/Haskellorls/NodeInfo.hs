@@ -13,6 +13,7 @@ module Haskellorls.NodeInfo
     isDirectory,
     mkNodeInfo,
     toFileInfo,
+    dereferencedNodePath,
   )
 where
 
@@ -112,7 +113,7 @@ mkProxyFileStatus config status =
 
 data NodeInfo = NodeInfo
   { getNodePath :: RawFilePath,
-    getNodeStatus :: ProxyFileStatus,
+    getNodeStatus :: Maybe ProxyFileStatus,
     getNodeContext :: T.Text,
     getNodeDirName :: RawFilePath,
     getNodeLinkInfo :: Maybe (Either OrphanedLinkNodeInfo LinkNodeInfo),
@@ -123,105 +124,83 @@ data NodeInfo = NodeInfo
 -- | Create a filenode infomation from a filepath.
 mkNodeInfo :: (MonadCatch m, MonadIO m) => Config.Config -> RawFilePath -> RawFilePath -> m NodeInfo
 mkNodeInfo config dirname basename = do
-  let filepath = dirname </> basename
+  let getNodePath = basename
+      getNodeDirName = dirname
+      getTreeNodePositions = []
+      filepath = dirname </> basename
+
+  getNodeContext <- T.pack <$> fileContext filepath
+
   filestatus <- liftIO $ Files.getSymbolicLinkStatus filepath
-  filecontext <- fileContext filepath
 
-  if Files.isSymbolicLink filestatus
-    then do
-      linkpath <- tryIO . liftIO $ Files.readSymbolicLink filepath
+  node <-
+    if Files.isSymbolicLink filestatus
+      then do
+        linkpath <- tryIO . liftIO $ Files.readSymbolicLink filepath
 
-      linkstatus <- case linkpath of
-        Right _ -> eitherToMaybe <$> tryIO (liftIO $ Files.getFileStatus filepath)
-        _ -> return Nothing
+        linkstatus <- case linkpath of
+          Right _ -> eitherToMaybe <$> tryIO (liftIO $ Files.getFileStatus filepath)
+          _ -> return Nothing
 
-      linkcontext <- case linkpath of
-        Right path -> fileContext path
-        _ -> return defaultContext
+        linkcontext <- case linkpath of
+          Right path -> fileContext path
+          _ -> return defaultContext
 
-      return $ case (linkpath, linkstatus) of
-        (Right p, Nothing) ->
-          NodeInfo
-            { getNodePath = basename,
-              getNodeStatus = mkProxyFileStatus config filestatus,
-              getNodeContext = T.pack filecontext,
-              getNodeDirName = dirname,
-              getNodeLinkInfo = Just . Left $ OrphanedLinkNodeInfo p,
-              getTreeNodePositions = []
-            }
-        (Right p, Just s)
-          | Config.dereference config
-              || Config.dereferenceCommandLine config
-              || Config.dereferenceCommandLineSymlinkToDir config && Files.isDirectory s ->
-              NodeInfo
-                { getNodePath = basename,
-                  getNodeStatus = mkProxyFileStatus config s,
-                  getNodeContext = T.pack filecontext,
-                  getNodeDirName = dirname,
-                  getNodeLinkInfo = Nothing,
-                  getTreeNodePositions = []
-                }
-          | otherwise ->
-              NodeInfo
-                { getNodePath = basename,
-                  getNodeStatus = mkProxyFileStatus config filestatus,
-                  getNodeContext = T.pack filecontext,
-                  getNodeDirName = dirname,
-                  getNodeLinkInfo =
-                    Just . Right $
-                      LinkNodeInfo
-                        { getLinkNodePath = p,
-                          getLinkNodeStatus = mkProxyFileStatus config s,
-                          getLinkNodeContext = T.pack linkcontext
-                        },
-                  getTreeNodePositions = []
-                }
-        _ ->
-          NodeInfo
-            { getNodePath = basename,
-              getNodeStatus = mkProxyFileStatus config filestatus,
-              getNodeContext = T.pack filecontext,
-              getNodeDirName = dirname,
-              getNodeLinkInfo = Nothing,
-              getTreeNodePositions = []
-            }
-    else
-      return $
-        NodeInfo
-          { getNodePath = basename,
-            getNodeStatus = mkProxyFileStatus config filestatus,
-            getNodeContext = T.pack filecontext,
-            getNodeDirName = dirname,
-            getNodeLinkInfo = Nothing,
-            getTreeNodePositions = []
-          }
+        return $ case (linkpath, linkstatus) of
+          (Right p, Nothing) ->
+            let getNodeStatus = Just $ mkProxyFileStatus config filestatus
+                getNodeLinkInfo = Just . Left $ OrphanedLinkNodeInfo p
+             in NodeInfo {..}
+          (Right p, Just s) ->
+            let getNodeStatus = Just $ mkProxyFileStatus config filestatus
+                getLinkNodePath = p
+                getLinkNodeStatus = mkProxyFileStatus config s
+                getLinkNodeContext = T.pack linkcontext
+                getNodeLinkInfo = Just . Right $ LinkNodeInfo {..}
+             in NodeInfo {..}
+          _ ->
+            let getNodeStatus = Just $ mkProxyFileStatus config filestatus
+                getNodeLinkInfo = Nothing
+             in NodeInfo {..}
+      else
+        let getNodeStatus = Just $ mkProxyFileStatus config filestatus
+            getNodeLinkInfo = Nothing
+         in return NodeInfo {..}
 
-fileMode :: NodeInfo -> Types.FileMode
-fileMode = pfsFileMode . getNodeStatus
+  return
+    if Config.dereference config
+      || Config.dereferenceCommandLine config
+      || Config.dereferenceCommandLineSymlinkToDir config
+        && maybe False (either (const False) (isDirectory . pfsNodeType . getLinkNodeStatus)) (getNodeLinkInfo node)
+      then toFileInfo node
+      else node
 
-fileID :: NodeInfo -> Types.FileID
-fileID = pfsFileID . getNodeStatus
+fileMode :: NodeInfo -> Maybe Types.FileMode
+fileMode = fmap pfsFileMode . getNodeStatus
 
-linkCount :: NodeInfo -> Types.LinkCount
-linkCount = pfsLinkCount . getNodeStatus
+fileID :: NodeInfo -> Maybe Types.FileID
+fileID = fmap pfsFileID . getNodeStatus
 
-userID :: NodeInfo -> Types.UserID
-userID = pfsUserID . getNodeStatus
+linkCount :: NodeInfo -> Maybe Types.LinkCount
+linkCount = fmap pfsLinkCount . getNodeStatus
 
-groupID :: NodeInfo -> Types.GroupID
-groupID = pfsGroupID . getNodeStatus
+userID :: NodeInfo -> Maybe Types.UserID
+userID = fmap pfsUserID . getNodeStatus
 
-fileSize :: NodeInfo -> Types.FileOffset
-fileSize = pfsFileSize . getNodeStatus
+groupID :: NodeInfo -> Maybe Types.GroupID
+groupID = fmap pfsGroupID . getNodeStatus
 
-fileTime :: NodeInfo -> POSIXTime
-fileTime = pfsFileTime . getNodeStatus
+fileSize :: NodeInfo -> Maybe Types.FileOffset
+fileSize = fmap pfsFileSize . getNodeStatus
 
-specialDeviceID :: NodeInfo -> Types.DeviceID
-specialDeviceID = pfsSpecialDeviceID . getNodeStatus
+fileTime :: NodeInfo -> Maybe POSIXTime
+fileTime = fmap pfsFileTime . getNodeStatus
 
-nodeType :: NodeInfo -> NodeType
-nodeType = pfsNodeType . getNodeStatus
+specialDeviceID :: NodeInfo -> Maybe Types.DeviceID
+specialDeviceID = fmap pfsSpecialDeviceID . getNodeStatus
+
+nodeType :: NodeInfo -> Maybe NodeType
+nodeType = fmap pfsNodeType . getNodeStatus
 
 data LinkNodeInfo = LinkNodeInfo
   { getLinkNodePath :: RawFilePath,
@@ -237,15 +216,19 @@ toFileInfo node = case getNodeLinkInfo node of
   Nothing -> node
   Just (Right LinkNodeInfo {..}) ->
     node
-      { getNodePath = getLinkNodePath,
-        getNodeStatus = getLinkNodeStatus,
-        getNodeContext = getLinkNodeContext
+      { getNodeStatus = Just getLinkNodeStatus,
+        getNodeContext = getLinkNodeContext,
+        getNodeLinkInfo = Nothing
       }
-  Just (Left OrphanedLinkNodeInfo {..}) ->
+  Just (Left OrphanedLinkNodeInfo {}) ->
     node
-      { getNodePath = getOrphanedNodeLinkPath,
-        getNodeStatus = (getNodeStatus node) {pfsNodeType = File}
+      { getNodeStatus = Nothing,
+        getNodeLinkInfo = Nothing
       }
+
+-- | Get a dereferenced node's filepath.
+dereferencedNodePath :: Either OrphanedLinkNodeInfo LinkNodeInfo -> RawFilePath
+dereferencedNodePath = either getOrphanedNodeLinkPath getLinkNodePath
 
 {- ORMOLU_DISABLE -}
 -- |

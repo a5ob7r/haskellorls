@@ -4,6 +4,7 @@ import Control.Exception.Safe (MonadCatch, SomeException, toException, tryIO)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.State.Strict (runState)
 import Data.Either (partitionEithers)
+import Data.Maybe (fromMaybe)
 import Data.Sequence (Seq (Empty, (:<|)), fromList, singleton, (|>))
 import GHC.IO.Exception (IOErrorType (NoSuchThing), IOException (ioe_type))
 import Haskellorls.Class
@@ -33,7 +34,7 @@ mkTreeNodeInfos configuration nodeinfo =
   let config
         | All <- Config.listing configuration = configuration {Config.listing = AlmostAll} -- Force hide @.@ and @..@ to avoid infinite loop.
         | otherwise = configuration
-   in go (Walk.singleton $ Node.fileID nodeinfo) config (singleton nodeinfo) mempty []
+   in go (Walk.singleton $ fromMaybe 0 $ Node.fileID nodeinfo) config (singleton nodeinfo) mempty []
   where
     go :: Walk.Inodes -> Config.Config -> Seq Node.NodeInfo -> Seq Node.NodeInfo -> [SomeException] -> m (Seq Node.NodeInfo, [SomeException])
     go _ _ Empty nodes errors = return (nodes, errors)
@@ -42,7 +43,7 @@ mkTreeNodeInfos configuration nodeinfo =
           depth = Config.level config
 
       contents <-
-        if depth <= Only 0 || not (Node.isDirectory $ Node.nodeType node)
+        if depth <= Only 0 || not (maybe False Node.isDirectory $ Node.nodeType node)
           then return []
           else
             tryIO (Listing.listContents config path) >>= \case

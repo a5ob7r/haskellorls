@@ -14,6 +14,7 @@ import Data.Bifunctor
 import Data.Either
 import Data.Functor
 import Data.List (foldl', intersperse, partition)
+import Data.Maybe (fromMaybe)
 import qualified Data.Sequence as Seq
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
@@ -130,7 +131,7 @@ run conf st operations = runLs conf st $ go operations
 
       case op' of
         PrintEntry (Entry {..}) | Config.recursive config && entryDepth < Config.level config -> do
-          (nodes, newInodes) <- gets $ runState (Walk.filterNodes $ filter (Node.isDirectory . Node.nodeType) entryNodes) . inodes
+          (nodes, newInodes) <- gets $ runState (Walk.filterNodes $ filter (maybe False Node.isDirectory . Node.nodeType) entryNodes) . inodes
           modify $ \s -> s {inodes = newInodes}
 
           let paths = (\node -> entryPath </> Node.getNodePath node) <$> nodes
@@ -158,7 +159,7 @@ mkInitialOperations config paths = do
   let depth = Only 1
       isDirectory
         | Config.directory config = const False
-        | otherwise = Node.isDirectory . Node.nodeType
+        | otherwise = maybe False Node.isDirectory . Node.nodeType
 
       (nodes, inodes) = runState (Walk.filterNodes $ Sort.sort config nodeinfos) mempty
       (dirs, files) = partition isDirectory nodes
@@ -190,7 +191,7 @@ mkDivisions config printers =
 
           -- Add total block size header only about directries when long style
           -- layout or @-s / --size@ is passed.
-          size = Attr.Other . from . T.concat . ("total " :) . map (from . Attr.unwrap) . Size.toTotalBlockSize config $ Node.fileSize <$> entryNodes
+          size = Attr.Other . from . T.concat . ("total " :) . map (from . Attr.unwrap) . Size.toTotalBlockSize config $ fromMaybe 0 . Node.fileSize <$> entryNodes
           totalBlockSize
             | Config.size config = [size]
             | FILES <- entryType = []

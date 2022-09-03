@@ -22,4 +22,5 @@ empty = NameIndeces 0 [] []
 update :: Attribute B.ByteString -> NameIndeces -> NameIndeces
 update (Name s) NameIndeces {..} = let l = B.length s in NameIndeces (total + l) ((total, total + l) : dired) subdired
 update (Dir s) NameIndeces {..} = let l = B.length s in NameIndeces (total + l) dired ((total, total + l) : subdired)
+update (Missing s) NameIndeces {..} = let l = B.length s in NameIndeces (total + l) dired subdired
 update (Other s) NameIndeces {..} = let l = B.length s in NameIndeces (total + l) dired subdired

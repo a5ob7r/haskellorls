@@ -11,6 +11,8 @@ data Attribute a
     Name a
   | -- | A directory path on a header.
     Dir a
+  | -- | Missing file information.
+    Missing a
   | -- | Other value.
     Other a
   deriving (Functor)
@@ -19,4 +21,5 @@ data Attribute a
 unwrap :: Attribute a -> a
 unwrap (Name x) = x
 unwrap (Dir x) = x
+unwrap (Missing x) = x
 unwrap (Other x) = x

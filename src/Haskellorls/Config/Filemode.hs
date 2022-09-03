@@ -26,18 +26,18 @@ data Filemode = Filemode
   deriving (Show)
 
 instance From NodeInfo Filemode where
-  from node =
-    Filemode
-      { getFiletype = from node,
-        getUserRead = fromMaybe NOTHING $ UserPerm READ `lookup` mode,
-        getUserWrite = fromMaybe NOTHING $ UserPerm WRITE `lookup` mode,
-        getUserExec = fromMaybe NOTHING $ UserPerm EXEC `lookup` mode,
-        getGroupRead = fromMaybe NOTHING $ GroupPerm READ `lookup` mode,
-        getGroupWrite = fromMaybe NOTHING $ GroupPerm WRITE `lookup` mode,
-        getGroupExec = fromMaybe NOTHING $ GroupPerm EXEC `lookup` mode,
-        getOtherRead = fromMaybe NOTHING $ OtherPerm READ `lookup` mode,
-        getOtherWrite = fromMaybe NOTHING $ OtherPerm WRITE `lookup` mode,
-        getOtherExec = fromMaybe NOTHING $ OtherPerm EXEC `lookup` mode
-      }
-    where
-      mode = fileMode node
+  from node = case nodeType node of
+    Nothing -> Filemode SYMLINK MISSING MISSING MISSING MISSING MISSING MISSING MISSING MISSING MISSING
+    _ ->
+      let mode = fileMode node
+          getFiletype = from node
+          getUserRead = fromMaybe NOTHING $ mode >>= lookup (UserPerm READ)
+          getUserWrite = fromMaybe NOTHING $ mode >>= lookup (UserPerm WRITE)
+          getUserExec = fromMaybe NOTHING $ mode >>= lookup (UserPerm EXEC)
+          getGroupRead = fromMaybe NOTHING $ mode >>= lookup (GroupPerm READ)
+          getGroupWrite = fromMaybe NOTHING $ mode >>= lookup (GroupPerm WRITE)
+          getGroupExec = fromMaybe NOTHING $ mode >>= lookup (GroupPerm EXEC)
+          getOtherRead = fromMaybe NOTHING $ mode >>= lookup (OtherPerm READ)
+          getOtherWrite = fromMaybe NOTHING $ mode >>= lookup (OtherPerm WRITE)
+          getOtherExec = fromMaybe NOTHING $ mode >>= lookup (OtherPerm EXEC)
+       in Filemode {..}

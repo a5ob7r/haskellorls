@@ -24,7 +24,7 @@ filterNodes :: [Node.NodeInfo] -> State Inodes [Node.NodeInfo]
 filterNodes nodes = do
   inodes <- gets unInodes
 
-  let newers = filter ((`IS.notMember` inodes) . fromIntegral . Node.fileID) nodes
-  put . Inodes . foldl' (flip IS.insert) inodes $ fromIntegral . Node.fileID <$> newers
+  let newers = filter (maybe True ((`IS.notMember` inodes) . fromIntegral) . Node.fileID) nodes
+  put . Inodes . foldl' (flip IS.insert) inodes $ maybe 0 fromIntegral . Node.fileID <$> newers
 
   return newers

@@ -164,7 +164,7 @@ mkPrinters config = do
       fileLinkPrinter = case Config.colorize config of
         Just True -> Link.nodeLinksNumberWithColor lscolors
         Just False -> Link.nodeLinksNumberWithNormalColor lscolors
-        _ -> (\t -> [Attr.Other $ from t]) . T.pack . show . Link.nodeLinksNumber
+        _ -> maybe [Attr.Missing $ from @T.Text "?"] (\l -> [Attr.Other $ from . T.pack $ show l]) . Link.nodeLinksNumber
 
       fileOwnerPrinter = case Config.colorize config of
         Just True -> Ownership.coloredOwnerName uidSubstTable lscolors userInfo
@@ -187,11 +187,10 @@ mkPrinters config = do
         _ -> (`Size.fileSize` config)
 
       fileTimePrinter = case Config.colorize config of
-        Just True -> Time.coloredTimeStyleFunc lscolors timeZone timeLocale currentTime timeStyle . fileTime
-        Just False -> Time.normalColoredTimeStyleFunc lscolors timeZone timeLocale currentTime timeStyle . fileTime
-        _ -> (\t -> [Attr.Other $ from t]) . Time.timeStyleFunc timeZone timeLocale currentTime timeStyle . fileTime
+        Just True -> maybe [Attr.Missing $ from @T.Text "?"] (Time.coloredTimeStyleFunc lscolors timeZone timeLocale currentTime timeStyle . posixSecondsToUTCTime) . Node.fileTime
+        Just False -> maybe [Attr.Missing $ from @T.Text "?"] (Time.normalColoredTimeStyleFunc lscolors timeZone timeLocale currentTime timeStyle . posixSecondsToUTCTime) . Node.fileTime
+        _ -> maybe [Attr.Missing $ from @T.Text "?"] (\t -> [Attr.Other . from . Time.timeStyleFunc timeZone timeLocale currentTime timeStyle $ posixSecondsToUTCTime t]) . Node.fileTime
         where
-          fileTime = posixSecondsToUTCTime . Node.fileTime
           timeStyle = case Config.timeStyle config of
             Time.POSIXFULLISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> Time.FULLISO
             Time.POSIXLONGISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> Time.LONGISO
@@ -254,8 +253,8 @@ mkColumn nodes config printers pType
         FILEAUTHOR -> fileOwnerPrinter printers <$> nodes
         FILECONTEXT -> fileContextPrinter printers <$> nodes
         FILESIZE ->
-          let majorWidth = maximum $ 0 : (length . show . unMajorID . from . Node.specialDeviceID <$> nodes)
-              minorWidth = maximum $ 0 : (length . show . unMinorID . from . Node.specialDeviceID <$> nodes)
+          let majorWidth = maximum $ 0 : (maybe 1 (length . show . unMajorID . from) . Node.specialDeviceID <$> nodes)
+              minorWidth = maximum $ 0 : (maybe 1 (length . show . unMinorID . from) . Node.specialDeviceID <$> nodes)
            in fileSizePrinter printers (majorWidth, minorWidth) <$> nodes
         FILETIME -> fileTimePrinter printers <$> nodes
         FILENAME ->
@@ -279,7 +278,9 @@ mkColumn nodes config printers pType
         FILEAUTHOR -> justifyLeft l ' '
         FILECONTEXT -> justifyLeft l ' '
         FILESIZE -> justifyRight l ' '
-        FILETIME -> justifyLeft l ' '
+        FILETIME -> \case
+          s@[Attr.Missing _] -> justifyRight l ' ' s
+          s -> justifyLeft l ' ' s
         FILENAME -> id
 
 mkGrid :: [Node.NodeInfo] -> Config.Config -> Printers -> [PrinterType] -> [[[Attr.Attribute WT.WrappedText]]]

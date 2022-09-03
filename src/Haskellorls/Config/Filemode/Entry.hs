@@ -21,13 +21,14 @@ data EntryType
 
 instance From NodeInfo EntryType where
   from node = case nodeType node of
-    SymbolicLink -> SYMLINK
-    NamedPipe -> FIFO
-    Socket -> SOCK
-    BlockDevise -> BLOCK
-    CharDevise -> CHAR
+    Nothing -> SYMLINK
+    Just SymbolicLink -> SYMLINK
+    Just NamedPipe -> FIFO
+    Just Socket -> SOCK
+    Just BlockDevise -> BLOCK
+    Just CharDevise -> CHAR
     nType
-      | isDirectory nType -> DIR
+      | maybe False isDirectory nType -> DIR
       | otherwise -> REGULAR
 
 instance From EntryType Char where

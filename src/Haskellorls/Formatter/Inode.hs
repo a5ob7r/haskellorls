@@ -13,20 +13,17 @@ import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
 import qualified System.Posix.Types as Types
 
-nodeInodeNumber :: Node.NodeInfo -> Types.FileID
+nodeInodeNumber :: Node.NodeInfo -> Maybe Types.FileID
 nodeInodeNumber = Node.fileID
 
 -- | A node inode number formatter with the @no@ parameter of the @LS_COLORS@.
 nodeInodeNumberWithNormalColor :: Color.LsColors -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
-nodeInodeNumberWithNormalColor lscolors node = [Attr.Other $ WT.wrap lscolors getterInode inodeNumber]
-  where
-    n = nodeInodeNumber node
-    inodeNumber = T.pack $ show n
-    getterInode = Color.normal
+nodeInodeNumberWithNormalColor lscolors node =
+  let inode = maybe (Attr.Missing "?") (Attr.Other . T.pack . show) $ nodeInodeNumber node
+   in [WT.wrap lscolors Color.normal <$> inode]
 
 nodeInodeNumberWithColor :: Color.LsColors -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
-nodeInodeNumberWithColor lscolors node = [Attr.Other $ WT.wrap lscolors getterInode inodeNumber]
-  where
-    n = nodeInodeNumber node
-    inodeNumber = T.pack $ show n
-    getterInode = Color.lookup $ Inode n
+nodeInodeNumberWithColor lscolors node =
+  let inode = maybe (Attr.Missing "?") (Attr.Other . T.pack . show) $ nodeInodeNumber node
+      getter = maybe (const Nothing) (Color.lookup . Inode) $ nodeInodeNumber node
+   in [WT.wrap lscolors getter <$> inode]

@@ -69,6 +69,7 @@ data PermissionClass
   | E_SETGID
   | E_STICKY
   | NOTHING
+  | MISSING
   deriving (Eq, Show)
 
 instance From PermissionClass Char where
@@ -83,3 +84,4 @@ instance From PermissionClass Char where
     E_SETGID -> 's'
     E_STICKY -> 't'
     NOTHING -> '-'
+    MISSING -> '?'
