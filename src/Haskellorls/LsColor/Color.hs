@@ -137,10 +137,10 @@ instance Dictionary Inode Sequence LsColors where
 instance Dictionary LinkCount Sequence LsColors where
   lookup l (Options {..}) = extension >>= lookup l
 
-instance Dictionary UserID Sequence LsColors where
+instance Dictionary (UserContext a) Sequence LsColors where
   lookup u (Options {..}) = extension >>= lookup u
 
-instance Dictionary GroupID Sequence LsColors where
+instance Dictionary (GroupContext a) Sequence LsColors where
   lookup g (Options {..}) = extension >>= lookup g
 
 instance Dictionary FileContext Sequence LsColors where
@@ -185,10 +185,10 @@ instance Dictionary Inode Sequence Extensions where
 instance Dictionary LinkCount Sequence Extensions where
   lookup l (Extensions {..}) = l `lookup` extraLsColors
 
-instance Dictionary UserID Sequence Extensions where
+instance Dictionary (UserContext a) Sequence Extensions where
   lookup u (Extensions {..}) = u `lookup` extraLsColors
 
-instance Dictionary GroupID Sequence Extensions where
+instance Dictionary (GroupContext a) Sequence Extensions where
   lookup g (Extensions {..}) = g `lookup` extraLsColors
 
 instance Dictionary FileContext Sequence Extensions where
@@ -290,12 +290,12 @@ instance Dictionary Inode a (ExtraOptions a) where
 instance Dictionary LinkCount a (ExtraOptions a) where
   lookup _ (ExtraOptions {..}) = fileLink
 
-instance Dictionary UserID a (ExtraOptions a) where
+instance Dictionary (UserContext a) b (ExtraOptions b) where
   lookup u (ExtraOptions {..}) = case u of
     Myself _ -> ownerYourself
     NotMyself _ -> ownerNotYourself
 
-instance Dictionary GroupID a (ExtraOptions a) where
+instance Dictionary (GroupContext a) b (ExtraOptions b) where
   lookup u (ExtraOptions {..}) = case u of
     Belongs _ -> groupYouBelongsTo
     NotBelongs _ -> groupYouNotBelongsTo

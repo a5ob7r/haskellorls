@@ -1,22 +1,10 @@
--- Ownership provides utility functions which lookup owner id, owner name,
--- group id and group name. Also it provides coloring versions.
---
--- To color owner or group fields, need current user's id and group id, and to
--- compare the values to node's owner id and group id.
---
--- NOTE: owner also be called as user.
-
 module Haskellorls.Formatter.Ownership
   ( ownerName,
-    numericOwnerName,
     normalColoredOwnerName,
     coloredOwnerName,
-    coloredNumericOwnerName,
     groupName,
-    numericGroupName,
     normalColoredGroupName,
     coloredGroupName,
-    coloredNumericGroupName,
     getGroupIdSubstTable,
     getUserIdSubstTable,
     module Haskellorls.Config.Ownership,
@@ -60,62 +48,28 @@ instance Dictionary Types.GroupID T.Text GroupIdSubstTable where
 getGroupIdSubstTable :: IO GroupIdSubstTable
 getGroupIdSubstTable = from <$> User.getAllGroupEntries
 
--- Owner name {{{
+-- | A name of the UNIX user which identifies an user.
 ownerName :: UserIdSubstTable -> Node.NodeInfo -> T.Text
 ownerName table = maybe "?" (\uid -> fromMaybe (T.pack $ show uid) $ uid `lookup` table) . Node.userID
 
-numericOwnerName :: Node.NodeInfo -> T.Text
-numericOwnerName = T.pack . show . Node.userID
-
 -- | A node owner name formatter for the @no@ parameter of @LS_COLORS@.
 normalColoredOwnerName :: UserIdSubstTable -> Color.LsColors -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
-normalColoredOwnerName table lscolors node = [Attr.Other $ WT.wrap lscolors Color.normal name]
-  where
-    name = ownerName table node
+normalColoredOwnerName table lscolors node = [Attr.Other . WT.wrap lscolors Color.normal $ ownerName table node]
 
 coloredOwnerName :: UserIdSubstTable -> Color.LsColors -> UserInfo -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
-coloredOwnerName table = coloredOwnerAs (ownerName table)
+coloredOwnerName table lscolors user node =
+  let getter = maybe (const Nothing) (\uid -> Color.lookup $ withUserContext uid user) $ Node.userID node
+   in [Attr.Other . WT.wrap lscolors getter $ ownerName table node]
 
-coloredNumericOwnerName :: Color.LsColors -> UserInfo -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
-coloredNumericOwnerName = coloredOwnerAs numericOwnerName
-
-coloredOwnerAs :: (Node.NodeInfo -> T.Text) -> Color.LsColors -> UserInfo -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
-coloredOwnerAs f lscolors user node = [Attr.Other $ WT.wrap lscolors getter (f node)]
-  where
-    getter = case Node.userID node of
-      Just uid
-        | uid == userInfoUserID user -> Color.lookup $ Myself uid
-        | otherwise -> Color.lookup $ NotMyself uid
-      _ -> const Nothing
-
--- }}}
-
--- Group name {{{
+-- | A name of the UNIX group which an user belongs to.
 groupName :: GroupIdSubstTable -> Node.NodeInfo -> T.Text
 groupName table = maybe "?" (\gid -> fromMaybe (T.pack $ show gid) $ gid `lookup` table) . Node.groupID
 
-numericGroupName :: Node.NodeInfo -> T.Text
-numericGroupName = T.pack . show . Node.groupID
-
 -- | A node group name formatter for the @no@ parameter of @LS_COLORS@.
 normalColoredGroupName :: GroupIdSubstTable -> Color.LsColors -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
-normalColoredGroupName table lscolors node = [Attr.Other $ WT.wrap lscolors Color.normal name]
-  where
-    name = groupName table node
+normalColoredGroupName table lscolors node = [Attr.Other . WT.wrap lscolors Color.normal $ groupName table node]
 
 coloredGroupName :: GroupIdSubstTable -> Color.LsColors -> UserInfo -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
-coloredGroupName table = coloredGroupAs (groupName table)
-
-coloredNumericGroupName :: Color.LsColors -> UserInfo -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
-coloredNumericGroupName = coloredGroupAs numericGroupName
-
-coloredGroupAs :: (Node.NodeInfo -> T.Text) -> Color.LsColors -> UserInfo -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
-coloredGroupAs f lscolors user node = [Attr.Other $ WT.wrap lscolors getter (f node)]
-  where
-    getter = case Node.groupID node of
-      Just gid
-        | gid `elem` userInfoGroupIDs user -> Color.lookup $ Belongs gid
-        | otherwise -> Color.lookup $ NotBelongs gid
-      Nothing -> const Nothing
-
--- }}}
+coloredGroupName table lscolors user node =
+  let getter = maybe (const Nothing) (\gid -> Color.lookup $ withGroupContext gid user) $ Node.groupID node
+   in [Attr.Other . WT.wrap lscolors getter $ groupName table node]

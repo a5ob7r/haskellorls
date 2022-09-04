@@ -1,27 +1,41 @@
 module Haskellorls.Config.Ownership
-  ( UserInfo (..),
+  ( UserInfo,
     userInfo,
-    UserID (..),
-    GroupID (..),
+    UserContext (..),
+    withUserContext,
+    GroupContext (..),
+    withGroupContext,
   )
 where
 
-import qualified System.Posix.Types as Types
-import qualified System.Posix.User as User
+import Control.Monad.IO.Class (MonadIO, liftIO)
+import System.Posix.Types (GroupID, UserID)
+import System.Posix.User (getGroups, getRealUserID)
 
-data UserInfo = UserInfo
-  { userInfoUserID :: Types.UserID,
-    userInfoGroupIDs :: [Types.GroupID]
-  }
+data UserInfo = UserInfo {userID :: UserID, groupIDs :: [GroupID]}
 
-userInfo :: IO UserInfo
+userInfo :: MonadIO m => m UserInfo
 userInfo = do
-  userInfoUserID <- User.getRealUserID
-  userInfoGroupIDs <- User.getGroups
-  return $ UserInfo {..}
+  userID <- liftIO getRealUserID
+  groupIDs <- liftIO getGroups
+  return UserInfo {..}
 
-data UserID = Myself Types.UserID | NotMyself Types.UserID
+-- | An UNIX user ID context information, whether or not the user ID identifies
+-- the current user.
+data UserContext a = Myself a | NotMyself a
 
--- | A group ID with a context, whether or not the current user belongs the
--- group.
-data GroupID = Belongs Types.GroupID | NotBelongs Types.GroupID
+-- | Modify an 'UserID' by 'UserContext'.
+withUserContext :: UserID -> UserInfo -> UserContext UserID
+withUserContext uid UserInfo {userID}
+  | uid == userID = Myself uid
+  | otherwise = NotMyself uid
+
+-- | An UNIX group ID context information, whether or not the current user
+-- belongs the group.
+data GroupContext a = Belongs a | NotBelongs a
+
+-- | Modify a 'GroupID' by 'GroupContext'.
+withGroupContext :: GroupID -> UserInfo -> GroupContext GroupID
+withGroupContext gid UserInfo {groupIDs}
+  | gid `elem` groupIDs = Belongs gid
+  | otherwise = NotBelongs gid
