@@ -25,7 +25,6 @@ import qualified Haskellorls.Config.Indicator as Indicator
 import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.Context as Context
 import qualified Haskellorls.Formatter.Filemode as Filemode
-import qualified Haskellorls.Formatter.Icon as Icon
 import qualified Haskellorls.Formatter.Indicator as Indicator
 import qualified Haskellorls.Formatter.Inode as Inode
 import qualified Haskellorls.Formatter.Link as Link
@@ -126,10 +125,6 @@ mkPrinters config = do
   lscolors <- case Config.colorize config of
     Just _ -> Color.lsColors
     _ -> return def
-  lsicons <-
-    if Config.icon config
-      then Color.lsIcons
-      else return def
   uidSubstTable <-
     if Config.format config == Format.LONG && not (Config.numericUidGid config) && (Config.owner config || Config.author config)
       then Ownership.getUserIdSubstTable
@@ -199,12 +194,9 @@ mkPrinters config = do
               Just False -> maybe [Attr.Missing $ from @T.Text "?"] (\t -> [Attr.Other . WT.wrap lscolors Color.normal $ fmtTime t]) . Node.fileTime
               _ -> maybe [Attr.Missing $ from @T.Text "?"] (\t -> [Attr.Other . from $ fmtTime t]) . Node.fileTime
 
-      -- TODO: Should use colored icon? But, must consider charactor size and background color.
-      -- e.g. $ echo -e '\e[48;5;196;38;5;232;1m\e[0m'
       nodeTreePrinter = case Config.colorize config of
         Just _ -> Tree.treeBranchWithColor lscolors . Node.getTreeNodePositions
         _ -> (\t -> [Attr.Other $ from t]) . Tree.treeBranch . Node.getTreeNodePositions
-      nodeIconPrinter = flip Icon.lookupIcon lsicons
       nodeNamePrinter = case Config.colorize config of
         Just _ -> Name.colorizedNodeName config lscolors
         _ -> Name.nodeName config
@@ -212,6 +204,12 @@ mkPrinters config = do
       nodeLinkPrinter = case Config.colorize config of
         Just _ -> SymbolicLink.coloredLinkName config lscolors
         _ -> SymbolicLink.linkName config
+
+  -- TODO: Should we use colored icon? However we must consider charactor size
+  -- and background color. e.g. @echo -e '\e[48;5;196;38;5;232;1m\e[0m'@.
+  nodeIconPrinter <- do
+    lsicons <- if Config.icon config then Color.lsIcons else return def
+    return $ \node -> Attr.Other <$> [from . maybe "" Color.unIcon $ node `Color.lookup` lsicons, from @T.Text " "]
 
   return $ Printers {fileNamePrinters = NodeNamePrinters {..}, ..}
 
