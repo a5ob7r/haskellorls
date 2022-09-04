@@ -1,12 +1,9 @@
 packages: ./
 
-index-state: 2022-09-02T13:32:33Z
+index-state: 2022-09-04T10:47:35Z
 
 -- For GHC >=9.4.
 allow-newer:
   -- This package is deprecated, so probably no longer its dependencies are
   -- updated.
   , filepath-bytestring:base
-
-  -- FIXME: Remove this if @setlocale@ package supports GHC >=9.4.
-  , setlocale:base
