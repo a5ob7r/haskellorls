@@ -82,16 +82,10 @@ data Entry = Entry
   { entryType :: EntryType,
     entryPath :: RawFilePath,
     entryNodes :: [Node.NodeInfo],
-    entryConfig :: Config.Config,
     entryDepth :: Infinitable Int
   }
 
-data Tree = Tree
-  { treePath :: RawFilePath,
-    treeNode :: Node.NodeInfo,
-    treeNodes :: Seq.Seq Node.NodeInfo,
-    treeConfig :: Config.Config
-  }
+newtype Tree = Tree {treeNodes :: Seq.Seq Node.NodeInfo}
 
 data Operation
   = Newline
@@ -130,13 +124,6 @@ run conf st operations = runLs conf st $ go operations
     go (op : ops) = do
       LsConf config printers <- ask
 
-      op' <- case op of
-        PrintTree Tree {..} -> do
-          nodes <- mkTreeNodeInfos treeNode
-
-          return $ PrintTree Tree {treeNodes = nodes, ..}
-        _ -> return op
-
       let f acc d = do
             liftIO . T.putStr . from $ Attr.unwrap d
 
@@ -144,19 +131,19 @@ run conf st operations = runLs conf st $ go operations
               if Config.dired config
                 then Dired.update (T.encodeUtf8 . WT.wtWord <$> d) acc
                 else acc
-          divs = mkDivisions config printers op'
+          divs = mkDivisions config printers op
        in use indicesL >>= \indices -> foldM f indices divs >>= (indicesL .=)
 
-      case op' of
+      case op of
         PrintEntry Entry {..} | Config.recursive config && entryDepth < Config.level config -> do
           (nodes, inodes) <- do
             let nodes = filter (maybe False Node.isDirectory . Node.nodeType) entryNodes
             runState (Walk.filterNodes nodes) <$> use inodesL
           inodesL .= inodes
 
-          let paths = (\node -> entryPath </> Node.getNodePath node) <$> nodes
-          ops' <- mkOperations config (succ <$> entryDepth) paths
-          let entries = (\es -> if null es then es else Newline : es) $ intersperse Newline ops'
+          entries <-
+            foldr (\entry acc -> Newline : entry : acc) []
+              <$> mkOperations config (succ <$> entryDepth) ((\node -> entryPath </> Node.getNodePath node) <$> nodes)
 
           go $ entries <> ops
         _ -> go ops
@@ -188,7 +175,7 @@ mkOperations config depth (parent : parents) =
       mkOperations config depth parents
     Right paths -> do
       nodes <- mkNodes False config parent paths
-      (PrintEntry (Entry DIRECTORY parent nodes config depth) :) <$> mkOperations config depth parents
+      (PrintEntry (Entry DIRECTORY parent nodes depth) :) <$> mkOperations config depth parents
 
 mkInitialOperations :: [RawFilePath] -> Ls [Operation]
 mkInitialOperations paths = do
@@ -204,19 +191,18 @@ mkInitialOperations paths = do
         | Config.directory config = const False
         | otherwise = maybe False Node.isDirectory . Node.nodeType
       (dirs, files) = partition isDirectory nodes
-      fileOp = [PrintEntry (Entry FILES "" files config depth) | not $ null files]
+      fileOp = [PrintEntry (Entry FILES "" files depth) | not $ null files]
 
-  if Config.tree config
-    then do
-      let ops = dirs <&> \node -> PrintTree $ Tree (Node.getNodePath node) node mempty config
-      return . intersperse Newline $ fileOp <> ops
-    else do
-      dirOps <-
+  dirOps <-
+    if Config.tree config
+      then mapM (fmap (PrintTree . Tree) . mkTreeNodeInfos) dirs
+      else
         mkOperations (Config.disableDereferenceOnCommandLine config) depth (Node.getNodePath <$> dirs) <&> \case
           -- Considers no argument to be also a single directory.
           [PrintEntry e] | null files && length paths < 2 -> [PrintEntry (e {entryType = SINGLEDIR})]
           ops -> ops
-      return . intersperse Newline $ fileOp <> dirOps
+
+  return . intersperse Newline $ fileOp <> dirOps
 
 mkTreeNodeInfos :: Node.NodeInfo -> Ls (Seq Node.NodeInfo)
 mkTreeNodeInfos nodeinfo = do
