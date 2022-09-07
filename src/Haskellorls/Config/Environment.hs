@@ -4,22 +4,25 @@ module Haskellorls.Config.Environment
   )
 where
 
-import Control.Applicative
+import Control.Applicative (optional, (<|>))
+import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Maybe (MaybeT (..))
 import Data.Gettext (Catalog, loadCatalog)
 import Haskellorls.Data.Gettext.Extra (lookupMO)
-import Network.HostName
-import Numeric
-import System.Console.Terminal.Size
-import System.Environment
+import Network.HostName (getHostName)
+import Numeric (readDec)
+import System.Console.Terminal.Size (Window (width), size)
+import System.Environment (getEnv, lookupEnv)
 import System.FilePath.Posix.ByteString (RawFilePath, decodeFilePath)
-import System.IO
+import System.IO (hIsTerminalDevice, stdout)
 import System.Locale.SetLocale (Category (LC_MESSAGES), setLocale)
-import System.Posix.Directory.ByteString
+import System.Posix.Directory.ByteString (getWorkingDirectory)
 
 data Environment = Environment
   { toTerminal :: Bool,
     blockSize :: Maybe String,
+    onlyBlockSize :: Maybe String,
+    posixlyCorrect :: Maybe String,
     quotingStyle :: Maybe String,
     timeStyle :: Maybe String,
     cwd :: RawFilePath,
@@ -29,31 +32,35 @@ data Environment = Environment
     catalog :: Maybe Catalog
   }
 
-mkEnvironment :: IO Environment
+mkEnvironment :: MonadIO m => m Environment
 mkEnvironment = do
-  toTerminal <- hIsTerminalDevice stdout
+  toTerminal <- liftIO $ hIsTerminalDevice stdout
 
-  blockSize <- optional $ getEnv "LS_BLOCK_SIZE" <|> getEnv "BLOCK_SIZE"
+  blockSize <- liftIO . optional $ getEnv "LS_BLOCK_SIZE" <|> getEnv "BLOCK_SIZE"
 
-  quotingStyle <- lookupEnv "QUOTING_STYLE"
+  onlyBlockSize <- liftIO $ lookupEnv "BLOCKSIZE"
 
-  timeStyle <- lookupEnv "TIME_STYLE"
+  posixlyCorrect <- liftIO $ lookupEnv "POSIXLY_CORRECT"
 
-  cwd <- getWorkingDirectory
+  quotingStyle <- liftIO $ lookupEnv "QUOTING_STYLE"
 
-  hostname <- getHostName
+  timeStyle <- liftIO $ lookupEnv "TIME_STYLE"
+
+  cwd <- liftIO getWorkingDirectory
+
+  hostname <- liftIO getHostName
 
   columnSize <-
     let f = \case
           Just s | [(n, "")] <- readDec s -> Just n
           _ -> Nothing
-     in runMaybeT $ width <$> MaybeT size <|> MaybeT (f <$> lookupEnv "COLUMNS")
+     in runMaybeT $ width <$> MaybeT (liftIO size) <|> MaybeT (f <$> liftIO (lookupEnv "COLUMNS"))
 
-  lcMessages <- setLocale LC_MESSAGES Nothing
+  lcMessages <- liftIO $ setLocale LC_MESSAGES Nothing
 
   catalog <- runMaybeT do
     locale <- MaybeT $ return lcMessages
-    path <- MaybeT $ lookupMO "/usr/share/locale" locale "coreutils"
-    MaybeT . optional . loadCatalog $ decodeFilePath path
+    path <- MaybeT . liftIO $ lookupMO "/usr/share/locale" locale "coreutils"
+    MaybeT . liftIO . optional . loadCatalog $ decodeFilePath path
 
   return $ Environment {..}

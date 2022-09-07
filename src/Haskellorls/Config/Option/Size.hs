@@ -6,18 +6,18 @@ module Haskellorls.Config.Option.Size
 where
 
 import Data.Char
-import Data.List (isPrefixOf)
+import Data.List (inits)
 import Haskellorls.Config.Size
 import Numeric
 import Options.Applicative
 
-blockSizeParser :: Parser BlockSize
+blockSizeParser :: Parser (Maybe BlockSize)
 blockSizeParser = option
-  do str >>= maybe (readerError "Invalid unit") return . parseBlockSize
+  do str >>= maybe (readerError "Invalid unit") (return . Just) . parseBlockSize
   do
     long "block-size"
       <> metavar "SIZE"
-      <> value DefaultSize
+      <> value Nothing
       <> help "Specify size unit when output file size"
 
 -- FIXME: This doesn't handle any overflow.
@@ -48,7 +48,8 @@ parseBlockSize s = case readNum s of
     _ -> Just . BlockSize $ n
   _
     | null s -> Nothing
-    | s `isPrefixOf` "human" -> Just HumanReadable
+    | s `elem` tail (inits "human-readable") -> Just HumanReadableBI
+    | s `elem` tail (inits "si") -> Just HumanReadableSI
     | otherwise -> case s of
         c : "B" -> case toUpper c of
           'K' -> Just KiloSi

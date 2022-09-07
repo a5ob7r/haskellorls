@@ -54,7 +54,6 @@ data Config = Config
     -- disabled.
     format :: Format.Format,
     groupDirectoriesFirst :: Bool,
-    si :: Bool,
     dereferenceCommandLine :: Bool,
     dereferenceCommandLineSymlinkToDir :: Bool,
     hide :: Maybe Pattern,
@@ -128,19 +127,21 @@ mkConfig env Option {..} = Config {..}
       | oAll || oNoneSortExtra = All
       | oAlmostAll = AlmostAll
       | otherwise = NoHidden
-    -- Probably we should throw a runtime error or output an error message if
-    -- fail to parse the block size come from the environment variable.
     fileSize = case oBlockSize of
-      DefaultSize
-        | oHumanReadable -> HumanReadable
-        | otherwise -> fromMaybe DefaultSize $ Env.blockSize env >>= Size.parseBlockSize
-      blocksize -> blocksize
+      Just blocksize -> blocksize
+      Nothing
+        | oHumanReadable -> HumanReadableBI
+        | oSi -> HumanReadableSI
+        | Just filesize <- Env.blockSize env -> fromMaybe (BlockSize . maybe 1024 (const 512) $ Env.posixlyCorrect env) $ Size.parseBlockSize filesize
+        | otherwise -> BlockSize 1
     blockSize = case oBlockSize of
-      DefaultSize
-        | oHumanReadable -> HumanReadable
-        | oKibibyte -> DefaultSize
-        | otherwise -> fromMaybe DefaultSize $ Env.blockSize env >>= Size.parseBlockSize
-      blocksize -> blocksize
+      Just blocksize -> blocksize
+      Nothing
+        | oHumanReadable -> HumanReadableBI
+        | oSi -> HumanReadableSI
+        | oKibibyte -> BlockSize 1024
+        | Just blocksize <- (Env.blockSize env <|> Env.onlyBlockSize env) >>= Size.parseBlockSize -> blocksize
+        | otherwise -> BlockSize . maybe 1024 (const 512) $ Env.posixlyCorrect env
     ignoreBackups = oIgnoreBackups
     format
       | oVertical = VERTICAL
@@ -153,7 +154,6 @@ mkConfig env Option {..} = Config {..}
       | otherwise = SINGLECOLUMN
     directory = oDirectory
     groupDirectoriesFirst = oGroupDirectoriesFirst
-    si = oSi
     dereferenceCommandLine = oDereferenceCommandLine
     dereferenceCommandLineSymlinkToDir
       | oDereferenceCommandLineSymlinkToDir = True

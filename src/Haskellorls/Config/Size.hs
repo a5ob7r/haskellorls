@@ -12,8 +12,8 @@ newtype SizeNumberScale a = SizeNumberScale {unSizeNumberScale :: Scale a}
 newtype SizeUnitScale a = SizeUnitScale {unSizeUnitScale :: Scale a}
 
 data BlockSize
-  = DefaultSize
-  | HumanReadable
+  = HumanReadableBI
+  | HumanReadableSI
   | KiloKibi
   | MegaKibi
   | GigaKibi

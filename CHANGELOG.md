@@ -12,6 +12,8 @@
 - Handle `mi` parameter of `$LS_COLORS`.
 - Lookup `TIME_STYLE` environment variable to determine the time format used.
 - `locale` and `clocale` for `--quoting-style=WORD`.
+- Accept `human-readable` as a value of `--block-size=SIZE` and so on.
+- Accept `si` as a value of `--block-size=SIZE` and so on.
 
 ### Changed
 

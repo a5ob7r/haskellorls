@@ -257,27 +257,50 @@ spec = do
         Just YottaSi -> True
         _ -> False
 
-    it "returns HumanReadable if the value is the prefix of \"human\"." $ do
-      property . forAll (elements . tail $ inits "human") $ \s ->
+    it "returns HumanReadableBI if the value is the prefix of \"human\"." $ do
+      property . forAll (elements . tail $ inits "human-readable") $ \s ->
         parseBlockSize s `shouldSatisfy` \case
-          Just HumanReadable -> True
+          Just HumanReadableBI -> True
           _ -> False
 
-    it "doesn't return HumanReadable if the value isn't just the prefix of \"human\"." $ do
+    it "doesn't return HumanReadableBI if the value isn't just the prefix of \"human\"." $ do
       parseBlockSize "fooh" `shouldSatisfy` \case
-        Just HumanReadable -> False
+        Just HumanReadableBI -> False
         _ -> True
 
       parseBlockSize "foohuman" `shouldSatisfy` \case
-        Just HumanReadable -> False
+        Just HumanReadableBI -> False
         _ -> True
 
       parseBlockSize "hfoo" `shouldSatisfy` \case
-        Just HumanReadable -> False
+        Just HumanReadableBI -> False
         _ -> True
 
       parseBlockSize "humanfoo" `shouldSatisfy` \case
-        Just HumanReadable -> False
+        Just HumanReadableBI -> False
+        _ -> True
+
+    it "returns HumanReadableSI if the value is the prefix of \"si\"." $ do
+      property . forAll (elements . tail $ inits "si") $ \s ->
+        parseBlockSize s `shouldSatisfy` \case
+          Just HumanReadableSI -> True
+          _ -> False
+
+    it "doesn't return HumanReadableSI if the value isn't just the prefix of \"si\"." $ do
+      parseBlockSize "foos" `shouldSatisfy` \case
+        Just HumanReadableSI -> False
+        _ -> True
+
+      parseBlockSize "foosi" `shouldSatisfy` \case
+        Just HumanReadableSI -> False
+        _ -> True
+
+      parseBlockSize "sfoo" `shouldSatisfy` \case
+        Just HumanReadableSI -> False
+        _ -> True
+
+      parseBlockSize "sifoo" `shouldSatisfy` \case
+        Just HumanReadableSI -> False
         _ -> True
 
     it "returns Nothing if the value is just a character but not \"K\", \"k\" \"M\", \"m\", \"G\", \"g\", \"T\", \"t\", \"P\", \"p\", \"E\", \"e\", \"Z\", \"z\", \"Y\", \"y\", \"h\" or a number." $ do

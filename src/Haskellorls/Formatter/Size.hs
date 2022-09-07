@@ -180,13 +180,7 @@ toTotalBlockSize :: Config.Config -> [Types.FileOffset] -> [Attr.Attribute WT.Wr
 toTotalBlockSize config = toWrappedText . toTotalBlockSize' config
 
 toTotalBlockSize' :: Config.Config -> [Types.FileOffset] -> FileSizeComponent
-toTotalBlockSize' config = fileSize' config size . foldl' (\acc o -> acc + toBlockSize o) 0
-  where
-    size = case Config.blockSize config of
-      DefaultSize
-        | Config.si config -> HumanReadable
-        | otherwise -> BlockSize 1024
-      sz -> sz
+toTotalBlockSize' config = fileSize' (Config.blockSize config) . foldl' (\acc o -> acc + toBlockSize o) 0
 
 fileBlockSize :: Config.Config -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 fileBlockSize config node = case Node.fileSize node of
@@ -248,13 +242,12 @@ fileSize :: (Int, Int) -> Config.Config -> Node.NodeInfo -> [Attr.Attribute WT.W
 fileSize widths config node = case Node.nodeType node of
   Just Node.BlockDevise -> deviceNumbers widths Nothing config node
   Just Node.CharDevise -> deviceNumbers widths Nothing config node
-  _ -> maybe [Attr.Missing $ from @T.Text "?"] (toWrappedText . fileSize' config (Config.fileSize config)) $ Node.fileSize node
+  _ -> maybe [Attr.Missing $ from @T.Text "?"] (toWrappedText . fileSize' (Config.fileSize config)) $ Node.fileSize node
 
-fileSize' :: Config.Config -> BlockSize -> Types.FileOffset -> FileSizeComponent
-fileSize' config size offset = case size of
-  _ | Config.si config -> humanize config offset
-  DefaultSize -> fileSize' config (BlockSize 1) offset
-  HumanReadable -> humanize config offset
+fileSize' :: BlockSize -> Types.FileOffset -> FileSizeComponent
+fileSize' size offset = case size of
+  HumanReadableSI -> humanize offset humanizeSI
+  HumanReadableBI -> humanize offset humanizeBI
   KiloKibi -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1024 ^ (1 :: Int)) "K" True
   KiloKibii -> FileSizeComponent offset (T.pack . show @Int . ceiling @Double $ fromIntegral offset / 1024 ^ (1 :: Int)) "KiB" True
   -- NOTE: This lowercased "k" is intended for compatibility with GNU ls.
@@ -289,7 +282,7 @@ normalColoredFileSize widths lscolors config node = case Node.nodeType node of
   Just Node.CharDevise -> deviceNumbers widths (Just lscolors) config node
   _ -> case Node.fileSize node of
     Just fsize ->
-      let FileSizeComponent {..} = fileSize' config (Config.fileSize config) fsize
+      let FileSizeComponent {..} = fileSize' (Config.fileSize config) fsize
        in [Attr.Other $ WT.wrap lscolors Color.normal (fileSizeNumber <> fileSizeUnit)]
     _ -> [Attr.Missing $ from @T.Text "?"]
 
@@ -298,7 +291,7 @@ coloredFileSize widths lscolors config node = case Node.nodeType node of
   Just Node.BlockDevise -> deviceNumbers widths (Just lscolors) config node
   Just Node.CharDevise -> deviceNumbers widths (Just lscolors) config node
   _ -> case Node.fileSize node of
-    Just fsize -> coloredFileSize' lscolors $ fileSize' config (Config.fileSize config) fsize
+    Just fsize -> coloredFileSize' lscolors $ fileSize' (Config.fileSize config) fsize
     _ -> [Attr.Missing $ from @T.Text "?"]
 
 coloredFileSize' :: Color.LsColors -> FileSizeComponent -> [Attr.Attribute WT.WrappedText]
@@ -342,8 +335,8 @@ deviceNumbers widths@(majorWidth, minorWidth) lscolors config node = case lscolo
     major = maybe "?" (from @MajorID) majorID
     minor = maybe "?" (from @MinorID) minorID
 
-humanize :: Config.Config -> Types.FileOffset -> FileSizeComponent
-humanize config size = case size' of
+humanize :: Types.FileOffset -> (Types.FileOffset -> Base (Scale FileSize)) -> FileSizeComponent
+humanize size humanizer = case humanizer size of
   BI (NoScale (ISize n)) -> FileSizeComponent size (T.pack $ show n) "" True
   BI (NoScale (DSize d)) -> FileSizeComponent size (T.pack $ show d) "" True
   BI (Kilo (ISize n)) -> FileSizeComponent size (T.pack $ show n) "K" True
@@ -381,11 +374,6 @@ humanize config size = case size' of
   SI (Zetta (DSize d)) -> FileSizeComponent size (T.pack $ show d) "Z" True
   SI (Yotta (ISize n)) -> FileSizeComponent size (T.pack $ show n) "Y" True
   SI (Yotta (DSize d)) -> FileSizeComponent size (T.pack $ show d) "Y" True
-  where
-    size' =
-      if Config.si config
-        then humanizeSI size
-        else humanizeBI size
 
 -- | Treat symbolic link block size as zero.
 fileBlockSizeOf :: Node.NodeInfo -> Types.FileOffset
