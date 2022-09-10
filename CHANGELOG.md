@@ -14,6 +14,7 @@
 - `locale` and `clocale` for `--quoting-style=WORD`.
 - Accept `human-readable` as a value of `--block-size=SIZE` and so on.
 - Accept `si` as a value of `--block-size=SIZE` and so on.
+- Accept values which are preceded by `'` as valid values of `--block-size=SIZE` and so on.
 
 ### Changed
 

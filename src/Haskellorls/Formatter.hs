@@ -2,6 +2,7 @@ module Haskellorls.Formatter
   ( Printers,
     mkPrinters,
     mkLines,
+    mkBlockSizeHeader,
     mkPrinterTypes,
   )
 where
@@ -11,6 +12,7 @@ import Data.Either (isLeft)
 import Data.Foldable
 import Data.Functor ((<&>))
 import Data.List (intercalate, transpose)
+import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Data.Time.Clock.POSIX
 import Data.Time.Format
@@ -39,6 +41,7 @@ import qualified Haskellorls.Formatter.WrappedText as WT
 import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
 import System.Locale.Current (currentLocale)
+import System.Locale.LocaleConv (localeConv)
 import System.Locale.SetLocale (Category (LC_TIME), setLocale)
 
 data PrinterType
@@ -105,7 +108,8 @@ mkNodeNamePrinter config NodeNamePrinters {..} node = NodeNames {..}
         else []
 
 data Printers = Printers
-  { fileInodePrinter :: Node.NodeInfo -> [Attr.Attribute WT.WrappedText],
+  { blockSizeHeaderPrinter :: [Node.NodeInfo] -> [Attr.Attribute WT.WrappedText],
+    fileInodePrinter :: Node.NodeInfo -> [Attr.Attribute WT.WrappedText],
     fileBlockPrinter :: Node.NodeInfo -> [Attr.Attribute WT.WrappedText],
     fileFieldPrinter :: Node.NodeInfo -> [Attr.Attribute WT.WrappedText],
     fileLinkPrinter :: Node.NodeInfo -> [Attr.Attribute WT.WrappedText],
@@ -145,16 +149,19 @@ mkPrinters config = do
     if Config.format config == Format.LONG
       then currentLocale
       else return defaultTimeLocale
+  nconfig <- from <$> localeConv
 
-  let fileInodePrinter = case Config.colorize config of
+  let blockSizeHeaderPrinter node = [Attr.Other . from . T.concat . ("total " :) . map (from . Attr.unwrap) . Size.toTotalBlockSize config nconfig $ fromMaybe 0 . Node.fileSize <$> node]
+
+      fileInodePrinter = case Config.colorize config of
         Just True -> Inode.nodeInodeNumberWithColor lscolors
         Just False -> Inode.nodeInodeNumberWithNormalColor lscolors
         _ -> (\t -> [Attr.Other $ from t]) . T.pack . show . Inode.nodeInodeNumber
 
       fileBlockPrinter = case Config.colorize config of
-        Just True -> Size.coloredFileBlockSize lscolors config
-        Just False -> Size.normalColoredFileBlockSize lscolors config
-        _ -> Size.fileBlockSize config
+        Just True -> Size.coloredFileBlockSize lscolors config nconfig
+        Just False -> Size.normalColoredFileBlockSize lscolors config nconfig
+        _ -> Size.fileBlockSize config nconfig
 
       fileFieldPrinter = case Config.colorize config of
         Just True -> Filemode.showFilemodeFieldWithColor lscolors . from
@@ -182,9 +189,9 @@ mkPrinters config = do
         _ -> (\t -> [Attr.Other $ from t]) . Context.context
 
       fileSizePrinter = case Config.colorize config of
-        Just True -> \w -> Size.coloredFileSize w lscolors config
-        Just False -> \w -> Size.normalColoredFileSize w lscolors config
-        _ -> (`Size.fileSize` config)
+        Just True -> \w -> Size.coloredFileSize w lscolors config nconfig
+        Just False -> \w -> Size.normalColoredFileSize w lscolors config nconfig
+        _ -> (\n -> Size.fileSize n config nconfig)
 
       fileTimePrinter = case Config.colorize config of
         Just True -> maybe [Attr.Missing $ from @T.Text "?"] (Time.coloredTimeStyleFunc lscolors timeZone timeLocale currentTime timeStyle . posixSecondsToUTCTime) . Node.fileTime
@@ -288,6 +295,9 @@ mkGrid nodes config printers = transpose . map (mkColumn nodes config printers)
 
 mkLines :: Foldable t => t Node.NodeInfo -> Config.Config -> Printers -> [PrinterType] -> [[Attr.Attribute WT.WrappedText]]
 mkLines nodes config printers types = intercalate [Attr.Other $ from @T.Text " "] <$> mkGrid (toList nodes) config printers types
+
+mkBlockSizeHeader :: Foldable t => t Node.NodeInfo -> Printers -> [Attr.Attribute WT.WrappedText]
+mkBlockSizeHeader nodes printers = blockSizeHeaderPrinter printers $ toList nodes
 
 justifyLeft :: Int -> Char -> [Attr.Attribute WT.WrappedText] -> [Attr.Attribute WT.WrappedText]
 justifyLeft n c wt

@@ -19,7 +19,6 @@ import Data.Default.Class (Default (..))
 import Data.Either (partitionEithers)
 import Data.Functor ((<&>))
 import Data.List (foldl', intersperse, partition)
-import Data.Maybe (fromMaybe)
 import Data.Sequence (Seq (Empty, (:<|)), fromList, singleton, (|>))
 import qualified Data.Sequence as Seq
 import qualified Data.Text as T
@@ -38,7 +37,6 @@ import qualified Haskellorls.Formatter as Formatter
 import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.Layout.Grid as Grid
 import qualified Haskellorls.Formatter.Quote as Quote
-import qualified Haskellorls.Formatter.Size as Size
 import qualified Haskellorls.Formatter.WrappedText as WT
 import Haskellorls.Lens.Micro (makeLenses', use, view, (%=), (.=))
 import qualified Haskellorls.NodeInfo as Node
@@ -264,11 +262,10 @@ mkDivisions config printers =
 
           -- Add total block size header only about directries when long style
           -- layout or @-s / --size@ is passed.
-          size = Attr.Other . from . T.concat . ("total " :) . map (from . Attr.unwrap) . Size.toTotalBlockSize config $ fromMaybe 0 . Node.fileSize <$> entryNodes
           totalBlockSize
-            | Config.size config = [size]
+            | Config.size config = Formatter.mkBlockSizeHeader entryNodes printers
             | FILES <- entryType = []
-            | Format.LONG <- Config.format config = [size]
+            | Format.LONG <- Config.format config = Formatter.mkBlockSizeHeader entryNodes printers
             | otherwise = []
        in filter (not . null) ([header] <> [totalBlockSize]) <> (mconcat <$> Grid.mkValidGrid config (Config.width config) nodes)
     PrintTree (Tree {..}) -> Formatter.mkLines treeNodes config printers $ Formatter.mkPrinterTypes config

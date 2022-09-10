@@ -1,4 +1,6 @@
-packages: ./
+packages:
+  ./
+  ./localeconv
 
 index-state: 2022-09-04T10:47:35Z
 

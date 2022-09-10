@@ -80,6 +80,7 @@ library haskellorls-internal
     Haskellorls.Formatter.Layout.Grid
     Haskellorls.Formatter.Link
     Haskellorls.Formatter.Name
+    Haskellorls.Formatter.Number
     Haskellorls.Formatter.Ownership
     Haskellorls.Formatter.Quote
     Haskellorls.Formatter.Size
@@ -133,6 +134,7 @@ library haskellorls-internal
     , Glob                  ^>=0.10.2
     , haskell-gettext       ^>=0.1.2.0
     , hostname              ^>=1.0
+    , localeconv            ^>=0.1.0.0
     , microlens             ^>=0.4.13.0
     , microlens-mtl         ^>=0.2.0.2
     , microlens-th          ^>=0.4.3.10
@@ -175,6 +177,7 @@ test-suite test
   other-modules:
     Test.Haskellorls.Config.Option.SizeSpec
     Test.Haskellorls.Data.InfinitableSpec
+    Test.Haskellorls.Formatter.NumberSpec
     Test.Haskellorls.Humanize.FileSizeSpec
 
   build-tool-depends: sydtest-discover:sydtest-discover -any

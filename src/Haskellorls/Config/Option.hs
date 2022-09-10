@@ -22,7 +22,7 @@ data Option = Option
     oAlmostAll :: Bool,
     oAuthor :: Bool,
     oEscape :: Bool,
-    oBlockSize :: Maybe Size.BlockSize,
+    oBlockSize :: Maybe (Size.BlockSizeMod Size.BlockSize),
     oIgnoreBackups :: Bool,
     oCtime :: Bool,
     oVertical :: Bool,

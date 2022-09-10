@@ -23,7 +23,7 @@ import qualified Haskellorls.Config.Option.Size as Size
 import qualified Haskellorls.Config.Option.Sort as Sort
 import qualified Haskellorls.Config.Option.Time as Time
 import Haskellorls.Config.Quote
-import Haskellorls.Config.Size (BlockSize (..))
+import Haskellorls.Config.Size (BlockSize (..), BlockSizeMod (..))
 import Haskellorls.Config.Sort
 import Haskellorls.Config.Time
 import qualified Haskellorls.Config.When as W
@@ -46,8 +46,8 @@ data Config = Config
     hyperlink :: Bool,
     indicatorStyle :: IndicatorStyle,
     listing :: ListingStyle,
-    fileSize :: Size.BlockSize,
-    blockSize :: Size.BlockSize,
+    fileSize :: BlockSizeMod Size.BlockSize,
+    blockSize :: BlockSizeMod Size.BlockSize,
     ignoreBackups :: Bool,
     directory :: Bool,
     -- | When this value is 'COMMAS', every column alignment in format is
@@ -130,18 +130,18 @@ mkConfig env Option {..} = Config {..}
     fileSize = case oBlockSize of
       Just blocksize -> blocksize
       Nothing
-        | oHumanReadable -> HumanReadableBI
-        | oSi -> HumanReadableSI
-        | Just filesize <- Env.blockSize env -> fromMaybe (BlockSize . maybe 1024 (const 512) $ Env.posixlyCorrect env) $ Size.parseBlockSize filesize
-        | otherwise -> BlockSize 1
+        | oHumanReadable -> NoMod HumanReadableBI
+        | oSi -> NoMod HumanReadableSI
+        | Just filesize <- Env.blockSize env -> fromMaybe (NoMod . BlockSize . maybe 1024 (const 512) $ Env.posixlyCorrect env) $ Size.parseBlockSize filesize
+        | otherwise -> NoMod $ BlockSize 1
     blockSize = case oBlockSize of
       Just blocksize -> blocksize
       Nothing
-        | oHumanReadable -> HumanReadableBI
-        | oSi -> HumanReadableSI
-        | oKibibyte -> BlockSize 1024
+        | oHumanReadable -> NoMod HumanReadableBI
+        | oSi -> NoMod HumanReadableSI
+        | oKibibyte -> NoMod $ BlockSize 1024
         | Just blocksize <- (Env.blockSize env <|> Env.onlyBlockSize env) >>= Size.parseBlockSize -> blocksize
-        | otherwise -> BlockSize . maybe 1024 (const 512) $ Env.posixlyCorrect env
+        | otherwise -> NoMod . BlockSize . maybe 1024 (const 512) $ Env.posixlyCorrect env
     ignoreBackups = oIgnoreBackups
     format
       | oVertical = VERTICAL
