@@ -263,13 +263,13 @@ spec = do
         Just (NoMod YottaSi) -> True
         _ -> False
 
-    it "returns HumanReadableBI if the value is the prefix of \"human\"." $ do
+    it "returns HumanReadableBI if the value is the prefix of \"human-readable\"." $ do
       property . forAll (elements . tail $ inits "human-readable") $ \s ->
         parseBlockSize s `shouldSatisfy` \case
           Just (NoMod HumanReadableBI) -> True
           _ -> False
 
-    it "doesn't return HumanReadableBI if the value isn't just the prefix of \"human\"." $ do
+    it "doesn't return HumanReadableBI if the value isn't just the prefix of \"human-readable\"." $ do
       parseBlockSize "fooh" `shouldSatisfy` \case
         Just (NoMod HumanReadableBI) -> False
         _ -> True
@@ -283,6 +283,10 @@ spec = do
         _ -> True
 
       parseBlockSize "humanfoo" `shouldSatisfy` \case
+        Just (NoMod HumanReadableBI) -> False
+        _ -> True
+
+      parseBlockSize "human-readablefoo" `shouldSatisfy` \case
         Just (NoMod HumanReadableBI) -> False
         _ -> True
 

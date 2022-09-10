@@ -71,6 +71,17 @@
 --     * hum
 --     * huma
 --     * human
+--     * human-
+--     * human-r
+--     * human-re
+--     * human-rea
+--     * human-read
+--     * human-reada
+--     * human-readab
+--     * human-readabl
+--     * human-readable
+--     * s
+--     * si
 --
 -- = Scale size parameter
 --
@@ -106,6 +117,17 @@
 --     * hum
 --     * huma
 --     * human
+--     * human-
+--     * human-r
+--     * human-re
+--     * human-rea
+--     * human-read
+--     * human-reada
+--     * human-readab
+--     * human-readabl
+--     * human-readable
+--     * s
+--     * si
 --
 -- 2. The scale size is @n@ if the determined block size @n@ is just a decimal,
 -- octal or hexadecimal number.
