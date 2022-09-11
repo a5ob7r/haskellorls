@@ -23,7 +23,7 @@ import Data.Either.Extra (eitherToMaybe)
 import qualified Data.Text as T
 import Data.Time.Clock.POSIX (POSIXTime)
 import qualified Haskellorls.Config as Config
-import qualified Haskellorls.Config.Time as Time
+import qualified Haskellorls.Config.TimeType as TimeType
 import qualified Haskellorls.Config.Tree as Tree
 import qualified Haskellorls.System.Posix.Files.ByteString as Files
 import System.FilePath.Posix.ByteString (RawFilePath, (</>))
@@ -104,9 +104,9 @@ mkProxyFileStatus config status =
       pfsGroupID = Files.fileGroup status,
       pfsFileSize = Files.fileSize status,
       pfsFileTime = case Config.time config of
-        Time.MODIFICATION -> Files.modificationTimeHiRes status
-        Time.ACCESS -> Files.accessTimeHiRes status
-        Time.CHANGE -> Files.statusChangeTimeHiRes status,
+        TimeType.MODIFICATION -> Files.modificationTimeHiRes status
+        TimeType.ACCESS -> Files.accessTimeHiRes status
+        TimeType.CHANGE -> Files.statusChangeTimeHiRes status,
       pfsSpecialDeviceID = Files.specialDeviceID status,
       pfsNodeType = mkNodeType status
     }

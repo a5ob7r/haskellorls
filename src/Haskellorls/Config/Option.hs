@@ -4,17 +4,19 @@ module Haskellorls.Config.Option
   )
 where
 
-import qualified Haskellorls.Config.Option.Format as Format
-import qualified Haskellorls.Config.Option.Indicator as Indicator
-import qualified Haskellorls.Config.Option.Quote as Quote
-import qualified Haskellorls.Config.Option.Size as Size
-import qualified Haskellorls.Config.Option.Sort as Sort
-import qualified Haskellorls.Config.Option.Time as Time
-import qualified Haskellorls.Config.Option.When as W
-import Haskellorls.Data.Infinitable
+import Haskellorls.Config.Format (Format)
+import Haskellorls.Config.Indicator (IndicatorStyle (..))
+import Haskellorls.Config.Quote (QuotingStyle)
+import Haskellorls.Config.Size (BlockSize, BlockSizeMod)
+import Haskellorls.Config.Sort (SortType (..))
+import Haskellorls.Config.TimeStyle (TimeStyle)
+import Haskellorls.Config.TimeType (TimeType (..))
+import qualified Haskellorls.Config.When as W
+import Haskellorls.Data.Infinitable (Infinitable (..))
 import Options.Applicative hiding (header)
 import Options.Applicative.Help.Pretty
-import Text.Read
+import Text.Read (readMaybe)
+import Witch (TryFromException (..), tryFrom)
 
 -- | An interface type for the option parser.
 data Option = Option
@@ -22,7 +24,7 @@ data Option = Option
     oAlmostAll :: Bool,
     oAuthor :: Bool,
     oEscape :: Bool,
-    oBlockSize :: Maybe (Size.BlockSizeMod Size.BlockSize),
+    oBlockSize :: Maybe (BlockSizeMod BlockSize),
     oIgnoreBackups :: Bool,
     oCtime :: Bool,
     oVertical :: Bool,
@@ -33,7 +35,7 @@ data Option = Option
     oClassify :: Maybe W.WHEN,
     oExtraColor :: Bool,
     oFileType :: Bool,
-    oFormat :: Maybe Format.Format,
+    oFormat :: Maybe Format,
     oFullTime :: Bool,
     oLongWithoutOwner :: Bool,
     oGroupDirectoriesFirst :: Bool,
@@ -45,7 +47,7 @@ data Option = Option
     oHide :: Maybe String,
     oHyperlink :: W.WHEN,
     oIcon :: Bool,
-    oIndicatorStyle :: Indicator.IndicatorStyle,
+    oIndicatorStyle :: IndicatorStyle,
     oInode :: Bool,
     oIgnore :: Maybe String,
     oKibibyte :: Bool,
@@ -59,14 +61,14 @@ data Option = Option
     oDirectoryIndicator :: Bool,
     oShowControlChars :: Maybe Bool,
     oQuoteName :: Bool,
-    oQuotingStyle :: Maybe Quote.QuotingStyle,
+    oQuotingStyle :: Maybe QuotingStyle,
     oReverse :: Bool,
     oRecursive :: Bool,
     oSize :: Bool,
     oSizeSort :: Bool,
-    oSort :: Sort.SortType,
-    oTime :: Time.TimeType,
-    oTimeStyle :: Maybe Time.TimeStyle,
+    oSort :: SortType,
+    oTime :: TimeType,
+    oTimeStyle :: Maybe TimeStyle,
     oTimeSort :: Bool,
     oTabSeparator :: Bool,
     oTabSize :: Int,
@@ -117,7 +119,13 @@ optionParser =
       long "escape"
         <> short 'b'
         <> help "Escape file name and link name by C lang style"
-    <*> Size.blockSizeParser
+    <*> option
+      do str >>= either (\(TryFromException _ e) -> readerError $ maybe "Invalid block size format." show e) (return . Just) . tryFrom @String
+      do
+        long "block-size"
+          <> metavar "SIZE"
+          <> value Nothing
+          <> help "Specify size unit when output file size"
     <*> switch do
       long "ignore-backups"
         <> short 'B'
@@ -131,7 +139,7 @@ optionParser =
     <*> do
       let noArg = flag' W.ALWAYS $ long "color"
           withArg =
-            option W.reader $
+            option whenReader $
               long "color"
                 <> metavar "WHEN"
                 <> value W.NEVER
@@ -152,7 +160,7 @@ optionParser =
     <*> do
       let noArg = flag' (Just W.ALWAYS) $ long "classify" <> short 'F'
           withArg =
-            option (Just <$> W.reader) $
+            option (Just <$> whenReader) $
               long "classify"
                 <> value Nothing
                 <> metavar "WHEN"
@@ -165,7 +173,13 @@ optionParser =
     <*> switch do
       long "file-type"
         <> help "Append indicators without '*'"
-    <*> Format.formatParser
+    <*> option
+      do str >>= either (\(TryFromException _ e) -> readerError $ maybe "Invalid format style format." show e) (return . Just) . tryFrom @String
+      do
+        long "format"
+          <> metavar "WORD"
+          <> value Nothing
+          <> completeWith ["across", "commas", "horizontal", "long", "single-column", "verbose", "vertical"]
     <*> switch do
       long "full-time"
         <> help "Equals to specify '-l' and '--time-style=full-iso'"
@@ -201,7 +215,7 @@ optionParser =
     <*> do
       let noArg = flag' W.ALWAYS $ long "hyperlink"
           withArg =
-            option W.reader $
+            option whenReader $
               long "hyperlink"
                 <> metavar "WHEN"
                 <> value W.NEVER
@@ -211,7 +225,14 @@ optionParser =
     <*> switch do
       long "icons"
         <> help "Output icon for each files"
-    <*> Indicator.indicatorStyleParser
+    <*> option
+      do str >>= either (\(TryFromException _ e) -> readerError $ maybe "Invalid indicator style format." show e) return . tryFrom @String
+      do
+        long "indicator-style"
+          <> metavar "WORD"
+          <> value IndicatorNone
+          <> help "Specify indicator style, 'none', 'slash', 'file-tyep' and 'classify'"
+          <> completeWith ["none", "slash", "file-type", "classify"]
     <*> switch do
       long "inode"
         <> short 'i'
@@ -275,7 +296,14 @@ optionParser =
       long "quote-name"
         <> short 'Q'
         <> help "Quote file name and link name with double quote (\")"
-    <*> Quote.quotingStyleParser
+    <*> option
+      do str >>= either (\(TryFromException _ e) -> readerError $ maybe "Invalid quoting style formats." show e) (return . Just) . tryFrom @String
+      do
+        long "quoting-style"
+          <> metavar "WORD"
+          <> value Nothing
+          <> help "Specify file name and link name quoting style; this also effects to file name and link name escape style"
+          <> completeWith ["literal", "shell", "shell-always", "shell-escape", "shell-escape-always", "c", "escape", "clocale", "locale"]
     <*> switch do
       long "reverse"
         <> short 'r'
@@ -291,9 +319,30 @@ optionParser =
     <*> switch do
       short 'S'
         <> help "Size sort, largest first"
-    <*> Sort.sortParser
-    <*> Time.timeParser
-    <*> Time.timeStyleParser
+    <*> option
+      do str >>= either (\(TryFromException _ e) -> readerError $ maybe "Invalid sort type format." show e) return . tryFrom @String
+      do
+        long "sort"
+          <> metavar "WORD"
+          <> value NAME
+          <> help "Specify an attribute to sort outputs"
+          <> completeWith ["none", "size", "time", "version", "extension"]
+    <*> option
+      do str >>= either (\(TryFromException _ e) -> readerError $ maybe "Invalid time kind formats." show e) return . tryFrom @String
+      do
+        long "time"
+          <> metavar "WORD"
+          <> value MODIFICATION
+          <> help "Specify a time kind which is used as file's time attribute"
+          <> completeWith ["atime", "access", "use", "ctime", "status"]
+    <*> option
+      do str >>= either (\(TryFromException _ e) -> readerError $ maybe "Invalid time style format." show e) (return . Just) . tryFrom @String
+      do
+        long "time-style"
+          <> metavar "TYPE_STYLE"
+          <> value Nothing
+          <> help "Specify time output format"
+          <> completeWith ["full-iso", "posix-full-iso", "long-iso", "posix-long-iso", "iso", "posix-iso", "locale", "posix-locale"]
     <*> switch do
       short 't'
         <> help "Time sort, newest first"
@@ -351,3 +400,5 @@ optionParser =
       many . strArgument $
         metavar "[FILE]..."
           <> action "file"
+  where
+    whenReader = str >>= either (\(TryFromException _ e) -> readerError $ maybe "Invalid WHEN format." show e) return . tryFrom @String

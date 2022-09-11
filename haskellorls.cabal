@@ -43,6 +43,7 @@ library haskellorls-internal
     Haskellorls.Class
     Haskellorls.Config
     Haskellorls.Config.Context
+    Haskellorls.Config.Datetime
     Haskellorls.Config.DeviceNumber
     Haskellorls.Config.Environment
     Haskellorls.Config.Filemode
@@ -54,18 +55,12 @@ library haskellorls-internal
     Haskellorls.Config.Link
     Haskellorls.Config.Listing
     Haskellorls.Config.Option
-    Haskellorls.Config.Option.Format
-    Haskellorls.Config.Option.Indicator
-    Haskellorls.Config.Option.Quote
-    Haskellorls.Config.Option.Size
-    Haskellorls.Config.Option.Sort
-    Haskellorls.Config.Option.Time
-    Haskellorls.Config.Option.When
     Haskellorls.Config.Ownership
     Haskellorls.Config.Quote
     Haskellorls.Config.Size
     Haskellorls.Config.Sort
-    Haskellorls.Config.Time
+    Haskellorls.Config.TimeStyle
+    Haskellorls.Config.TimeType
     Haskellorls.Config.Tree
     Haskellorls.Config.When
     Haskellorls.Data.Gettext.Extra
@@ -150,6 +145,7 @@ library haskellorls-internal
     , time                  ^>=1.12.2
     , transformers          ^>=0.5.6.2
     , unix                  ^>=2.7.2
+    , witch                 ^>=1.0.0.4
 
   if flag(selinux)
     build-depends: selinux
@@ -173,6 +169,7 @@ test-suite test
     , haskellorls-internal
     , QuickCheck            ^>=2.14.2
     , sydtest               ^>=0.11.0.0
+    , witch
 
   other-modules:
     Test.Haskellorls.Config.Option.SizeSpec

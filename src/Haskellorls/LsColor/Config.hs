@@ -12,8 +12,9 @@ import Data.Default.Class
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import qualified Data.Text as T
-import Haskellorls.Class
+import Haskellorls.Class (Dictionary (..))
 import Haskellorls.LsColor.Class
+import Witch (From (..), via)
 import Prelude hiding (lookup)
 
 -- | A dictionary, which contains raw parsed results of 'LS_COLORS' or similar
@@ -64,7 +65,7 @@ data Options a e = Options
   deriving (Show)
 
 instance (From T.Text a, From Sources e, Default (Options a e)) => From T.Text (Options a e) where
-  from = from @Sources . from
+  from = via @Sources
 
 instance (From T.Text a, From Sources e, Default (Options a e)) => From Sources (Options a e) where
   from s =

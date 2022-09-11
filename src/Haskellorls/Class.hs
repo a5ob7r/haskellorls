@@ -1,6 +1,5 @@
 module Haskellorls.Class
   ( Dictionary (..),
-    From (..),
     TerminalLength (..),
     Notifiable (..),
   )
@@ -18,10 +17,6 @@ class Dictionary k v d where
 
 instance (Ord k) => Dictionary k v (M.Map k v) where
   lookup k d = k `M.lookup` d
-
--- | Generaete a @b@ type value from an @a@ type value.
-class From a b where
-  from :: a -> b
 
 -- | A instance of "TerminalLength" has a length to dipslay it on a terminal.
 class TerminalLength a where

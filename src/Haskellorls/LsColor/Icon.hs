@@ -15,11 +15,12 @@ import Data.Maybe
 import Data.String
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
-import Haskellorls.Class
+import Haskellorls.Class (Dictionary (..))
 import Haskellorls.LsColor.Config
 import Haskellorls.NodeInfo
 import System.Environment
 import System.FilePath.Posix.ByteString
+import Witch (From (..), via)
 import Prelude hiding (lookup)
 
 lsIcons :: IO LsIcons
@@ -94,7 +95,7 @@ instance From Sources Icons where
         _ -> Nothing
 
 instance From T.Text Icons where
-  from = from @Sources . from
+  from = via @Sources
 
 instance Dictionary Query Icon Icons where
   lookup q (Icons i) = q `M.lookup` i
@@ -108,8 +109,6 @@ instance Queryable Icon Icons
 newtype Icon = Icon {unIcon :: T.Text}
   deriving (Eq, Show, IsString, Semigroup, Monoid)
 
-instance From Icon T.Text where
-  from = unIcon
+instance From Icon T.Text
 
-instance From T.Text Icon where
-  from = Icon
+instance From T.Text Icon

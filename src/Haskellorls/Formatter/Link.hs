@@ -6,13 +6,13 @@ module Haskellorls.Formatter.Link
 where
 
 import qualified Data.Text as T
-import Haskellorls.Class
 import Haskellorls.Config.Link
 import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.WrappedText as WT
 import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
 import qualified System.Posix.Types as Types
+import Witch (From (..))
 
 nodeLinksNumber :: Node.NodeInfo -> Maybe Types.LinkCount
 nodeLinksNumber = Node.linkCount

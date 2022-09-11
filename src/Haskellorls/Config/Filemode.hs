@@ -9,6 +9,7 @@ import Data.Maybe
 import Haskellorls.Config.Filemode.Entry
 import Haskellorls.Config.Filemode.Permission
 import Haskellorls.NodeInfo
+import Witch (From (..))
 import Prelude hiding (lookup)
 
 data Filemode = Filemode

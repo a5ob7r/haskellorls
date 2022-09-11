@@ -10,6 +10,7 @@ import Haskellorls.Config.Filemode
 import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.WrappedText as WT
 import Haskellorls.LsColor
+import Witch (from)
 import Prelude hiding (lookup)
 
 showFilemodeField :: Filemode -> [Attr.Attribute WT.WrappedText]

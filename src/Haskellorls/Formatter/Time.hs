@@ -9,7 +9,8 @@ import qualified Data.Text as T
 import Data.Time.Clock (UTCTime, diffUTCTime, secondsToNominalDiffTime)
 import Data.Time.Format (TimeLocale, formatTime)
 import Data.Time.LocalTime (TimeZone, utcToZonedTime)
-import Haskellorls.Config.Time
+import Haskellorls.Config.Datetime
+import Haskellorls.Config.TimeStyle
 import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.WrappedText as WT
 import qualified Haskellorls.LsColor as Color
@@ -37,7 +38,7 @@ coloredTimeStyleFunc lscolors zone locale time style fTime = [Attr.Other $ WT.wr
     timeAsT = timeStyleFunc zone locale time style fTime
     -- TODO: We have no time type information such as modification, access and
     -- so on at this point. So assume that it is modification time.
-    getter = Color.lookup $ Datatime fTime
+    getter = Color.lookup $ Datetime fTime
 
 -- FIXME: Maybe 'formatTime' is slow a little bit.
 formatFiletime :: [String] -> TimeZone -> TimeLocale -> UTCTime -> UTCTime -> T.Text

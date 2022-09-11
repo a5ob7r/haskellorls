@@ -6,16 +6,17 @@ module Haskellorls.Config.Filemode.Permission
   )
 where
 
-import Haskellorls.Class
+import Haskellorls.Class (Dictionary (..))
 import qualified Haskellorls.System.Posix.Files.ByteString as Files
 import System.Posix.Types (FileMode)
+import Witch (From (..), via)
 import Prelude hiding (lookup)
 
 -- | Permission class with @user@, @group@ and @other@ context.
 type Permission = PermissionContext PermissionClass
 
 instance From Permission Char where
-  from = from @PermissionClass . from
+  from = via @PermissionClass
 
 -- | Permission context with @user@, @group@ and @other@.
 data PermissionContext a = UserPerm a | GroupPerm a | OtherPerm a

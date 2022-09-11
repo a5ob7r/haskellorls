@@ -5,31 +5,29 @@ module Haskellorls.Config
   )
 where
 
-import Control.Applicative
+import Control.Applicative ((<|>))
 import qualified Data.ByteString.Char8 as C
+import Data.Either.Extra (eitherToMaybe)
 import Data.Gettext (gettext)
 import Data.List (isSuffixOf)
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Haskellorls.Config.Environment as Env
-import Haskellorls.Config.Format
-import Haskellorls.Config.Indicator
-import Haskellorls.Config.Listing
-import Haskellorls.Config.Option
-import qualified Haskellorls.Config.Option.Format as Format
-import qualified Haskellorls.Config.Option.Quote as Quote
-import qualified Haskellorls.Config.Option.Size as Size
-import qualified Haskellorls.Config.Option.Sort as Sort
-import qualified Haskellorls.Config.Option.Time as Time
-import Haskellorls.Config.Quote
+import Haskellorls.Config.Format (Format (..))
+import Haskellorls.Config.Indicator (IndicatorStyle (..))
+import Haskellorls.Config.Listing (ListingStyle (..))
+import Haskellorls.Config.Option (Option (..))
+import Haskellorls.Config.Quote (QuotingStyle (..))
 import Haskellorls.Config.Size (BlockSize (..), BlockSizeMod (..))
-import Haskellorls.Config.Sort
-import Haskellorls.Config.Time
+import Haskellorls.Config.Sort (SortType (..))
+import Haskellorls.Config.TimeStyle (TimeStyle (..))
+import Haskellorls.Config.TimeType (TimeType (..))
 import qualified Haskellorls.Config.When as W
-import Haskellorls.Data.Infinitable
+import Haskellorls.Data.Infinitable (Infinitable)
 import System.FilePath.Glob (Pattern, compile)
-import System.FilePath.Posix.ByteString
+import System.FilePath.Posix.ByteString (RawFilePath)
+import Witch (tryFrom)
 import Prelude hiding (lookup, reverse)
 
 data Config = Config
@@ -46,13 +44,13 @@ data Config = Config
     hyperlink :: Bool,
     indicatorStyle :: IndicatorStyle,
     listing :: ListingStyle,
-    fileSize :: BlockSizeMod Size.BlockSize,
-    blockSize :: BlockSizeMod Size.BlockSize,
+    fileSize :: BlockSizeMod BlockSize,
+    blockSize :: BlockSizeMod BlockSize,
     ignoreBackups :: Bool,
     directory :: Bool,
     -- | When this value is 'COMMAS', every column alignment in format is
     -- disabled.
-    format :: Format.Format,
+    format :: Format,
     groupDirectoriesFirst :: Bool,
     dereferenceCommandLine :: Bool,
     dereferenceCommandLineSymlinkToDir :: Bool,
@@ -66,7 +64,7 @@ data Config = Config
     -- option's value. If the value is unset or an invalid value, then it is
     -- ignored. In that case, this value is 'ShellEscape' when the stdout is
     -- connected to a terminl, otherwise 'Literal'.
-    quotingStyle :: Quote.QuotingStyle,
+    quotingStyle :: QuotingStyle,
     -- | Whether or not to show any control (or non-printable) charaster as is,
     -- or to replace them by @?@, when the 'quotingStyle' is 'Literal'. By
     -- default this value is 'True' unless the stdout is connected to a
@@ -74,9 +72,9 @@ data Config = Config
     showControlChars :: Bool,
     reverse :: Bool,
     recursive :: Bool,
-    sort :: Sort.SortType,
-    time :: Time.TimeType,
-    timeStyle :: Time.TimeStyle,
+    sort :: SortType,
+    time :: TimeType,
+    timeStyle :: TimeStyle,
     tabSize :: Maybe Int,
     tree :: Bool,
     width :: Int,
@@ -132,7 +130,7 @@ mkConfig env Option {..} = Config {..}
       Nothing
         | oHumanReadable -> NoMod HumanReadableBI
         | oSi -> NoMod HumanReadableSI
-        | Just filesize <- Env.blockSize env -> fromMaybe (NoMod . BlockSize . maybe 1024 (const 512) $ Env.posixlyCorrect env) $ Size.parseBlockSize filesize
+        | Just filesize <- Env.blockSize env -> fromMaybe (NoMod . BlockSize . maybe 1024 (const 512) $ Env.posixlyCorrect env) . eitherToMaybe $ tryFrom filesize
         | otherwise -> NoMod $ BlockSize 1
     blockSize = case oBlockSize of
       Just blocksize -> blocksize
@@ -140,7 +138,7 @@ mkConfig env Option {..} = Config {..}
         | oHumanReadable -> NoMod HumanReadableBI
         | oSi -> NoMod HumanReadableSI
         | oKibibyte -> NoMod $ BlockSize 1024
-        | Just blocksize <- (Env.blockSize env <|> Env.onlyBlockSize env) >>= Size.parseBlockSize -> blocksize
+        | Just blocksize <- Env.blockSize env <|> Env.onlyBlockSize env >>= eitherToMaybe . tryFrom -> blocksize
         | otherwise -> NoMod . BlockSize . maybe 1024 (const 512) $ Env.posixlyCorrect env
     ignoreBackups = oIgnoreBackups
     format
@@ -170,20 +168,20 @@ mkConfig env Option {..} = Config {..}
       | oLiteral = Literal
       | oQuoteName = C
       | oEscape = Escape
-      | Just style <- (Env.quotingStyle env >>= Quote.parseQuotingStyle . T.pack) <|> oQuotingStyle =
+      | Just style <- oQuotingStyle <|> (Env.quotingStyle env >>= eitherToMaybe . tryFrom) =
           let lookup l r catalog = do
                 (lh, lt) <- TL.uncons $ gettext catalog (C.singleton l)
                 (rh, rt) <- TL.uncons $ gettext catalog (C.singleton r)
                 if TL.null lt && TL.null rt then Just (lh, rh) else Nothing
            in case style of
-                Quote.CLocale l r
-                  | Just catalog <- Env.catalog env, Just (lh, rh) <- lookup l r catalog -> Quote.CLocale lh rh
-                  | maybe False ("UTF-8" `isSuffixOf`) $ Env.lcMessages env -> Quote.CLocale '‘' '’'
-                  | otherwise -> Quote.CLocale '"' '"'
-                Quote.Locale l r
-                  | Just catalog <- Env.catalog env, Just (lh, rh) <- lookup l r catalog -> Quote.Locale lh rh
-                  | maybe False ("UTF-8" `isSuffixOf`) $ Env.lcMessages env -> Quote.Locale '‘' '’'
-                  | maybe False (`elem` ["C", "POSIX"]) $ Env.lcMessages env -> Quote.Locale '\'' '\''
+                CLocale l r
+                  | Just catalog <- Env.catalog env, Just (lh, rh) <- lookup l r catalog -> CLocale lh rh
+                  | maybe False ("UTF-8" `isSuffixOf`) $ Env.lcMessages env -> CLocale '‘' '’'
+                  | otherwise -> CLocale '"' '"'
+                Locale l r
+                  | Just catalog <- Env.catalog env, Just (lh, rh) <- lookup l r catalog -> Locale lh rh
+                  | maybe False ("UTF-8" `isSuffixOf`) $ Env.lcMessages env -> Locale '‘' '’'
+                  | maybe False (`elem` ["C", "POSIX"]) $ Env.lcMessages env -> Locale '\'' '\''
                 _ -> style
       | toTTY = ShellEscape
       | otherwise = Literal
@@ -206,12 +204,12 @@ mkConfig env Option {..} = Config {..}
       | otherwise = oTime
     timeStyle
       | oFullTime = FULLISO
-      | otherwise = fromMaybe LOCALE $ oTimeStyle <|> (Env.timeStyle env >>= Time.parseTimeStyle)
+      | otherwise = fromMaybe LOCALE $ oTimeStyle <|> (Env.timeStyle env >>= eitherToMaybe . tryFrom)
     tabSize = if oTabSeparator then Just oTabSize else Nothing
     tree = oTree
     width = case format of
-      Format.SINGLECOLUMN -> 1
-      Format.LONG -> 1
+      SINGLECOLUMN -> 1
+      LONG -> 1
       _ -> fromMaybe 80 $ oWidth <|> Env.columnSize env
     zero = oZero
     dired = oDired && format == LONG && not tree

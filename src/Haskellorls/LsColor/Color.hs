@@ -15,8 +15,8 @@ import Data.Maybe
 import Data.String
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
-import Haskellorls.Class
 import Haskellorls.Config.Context
+import Haskellorls.Config.Datetime
 import Haskellorls.Config.DeviceNumber
 import Haskellorls.Config.Filemode.Entry
 import Haskellorls.Config.Filemode.Permission
@@ -24,12 +24,12 @@ import Haskellorls.Config.Inode
 import Haskellorls.Config.Link
 import Haskellorls.Config.Ownership
 import Haskellorls.Config.Size
-import Haskellorls.Config.Time
 import Haskellorls.Config.Tree
 import Haskellorls.Humanize.FileSize
 import Haskellorls.LsColor.Config
 import Haskellorls.NodeInfo
 import System.Environment
+import Witch (From (..), via)
 import Prelude hiding (lookup)
 
 lsColors :: IO LsColors
@@ -229,7 +229,7 @@ instance From Sources Sequences where
         _ -> Nothing
 
 instance From T.Text Sequences where
-  from = from @Sources . from
+  from = via @Sources
 
 instance Dictionary Query Sequence Sequences where
   lookup k (Sequences m) = k `M.lookup` m
@@ -449,8 +449,6 @@ instance From Sources ExtraLsColors where
 newtype Sequence = Sequence {unSequence :: T.Text}
   deriving (Eq, Show, IsString, Semigroup, Monoid)
 
-instance From Sequence T.Text where
-  from = unSequence
+instance From Sequence T.Text
 
-instance From T.Text Sequence where
-  from = Sequence
+instance From T.Text Sequence

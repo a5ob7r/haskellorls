@@ -27,7 +27,7 @@ import qualified Data.Text.IO as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as TL
 import GHC.IO.Exception (IOErrorType (NoSuchThing), IOException (ioe_type))
-import Haskellorls.Class
+import Haskellorls.Class (notify)
 import qualified Haskellorls.Config as Config
 import qualified Haskellorls.Config.Format as Format
 import Haskellorls.Config.Listing
@@ -45,6 +45,7 @@ import qualified Haskellorls.Walk.Listing as Listing
 import qualified Haskellorls.Walk.Sort as Sort
 import qualified Haskellorls.Walk.Utils as Walk
 import System.FilePath.Posix.ByteString (RawFilePath, (</>))
+import Witch (from)
 
 data LsConf = LsConf
   { _config :: Config.Config,

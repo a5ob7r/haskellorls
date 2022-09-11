@@ -17,12 +17,12 @@ import qualified Data.Text as T
 import Data.Time.Clock.POSIX
 import Data.Time.Format
 import Data.Time.LocalTime
-import Haskellorls.Class (from, termLength)
+import Haskellorls.Class (termLength)
 import qualified Haskellorls.Config as Config
 import Haskellorls.Config.DeviceNumber
 import qualified Haskellorls.Config.Format as Format
 import qualified Haskellorls.Config.Indicator as Indicator
-import qualified Haskellorls.Config.Time as Time
+import qualified Haskellorls.Config.TimeStyle as TimeStyle
 import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.Context as Context
 import qualified Haskellorls.Formatter.Filemode as Filemode
@@ -43,6 +43,7 @@ import qualified Haskellorls.NodeInfo as Node
 import System.Locale.Current (currentLocale)
 import System.Locale.LocaleConv (localeConv)
 import System.Locale.SetLocale (Category (LC_TIME), setLocale)
+import Witch (from)
 
 data PrinterType
   = FILEINODE
@@ -199,10 +200,10 @@ mkPrinters config = do
         _ -> maybe [Attr.Missing $ from @T.Text "?"] (\t -> [Attr.Other . from . Time.timeStyleFunc timeZone timeLocale currentTime timeStyle $ posixSecondsToUTCTime t]) . Node.fileTime
         where
           timeStyle = case Config.timeStyle config of
-            Time.POSIXFULLISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> Time.FULLISO
-            Time.POSIXLONGISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> Time.LONGISO
-            Time.POSIXISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> Time.ISO
-            Time.POSIXLOCALE | maybe True (`notElem` ["C", "POSIX"]) lcTime -> Time.LOCALE
+            TimeStyle.POSIXFULLISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> TimeStyle.FULLISO
+            TimeStyle.POSIXLONGISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> TimeStyle.LONGISO
+            TimeStyle.POSIXISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> TimeStyle.ISO
+            TimeStyle.POSIXLOCALE | maybe True (`notElem` ["C", "POSIX"]) lcTime -> TimeStyle.LOCALE
             style -> style
 
       -- TODO: Should use colored icon? But, must consider charactor size and background color.

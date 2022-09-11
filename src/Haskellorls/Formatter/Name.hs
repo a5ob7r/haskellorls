@@ -5,13 +5,13 @@ module Haskellorls.Formatter.Name
 where
 
 import qualified Data.Text.Encoding as T
-import Haskellorls.Class
 import qualified Haskellorls.Config as Config
 import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.WrappedText as WT
 import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
 import System.FilePath.Posix.ByteString
+import Witch (From (..))
 
 colorizedNodeName :: Config.Config -> Color.LsColors -> Node.NodeInfo -> Attr.Attribute WT.WrappedText
 colorizedNodeName config lscolors node = Attr.Name $ WT.WrappedText (prefix' <> prefix) t (suffix <> suffix')

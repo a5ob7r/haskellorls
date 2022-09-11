@@ -5,7 +5,6 @@ module Haskellorls.Formatter.SymbolicLink
 where
 
 import qualified Data.Text as T
-import Haskellorls.Class (from)
 import qualified Haskellorls.Config as Config
 import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.Name as Name
@@ -13,6 +12,7 @@ import qualified Haskellorls.Formatter.Quote as Quote
 import qualified Haskellorls.Formatter.WrappedText as WT
 import qualified Haskellorls.LsColor.Color as Color
 import qualified Haskellorls.NodeInfo as Node
+import Witch (from)
 
 linkName :: Config.Config -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 linkName config node = case Node.getNodeLinkInfo node of

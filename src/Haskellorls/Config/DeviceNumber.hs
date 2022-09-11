@@ -5,9 +5,9 @@ module Haskellorls.Config.DeviceNumber
 where
 
 import qualified Data.Text as T
-import Haskellorls.Class
 import Haskellorls.System.Posix.Files.ByteString
 import System.Posix.Types
+import Witch (From (..))
 
 -- | The major ID of a device.
 newtype MajorID = MajorID {unMajorID :: DeviceID}

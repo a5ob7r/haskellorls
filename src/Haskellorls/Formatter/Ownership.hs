@@ -22,6 +22,7 @@ import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
 import qualified System.Posix.Types as Types
 import qualified System.Posix.User as User
+import Witch (From (from))
 import Prelude hiding (lookup)
 
 newtype UserIdSubstTable = UserIdSubstTable (IM.IntMap T.Text)

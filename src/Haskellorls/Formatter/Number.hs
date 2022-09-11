@@ -9,9 +9,9 @@ import Data.Bifunctor (bimap)
 import Data.Char (isDigit)
 import Data.Ix (inRange)
 import Data.List.Extra (chunksOf, intercalate)
-import Haskellorls.Class (From (..))
 import qualified System.Locale.LocaleConv as LC
 import Text.Read (readMaybe)
+import Witch (From (..))
 
 -- | A configuration for number format.
 data Config = Config

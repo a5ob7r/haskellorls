@@ -173,7 +173,7 @@ where
 import Data.List (foldl')
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
-import Haskellorls.Class
+import Haskellorls.Class (lookup)
 import qualified Haskellorls.Config as Config
 import Haskellorls.Config.DeviceNumber
 import Haskellorls.Config.Size
@@ -184,6 +184,7 @@ import Haskellorls.Humanize.FileSize
 import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
 import qualified System.Posix.Types as Types
+import Witch (from)
 import Prelude hiding (lookup)
 
 data FileSizeComponent = FileSizeComponent

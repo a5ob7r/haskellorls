@@ -9,8 +9,9 @@ module Haskellorls.Formatter.WrappedText
 where
 
 import qualified Data.Text as T
-import Haskellorls.Class
+import Haskellorls.Class (TerminalLength (..))
 import qualified Haskellorls.LsColor.Config as Config
+import Witch (From (..))
 
 -- | A 'Text', which are surrounded with two 'Text's. We assume that these
 -- surround texts are invisible on a terminal, these usually are valid SGR

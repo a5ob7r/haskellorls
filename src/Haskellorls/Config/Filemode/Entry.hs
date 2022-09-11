@@ -1,11 +1,7 @@
-module Haskellorls.Config.Filemode.Entry
-  ( EntryType (..),
-    module Haskellorls.Class,
-  )
-where
+module Haskellorls.Config.Filemode.Entry (EntryType (..)) where
 
-import Haskellorls.Class
 import Haskellorls.NodeInfo
+import Witch (From (..))
 
 -- TODO: some kinds of devices are not implemented.
 data EntryType
