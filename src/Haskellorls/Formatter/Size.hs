@@ -191,7 +191,7 @@ data FileSizeComponent = FileSizeComponent
   { fileSizeRawNumber :: Types.FileOffset,
     fileSizeNumber :: T.Text,
     fileSizeUnit :: T.Text,
-    fileSizeKibi :: Bool
+    fileSizeScale :: Scale () ()
   }
 
 toWrappedText :: FileSizeComponent -> [Attr.Attribute WT.WrappedText]
@@ -281,55 +281,55 @@ fileSize' nconfig blocksize offset =
                 ISize i -> show i
                 DSize d -> show d
            in (sz, T.pack . format)
-      humanize humanizer = case humanizer offset of
-        BI (NoScale size) -> FileSizeComponent offset (toText size) "" True
-        BI (Kilo size) -> FileSizeComponent offset (toText size) "K" True
-        BI (Mega size) -> FileSizeComponent offset (toText size) "M" True
-        BI (Giga size) -> FileSizeComponent offset (toText size) "G" True
-        BI (Tera size) -> FileSizeComponent offset (toText size) "T" True
-        BI (Peta size) -> FileSizeComponent offset (toText size) "P" True
-        BI (Exa size) -> FileSizeComponent offset (toText size) "E" True
-        BI (Zetta size) -> FileSizeComponent offset (toText size) "Z" True
-        BI (Yotta size) -> FileSizeComponent offset (toText size) "Y" True
-        SI (NoScale size) -> FileSizeComponent offset (toText size) "" True
-        -- NOTE: Both or lowercased "k" are intended for compatibility with GNU ls.
-        SI (Kilo size) -> FileSizeComponent offset (toText size) "k" True
-        SI (Mega size) -> FileSizeComponent offset (toText size) "M" True
-        SI (Giga size) -> FileSizeComponent offset (toText size) "G" True
-        SI (Tera size) -> FileSizeComponent offset (toText size) "T" True
-        SI (Peta size) -> FileSizeComponent offset (toText size) "P" True
-        SI (Exa size) -> FileSizeComponent offset (toText size) "E" True
-        SI (Zetta size) -> FileSizeComponent offset (toText size) "Z" True
-        SI (Yotta size) -> FileSizeComponent offset (toText size) "Y" True
    in case bsize of
-        HumanReadableSI -> humanize humanizeSI
-        HumanReadableBI -> humanize humanizeBI
-        KiloKibi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (1 :: Int)) "K" True
-        KiloKibii -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (1 :: Int)) "KiB" True
+        HumanReadableSI -> case humanizeSI offset of
+          NoScale size -> FileSizeComponent offset (toText size) "" (NoScale ())
+          -- NOTE: This lowercased @k@ is intended for compatibility with GNU ls.
+          Kilo size -> FileSizeComponent offset (toText size) "k" (Kilo ())
+          Mega size -> FileSizeComponent offset (toText size) "M" (Mega ())
+          Giga size -> FileSizeComponent offset (toText size) "G" (Giga ())
+          Tera size -> FileSizeComponent offset (toText size) "T" (Tera ())
+          Peta size -> FileSizeComponent offset (toText size) "P" (Peta ())
+          Exa size -> FileSizeComponent offset (toText size) "E" (Exa ())
+          Zetta size -> FileSizeComponent offset (toText size) "Z" (Zetta ())
+          Yotta size -> FileSizeComponent offset (toText size) "Y" (Yotta ())
+        HumanReadableBI -> case humanizeBI offset of
+          NoScale size -> FileSizeComponent offset (toText size) "" (NoScale ())
+          Kilo size -> FileSizeComponent offset (toText size) "K" (Kilo ())
+          Mega size -> FileSizeComponent offset (toText size) "M" (Mega ())
+          Giga size -> FileSizeComponent offset (toText size) "G" (Giga ())
+          Tera size -> FileSizeComponent offset (toText size) "T" (Tera ())
+          Peta size -> FileSizeComponent offset (toText size) "P" (Peta ())
+          Exa size -> FileSizeComponent offset (toText size) "E" (Exa ())
+          Zetta size -> FileSizeComponent offset (toText size) "Z" (Zetta ())
+          Yotta size -> FileSizeComponent offset (toText size) "Y" (Yotta ())
+        KiloKibi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (1 :: Int)) "K" (Kilo ())
+        KiloKibii -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (1 :: Int)) "KiB" (Kilo ())
         -- NOTE: This lowercased "k" is intended for compatibility with GNU ls.
-        KiloSi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1000 ^ (1 :: Int)) "kB" True
-        MegaKibi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (2 :: Int)) "M" True
-        MegaKibii -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (2 :: Int)) "MiB" True
-        MegaSi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1000 ^ (2 :: Int)) "MB" True
-        GigaKibi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (3 :: Int)) "G" True
-        GigaKibii -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (3 :: Int)) "GiB" True
-        GigaSi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1000 ^ (3 :: Int)) "GB" True
-        TeraKibi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (4 :: Int)) "T" True
-        TeraKibii -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (4 :: Int)) "TiB" True
-        TeraSi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1000 ^ (4 :: Int)) "TB" True
-        PetaKibi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (5 :: Int)) "P" True
-        PetaKibii -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (5 :: Int)) "PiB" True
-        PetaSi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1000 ^ (5 :: Int)) "PB" True
-        ExaKibi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (6 :: Int)) "E" True
-        ExaKibii -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (6 :: Int)) "EiB" True
-        ExaSi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1000 ^ (6 :: Int)) "EB" True
-        ZettaKibi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (7 :: Int)) "Z" True
-        ZettaKibii -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (7 :: Int)) "ZiB" True
-        ZettaSi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1000 ^ (7 :: Int)) "ZB" True
-        YottaKibi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (8 :: Int)) "Y" True
-        YottaKibii -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (8 :: Int)) "YiB" True
-        YottaSi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1000 ^ (8 :: Int)) "YB" True
-        BlockSize n -> FileSizeComponent offset (toText . ISize $ fromIntegral offset `ceilingDiv` n) "" True
+        KiloSi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1000 ^ (1 :: Int)) "kB" (Kilo ())
+        MegaKibi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (2 :: Int)) "M" (Mega ())
+        MegaKibii -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (2 :: Int)) "MiB" (Mega ())
+        MegaSi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1000 ^ (2 :: Int)) "MB" (Mega ())
+        GigaKibi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (3 :: Int)) "G" (Giga ())
+        GigaKibii -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (3 :: Int)) "GiB" (Giga ())
+        GigaSi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1000 ^ (3 :: Int)) "GB" (Giga ())
+        TeraKibi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (4 :: Int)) "T" (Tera ())
+        TeraKibii -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (4 :: Int)) "TiB" (Tera ())
+        TeraSi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1000 ^ (4 :: Int)) "TB" (Tera ())
+        PetaKibi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (5 :: Int)) "P" (Peta ())
+        PetaKibii -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (5 :: Int)) "PiB" (Peta ())
+        PetaSi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1000 ^ (5 :: Int)) "PB" (Peta ())
+        ExaKibi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (6 :: Int)) "E" (Exa ())
+        ExaKibii -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (6 :: Int)) "EiB" (Exa ())
+        ExaSi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1000 ^ (6 :: Int)) "EB" (Exa ())
+        ZettaKibi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (7 :: Int)) "Z" (Zetta ())
+        ZettaKibii -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (7 :: Int)) "ZiB" (Zetta ())
+        ZettaSi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1000 ^ (7 :: Int)) "ZB" (Zetta ())
+        YottaKibi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (8 :: Int)) "Y" (Yotta ())
+        YottaKibii -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1024 ^ (8 :: Int)) "YiB" (Yotta ())
+        YottaSi -> FileSizeComponent offset (toText . ISize . ceiling @Double $ fromIntegral offset / 1000 ^ (8 :: Int)) "YB" (Yotta ())
+        -- TODO: Should change the scale dynamically?
+        BlockSize n -> FileSizeComponent offset (toText . ISize $ fromIntegral offset `ceilingDiv` n) "" (NoScale ())
 
 -- | A node file size formatter for the @no@ parameter of the @LS_COLORS@.
 normalColoredFileSize :: (Int, Int) -> Color.LsColors -> Config.Config -> Number.Config -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
@@ -352,18 +352,9 @@ coloredFileSize widths lscolors config nconfig node = case Node.nodeType node of
 
 coloredFileSize' :: Color.LsColors -> FileSizeComponent -> [Attr.Attribute WT.WrappedText]
 coloredFileSize' lscolors FileSizeComponent {..} =
-  [ Attr.Other $ WT.wrap lscolors sizeSelector fileSizeNumber,
-    Attr.Other $ WT.wrap lscolors unitSelector fileSizeUnit
+  [ Attr.Other $ WT.wrap lscolors (Color.lookup $ SizeNumberScale fileSizeScale) fileSizeNumber,
+    Attr.Other $ WT.wrap lscolors (Color.lookup $ SizeUnitScale fileSizeScale) fileSizeUnit
   ]
-  where
-    sizeSelector = Color.lookup . SizeNumberScale $ unwrap bScale
-    unitSelector = Color.lookup . SizeUnitScale $ unwrap bScale
-    bScale
-      | fileSizeKibi = humanizeBI fileSizeRawNumber
-      | otherwise = humanizeSI fileSizeRawNumber
-    unwrap = \case
-      BI scaled -> scaled
-      SI scaled -> scaled
 
 deviceNumbers :: (Int, Int) -> Maybe Color.LsColors -> Config.Config -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 deviceNumbers widths@(majorWidth, minorWidth) lscolors config node = case lscolors of

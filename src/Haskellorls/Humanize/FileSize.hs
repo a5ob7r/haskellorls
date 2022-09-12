@@ -30,31 +30,28 @@ module Haskellorls.Humanize.FileSize
   ( humanizeBI,
     humanizeSI,
     Scale (..),
-    Base (..),
     FileSize (..),
   )
 where
 
+-- | The scale base is 1024.
+data BI
+
+-- | The scale base is 1000.
+data SI
+
 -- | A modifier to indicate how much scaled the value is. This doesn't provide
 -- base of scale, so somehow users should do it.
-data Scale a
-  = NoScale a
-  | Kilo a
-  | Mega a
-  | Giga a
-  | Tera a
-  | Peta a
-  | Exa a
-  | Zetta a
-  | Yotta a
-  deriving (Show, Functor)
-
--- | A modifier to indicate what the scale base is.
-data Base a
-  = -- | The scale base is 1024.
-    BI a
-  | -- | The scale base is 1000.
-    SI a
+data Scale a b
+  = NoScale b
+  | Kilo b
+  | Mega b
+  | Giga b
+  | Tera b
+  | Peta b
+  | Exa b
+  | Zetta b
+  | Yotta b
   deriving (Show, Functor)
 
 -- | Human readable file size.
@@ -79,15 +76,15 @@ ceiling' d = fromIntegral @Int (ceiling @Double (d * 10)) / 10
 
 -- | Convert a integral number into human readable format using a binary
 -- prefix, which uses powers of 1024.
-humanizeBI :: Integral a => a -> Base (Scale FileSize)
-humanizeBI n = BI $ n `humanizeBy` 1024
+humanizeBI :: Integral a => a -> Scale BI FileSize
+humanizeBI n = n `humanizeBy` 1024
 
 -- | Convert a integral number into human readable format using a SI prefix,
 -- which uses powers of 1000 instead of 1024.
-humanizeSI :: Integral a => a -> Base (Scale FileSize)
-humanizeSI n = SI $ n `humanizeBy` 1000
+humanizeSI :: Integral a => a -> Scale SI FileSize
+humanizeSI n = n `humanizeBy` 1000
 
-humanizeBy :: Integral a => a -> a -> Scale FileSize
+humanizeBy :: Integral a => a -> a -> Scale b FileSize
 humanizeBy n scale
   | n <= scale ^ (0 :: Int) * (scale - 1) = NoScale . ISize $ fromIntegral n
   | n <= scale ^ (1 :: Int) * (scale - 1) = let r = fromIntegral n / fromIntegral scale ^ (1 :: Int) in Kilo $ if r > 9 then ISize $ ceiling r else DSize $ ceiling' r

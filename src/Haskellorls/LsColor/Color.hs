@@ -146,10 +146,10 @@ instance Dictionary (GroupContext a) Sequence LsColors where
 instance Dictionary FileContext Sequence LsColors where
   lookup c (Options {..}) = extension >>= lookup c
 
-instance Dictionary (SizeNumberScale a) Sequence LsColors where
+instance Dictionary (SizeNumberScale a b) Sequence LsColors where
   lookup s (Options {..}) = extension >>= lookup s
 
-instance Dictionary (SizeUnitScale a) Sequence LsColors where
+instance Dictionary (SizeUnitScale a b) Sequence LsColors where
   lookup s (Options {..}) = extension >>= lookup s
 
 instance Dictionary MajorID Sequence LsColors where
@@ -194,10 +194,10 @@ instance Dictionary (GroupContext a) Sequence Extensions where
 instance Dictionary FileContext Sequence Extensions where
   lookup c (Extensions {..}) = c `lookup` extraLsColors
 
-instance Dictionary (SizeNumberScale a) Sequence Extensions where
+instance Dictionary (SizeNumberScale a b) Sequence Extensions where
   lookup s (Extensions {..}) = s `lookup` extraLsColors
 
-instance Dictionary (SizeUnitScale a) Sequence Extensions where
+instance Dictionary (SizeUnitScale a b) Sequence Extensions where
   lookup s (Extensions {..}) = s `lookup` extraLsColors
 
 instance Dictionary MajorID Sequence Extensions where
@@ -303,7 +303,7 @@ instance Dictionary (GroupContext a) b (ExtraOptions b) where
 instance Dictionary FileContext a (ExtraOptions a) where
   lookup _ (ExtraOptions {..}) = fileContext
 
-instance Dictionary (SizeNumberScale a) b (ExtraOptions b) where
+instance Dictionary (SizeNumberScale a b) c (ExtraOptions c) where
   lookup (SizeNumberScale s) (ExtraOptions {..}) = case s of
     NoScale _ -> fileSizeNumber
     Kilo _ -> fileSizeNumberKilo
@@ -315,7 +315,7 @@ instance Dictionary (SizeNumberScale a) b (ExtraOptions b) where
     Zetta _ -> fileSizeNumberZetta
     Yotta _ -> fileSizeNumberYotta
 
-instance Dictionary (SizeUnitScale a) b (ExtraOptions b) where
+instance Dictionary (SizeUnitScale a b) c (ExtraOptions c) where
   lookup (SizeUnitScale s) (ExtraOptions {..}) = case s of
     NoScale _ -> fileSizeUnitByte
     Kilo _ -> fileSizeUnitKilo

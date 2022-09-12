@@ -44,9 +44,9 @@ instance Show BlockSizeException where
 
 instance Exception BlockSizeException
 
-newtype SizeNumberScale a = SizeNumberScale {unSizeNumberScale :: Scale a}
+newtype SizeNumberScale a b = SizeNumberScale {unSizeNumberScale :: Scale a b}
 
-newtype SizeUnitScale a = SizeUnitScale {unSizeUnitScale :: Scale a}
+newtype SizeUnitScale a b = SizeUnitScale {unSizeUnitScale :: Scale a b}
 
 -- | A modifier for formats of block size.
 data BlockSizeMod a
