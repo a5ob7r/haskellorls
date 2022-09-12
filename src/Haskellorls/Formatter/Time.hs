@@ -36,8 +36,6 @@ coloredTimeStyleFunc :: Color.LsColors -> TimeZone -> TimeLocale -> UTCTime -> T
 coloredTimeStyleFunc lscolors zone locale time style fTime = [Attr.Other $ WT.wrap lscolors getter timeAsT]
   where
     timeAsT = timeStyleFunc zone locale time style fTime
-    -- TODO: We have no time type information such as modification, access and
-    -- so on at this point. So assume that it is modification time.
     getter = Color.lookup $ Datetime fTime
 
 -- FIXME: Maybe 'formatTime' is slow a little bit.
