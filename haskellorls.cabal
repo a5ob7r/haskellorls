@@ -70,7 +70,6 @@ library haskellorls-internal
     Haskellorls.Formatter.Context
     Haskellorls.Formatter.Filemode
     Haskellorls.Formatter.Indicator
-    Haskellorls.Formatter.Inode
     Haskellorls.Formatter.Layout.Grid
     Haskellorls.Formatter.Link
     Haskellorls.Formatter.Name

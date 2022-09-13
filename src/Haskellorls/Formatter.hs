@@ -22,11 +22,11 @@ import Haskellorls.Config.DeviceNumber
 import Haskellorls.Config.Filetime (Filetime (..))
 import qualified Haskellorls.Config.Format as Format
 import qualified Haskellorls.Config.Indicator as Indicator
+import Haskellorls.Config.Inode (Inode (..))
 import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.Context as Context
 import qualified Haskellorls.Formatter.Filemode as Filemode
 import qualified Haskellorls.Formatter.Indicator as Indicator
-import qualified Haskellorls.Formatter.Inode as Inode
 import qualified Haskellorls.Formatter.Link as Link
 import qualified Haskellorls.Formatter.Name as Name
 import qualified Haskellorls.Formatter.Ownership as Ownership
@@ -147,9 +147,14 @@ mkPrinters config = do
   let blockSizeHeaderPrinter node = [Attr.Other . from . T.concat . ("total " :) . map (from . Attr.unwrap) . Size.toTotalBlockSize config nconfig $ fromMaybe 0 . Node.fileSize <$> node]
 
       fileInodePrinter = case Config.colorize config of
-        Just True -> Inode.nodeInodeNumberWithColor lscolors
-        Just False -> Inode.nodeInodeNumberWithNormalColor lscolors
-        _ -> (\t -> [Attr.Other $ from t]) . T.pack . show . Inode.nodeInodeNumber
+        Just True -> \node ->
+          let inode = maybe (Attr.Missing "?") (Attr.Other . T.pack . show) $ Node.fileID node
+              getter = maybe (const Nothing) (Color.lookup . Inode) $ Node.fileID node
+           in [WT.wrap lscolors getter <$> inode]
+        Just False -> \node ->
+          let inode = maybe (Attr.Missing "?") (Attr.Other . T.pack . show) $ Node.fileID node
+           in [WT.wrap lscolors Color.normal <$> inode]
+        _ -> maybe [Attr.Missing $ from @T.Text "?"] (\inode -> [Attr.Other . from . T.pack $ show inode]) . Node.fileID
 
       fileBlockPrinter = case Config.colorize config of
         Just True -> Size.coloredFileBlockSize lscolors config nconfig
