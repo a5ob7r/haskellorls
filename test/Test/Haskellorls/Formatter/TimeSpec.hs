@@ -4,8 +4,8 @@ module Test.Haskellorls.Formatter.TimeSpec (spec) where
 
 import Data.Time
 import Data.Time.Calendar.OrdinalDate
-import Haskellorls.Formatter.Time
 import Haskellorls.Config.TimeStyle
+import Haskellorls.Formatter.Time
 import Test.Syd
 
 spec :: Spec
