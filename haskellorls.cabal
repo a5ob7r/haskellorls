@@ -43,12 +43,12 @@ library haskellorls-internal
     Haskellorls.Class
     Haskellorls.Config
     Haskellorls.Config.Context
-    Haskellorls.Config.Datetime
     Haskellorls.Config.DeviceNumber
     Haskellorls.Config.Environment
     Haskellorls.Config.Filemode
     Haskellorls.Config.Filemode.Entry
     Haskellorls.Config.Filemode.Permission
+    Haskellorls.Config.Filetime
     Haskellorls.Config.Format
     Haskellorls.Config.Indicator
     Haskellorls.Config.Inode
@@ -170,6 +170,7 @@ test-suite test
     , haskellorls-internal
     , QuickCheck            ^>=2.14.2
     , sydtest               ^>=0.11.0.0
+    , time
     , witch
 
   other-modules:
@@ -177,6 +178,7 @@ test-suite test
     Test.Haskellorls.Config.TimeStyleSpec
     Test.Haskellorls.Data.InfinitableSpec
     Test.Haskellorls.Formatter.NumberSpec
+    Test.Haskellorls.Formatter.TimeSpec
     Test.Haskellorls.Humanize.FileSizeSpec
 
   build-tool-depends: sydtest-discover:sydtest-discover -any

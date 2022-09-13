@@ -16,10 +16,10 @@ import Data.String
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import Haskellorls.Config.Context
-import Haskellorls.Config.Datetime
 import Haskellorls.Config.DeviceNumber
 import Haskellorls.Config.Filemode.Entry
 import Haskellorls.Config.Filemode.Permission
+import Haskellorls.Config.Filetime
 import Haskellorls.Config.Inode
 import Haskellorls.Config.Link
 import Haskellorls.Config.Ownership
@@ -158,8 +158,8 @@ instance Dictionary MajorID Sequence LsColors where
 instance Dictionary MinorID Sequence LsColors where
   lookup s Options {..} = extension >>= lookup s
 
-instance Dictionary Datetime Sequence LsColors where
-  lookup d (Options {..}) = extension >>= lookup d
+instance Dictionary (Filetime a) Sequence LsColors where
+  lookup t (Options {..}) = extension >>= lookup t
 
 instance Dictionary TreeNodePosition Sequence LsColors where
   lookup t (Options {..}) = extension >>= lookup t
@@ -206,8 +206,8 @@ instance Dictionary MajorID Sequence Extensions where
 instance Dictionary MinorID Sequence Extensions where
   lookup s Extensions {..} = s `lookup` extraLsColors
 
-instance Dictionary Datetime Sequence Extensions where
-  lookup d (Extensions {..}) = d `lookup` extraLsColors
+instance Dictionary (Filetime a) Sequence Extensions where
+  lookup t (Extensions {..}) = t `lookup` extraLsColors
 
 instance Dictionary TreeNodePosition Sequence Extensions where
   lookup t (Extensions {..}) = t `lookup` extraLsColors
@@ -333,7 +333,7 @@ instance Dictionary MajorID a (ExtraOptions a) where
 instance Dictionary MinorID a (ExtraOptions a) where
   lookup _ ExtraOptions {..} = deviceMinorID
 
-instance Dictionary Datetime a (ExtraOptions a) where
+instance Dictionary (Filetime a) b (ExtraOptions b) where
   lookup _ (ExtraOptions {..}) = date
 
 instance Dictionary TreeNodePosition a (ExtraOptions a) where

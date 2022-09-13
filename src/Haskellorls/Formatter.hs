@@ -14,12 +14,12 @@ import Data.Functor ((<&>))
 import Data.List (intercalate, transpose)
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
-import Data.Time.Clock.POSIX
-import Data.Time.Format
-import Data.Time.LocalTime
+import Data.Time (defaultTimeLocale, getCurrentTime, getCurrentTimeZone)
+import Data.Time.Clock.POSIX (posixSecondsToUTCTime)
 import Haskellorls.Class (termLength)
 import qualified Haskellorls.Config as Config
 import Haskellorls.Config.DeviceNumber
+import Haskellorls.Config.Filetime (Filetime (..))
 import qualified Haskellorls.Config.Format as Format
 import qualified Haskellorls.Config.Indicator as Indicator
 import qualified Haskellorls.Formatter.Attribute as Attr
@@ -191,12 +191,13 @@ mkPrinters config = do
         Just False -> \w -> Size.normalColoredFileSize w lscolors config nconfig
         _ -> (\n -> Size.fileSize n config nconfig)
 
-      fileTimePrinter = case Config.colorize config of
-        Just True -> maybe [Attr.Missing $ from @T.Text "?"] (Time.coloredTimeStyleFunc lscolors timeZone timeLocale currentTime timeStyle . posixSecondsToUTCTime) . Node.fileTime
-        Just False -> maybe [Attr.Missing $ from @T.Text "?"] (Time.normalColoredTimeStyleFunc lscolors timeZone timeLocale currentTime timeStyle . posixSecondsToUTCTime) . Node.fileTime
-        _ -> maybe [Attr.Missing $ from @T.Text "?"] (\t -> [Attr.Other . from . Time.timeStyleFunc timeZone timeLocale currentTime timeStyle $ posixSecondsToUTCTime t]) . Node.fileTime
-        where
-          timeStyle = from (Config.timeStyle config, lctime)
+      fileTimePrinter =
+        let timeStyle = from (Config.timeStyle config, lctime)
+            fmtTime = from . Time.formatFiletime timeZone timeLocale currentTime timeStyle . posixSecondsToUTCTime
+         in case Config.colorize config of
+              Just True -> maybe [Attr.Missing $ from @T.Text "?"] (\t -> [Attr.Other . WT.wrap lscolors (Color.lookup $ Filetime ()) $ fmtTime t]) . Node.fileTime
+              Just False -> maybe [Attr.Missing $ from @T.Text "?"] (\t -> [Attr.Other . WT.wrap lscolors Color.normal $ fmtTime t]) . Node.fileTime
+              _ -> maybe [Attr.Missing $ from @T.Text "?"] (\t -> [Attr.Other . from $ fmtTime t]) . Node.fileTime
 
       -- TODO: Should use colored icon? But, must consider charactor size and background color.
       -- e.g. $ echo -e '\e[48;5;196;38;5;232;1m\e[0m'

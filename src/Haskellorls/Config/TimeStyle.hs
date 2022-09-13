@@ -2,12 +2,8 @@ module Haskellorls.Config.TimeStyle (TimeStyle (..), TimeStyleException (..)) wh
 
 import Control.Exception.Safe (Exception, toException)
 import Data.List.Extra (intercalate, split)
-import Data.Time.Clock
 import Haskellorls.System.Locale (LcTime (..))
 import Witch (From (..), TryFrom (..), TryFromException (..))
-
-newtype Datetime = Datatime UTCTime
-  deriving (Eq, Ord, Show)
 
 data TimeStyle
   = FULLISO
