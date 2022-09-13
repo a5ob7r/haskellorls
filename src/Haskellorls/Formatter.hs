@@ -22,7 +22,6 @@ import qualified Haskellorls.Config as Config
 import Haskellorls.Config.DeviceNumber
 import qualified Haskellorls.Config.Format as Format
 import qualified Haskellorls.Config.Indicator as Indicator
-import qualified Haskellorls.Config.TimeStyle as TimeStyle
 import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.Context as Context
 import qualified Haskellorls.Formatter.Filemode as Filemode
@@ -40,9 +39,9 @@ import qualified Haskellorls.Formatter.Tree as Tree
 import qualified Haskellorls.Formatter.WrappedText as WT
 import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
+import Haskellorls.System.Locale (LcTime (..), lcTime)
 import System.Locale.Current (currentLocale)
 import System.Locale.LocaleConv (localeConv)
-import System.Locale.SetLocale (Category (LC_TIME), setLocale)
 import Witch (from)
 
 data PrinterType
@@ -142,14 +141,12 @@ mkPrinters config = do
   userInfo <- Ownership.userInfo
   currentTime <- getCurrentTime
   timeZone <- getCurrentTimeZone
-  lcTime <-
-    if Config.format config == Format.LONG
-      then setLocale LC_TIME Nothing
-      else return Nothing
-  timeLocale <-
-    if Config.format config == Format.LONG
-      then currentLocale
-      else return defaultTimeLocale
+  lctime <- case Config.format config of
+    Format.LONG -> lcTime
+    _ -> return $ LcTime Nothing
+  timeLocale <- case Config.format config of
+    Format.LONG -> currentLocale
+    _ -> return defaultTimeLocale
   nconfig <- from <$> localeConv
 
   let blockSizeHeaderPrinter node = [Attr.Other . from . T.concat . ("total " :) . map (from . Attr.unwrap) . Size.toTotalBlockSize config nconfig $ fromMaybe 0 . Node.fileSize <$> node]
@@ -199,12 +196,7 @@ mkPrinters config = do
         Just False -> maybe [Attr.Missing $ from @T.Text "?"] (Time.normalColoredTimeStyleFunc lscolors timeZone timeLocale currentTime timeStyle . posixSecondsToUTCTime) . Node.fileTime
         _ -> maybe [Attr.Missing $ from @T.Text "?"] (\t -> [Attr.Other . from . Time.timeStyleFunc timeZone timeLocale currentTime timeStyle $ posixSecondsToUTCTime t]) . Node.fileTime
         where
-          timeStyle = case Config.timeStyle config of
-            TimeStyle.POSIXFULLISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> TimeStyle.FULLISO
-            TimeStyle.POSIXLONGISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> TimeStyle.LONGISO
-            TimeStyle.POSIXISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> TimeStyle.ISO
-            TimeStyle.POSIXLOCALE | maybe True (`notElem` ["C", "POSIX"]) lcTime -> TimeStyle.LOCALE
-            style -> style
+          timeStyle = from (Config.timeStyle config, lctime)
 
       -- TODO: Should use colored icon? But, must consider charactor size and background color.
       -- e.g. $ echo -e '\e[48;5;196;38;5;232;1m\e[0m'

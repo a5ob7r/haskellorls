@@ -3,7 +3,8 @@ module Haskellorls.Config.TimeStyle (TimeStyle (..), TimeStyleException (..)) wh
 import Control.Exception.Safe (Exception, toException)
 import Data.List.Extra (intercalate, split)
 import Data.Time.Clock
-import Witch (TryFrom (..), TryFromException (..))
+import Haskellorls.System.Locale (LcTime (..))
+import Witch (From (..), TryFrom (..), TryFromException (..))
 
 newtype Datetime = Datatime UTCTime
   deriving (Eq, Ord, Show)
@@ -18,6 +19,7 @@ data TimeStyle
   | LOCALE
   | POSIXLOCALE
   | FORMAT [String]
+  deriving (Eq, Show)
 
 data TimeStyleException = InvalidFormat
 
@@ -49,3 +51,11 @@ instance TryFrom String TimeStyle where
     "posix-locale" -> Right POSIXLOCALE
     '+' : s -> Right . FORMAT $ split (== '\n') s
     s -> Left . TryFromException s . Just $ toException InvalidFormat
+
+instance From (TimeStyle, LcTime) TimeStyle where
+  from (style, LcTime lcTime) = case style of
+    POSIXFULLISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> FULLISO
+    POSIXLONGISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> LONGISO
+    POSIXISO | maybe True (`notElem` ["C", "POSIX"]) lcTime -> ISO
+    POSIXLOCALE | maybe True (`notElem` ["C", "POSIX"]) lcTime -> LOCALE
+    sty -> sty
