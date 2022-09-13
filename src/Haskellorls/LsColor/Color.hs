@@ -143,7 +143,7 @@ instance Dictionary (UserContext a) Sequence LsColors where
 instance Dictionary (GroupContext a) Sequence LsColors where
   lookup g (Options {..}) = extension >>= lookup g
 
-instance Dictionary FileContext Sequence LsColors where
+instance Dictionary (FileContext a) Sequence LsColors where
   lookup c (Options {..}) = extension >>= lookup c
 
 instance Dictionary (SizeNumberScale a b) Sequence LsColors where
@@ -191,7 +191,7 @@ instance Dictionary (UserContext a) Sequence Extensions where
 instance Dictionary (GroupContext a) Sequence Extensions where
   lookup g (Extensions {..}) = g `lookup` extraLsColors
 
-instance Dictionary FileContext Sequence Extensions where
+instance Dictionary (FileContext a) Sequence Extensions where
   lookup c (Extensions {..}) = c `lookup` extraLsColors
 
 instance Dictionary (SizeNumberScale a b) Sequence Extensions where
@@ -300,7 +300,7 @@ instance Dictionary (GroupContext a) b (ExtraOptions b) where
     Belongs _ -> groupYouBelongsTo
     NotBelongs _ -> groupYouNotBelongsTo
 
-instance Dictionary FileContext a (ExtraOptions a) where
+instance Dictionary (FileContext a) b (ExtraOptions b) where
   lookup _ (ExtraOptions {..}) = fileContext
 
 instance Dictionary (SizeNumberScale a b) c (ExtraOptions c) where

@@ -67,7 +67,6 @@ library haskellorls-internal
     Haskellorls.Data.Infinitable
     Haskellorls.Formatter
     Haskellorls.Formatter.Attribute
-    Haskellorls.Formatter.Context
     Haskellorls.Formatter.Filemode
     Haskellorls.Formatter.Indicator
     Haskellorls.Formatter.Layout.Grid

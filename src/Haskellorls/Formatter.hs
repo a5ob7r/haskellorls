@@ -18,6 +18,7 @@ import Data.Time (defaultTimeLocale, getCurrentTime, getCurrentTimeZone)
 import Data.Time.Clock.POSIX (posixSecondsToUTCTime)
 import Haskellorls.Class (termLength)
 import qualified Haskellorls.Config as Config
+import Haskellorls.Config.Context (FileContext (..))
 import Haskellorls.Config.DeviceNumber
 import Haskellorls.Config.Filetime (Filetime (..))
 import qualified Haskellorls.Config.Format as Format
@@ -25,7 +26,6 @@ import qualified Haskellorls.Config.Indicator as Indicator
 import Haskellorls.Config.Inode (Inode (..))
 import Haskellorls.Config.Link (LinkCount (..))
 import qualified Haskellorls.Formatter.Attribute as Attr
-import qualified Haskellorls.Formatter.Context as Context
 import qualified Haskellorls.Formatter.Filemode as Filemode
 import qualified Haskellorls.Formatter.Indicator as Indicator
 import qualified Haskellorls.Formatter.Name as Name
@@ -184,9 +184,9 @@ mkPrinters config = do
         _ -> (\t -> [Attr.Other $ from t]) . Ownership.groupName gidSubstTable
 
       fileContextPrinter = case Config.colorize config of
-        Just True -> Context.colorizedContext lscolors
-        Just False -> Context.normalColorizedContext lscolors
-        _ -> (\t -> [Attr.Other $ from t]) . Context.context
+        Just True -> \node -> [Attr.Other $ WT.wrap lscolors (Color.lookup $ FileContext ()) $ Node.getNodeContext node]
+        Just False -> \node -> [Attr.Other $ WT.wrap lscolors Color.normal $ Node.getNodeContext node]
+        _ -> (\t -> [Attr.Other $ from t]) . Node.getNodeContext
 
       fileSizePrinter = case Config.colorize config of
         Just True -> \w -> Size.coloredFileSize w lscolors config nconfig
