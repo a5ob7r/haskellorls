@@ -23,11 +23,11 @@ import Haskellorls.Config.Filetime (Filetime (..))
 import qualified Haskellorls.Config.Format as Format
 import qualified Haskellorls.Config.Indicator as Indicator
 import Haskellorls.Config.Inode (Inode (..))
+import Haskellorls.Config.Link (LinkCount (..))
 import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.Context as Context
 import qualified Haskellorls.Formatter.Filemode as Filemode
 import qualified Haskellorls.Formatter.Indicator as Indicator
-import qualified Haskellorls.Formatter.Link as Link
 import qualified Haskellorls.Formatter.Name as Name
 import qualified Haskellorls.Formatter.Ownership as Ownership
 import qualified Haskellorls.Formatter.Quote as Quote
@@ -167,9 +167,11 @@ mkPrinters config = do
         _ -> Filemode.showFilemodeField . from
 
       fileLinkPrinter = case Config.colorize config of
-        Just True -> Link.nodeLinksNumberWithColor lscolors
-        Just False -> Link.nodeLinksNumberWithNormalColor lscolors
-        _ -> maybe [Attr.Missing $ from @T.Text "?"] (\l -> [Attr.Other $ from . T.pack $ show l]) . Link.nodeLinksNumber
+        Just True -> \node ->
+          let getter = maybe (const Nothing) (Color.lookup . LinkCount) $ Node.linkCount node
+           in maybe [Attr.Missing $ from @T.Text "?"] (\l -> [Attr.Other $ WT.wrap lscolors getter . T.pack $ show l]) $ Node.linkCount node
+        Just False -> maybe [Attr.Missing $ from @T.Text "?"] (\l -> [Attr.Other $ WT.wrap lscolors Color.normal . T.pack $ show l]) . Node.linkCount
+        _ -> maybe [Attr.Missing $ from @T.Text "?"] (\l -> [Attr.Other $ from . T.pack $ show l]) . Node.linkCount
 
       fileOwnerPrinter = case Config.colorize config of
         Just True -> Ownership.coloredOwnerName uidSubstTable lscolors userInfo

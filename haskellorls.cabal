@@ -71,7 +71,6 @@ library haskellorls-internal
     Haskellorls.Formatter.Filemode
     Haskellorls.Formatter.Indicator
     Haskellorls.Formatter.Layout.Grid
-    Haskellorls.Formatter.Link
     Haskellorls.Formatter.Name
     Haskellorls.Formatter.Number
     Haskellorls.Formatter.Ownership
