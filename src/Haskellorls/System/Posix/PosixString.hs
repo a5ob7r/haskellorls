@@ -1,19 +1,24 @@
--- | "System.Posix.Files.ByteString" with extras.
-module Haskellorls.System.Posix.Files.ByteString
+-- | "System.Posix.PosixString" with extras.
+module Haskellorls.System.Posix.PosixString
   ( stickyMode,
     hasFileMode,
     hasFileModesAll,
     hasFileModesOr,
     major,
     minor,
-    module System.Posix.Files.ByteString,
+    fileBlockSize,
+    fileBlocks,
+    GroupEntry,
+    UserEntry,
+    module System.Posix.PosixString,
   )
 where
 
 import Data.Bits (shiftR, (.&.), (.|.))
 import Data.List (foldl')
-import System.Posix.Files.ByteString
-import System.Posix.Types (DeviceID, FileMode)
+import System.Posix.Files (fileBlockSize, fileBlocks)
+import System.Posix.PosixString hiding (GroupEntry, UserEntry)
+import System.Posix.User.ByteString (GroupEntry, UserEntry)
 
 stickyMode :: FileMode
 stickyMode = 548

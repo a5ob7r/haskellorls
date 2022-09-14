@@ -7,11 +7,11 @@ import Haskellorls.Config.Environment
 import qualified Haskellorls.Config.Option as Option
 import qualified Haskellorls.Formatter as Formatter
 import qualified Haskellorls.System.Locale as Locale
+import Haskellorls.System.OsPath.Posix.Extra (encode)
 import qualified Haskellorls.Walk as Walk
 import Options.Applicative
 import Paths_haskellorls (version)
 import System.Exit
-import System.FilePath.Posix.ByteString
 
 -- | Run @ls@.
 --
@@ -48,7 +48,7 @@ run opt = do
         st = def
      in -- Assume that the current directory's path is passed as an argument
         -- implicitly if no argument.
-        Walk.runLs conf st . Walk.mkInitialOperations $ encodeFilePath <$> if null targets then ["."] else targets
+        Walk.runLs conf st . Walk.mkInitialOperations $ encode <$> if null targets then ["."] else targets
 
   let -- Dereference only on command line arguments.
       conf = Walk.LsConf (disableDereferenceOnCommandLine config) printers

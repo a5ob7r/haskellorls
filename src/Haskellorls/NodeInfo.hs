@@ -8,6 +8,8 @@ module Haskellorls.NodeInfo
     userID,
     groupID,
     fileTime,
+    allocSize,
+    blockSize,
     specialDeviceID,
     nodeType,
     isDirectory,
@@ -18,6 +20,7 @@ module Haskellorls.NodeInfo
 where
 
 import Control.Exception.Safe (MonadCatch, tryIO)
+import Control.Monad ((>=>))
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Either.Extra (eitherToMaybe)
 import qualified Data.Text as T
@@ -25,12 +28,12 @@ import Data.Time.Clock.POSIX (POSIXTime)
 import qualified Haskellorls.Config as Config
 import qualified Haskellorls.Config.TimeType as TimeType
 import qualified Haskellorls.Config.Tree as Tree
-import qualified Haskellorls.System.Posix.Files.ByteString as Files
-import System.FilePath.Posix.ByteString (RawFilePath, (</>))
-import qualified System.Posix.Types as Types
+import Haskellorls.System.OsPath.Posix.Extra (PosixPath, (</>))
+import qualified Haskellorls.System.Posix.PosixString as Posix
 
 #ifdef SELINUX
 import Data.Either (fromRight)
+import Haskellorls.System.OsPath.Posix.Extra (decode)
 import qualified System.Linux.SELinux as SELinux
 #endif
 
@@ -52,27 +55,27 @@ data NodeType
   | Orphan
   deriving (Show)
 
-mkNodeType :: Files.FileStatus -> NodeType
+mkNodeType :: Posix.FileStatus -> NodeType
 mkNodeType status
-  | Files.isRegularFile status =
+  | Posix.isRegularFile status =
       if
-          | mode `Files.hasFileMode` Files.setUserIDMode -> Setuid
-          | mode `Files.hasFileMode` Files.setGroupIDMode -> Setgid
-          | mode `Files.hasFileModesOr` [Files.ownerExecuteMode, Files.groupExecuteMode, Files.otherExecuteMode] -> Executable
+          | mode `Posix.hasFileMode` Posix.setUserIDMode -> Setuid
+          | mode `Posix.hasFileMode` Posix.setGroupIDMode -> Setgid
+          | mode `Posix.hasFileModesOr` [Posix.ownerExecuteMode, Posix.groupExecuteMode, Posix.otherExecuteMode] -> Executable
           | otherwise -> File
-  | Files.isDirectory status = case (mode `Files.hasFileMode` Files.otherWriteMode, mode `Files.hasFileMode` Files.stickyMode) of
+  | Posix.isDirectory status = case (mode `Posix.hasFileMode` Posix.otherWriteMode, mode `Posix.hasFileMode` Posix.stickyMode) of
       (True, True) -> StickyOtherWritable
       (True, _) -> OtherWritable
       (_, True) -> Sticky
       _ -> Directory
-  | Files.isSymbolicLink status = SymbolicLink
-  | Files.isNamedPipe status = NamedPipe
-  | Files.isSocket status = Socket
-  | Files.isBlockDevice status = BlockDevise
-  | Files.isCharacterDevice status = CharDevise
+  | Posix.isSymbolicLink status = SymbolicLink
+  | Posix.isNamedPipe status = NamedPipe
+  | Posix.isSocket status = Socket
+  | Posix.isBlockDevice status = BlockDevise
+  | Posix.isCharacterDevice status = CharDevise
   | otherwise = Orphan
   where
-    mode = Files.fileMode status
+    mode = Posix.fileMode status
 
 isDirectory :: NodeType -> Bool
 isDirectory = \case
@@ -83,46 +86,50 @@ isDirectory = \case
   _ -> False
 
 data ProxyFileStatus = ProxyFileStatus
-  { pfsFileMode :: Types.FileMode,
-    pfsFileID :: Types.FileID,
-    pfsLinkCount :: Types.LinkCount,
-    pfsUserID :: Types.UserID,
-    pfsGroupID :: Types.GroupID,
-    pfsFileSize :: Types.FileOffset,
+  { pfsFileMode :: Posix.FileMode,
+    pfsFileID :: Posix.FileID,
+    pfsLinkCount :: Posix.LinkCount,
+    pfsUserID :: Posix.UserID,
+    pfsGroupID :: Posix.GroupID,
+    pfsFileSize :: Posix.FileOffset,
+    pfsAllocSize :: Maybe Posix.FileOffset,
+    pfsBlockSize :: Maybe Posix.FileOffset,
     pfsFileTime :: POSIXTime,
-    pfsSpecialDeviceID :: Types.DeviceID,
+    pfsSpecialDeviceID :: Posix.DeviceID,
     pfsNodeType :: NodeType
   }
 
-mkProxyFileStatus :: Config.Config -> Files.FileStatus -> ProxyFileStatus
+mkProxyFileStatus :: Config.Config -> Posix.FileStatus -> ProxyFileStatus
 mkProxyFileStatus config status =
   ProxyFileStatus
-    { pfsFileMode = Files.fileMode status,
-      pfsFileID = Files.fileID status,
-      pfsLinkCount = Files.linkCount status,
-      pfsUserID = Files.fileOwner status,
-      pfsGroupID = Files.fileGroup status,
-      pfsFileSize = Files.fileSize status,
+    { pfsFileMode = Posix.fileMode status,
+      pfsFileID = Posix.fileID status,
+      pfsLinkCount = Posix.linkCount status,
+      pfsUserID = Posix.fileOwner status,
+      pfsGroupID = Posix.fileGroup status,
+      pfsFileSize = Posix.fileSize status,
+      pfsAllocSize = (\n -> fromIntegral n * 512) <$> Posix.fileBlocks status,
+      pfsBlockSize = fromIntegral <$> Posix.fileBlockSize status,
       pfsFileTime = case Config.time config of
-        TimeType.MODIFICATION -> Files.modificationTimeHiRes status
-        TimeType.ACCESS -> Files.accessTimeHiRes status
-        TimeType.CHANGE -> Files.statusChangeTimeHiRes status,
-      pfsSpecialDeviceID = Files.specialDeviceID status,
+        TimeType.MODIFICATION -> Posix.modificationTimeHiRes status
+        TimeType.ACCESS -> Posix.accessTimeHiRes status
+        TimeType.CHANGE -> Posix.statusChangeTimeHiRes status,
+      pfsSpecialDeviceID = Posix.specialDeviceID status,
       pfsNodeType = mkNodeType status
     }
 
 data NodeInfo = NodeInfo
-  { getNodePath :: RawFilePath,
+  { getNodePath :: PosixPath,
     getNodeStatus :: Maybe ProxyFileStatus,
     getNodeContext :: T.Text,
-    getNodeDirName :: RawFilePath,
+    getNodeDirName :: PosixPath,
     getNodeLinkInfo :: Maybe (Either OrphanedLinkNodeInfo LinkNodeInfo),
     -- | This contains reversed list due to the performance problem.
     getTreeNodePositions :: [Tree.TreeNodePosition]
   }
 
 -- | Create a filenode infomation from a filepath.
-mkNodeInfo :: (MonadCatch m, MonadIO m) => Config.Config -> RawFilePath -> RawFilePath -> m NodeInfo
+mkNodeInfo :: (MonadCatch m, MonadIO m) => Config.Config -> PosixPath -> PosixPath -> m NodeInfo
 mkNodeInfo config dirname basename = do
   let getNodePath = basename
       getNodeDirName = dirname
@@ -131,15 +138,15 @@ mkNodeInfo config dirname basename = do
 
   getNodeContext <- T.pack <$> fileContext filepath
 
-  filestatus <- liftIO $ Files.getSymbolicLinkStatus filepath
+  filestatus <- liftIO $ Posix.getSymbolicLinkStatus filepath
 
   node <-
-    if Files.isSymbolicLink filestatus
+    if Posix.isSymbolicLink filestatus
       then do
-        linkpath <- tryIO . liftIO $ Files.readSymbolicLink filepath
+        linkpath <- tryIO . liftIO $ Posix.readSymbolicLink filepath
 
         linkstatus <- case linkpath of
-          Right _ -> eitherToMaybe <$> tryIO (liftIO $ Files.getFileStatus filepath)
+          Right _ -> eitherToMaybe <$> tryIO (liftIO $ Posix.getFileStatus filepath)
           _ -> return Nothing
 
         linkcontext <- case linkpath of
@@ -175,40 +182,46 @@ mkNodeInfo config dirname basename = do
       then dereference node
       else node
 
-fileMode :: NodeInfo -> Maybe Types.FileMode
+fileMode :: NodeInfo -> Maybe Posix.FileMode
 fileMode = fmap pfsFileMode . getNodeStatus
 
-fileID :: NodeInfo -> Maybe Types.FileID
+fileID :: NodeInfo -> Maybe Posix.FileID
 fileID = fmap pfsFileID . getNodeStatus
 
-linkCount :: NodeInfo -> Maybe Types.LinkCount
+linkCount :: NodeInfo -> Maybe Posix.LinkCount
 linkCount = fmap pfsLinkCount . getNodeStatus
 
-userID :: NodeInfo -> Maybe Types.UserID
+userID :: NodeInfo -> Maybe Posix.UserID
 userID = fmap pfsUserID . getNodeStatus
 
-groupID :: NodeInfo -> Maybe Types.GroupID
+groupID :: NodeInfo -> Maybe Posix.GroupID
 groupID = fmap pfsGroupID . getNodeStatus
 
-fileSize :: NodeInfo -> Maybe Types.FileOffset
+fileSize :: NodeInfo -> Maybe Posix.FileOffset
 fileSize = fmap pfsFileSize . getNodeStatus
 
 fileTime :: NodeInfo -> Maybe POSIXTime
 fileTime = fmap pfsFileTime . getNodeStatus
 
-specialDeviceID :: NodeInfo -> Maybe Types.DeviceID
+specialDeviceID :: NodeInfo -> Maybe Posix.DeviceID
 specialDeviceID = fmap pfsSpecialDeviceID . getNodeStatus
+
+allocSize :: NodeInfo -> Maybe Posix.FileOffset
+allocSize = getNodeStatus >=> pfsAllocSize
+
+blockSize :: NodeInfo -> Maybe Posix.FileOffset
+blockSize = getNodeStatus >=> pfsBlockSize
 
 nodeType :: NodeInfo -> Maybe NodeType
 nodeType = fmap pfsNodeType . getNodeStatus
 
 data LinkNodeInfo = LinkNodeInfo
-  { getLinkNodePath :: RawFilePath,
+  { getLinkNodePath :: PosixPath,
     getLinkNodeStatus :: ProxyFileStatus,
     getLinkNodeContext :: T.Text
   }
 
-newtype OrphanedLinkNodeInfo = OrphanedLinkNodeInfo {getOrphanedNodeLinkPath :: RawFilePath}
+newtype OrphanedLinkNodeInfo = OrphanedLinkNodeInfo {getOrphanedNodeLinkPath :: PosixPath}
 
 -- | Convert a 'NodeInfo' value to the dereferenced 'NodeInfo'.
 dereference :: NodeInfo -> NodeInfo
@@ -227,7 +240,7 @@ dereference node = case getNodeLinkInfo node of
       }
 
 -- | Get a dereferenced node's filepath.
-dereferencedNodePath :: Either OrphanedLinkNodeInfo LinkNodeInfo -> RawFilePath
+dereferencedNodePath :: Either OrphanedLinkNodeInfo LinkNodeInfo -> PosixPath
 dereferencedNodePath = either getOrphanedNodeLinkPath getLinkNodePath
 
 {- ORMOLU_DISABLE -}
@@ -235,9 +248,9 @@ dereferencedNodePath = either getOrphanedNodeLinkPath getLinkNodePath
 -- NOTE: This is not tested on SELinux enabled environment, so this may be
 -- broken.
 -- NOTE: Disable ormolu because it does not support CPP extension.
-fileContext :: MonadIO m => RawFilePath -> m String
+fileContext :: MonadIO m => PosixPath -> m String
 #ifdef SELINUX
-fileContext path = fromRight defaultContext <$> tryIO (SELinux.getFileCon path)
+fileContext path = fromRight defaultContext <$> tryIO (SELinux.getFileCon $ decode path)
 #else
 fileContext _ = return defaultContext
 #endif

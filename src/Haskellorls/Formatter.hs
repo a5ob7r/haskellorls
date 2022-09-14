@@ -12,7 +12,6 @@ import Data.Either (isLeft)
 import Data.Foldable
 import Data.Functor ((<&>))
 import Data.List (intercalate, transpose)
-import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Data.Time (defaultTimeLocale, getCurrentTime, getCurrentTimeZone)
 import Data.Time.Clock.POSIX (posixSecondsToUTCTime)
@@ -144,7 +143,7 @@ mkPrinters config = do
     _ -> return defaultTimeLocale
   nconfig <- from <$> localeConv
 
-  let blockSizeHeaderPrinter node = [Attr.Other . from . T.concat . ("total " :) . map (from . Attr.unwrap) . Size.toTotalBlockSize config nconfig $ fromMaybe 0 . Node.fileSize <$> node]
+  let blockSizeHeaderPrinter nodes = [Attr.Other . from . T.concat . ("total " :) . map (from . Attr.unwrap) $ Size.toTotalBlockSize config nconfig nodes]
 
       fileInodePrinter = case Config.colorize config of
         Just True -> \node ->

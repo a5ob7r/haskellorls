@@ -9,8 +9,7 @@ module Haskellorls.Config.Ownership
 where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import System.Posix.Types (GroupID, UserID)
-import System.Posix.User (getGroups, getRealUserID)
+import Haskellorls.System.Posix.PosixString (GroupID, UserID, getGroups, getRealUserID)
 
 data UserInfo = UserInfo {userID :: UserID, groupIDs :: [GroupID]}
 

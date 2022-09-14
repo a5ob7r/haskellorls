@@ -27,8 +27,8 @@ import Haskellorls.Config.Tree
 import Haskellorls.Humanize.FileSize
 import Haskellorls.LsColor.Config
 import Haskellorls.NodeInfo
+import Haskellorls.System.OsPath.Posix.Extra (decode)
 import System.Environment
-import System.FilePath.Posix.ByteString (decodeFilePath)
 import Witch (From (..), via)
 import Prelude hiding (lookup)
 
@@ -92,7 +92,7 @@ instance Dictionary NodeInfo Sequence LsColors where
       Just StickyOtherWritable -> stickyOtherWritable
       Just OtherWritable -> otherWritable
       Just Executable -> executable
-      Just File -> (Query . T.pack . decodeFilePath $ getNodePath n) `query` l <|> file <|> normal
+      Just File -> (Query . from . decode $ getNodePath n) `query` l <|> file <|> normal
       Just Orphan -> orphan
       Nothing -> Nothing
 

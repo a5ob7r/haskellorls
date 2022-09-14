@@ -17,8 +17,8 @@ import qualified Data.Text as T
 import Haskellorls.Class (Dictionary (..))
 import Haskellorls.LsColor.Config
 import Haskellorls.NodeInfo
+import Haskellorls.System.OsPath.Posix.Extra (decode, takeFileName)
 import System.Environment
-import System.FilePath.Posix.ByteString (decodeFilePath, takeFileName)
 import Witch (From (..), via)
 import Prelude hiding (lookup)
 
@@ -74,7 +74,7 @@ instance Dictionary NodeInfo Icon LsIcons where
       Just Orphan -> orphan
       Just Directory -> directory
       _ ->
-        let filename = T.pack . decodeFilePath . takeFileName $ getNodePath n
+        let filename = from . decode . takeFileName $ getNodePath n
          in Query filename `query` l <|> file
 
 instance Dictionary Query Icon LsIcons where

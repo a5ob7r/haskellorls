@@ -20,34 +20,33 @@ import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.WrappedText as WT
 import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
-import qualified System.Posix.Types as Types
-import qualified System.Posix.User as User
+import qualified Haskellorls.System.Posix.PosixString as Posix
 import Witch (From (from))
 import Prelude hiding (lookup)
 
 newtype UserIdSubstTable = UserIdSubstTable (IM.IntMap T.Text)
   deriving (Semigroup, Monoid)
 
-instance From [User.UserEntry] UserIdSubstTable where
-  from = UserIdSubstTable . IM.fromList . map (\entry -> (fromIntegral $ User.userID entry, T.pack $ User.userName entry))
+instance From [Posix.UserEntry] UserIdSubstTable where
+  from = UserIdSubstTable . IM.fromList . map (\entry -> (fromIntegral $ Posix.userID entry, T.pack $ Posix.userName entry))
 
-instance Dictionary Types.UserID T.Text UserIdSubstTable where
+instance Dictionary Posix.UserID T.Text UserIdSubstTable where
   lookup k (UserIdSubstTable m) = fromIntegral k `IM.lookup` m
 
 getUserIdSubstTable :: IO UserIdSubstTable
-getUserIdSubstTable = from <$> User.getAllUserEntries
+getUserIdSubstTable = from <$> Posix.getAllUserEntries
 
 newtype GroupIdSubstTable = GroupIdSubstTable (IM.IntMap T.Text)
   deriving (Semigroup, Monoid)
 
-instance From [User.GroupEntry] GroupIdSubstTable where
-  from = GroupIdSubstTable . IM.fromList . map (\entry -> (fromIntegral $ User.groupID entry, T.pack $ User.groupName entry))
+instance From [Posix.GroupEntry] GroupIdSubstTable where
+  from = GroupIdSubstTable . IM.fromList . map (\entry -> (fromIntegral $ Posix.groupID entry, T.pack $ Posix.groupName entry))
 
-instance Dictionary Types.GroupID T.Text GroupIdSubstTable where
+instance Dictionary Posix.GroupID T.Text GroupIdSubstTable where
   lookup k (GroupIdSubstTable m) = fromIntegral k `IM.lookup` m
 
 getGroupIdSubstTable :: IO GroupIdSubstTable
-getGroupIdSubstTable = from <$> User.getAllGroupEntries
+getGroupIdSubstTable = from <$> Posix.getAllGroupEntries
 
 -- | A name of the UNIX user which identifies an user.
 ownerName :: UserIdSubstTable -> Node.NodeInfo -> T.Text

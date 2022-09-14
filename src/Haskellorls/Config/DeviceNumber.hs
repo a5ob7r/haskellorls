@@ -5,8 +5,7 @@ module Haskellorls.Config.DeviceNumber
 where
 
 import qualified Data.Text as T
-import Haskellorls.System.Posix.Files.ByteString
-import System.Posix.Types
+import Haskellorls.System.Posix.PosixString (DeviceID, major, minor)
 import Witch (From (..))
 
 -- | The major ID of a device.

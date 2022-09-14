@@ -3,9 +3,3 @@ packages:
   ./localeconv
 
 index-state: 2023-03-16T01:52:57Z
-
--- For GHC >=9.4.
-allow-newer:
-  -- This package is deprecated, so probably no longer its dependencies are
-  -- updated.
-  , filepath-bytestring:base

@@ -26,7 +26,7 @@ import Haskellorls.Config.TimeType (TimeType (..))
 import qualified Haskellorls.Config.When as W
 import Haskellorls.Data.Infinitable (Infinitable)
 import System.FilePath.Glob (Pattern, compile)
-import System.FilePath.Posix.ByteString (RawFilePath)
+import System.OsPath.Posix (PosixPath)
 import Witch (from, into, tryFrom)
 import Prelude hiding (lookup, reverse)
 
@@ -80,7 +80,7 @@ data Config = Config
     width :: Int,
     zero :: Bool,
     dired :: Bool,
-    currentWorkingDirectory :: RawFilePath,
+    currentWorkingDirectory :: PosixPath,
     hostname :: T.Text
   }
 

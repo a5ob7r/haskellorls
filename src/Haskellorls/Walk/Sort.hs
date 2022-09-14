@@ -8,7 +8,7 @@ import qualified Data.Text as T
 import qualified Haskellorls.Config as Config
 import Haskellorls.Config.Sort
 import qualified Haskellorls.NodeInfo as Node
-import System.FilePath.Posix.ByteString (decodeFilePath)
+import Haskellorls.System.OsPath.Posix.Extra (decode)
 
 -- | Compare naturally.
 newtype NaturalS a = NaturalS a
@@ -53,7 +53,7 @@ sortByExtension = sortOn $ \node -> let path = toText node in (normalize $ T.tak
 
 -- | Create a "Text" for name comparison from "NodeInfo".
 toText :: Node.NodeInfo -> T.Text
-toText = T.pack . decodeFilePath . Node.getNodePath
+toText = T.pack . decode . Node.getNodePath
 
 -- | Normalize a "Text" for name comparison.
 normalize :: T.Text -> T.Text

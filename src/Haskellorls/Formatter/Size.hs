@@ -170,6 +170,7 @@ module Haskellorls.Formatter.Size
   )
 where
 
+import Control.Applicative ((<|>))
 import Data.List (foldl')
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
@@ -183,12 +184,12 @@ import qualified Haskellorls.Formatter.WrappedText as WT
 import Haskellorls.Humanize.FileSize
 import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
-import qualified System.Posix.Types as Types
+import Haskellorls.System.Posix.PosixString (FileOffset)
 import Witch (from)
 import Prelude hiding (lookup)
 
 data FileSizeComponent = FileSizeComponent
-  { fileSizeRawNumber :: Types.FileOffset,
+  { fileSizeRawNumber :: FileOffset,
     fileSizeNumber :: T.Text,
     fileSizeUnit :: T.Text,
     fileSizeScale :: Scale () ()
@@ -200,37 +201,36 @@ toWrappedText FileSizeComponent {..} =
     Attr.Other $ from fileSizeUnit
   ]
 
-toTotalBlockSize :: Config.Config -> Number.Config -> [Types.FileOffset] -> [Attr.Attribute WT.WrappedText]
+toTotalBlockSize :: Config.Config -> Number.Config -> [Node.NodeInfo] -> [Attr.Attribute WT.WrappedText]
 toTotalBlockSize config nconfig = toWrappedText . toTotalBlockSize' config nconfig
 
-toTotalBlockSize' :: Config.Config -> Number.Config -> [Types.FileOffset] -> FileSizeComponent
-toTotalBlockSize' config nconfig = fileSize' nconfig (Config.blockSize config) . foldl' (\acc o -> acc + toBlockSize o) 0
+toTotalBlockSize' :: Config.Config -> Number.Config -> [Node.NodeInfo] -> FileSizeComponent
+toTotalBlockSize' config nconfig = fileSize' nconfig (Config.blockSize config) . foldl' (\acc node -> acc + allocationSize node) 0
 
 fileBlockSize :: Config.Config -> Number.Config -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 fileBlockSize config nconfig node = case Node.fileSize node of
   Nothing -> [Attr.Missing $ from @T.Text "?"]
-  Just _ -> toTotalBlockSize config nconfig [fileBlockSizeOf node]
+  Just _ -> toTotalBlockSize config nconfig [node]
 
 -- | A node block size formatter for the @no@ parameter of @LS_COLORS@.
 normalColoredFileBlockSize :: Color.LsColors -> Config.Config -> Number.Config -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 normalColoredFileBlockSize lscolors config nconfig node = case Node.fileSize node of
   Nothing -> [Attr.Missing $ from @T.Text "?"]
   Just _ ->
-    let FileSizeComponent {..} = toTotalBlockSize' config nconfig [fileBlockSizeOf node]
+    let FileSizeComponent {..} = toTotalBlockSize' config nconfig [node]
      in [Attr.Other $ WT.wrap lscolors Color.normal (fileSizeNumber <> fileSizeUnit)]
 
 coloredFileBlockSize :: Color.LsColors -> Config.Config -> Number.Config -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]
 coloredFileBlockSize lscolors config nconfig node = case Node.fileSize node of
   Nothing -> [Attr.Missing $ from @T.Text "?"]
-  Just _ -> coloredFileSize' lscolors $ toTotalBlockSize' config nconfig [fileBlockSizeOf node]
+  Just _ -> coloredFileSize' lscolors $ toTotalBlockSize' config nconfig [node]
 
--- | Calculate a block size of a file.
---
--- prop> (toBlockSize n) `mod` (1024 * 4) == 0
-toBlockSize :: (Integral a) => a -> a
-toBlockSize i
-  | i < 0 = negate . toBlockSize $ negate i
-  | otherwise = i `ceilingBy` (1024 * 4)
+allocationSize :: Node.NodeInfo -> FileOffset
+allocationSize node =
+  fromMaybe 0 $
+    Node.allocSize node
+      <|> 0 <$ Node.getNodeLinkInfo node
+      <|> (`ceilingBy` (fromMaybe (1024 * 4) $ Node.blockSize node)) <$> Node.fileSize node
 
 -- | Ceil @i@ to the value which is multiple of @n@, and is equal to @i@ or is
 -- greater than @i@.
@@ -268,7 +268,7 @@ fileSize widths config nconfig node = case Node.nodeType node of
   Just Node.CharDevise -> deviceNumbers widths Nothing config node
   _ -> maybe [Attr.Missing $ from @T.Text "?"] (toWrappedText . fileSize' nconfig (Config.fileSize config)) $ Node.fileSize node
 
-fileSize' :: Number.Config -> BlockSizeMod BlockSize -> Types.FileOffset -> FileSizeComponent
+fileSize' :: Number.Config -> BlockSizeMod BlockSize -> FileOffset -> FileSizeComponent
 fileSize' nconfig blocksize offset =
   let (bsize, toText) = case blocksize of
         WithSeps sz ->
@@ -381,7 +381,3 @@ deviceNumbers widths@(majorWidth, minorWidth) lscolors config node = case lscolo
     minorID = from <$> Node.specialDeviceID node
     major = maybe "?" (from @MajorID) majorID
     minor = maybe "?" (from @MinorID) minorID
-
--- | Treat symbolic link block size as zero.
-fileBlockSizeOf :: Node.NodeInfo -> Types.FileOffset
-fileBlockSizeOf node = maybe (fromMaybe 0 $ Node.fileSize node) (const 0) $ Node.getNodeLinkInfo node

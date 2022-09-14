@@ -15,6 +15,7 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Reader (MonadReader, ReaderT (..), ask)
 import Control.Monad.State.Strict (MonadState, StateT (..), runState)
 import Data.Bifunctor (bimap)
+import Data.ByteString (fromFilePath)
 import Data.Default.Class (Default (..))
 import Data.Either (partitionEithers)
 import Data.Functor ((<&>))
@@ -39,11 +40,12 @@ import qualified Haskellorls.Formatter.Quote as Quote
 import qualified Haskellorls.Formatter.WrappedText as WT
 import Haskellorls.Lens.Micro (makeLenses', use, view, (%=), (.=))
 import qualified Haskellorls.NodeInfo as Node
+import Haskellorls.System.OsPath.Posix.Extra (PosixPath, decode, encode, (</>))
 import qualified Haskellorls.Walk.Dired as Dired
 import qualified Haskellorls.Walk.Listing as Listing
 import qualified Haskellorls.Walk.Sort as Sort
 import qualified Haskellorls.Walk.Utils as Walk
-import System.FilePath.Posix.ByteString (RawFilePath, decodeFilePath, encodeFilePath, (</>))
+import System.IO.Unsafe (unsafePerformIO)
 import Witch (from, via)
 
 data LsConf = LsConf
@@ -78,7 +80,7 @@ data EntryType = FILES | SINGLEDIR | DIRECTORY
 
 data Entry = Entry
   { entryType :: EntryType,
-    entryPath :: RawFilePath,
+    entryPath :: PosixPath,
     entryNodes :: [Node.NodeInfo],
     entryDepth :: Infinitable Int
   }
@@ -127,7 +129,7 @@ run conf st operations = runLs conf st $ go operations
 
             return $!
               if Config.dired config
-                then Dired.update (encodeFilePath . T.unpack . WT.wtWord <$> d) acc
+                then Dired.update (unsafePerformIO . fromFilePath . T.unpack . WT.wtWord <$> d) acc
                 else acc
           divs = mkDivisions config printers op
        in use indicesL >>= \indices -> foldM f indices divs >>= (indicesL .=)
@@ -153,7 +155,7 @@ run conf st operations = runLs conf st $ go operations
 ignorable :: Bool -> IOException -> Bool
 ignorable onCommandLine e = not onCommandLine && ioe_type e == NoSuchThing
 
-mkNodes :: Bool -> Config.Config -> RawFilePath -> [RawFilePath] -> Ls [Node.NodeInfo]
+mkNodes :: Bool -> Config.Config -> PosixPath -> [PosixPath] -> Ls [Node.NodeInfo]
 mkNodes onCommandLine config parent paths = do
   (errs, nodes) <-
     bimap (foldr (\e acc -> if ignorable onCommandLine e then acc else toException e : acc) []) (Sort.sort config) . partitionEithers
@@ -164,7 +166,7 @@ mkNodes onCommandLine config parent paths = do
 
   return nodes
 
-mkOperations :: Config.Config -> Infinitable Int -> [RawFilePath] -> Ls [Operation]
+mkOperations :: Config.Config -> Infinitable Int -> [PosixPath] -> Ls [Operation]
 mkOperations _ _ [] = return []
 mkOperations config depth (parent : parents) =
   tryIO (Listing.listContents config parent) >>= \case
@@ -175,11 +177,11 @@ mkOperations config depth (parent : parents) =
       nodes <- mkNodes False config parent paths
       (PrintEntry (Entry DIRECTORY parent nodes depth) :) <$> mkOperations config depth parents
 
-mkInitialOperations :: [RawFilePath] -> Ls [Operation]
+mkInitialOperations :: [PosixPath] -> Ls [Operation]
 mkInitialOperations paths = do
   config <- view configL
   nodes <- do
-    nodes <- mkNodes True config "" paths
+    nodes <- mkNodes True config (encode "") paths
     (_, inodes) <- runState (Walk.filterNodes nodes) <$> use inodesL
     inodesL .= inodes
     return nodes
@@ -189,7 +191,7 @@ mkInitialOperations paths = do
         | Config.directory config = const False
         | otherwise = maybe False Node.isDirectory . Node.nodeType
       (dirs, files) = partition isDirectory nodes
-      fileOp = [PrintEntry (Entry FILES "" files depth) | not $ null files]
+      fileOp = [PrintEntry (Entry FILES (encode "") files depth) | not $ null files]
 
   dirOps <-
     if Config.tree config
@@ -258,7 +260,7 @@ mkDivisions config printers =
           header = case entryType of
             FILES -> []
             SINGLEDIR | not (Config.recursive config) -> []
-            _ -> [Attr.Dir . via @T.Text $ decodeFilePath entryPath, Attr.Other $ from @T.Text ":"]
+            _ -> [Attr.Dir . via @T.Text $ decode entryPath, Attr.Other $ from @T.Text ":"]
 
           -- Add total block size header only about directries when long style
           -- layout or @-s / --size@ is passed.

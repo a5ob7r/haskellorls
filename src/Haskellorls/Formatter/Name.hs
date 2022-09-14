@@ -9,7 +9,7 @@ import qualified Haskellorls.Formatter.Attribute as Attr
 import qualified Haskellorls.Formatter.WrappedText as WT
 import qualified Haskellorls.LsColor as Color
 import qualified Haskellorls.NodeInfo as Node
-import System.FilePath.Posix.ByteString (RawFilePath, decodeFilePath, isAbsolute, normalise, (</>))
+import Haskellorls.System.OsPath.Posix.Extra (PosixPath, decode, isAbsolute, normalise, (</>))
 import Witch (From (..))
 
 colorizedNodeName :: Config.Config -> Color.LsColors -> Node.NodeInfo -> Attr.Attribute WT.WrappedText
@@ -23,13 +23,13 @@ nodeName config@(Config.Config {hyperlink, hostname}) node
   | hyperlink = Attr.Name $ WT.WrappedText (left <> uri <> right) name (left <> right)
   | otherwise = Attr.Name $ from name
   where
-    name = from . decodeFilePath $ Node.getNodePath node
+    name = from . decode $ Node.getNodePath node
     left = "\^[]8;;"
     right = "\^G"
-    uri = "file://" <> hostname <> from (decodeFilePath $ mkAbsolutePath config node)
+    uri = "file://" <> hostname <> from (decode $ mkAbsolutePath config node)
 
 -- | Make the absolute path from a node.
-mkAbsolutePath :: Config.Config -> Node.NodeInfo -> RawFilePath
+mkAbsolutePath :: Config.Config -> Node.NodeInfo -> PosixPath
 mkAbsolutePath Config.Config {currentWorkingDirectory} Node.NodeInfo {..} = normalise path
   where
     path
