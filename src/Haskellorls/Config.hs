@@ -27,7 +27,7 @@ import qualified Haskellorls.Config.When as W
 import Haskellorls.Data.Infinitable (Infinitable)
 import System.FilePath.Glob (Pattern, compile)
 import System.FilePath.Posix.ByteString (RawFilePath)
-import Witch (tryFrom)
+import Witch (from, into, tryFrom)
 import Prelude hiding (lookup, reverse)
 
 data Config = Config
@@ -176,12 +176,12 @@ mkConfig env Option {..} = Config {..}
            in case style of
                 CLocale l r
                   | Just catalog <- Env.catalog env, Just (lh, rh) <- lookup l r catalog -> CLocale lh rh
-                  | maybe False ("UTF-8" `isSuffixOf`) $ Env.lcMessages env -> CLocale '‘' '’'
+                  | maybe False ("UTF-8" `isSuffixOf`) . from $ Env.lcMessages env -> CLocale '‘' '’'
                   | otherwise -> CLocale '"' '"'
                 Locale l r
                   | Just catalog <- Env.catalog env, Just (lh, rh) <- lookup l r catalog -> Locale lh rh
-                  | maybe False ("UTF-8" `isSuffixOf`) $ Env.lcMessages env -> Locale '‘' '’'
-                  | maybe False (`elem` ["C", "POSIX"]) $ Env.lcMessages env -> Locale '\'' '\''
+                  | maybe False ("UTF-8" `isSuffixOf`) . from $ Env.lcMessages env -> Locale '‘' '’'
+                  | maybe False (`elem` ["C", "POSIX"]) . into @(Maybe String) $ Env.lcMessages env -> Locale '\'' '\''
                 _ -> style
       | toTTY = ShellEscape
       | otherwise = Literal

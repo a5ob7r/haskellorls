@@ -1,18 +1,17 @@
 module Haskellorls (haskellorls) where
 
-import Control.Monad (void)
 import Data.Default.Class (Default (..))
 import Data.Version (showVersion)
 import Haskellorls.Config
 import Haskellorls.Config.Environment
 import qualified Haskellorls.Config.Option as Option
 import qualified Haskellorls.Formatter as Formatter
+import qualified Haskellorls.System.Locale as Locale
 import qualified Haskellorls.Walk as Walk
 import Options.Applicative
 import Paths_haskellorls (version)
 import System.Exit
 import System.FilePath.Posix.ByteString
-import System.Locale.SetLocale (Category (LC_ALL), setLocale)
 
 -- | Run @ls@.
 --
@@ -25,8 +24,7 @@ import System.Locale.SetLocale (Category (LC_ALL), setLocale)
 -- traversed them.
 haskellorls :: [String] -> IO ExitCode
 haskellorls args = do
-  -- This is to lookup @LC_TIME@ by disabling the default portable @C@ locale.
-  void . setLocale LC_ALL $ Just ""
+  Locale.initialize
 
   options <- argParser args
 

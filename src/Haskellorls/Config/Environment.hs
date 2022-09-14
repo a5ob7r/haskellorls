@@ -9,14 +9,15 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Maybe (MaybeT (..))
 import Data.Gettext (Catalog, loadCatalog)
 import Haskellorls.Data.Gettext.Extra (lookupMO)
+import qualified Haskellorls.System.Locale as Locale
 import Network.HostName (getHostName)
 import Numeric (readDec)
 import System.Console.Terminal.Size (Window (width), size)
 import System.Environment (getEnv, lookupEnv)
 import System.FilePath.Posix.ByteString (RawFilePath, decodeFilePath)
 import System.IO (hIsTerminalDevice, stdout)
-import System.Locale.SetLocale (Category (LC_MESSAGES), setLocale)
 import System.Posix.Directory.ByteString (getWorkingDirectory)
+import Witch (from)
 
 data Environment = Environment
   { toTerminal :: Bool,
@@ -28,7 +29,7 @@ data Environment = Environment
     cwd :: RawFilePath,
     hostname :: String,
     columnSize :: Maybe Int,
-    lcMessages :: Maybe String,
+    lcMessages :: Locale.LcMessages,
     catalog :: Maybe Catalog
   }
 
@@ -56,10 +57,10 @@ mkEnvironment = do
           _ -> Nothing
      in runMaybeT $ width <$> MaybeT (liftIO size) <|> MaybeT (f <$> liftIO (lookupEnv "COLUMNS"))
 
-  lcMessages <- liftIO $ setLocale LC_MESSAGES Nothing
+  lcMessages <- Locale.lcMessages
 
   catalog <- runMaybeT do
-    locale <- MaybeT $ return lcMessages
+    locale <- MaybeT . return $ from lcMessages
     path <- MaybeT . liftIO $ lookupMO "/usr/share/locale" locale "coreutils"
     MaybeT . liftIO . optional . loadCatalog $ decodeFilePath path
 
