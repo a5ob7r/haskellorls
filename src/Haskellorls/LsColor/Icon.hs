@@ -14,12 +14,11 @@ import qualified Data.Map.Strict as M
 import Data.Maybe
 import Data.String
 import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
 import Haskellorls.Class (Dictionary (..))
 import Haskellorls.LsColor.Config
 import Haskellorls.NodeInfo
 import System.Environment
-import System.FilePath.Posix.ByteString
+import System.FilePath.Posix.ByteString (decodeFilePath, takeFileName)
 import Witch (From (..), via)
 import Prelude hiding (lookup)
 
@@ -75,7 +74,7 @@ instance Dictionary NodeInfo Icon LsIcons where
       Just Orphan -> orphan
       Just Directory -> directory
       _ ->
-        let filename = T.decodeUtf8 . takeFileName $ getNodePath n
+        let filename = T.pack . decodeFilePath . takeFileName $ getNodePath n
          in Query filename `query` l <|> file
 
 instance Dictionary Query Icon LsIcons where

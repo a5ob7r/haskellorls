@@ -14,7 +14,6 @@ import qualified Data.Map.Strict as M
 import Data.Maybe
 import Data.String
 import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
 import Haskellorls.Config.Context
 import Haskellorls.Config.DeviceNumber
 import Haskellorls.Config.Filemode.Entry
@@ -29,6 +28,7 @@ import Haskellorls.Humanize.FileSize
 import Haskellorls.LsColor.Config
 import Haskellorls.NodeInfo
 import System.Environment
+import System.FilePath.Posix.ByteString (decodeFilePath)
 import Witch (From (..), via)
 import Prelude hiding (lookup)
 
@@ -92,7 +92,7 @@ instance Dictionary NodeInfo Sequence LsColors where
       Just StickyOtherWritable -> stickyOtherWritable
       Just OtherWritable -> otherWritable
       Just Executable -> executable
-      Just File -> (Query . T.decodeUtf8 $ getNodePath n) `query` l <|> file <|> normal
+      Just File -> (Query . T.pack . decodeFilePath $ getNodePath n) `query` l <|> file <|> normal
       Just Orphan -> orphan
       Nothing -> Nothing
 

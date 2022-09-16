@@ -5,10 +5,10 @@ import Data.Char (isPunctuation)
 import Data.List (partition, sortOn)
 import Data.Ord
 import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
 import qualified Haskellorls.Config as Config
 import Haskellorls.Config.Sort
 import qualified Haskellorls.NodeInfo as Node
+import System.FilePath.Posix.ByteString (decodeFilePath)
 
 -- | Compare naturally.
 newtype NaturalS a = NaturalS a
@@ -53,7 +53,7 @@ sortByExtension = sortOn $ \node -> let path = toText node in (normalize $ T.tak
 
 -- | Create a "Text" for name comparison from "NodeInfo".
 toText :: Node.NodeInfo -> T.Text
-toText = T.decodeUtf8 . Node.getNodePath
+toText = T.pack . decodeFilePath . Node.getNodePath
 
 -- | Normalize a "Text" for name comparison.
 normalize :: T.Text -> T.Text

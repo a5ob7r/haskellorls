@@ -22,7 +22,6 @@ import Data.List (foldl', intersperse, partition)
 import Data.Sequence (Seq (Empty, (:<|)), fromList, singleton, (|>))
 import qualified Data.Sequence as Seq
 import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
 import qualified Data.Text.IO as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as TL
@@ -44,8 +43,8 @@ import qualified Haskellorls.Walk.Dired as Dired
 import qualified Haskellorls.Walk.Listing as Listing
 import qualified Haskellorls.Walk.Sort as Sort
 import qualified Haskellorls.Walk.Utils as Walk
-import System.FilePath.Posix.ByteString (RawFilePath, (</>))
-import Witch (from)
+import System.FilePath.Posix.ByteString (RawFilePath, decodeFilePath, encodeFilePath, (</>))
+import Witch (from, via)
 
 data LsConf = LsConf
   { _config :: Config.Config,
@@ -128,7 +127,7 @@ run conf st operations = runLs conf st $ go operations
 
             return $!
               if Config.dired config
-                then Dired.update (T.encodeUtf8 . WT.wtWord <$> d) acc
+                then Dired.update (encodeFilePath . T.unpack . WT.wtWord <$> d) acc
                 else acc
           divs = mkDivisions config printers op
        in use indicesL >>= \indices -> foldM f indices divs >>= (indicesL .=)
@@ -259,7 +258,7 @@ mkDivisions config printers =
           header = case entryType of
             FILES -> []
             SINGLEDIR | not (Config.recursive config) -> []
-            _ -> [Attr.Dir . from $ T.decodeUtf8 entryPath, Attr.Other $ from @T.Text ":"]
+            _ -> [Attr.Dir . via @T.Text $ decodeFilePath entryPath, Attr.Other $ from @T.Text ":"]
 
           -- Add total block size header only about directries when long style
           -- layout or @-s / --size@ is passed.
