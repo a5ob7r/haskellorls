@@ -124,13 +124,13 @@ jobs:
 
       - uses: haskell/actions/hlint-setup@v2
         with:
-          version: '3.4.1'
+          version: '3.5'
 
       - name: Run hlint
         uses: haskell/actions/hlint-run@v2
         with:
           fail-on: status
-          path: '["app/", "src/"]'
+          path: '["app/", "src/", "test/"]'
 
   actionlint:
     runs-on: ubuntu-latest
