@@ -2,7 +2,7 @@ packages:
   ./
   ./localeconv
 
-index-state: 2022-09-10T14:52:26Z
+index-state: 2022-09-24T03:16:59Z
 
 -- For GHC >=9.4.
 allow-newer:
