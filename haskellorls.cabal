@@ -136,7 +136,7 @@ library haskellorls-internal
     , rawfilepath           ^>=1.0.1
     , safe-exceptions       ^>=0.1.7
     , setlocale             ^>=1.0.0.10
-    , template-haskell      >=2.16.0.0   && <2.20.0.0
+    , template-haskell
     , terminal-size         ^>=0.3.2
     , text                  ^>=2.0
     , time                  ^>=1.12.2
