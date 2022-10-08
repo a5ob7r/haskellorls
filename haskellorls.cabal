@@ -142,7 +142,7 @@ library haskellorls-internal
     , time                  ^>=1.12.2
     , transformers          ^>=0.5.6.2
     , unix                  ^>=2.7.2
-    , witch                 ^>=1.0.0.4
+    , witch                 ^>=1.1
 
   if flag(selinux)
     build-depends: selinux
@@ -165,7 +165,7 @@ test-suite test
   build-depends:
     , haskellorls-internal
     , QuickCheck            ^>=2.14.2
-    , sydtest               ^>=0.11.0.0
+    , sydtest               ^>=0.12
     , time
     , witch
 
