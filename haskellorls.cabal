@@ -165,7 +165,7 @@ test-suite test
   build-depends:
     , haskellorls-internal
     , QuickCheck            ^>=2.14.2
-    , sydtest               ^>=0.12
+    , sydtest               ^>=0.13
     , time
     , witch
 
