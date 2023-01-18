@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.0.0 -- 2023-01-18
+
 ### Added
 
 - Lookup `COLUMNS` environment variable to determine a column size if no terminal size.
