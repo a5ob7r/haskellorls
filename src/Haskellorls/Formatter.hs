@@ -292,10 +292,10 @@ mkColumn nodes config printers pType
 mkGrid :: [Node.NodeInfo] -> Config.Config -> Printers -> [PrinterType] -> [[[Attr.Attribute WT.WrappedText]]]
 mkGrid nodes config printers = transpose . map (mkColumn nodes config printers)
 
-mkLines :: Foldable t => t Node.NodeInfo -> Config.Config -> Printers -> [PrinterType] -> [[Attr.Attribute WT.WrappedText]]
+mkLines :: (Foldable t) => t Node.NodeInfo -> Config.Config -> Printers -> [PrinterType] -> [[Attr.Attribute WT.WrappedText]]
 mkLines nodes config printers types = intercalate [Attr.Other $ from @T.Text " "] <$> mkGrid (toList nodes) config printers types
 
-mkBlockSizeHeader :: Foldable t => t Node.NodeInfo -> Printers -> [Attr.Attribute WT.WrappedText]
+mkBlockSizeHeader :: (Foldable t) => t Node.NodeInfo -> Printers -> [Attr.Attribute WT.WrappedText]
 mkBlockSizeHeader nodes printers = blockSizeHeaderPrinter printers $ toList nodes
 
 justifyLeft :: Int -> Char -> [Attr.Attribute WT.WrappedText] -> [Attr.Attribute WT.WrappedText]

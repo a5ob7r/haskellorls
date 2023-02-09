@@ -30,13 +30,13 @@ instance From LC.Lconv Config where
      in Config {..}
 
 -- | Format an integer.
-formatI :: Integral a => Config -> a -> String
+formatI :: (Integral a) => Config -> a -> String
 formatI config@Config {..} i
   | i < 0 = '-' : formatI config (abs i)
   | otherwise = intercalate thousandsSep . reverse . fmap reverse . group charMax grouping . reverse . show . toInteger $ abs i
 
 -- | Format an floating point number.
-formatF :: Real a => Config -> a -> String
+formatF :: (Real a) => Config -> a -> String
 formatF config@Config {..} f
   | f < 0 = '-' : formatF config (abs f)
   | otherwise =

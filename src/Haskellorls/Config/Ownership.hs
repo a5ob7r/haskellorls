@@ -14,7 +14,7 @@ import System.Posix.User (getGroups, getRealUserID)
 
 data UserInfo = UserInfo {userID :: UserID, groupIDs :: [GroupID]}
 
-userInfo :: MonadIO m => m UserInfo
+userInfo :: (MonadIO m) => m UserInfo
 userInfo = do
   userID <- liftIO getRealUserID
   groupIDs <- liftIO getGroups

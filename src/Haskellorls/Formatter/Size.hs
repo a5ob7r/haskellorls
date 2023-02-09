@@ -227,7 +227,7 @@ coloredFileBlockSize lscolors config nconfig node = case Node.fileSize node of
 -- | Calculate a block size of a file.
 --
 -- prop> (toBlockSize n) `mod` (1024 * 4) == 0
-toBlockSize :: Integral a => a -> a
+toBlockSize :: (Integral a) => a -> a
 toBlockSize i
   | i < 0 = negate . toBlockSize $ negate i
   | otherwise = i `ceilingBy` (1024 * 4)
@@ -250,14 +250,14 @@ toBlockSize i
 --
 -- >>> 3 `ceilingBy` 2
 -- 4
-ceilingBy :: Integral a => a -> a -> a
+ceilingBy :: (Integral a) => a -> a -> a
 ceilingBy i d = (i `ceilingDiv` d) * d
 
 -- | 'div' @i@ by @d@, but add @1@ to the @quosient@ if the @remainder@ is not
 -- @0@.
 --
 -- prop> i `div` d <= i `ceilingDiv` d
-ceilingDiv :: Integral a => a -> a -> a
+ceilingDiv :: (Integral a) => a -> a -> a
 ceilingDiv i d = q + abs (signum r)
   where
     (q, r) = i `divMod` d

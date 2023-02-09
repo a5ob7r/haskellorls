@@ -9,7 +9,7 @@ import System.FilePath.Glob (Pattern, match)
 import System.FilePath.Posix.ByteString
 
 -- | List contents in a directory in accordance with @Config@.
-listContents :: MonadIO m => Config.Config -> RawFilePath -> m [RawFilePath]
+listContents :: (MonadIO m) => Config.Config -> RawFilePath -> m [RawFilePath]
 listContents config path = ignoreExcluder . hideExcluder . ignoreFilter <$> list path
   where
     list = case Config.listing config of
@@ -27,16 +27,16 @@ listContents config path = ignoreExcluder . hideExcluder . ignoreFilter <$> list
 
 -- | Return all of contents in a directory. They contains all of normal files
 -- and all of hidden files include @.@ and @..@.
-listAllEntries :: MonadIO m => RawFilePath -> m [RawFilePath]
+listAllEntries :: (MonadIO m) => RawFilePath -> m [RawFilePath]
 listAllEntries = liftIO . getDirectoryFiles
 
 -- | Return almost all of contents in a directory. They contains all of normal
 -- files and all of hidden files except @.@ and @..@.
-listSemiAllEntries :: MonadIO m => RawFilePath -> m [RawFilePath]
+listSemiAllEntries :: (MonadIO m) => RawFilePath -> m [RawFilePath]
 listSemiAllEntries = liftIO . listDirectory
 
 -- | Return contents in a directory. They contains only all of normal files.
-listEntries :: MonadIO m => RawFilePath -> m [RawFilePath]
+listEntries :: (MonadIO m) => RawFilePath -> m [RawFilePath]
 listEntries path = filter (\s -> not $ "." `B.isPrefixOf` s) <$> listSemiAllEntries path
 
 -- | Exclude backup files, which have @~@ as a suffix.

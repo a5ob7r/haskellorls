@@ -76,15 +76,15 @@ ceiling' d = fromIntegral @Int (ceiling @Double (d * 10)) / 10
 
 -- | Convert a integral number into human readable format using a binary
 -- prefix, which uses powers of 1024.
-humanizeBI :: Integral a => a -> Scale BI FileSize
+humanizeBI :: (Integral a) => a -> Scale BI FileSize
 humanizeBI n = n `humanizeBy` 1024
 
 -- | Convert a integral number into human readable format using a SI prefix,
 -- which uses powers of 1000 instead of 1024.
-humanizeSI :: Integral a => a -> Scale SI FileSize
+humanizeSI :: (Integral a) => a -> Scale SI FileSize
 humanizeSI n = n `humanizeBy` 1000
 
-humanizeBy :: Integral a => a -> a -> Scale b FileSize
+humanizeBy :: (Integral a) => a -> a -> Scale b FileSize
 humanizeBy n scale
   | n <= scale ^ (0 :: Int) * (scale - 1) = NoScale . ISize $ fromIntegral n
   | n <= scale ^ (1 :: Int) * (scale - 1) = let r = fromIntegral n / fromIntegral scale ^ (1 :: Int) in Kilo $ if r > 9 then ISize $ ceiling r else DSize $ ceiling' r

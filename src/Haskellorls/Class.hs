@@ -39,7 +39,7 @@ instance TerminalLength T.Text where
 -- | Notify a information to users by printing a message to stderr. This is
 -- similar to a shell command @echo message >&2@.
 class (Show a) => Notifiable a where
-  notify :: MonadIO m => a -> m ()
+  notify :: (MonadIO m) => a -> m ()
   notify = liftIO . hPrint stderr
 
 instance Notifiable IOException

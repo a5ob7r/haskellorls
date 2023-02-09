@@ -33,7 +33,7 @@ data Environment = Environment
     catalog :: Maybe Catalog
   }
 
-mkEnvironment :: MonadIO m => m Environment
+mkEnvironment :: (MonadIO m) => m Environment
 mkEnvironment = do
   toTerminal <- liftIO $ hIsTerminalDevice stdout
 
