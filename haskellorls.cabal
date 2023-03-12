@@ -6,7 +6,7 @@ license:            BSD-3-Clause
 license-file:       LICENSE
 maintainer:         12132068+a5ob7r@users.noreply.github.com
 author:             a5ob7r
-tested-with:        GHC ==9.2.7 || ==9.4.4
+tested-with:        GHC ==9.2.7 || ==9.4.4 || ==9.6.1
 extra-source-files:
   CHANGELOG.md
   README.md
@@ -27,7 +27,7 @@ flag selinux
   manual:      True
 
 common common-options
-  build-depends:    base >=4.14 && <4.18
+  build-depends:    base >=4.14 && <4.19
   default-language: Haskell2010
   ghc-options:
     -W -Wall -Wcompat -Wredundant-constraints -Wpartial-fields
