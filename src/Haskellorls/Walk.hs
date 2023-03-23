@@ -30,7 +30,6 @@ import GHC.IO.Exception (IOErrorType (NoSuchThing), IOException (ioe_type))
 import Haskellorls.Class (notify)
 import qualified Haskellorls.Config as Config
 import qualified Haskellorls.Config.Format as Format
-import Haskellorls.Config.Listing
 import Haskellorls.Config.Tree
 import Haskellorls.Data.Infinitable
 import qualified Haskellorls.Formatter as Formatter
@@ -206,23 +205,18 @@ mkInitialOperations paths = do
 
 mkTreeNodeInfos :: Node.NodeInfo -> Ls (Seq Node.NodeInfo)
 mkTreeNodeInfos nodeinfo = do
-  config <-
-    view configL <&> \config -> case Config.listing config of
-      -- Force hide @.@ and @..@ to avoid infinite loop.
-      All -> config {Config.listing = AlmostAll}
-      _ -> config
   inodesL %= \inodes -> maybe inodes (\inode -> Walk.singleton inode <> inodes) $ Node.fileID nodeinfo
 
-  go config (singleton nodeinfo) mempty
+  go (singleton nodeinfo) mempty
   where
-    go :: Config.Config -> Seq Node.NodeInfo -> Seq Node.NodeInfo -> Ls (Seq Node.NodeInfo)
-    go _ Empty nodes = return nodes
-    go config (node :<| nodeSeq) nodeSeq' = do
+    go :: Seq Node.NodeInfo -> Seq Node.NodeInfo -> Ls (Seq Node.NodeInfo)
+    go Empty nodes = return nodes
+    go (node :<| nodeSeq) nodeSeq' = do
+      config <- view configL
       let path = Node.getNodeDirName node </> Node.getNodePath node
-          depth = Config.level config
 
       contents <-
-        if depth <= Only 0 || not (maybe False Node.isDirectory $ Node.nodeType node)
+        if Config.level config <= (Only . length $ Node.getTreeNodePositions node) || not (maybe False Node.isDirectory $ Node.nodeType node)
           then return []
           else
             tryIO (Listing.listContents config path) >>= \case
@@ -237,7 +231,7 @@ mkTreeNodeInfos nodeinfo = do
         let pList = mkPositions (length nodes) $ Node.getTreeNodePositions node
         return $ zipWith (\nd p -> nd {Node.getTreeNodePositions = p}) nodes pList
 
-      go config {Config.level = pred <$> depth} (fromList nodes <> nodeSeq) (nodeSeq' |> node)
+      go (fromList nodes <> nodeSeq) (nodeSeq' |> node)
 
 mkPositions :: Int -> [TreeNodePosition] -> [[TreeNodePosition]]
 mkPositions n _ | n < 1 = [[]]

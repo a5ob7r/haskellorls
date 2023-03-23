@@ -16,7 +16,11 @@ listContents :: (MonadThrow m, MonadIO m) => Config.Config -> PosixPath -> m [Po
 listContents config path = filter ((\s -> not $ isBackup s || isMatchIgnore s || isMatchHide s) . decode) <$> list path
   where
     list = case Config.listing config of
-      All -> listAllEntries
+      -- Force hide @.@ and @..@ to avoid infinite loop when the tree option is
+      -- enabled.
+      All
+        | Config.tree config -> listAlmostAllEntries
+        | otherwise -> listAllEntries
       AlmostAll -> listAlmostAllEntries
       NoHidden -> listEntries
     isBackup s = Config.ignoreBackups config && "~" `isSuffixOf` s
