@@ -4,14 +4,14 @@ module Haskellorls.Formatter.SymbolicLink
   )
 where
 
-import qualified Data.Text as T
-import qualified Haskellorls.Config as Config
-import qualified Haskellorls.Formatter.Attribute as Attr
-import qualified Haskellorls.Formatter.Name as Name
-import qualified Haskellorls.Formatter.Quote as Quote
-import qualified Haskellorls.Formatter.WrappedText as WT
-import qualified Haskellorls.LsColor.Color as Color
-import qualified Haskellorls.NodeInfo as Node
+import Data.Text qualified as T
+import Haskellorls.Config qualified as Config
+import Haskellorls.Formatter.Attribute qualified as Attr
+import Haskellorls.Formatter.Name qualified as Name
+import Haskellorls.Formatter.Quote qualified as Quote
+import Haskellorls.Formatter.WrappedText qualified as WT
+import Haskellorls.LsColor.Color qualified as Color
+import Haskellorls.NodeInfo qualified as Node
 import Witch (from)
 
 linkName :: Config.Config -> Node.NodeInfo -> [Attr.Attribute WT.WrappedText]

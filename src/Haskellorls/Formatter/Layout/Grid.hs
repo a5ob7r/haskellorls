@@ -2,12 +2,12 @@ module Haskellorls.Formatter.Layout.Grid (mkValidGrid) where
 
 import Data.List (find, intersperse, transpose, unfoldr)
 import Data.Maybe (fromMaybe)
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Haskellorls.Class (TerminalLength (..))
-import qualified Haskellorls.Config as Config
-import qualified Haskellorls.Config.Format as Format
-import qualified Haskellorls.Formatter.Attribute as Attr
-import qualified Haskellorls.Formatter.WrappedText as WT
+import Haskellorls.Config qualified as Config
+import Haskellorls.Config.Format qualified as Format
+import Haskellorls.Formatter.Attribute qualified as Attr
+import Haskellorls.Formatter.WrappedText qualified as WT
 import Witch (From (..))
 
 -- | 'splitInto' @n xs@ returns a list which are sliced @xs@ into @n@ elements:

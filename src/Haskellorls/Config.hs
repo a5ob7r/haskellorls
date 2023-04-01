@@ -6,14 +6,14 @@ module Haskellorls.Config
 where
 
 import Control.Applicative ((<|>))
-import qualified Data.ByteString.Char8 as C
+import Data.ByteString.Char8 qualified as C
 import Data.Either.Extra (eitherToMaybe)
 import Data.Gettext (gettext)
 import Data.List (isSuffixOf)
 import Data.Maybe (fromMaybe)
-import qualified Data.Text as T
-import qualified Data.Text.Lazy as TL
-import qualified Haskellorls.Config.Environment as Env
+import Data.Text qualified as T
+import Data.Text.Lazy qualified as TL
+import Haskellorls.Config.Environment qualified as Env
 import Haskellorls.Config.Format (Format (..))
 import Haskellorls.Config.Indicator (IndicatorStyle (..))
 import Haskellorls.Config.Listing (ListingStyle (..))
@@ -23,7 +23,7 @@ import Haskellorls.Config.Size (BlockSize (..), BlockSizeMod (..))
 import Haskellorls.Config.Sort (SortType (..))
 import Haskellorls.Config.TimeStyle (TimeStyle (..))
 import Haskellorls.Config.TimeType (TimeType (..))
-import qualified Haskellorls.Config.When as W
+import Haskellorls.Config.When qualified as W
 import Haskellorls.Data.Infinitable (Infinitable)
 import System.FilePath.Glob (Pattern, compile)
 import System.OsPath.Posix (PosixPath)

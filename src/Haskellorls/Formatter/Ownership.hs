@@ -11,16 +11,16 @@ module Haskellorls.Formatter.Ownership
   )
 where
 
-import qualified Data.IntMap.Strict as IM
+import Data.IntMap.Strict qualified as IM
 import Data.Maybe
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Haskellorls.Class
 import Haskellorls.Config.Ownership
-import qualified Haskellorls.Formatter.Attribute as Attr
-import qualified Haskellorls.Formatter.WrappedText as WT
-import qualified Haskellorls.LsColor as Color
-import qualified Haskellorls.NodeInfo as Node
-import qualified Haskellorls.System.Posix.PosixString as Posix
+import Haskellorls.Formatter.Attribute qualified as Attr
+import Haskellorls.Formatter.WrappedText qualified as WT
+import Haskellorls.LsColor qualified as Color
+import Haskellorls.NodeInfo qualified as Node
+import Haskellorls.System.Posix.PosixString qualified as Posix
 import Witch (From (from))
 import Prelude hiding (lookup)
 

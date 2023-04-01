@@ -8,9 +8,9 @@ module Haskellorls.Formatter.WrappedText
   )
 where
 
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Haskellorls.Class (TerminalLength (..))
-import qualified Haskellorls.LsColor.Config as Config
+import Haskellorls.LsColor.Config qualified as Config
 import Witch (From (..))
 
 -- | A 'Text', which are surrounded with two 'Text's. We assume that these

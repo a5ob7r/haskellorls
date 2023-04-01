@@ -10,10 +10,10 @@ where
 import Control.Applicative
 import Data.Bifunctor
 import Data.Default.Class
-import qualified Data.Map.Strict as M
+import Data.Map.Strict qualified as M
 import Data.Maybe
 import Data.String
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Haskellorls.Config.Context
 import Haskellorls.Config.DeviceNumber
 import Haskellorls.Config.Filemode.Entry

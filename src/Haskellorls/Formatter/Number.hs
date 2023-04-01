@@ -9,7 +9,7 @@ import Data.Bifunctor (bimap)
 import Data.Char (isDigit)
 import Data.Ix (inRange)
 import Data.List.Extra (chunksOf, intercalate)
-import qualified System.Locale.LocaleConv as LC
+import System.Locale.LocaleConv qualified as LC
 import Text.Read (readMaybe)
 import Witch (From (..))
 

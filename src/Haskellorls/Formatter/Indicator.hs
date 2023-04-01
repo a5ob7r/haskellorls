@@ -1,13 +1,13 @@
 module Haskellorls.Formatter.Indicator (mkIndicatorPrinter) where
 
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Haskellorls.Class (Dictionary (lookup))
-import qualified Haskellorls.Config as Config
-import qualified Haskellorls.Config.Format as Format
+import Haskellorls.Config qualified as Config
+import Haskellorls.Config.Format qualified as Format
 import Haskellorls.Config.Indicator
-import qualified Haskellorls.Formatter.Attribute as Attr
-import qualified Haskellorls.Formatter.WrappedText as WT
-import qualified Haskellorls.NodeInfo as Node
+import Haskellorls.Formatter.Attribute qualified as Attr
+import Haskellorls.Formatter.WrappedText qualified as WT
+import Haskellorls.NodeInfo qualified as Node
 import Witch (From (..))
 import Prelude hiding (lookup)
 

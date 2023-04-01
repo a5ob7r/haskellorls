@@ -1,13 +1,13 @@
 module Haskellorls.Walk.Sort (sort) where
 
-import qualified Algorithms.NaturalSort as NSort
+import Algorithms.NaturalSort qualified as NSort
 import Data.Char (isPunctuation)
 import Data.List (partition, sortOn)
 import Data.Ord
-import qualified Data.Text as T
-import qualified Haskellorls.Config as Config
+import Data.Text qualified as T
+import Haskellorls.Config qualified as Config
 import Haskellorls.Config.Sort
-import qualified Haskellorls.NodeInfo as Node
+import Haskellorls.NodeInfo qualified as Node
 import Haskellorls.System.OsPath.Posix.Extra (decode)
 
 -- | Compare naturally.

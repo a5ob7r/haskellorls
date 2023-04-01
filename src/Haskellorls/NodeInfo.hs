@@ -23,13 +23,13 @@ import Control.Exception.Safe (MonadCatch, tryIO)
 import Control.Monad ((>=>))
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Either.Extra (eitherToMaybe)
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Data.Time.Clock.POSIX (POSIXTime)
-import qualified Haskellorls.Config as Config
-import qualified Haskellorls.Config.TimeType as TimeType
-import qualified Haskellorls.Config.Tree as Tree
+import Haskellorls.Config qualified as Config
+import Haskellorls.Config.TimeType qualified as TimeType
+import Haskellorls.Config.Tree qualified as Tree
 import Haskellorls.System.OsPath.Posix.Extra (PosixPath, (</>))
-import qualified Haskellorls.System.Posix.PosixString as Posix
+import Haskellorls.System.Posix.PosixString qualified as Posix
 
 #ifdef SELINUX
 import Data.Either (fromRight)

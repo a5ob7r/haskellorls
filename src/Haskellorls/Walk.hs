@@ -21,29 +21,29 @@ import Data.Either (partitionEithers)
 import Data.Functor ((<&>))
 import Data.List (foldl', intersperse, partition)
 import Data.Sequence (Seq (Empty, (:<|)), fromList, singleton, (|>))
-import qualified Data.Sequence as Seq
-import qualified Data.Text as T
-import qualified Data.Text.IO as T
-import qualified Data.Text.Lazy as TL
-import qualified Data.Text.Lazy.Builder as TL
+import Data.Sequence qualified as Seq
+import Data.Text qualified as T
+import Data.Text.IO qualified as T
+import Data.Text.Lazy qualified as TL
+import Data.Text.Lazy.Builder qualified as TL
 import GHC.IO.Exception (IOErrorType (NoSuchThing), IOException (ioe_type))
 import Haskellorls.Class (notify)
-import qualified Haskellorls.Config as Config
-import qualified Haskellorls.Config.Format as Format
+import Haskellorls.Config qualified as Config
+import Haskellorls.Config.Format qualified as Format
 import Haskellorls.Config.Tree
 import Haskellorls.Data.Infinitable
-import qualified Haskellorls.Formatter as Formatter
-import qualified Haskellorls.Formatter.Attribute as Attr
-import qualified Haskellorls.Formatter.Layout.Grid as Grid
-import qualified Haskellorls.Formatter.Quote as Quote
-import qualified Haskellorls.Formatter.WrappedText as WT
+import Haskellorls.Formatter qualified as Formatter
+import Haskellorls.Formatter.Attribute qualified as Attr
+import Haskellorls.Formatter.Layout.Grid qualified as Grid
+import Haskellorls.Formatter.Quote qualified as Quote
+import Haskellorls.Formatter.WrappedText qualified as WT
 import Haskellorls.Lens.Micro (makeLenses', use, view, (%=), (.=))
-import qualified Haskellorls.NodeInfo as Node
+import Haskellorls.NodeInfo qualified as Node
 import Haskellorls.System.OsPath.Posix.Extra (PosixPath, decode, encode, (</>))
-import qualified Haskellorls.Walk.Dired as Dired
-import qualified Haskellorls.Walk.Listing as Listing
-import qualified Haskellorls.Walk.Sort as Sort
-import qualified Haskellorls.Walk.Utils as Walk
+import Haskellorls.Walk.Dired qualified as Dired
+import Haskellorls.Walk.Listing qualified as Listing
+import Haskellorls.Walk.Sort qualified as Sort
+import Haskellorls.Walk.Utils qualified as Walk
 import System.IO.Unsafe (unsafePerformIO)
 import Witch (from, via)
 

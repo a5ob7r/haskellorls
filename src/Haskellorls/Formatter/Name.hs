@@ -4,11 +4,11 @@ module Haskellorls.Formatter.Name
   )
 where
 
-import qualified Haskellorls.Config as Config
-import qualified Haskellorls.Formatter.Attribute as Attr
-import qualified Haskellorls.Formatter.WrappedText as WT
-import qualified Haskellorls.LsColor as Color
-import qualified Haskellorls.NodeInfo as Node
+import Haskellorls.Config qualified as Config
+import Haskellorls.Formatter.Attribute qualified as Attr
+import Haskellorls.Formatter.WrappedText qualified as WT
+import Haskellorls.LsColor qualified as Color
+import Haskellorls.NodeInfo qualified as Node
 import Haskellorls.System.OsPath.Posix.Extra (PosixPath, decode, isAbsolute, normalise, (</>))
 import Witch (From (..))
 

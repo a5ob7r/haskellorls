@@ -8,8 +8,8 @@ where
 import Control.Exception (IOException, SomeException)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Char (isLatin1)
-import qualified Data.Map.Strict as M
-import qualified Data.Text as T
+import Data.Map.Strict qualified as M
+import Data.Text qualified as T
 import System.IO (hPrint, stderr)
 
 class Dictionary k v d where

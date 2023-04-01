@@ -5,7 +5,7 @@ module Haskellorls.Walk.Dired
   )
 where
 
-import qualified Data.ByteString as B
+import Data.ByteString qualified as B
 import Haskellorls.Formatter.Attribute
 
 -- | Filename byte indeces for @-D / --dired@ option. These indeces are

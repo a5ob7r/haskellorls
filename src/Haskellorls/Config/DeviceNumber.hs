@@ -4,7 +4,7 @@ module Haskellorls.Config.DeviceNumber
   )
 where
 
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Haskellorls.System.Posix.PosixString (DeviceID, major, minor)
 import Witch (From (..))
 

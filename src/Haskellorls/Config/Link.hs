@@ -1,5 +1,5 @@
 module Haskellorls.Config.Link (LinkCount (..)) where
 
-import qualified System.Posix.Types as Types
+import System.Posix.Types qualified as Types
 
 newtype LinkCount = LinkCount {unLinkCount :: Types.LinkCount}

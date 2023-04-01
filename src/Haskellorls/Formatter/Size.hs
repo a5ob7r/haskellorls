@@ -173,17 +173,17 @@ where
 import Control.Applicative ((<|>))
 import Data.List (foldl')
 import Data.Maybe (fromMaybe)
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Haskellorls.Class (lookup)
-import qualified Haskellorls.Config as Config
+import Haskellorls.Config qualified as Config
 import Haskellorls.Config.DeviceNumber
 import Haskellorls.Config.Size
-import qualified Haskellorls.Formatter.Attribute as Attr
-import qualified Haskellorls.Formatter.Number as Number
-import qualified Haskellorls.Formatter.WrappedText as WT
+import Haskellorls.Formatter.Attribute qualified as Attr
+import Haskellorls.Formatter.Number qualified as Number
+import Haskellorls.Formatter.WrappedText qualified as WT
 import Haskellorls.Humanize.FileSize
-import qualified Haskellorls.LsColor as Color
-import qualified Haskellorls.NodeInfo as Node
+import Haskellorls.LsColor qualified as Color
+import Haskellorls.NodeInfo qualified as Node
 import Haskellorls.System.Posix.PosixString (FileOffset)
 import Witch (from)
 import Prelude hiding (lookup)

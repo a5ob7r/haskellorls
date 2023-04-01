@@ -6,9 +6,9 @@ module Haskellorls.Walk.Utils
 where
 
 import Control.Monad.State.Strict (State, gets, put)
-import qualified Data.IntSet as IS
+import Data.IntSet qualified as IS
 import Data.List (foldl')
-import qualified Haskellorls.NodeInfo as Node
+import Haskellorls.NodeInfo qualified as Node
 import System.Posix.Types (FileID)
 
 -- | Already traversed 'FileID's.

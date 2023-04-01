@@ -5,12 +5,12 @@ module Haskellorls.Formatter.Quote
 where
 
 import Data.Char (isPrint)
-import qualified Data.Set as S
-import qualified Data.Text as T
-import qualified Haskellorls.Config as Config
+import Data.Set qualified as S
+import Data.Text qualified as T
+import Haskellorls.Config qualified as Config
 import Haskellorls.Config.Quote
-import qualified Haskellorls.Formatter.Attribute as Attr
-import qualified Haskellorls.Formatter.WrappedText as WT
+import Haskellorls.Formatter.Attribute qualified as Attr
+import Haskellorls.Formatter.WrappedText qualified as WT
 
 -- | Quote and Escape for filenames.
 quote :: Config.Config -> Attr.Attribute WT.WrappedText -> Attr.Attribute WT.WrappedText

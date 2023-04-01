@@ -4,14 +4,14 @@ module Haskellorls.Formatter.Tree
   )
 where
 
-import qualified Data.List as L
-import qualified Data.Text as T
-import qualified Data.Text.Lazy as TL
-import qualified Data.Text.Lazy.Builder as TL
+import Data.List qualified as L
+import Data.Text qualified as T
+import Data.Text.Lazy qualified as TL
+import Data.Text.Lazy.Builder qualified as TL
 import Haskellorls.Config.Tree
-import qualified Haskellorls.Formatter.Attribute as Attr
-import qualified Haskellorls.Formatter.WrappedText as WT
-import qualified Haskellorls.LsColor as Color
+import Haskellorls.Formatter.Attribute qualified as Attr
+import Haskellorls.Formatter.WrappedText qualified as WT
+import Haskellorls.LsColor qualified as Color
 
 treeBranch :: [TreeNodePosition] -> T.Text
 treeBranch [] = ""

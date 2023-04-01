@@ -10,7 +10,7 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Maybe (MaybeT (..))
 import Data.Gettext (Catalog, loadCatalog)
 import Haskellorls.Data.Gettext.Extra (lookupMO)
-import qualified Haskellorls.System.Locale as Locale
+import Haskellorls.System.Locale qualified as Locale
 import Haskellorls.System.OsPath.Posix.Extra (PosixPath, decode, encode)
 import Network.HostName (getHostName)
 import Numeric (readDec)

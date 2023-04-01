@@ -11,7 +11,7 @@ import Haskellorls.Config.Size (BlockSize, BlockSizeMod)
 import Haskellorls.Config.Sort (SortType (..))
 import Haskellorls.Config.TimeStyle (TimeStyle)
 import Haskellorls.Config.TimeType (TimeType (..))
-import qualified Haskellorls.Config.When as W
+import Haskellorls.Config.When qualified as W
 import Haskellorls.Data.Infinitable (Infinitable (..))
 import Options.Applicative hiding (header)
 import Options.Applicative.Help.Pretty

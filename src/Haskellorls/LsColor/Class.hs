@@ -7,7 +7,7 @@ where
 import Data.Foldable
 import Data.Maybe
 import Data.String
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Haskellorls.Class
 import Prelude hiding (lookup)
 

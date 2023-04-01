@@ -7,7 +7,7 @@ module Haskellorls.Config.Filemode.Permission
 where
 
 import Haskellorls.Class (Dictionary (..))
-import qualified Haskellorls.System.Posix.PosixString as Posix
+import Haskellorls.System.Posix.PosixString qualified as Posix
 import Witch (From (..), via)
 import Prelude hiding (lookup)
 

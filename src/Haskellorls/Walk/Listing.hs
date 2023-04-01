@@ -4,7 +4,7 @@ import Control.Exception.Safe (MonadThrow)
 import Control.Monad.IO.Class
 import Data.List (isSuffixOf)
 import Data.Maybe (listToMaybe)
-import qualified Haskellorls.Config as Config
+import Haskellorls.Config qualified as Config
 import Haskellorls.Config.Listing
 import Haskellorls.System.OsPath.Posix.Extra (PosixPath, decode, isExtSeparator, unpack)
 import System.Directory.OsPath (getDirectoryContents, listDirectory)

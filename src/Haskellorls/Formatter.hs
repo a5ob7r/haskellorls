@@ -12,31 +12,31 @@ import Data.Either (isLeft)
 import Data.Foldable
 import Data.Functor ((<&>))
 import Data.List (intercalate, transpose)
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Data.Time (defaultTimeLocale, getCurrentTime, getCurrentTimeZone)
 import Data.Time.Clock.POSIX (posixSecondsToUTCTime)
 import Haskellorls.Class (termLength)
-import qualified Haskellorls.Config as Config
+import Haskellorls.Config qualified as Config
 import Haskellorls.Config.Context (FileContext (..))
 import Haskellorls.Config.DeviceNumber
 import Haskellorls.Config.Filetime (Filetime (..))
-import qualified Haskellorls.Config.Format as Format
-import qualified Haskellorls.Config.Indicator as Indicator
+import Haskellorls.Config.Format qualified as Format
+import Haskellorls.Config.Indicator qualified as Indicator
 import Haskellorls.Config.Inode (Inode (..))
 import Haskellorls.Config.Link (LinkCount (..))
-import qualified Haskellorls.Formatter.Attribute as Attr
-import qualified Haskellorls.Formatter.Filemode as Filemode
-import qualified Haskellorls.Formatter.Indicator as Indicator
-import qualified Haskellorls.Formatter.Name as Name
-import qualified Haskellorls.Formatter.Ownership as Ownership
-import qualified Haskellorls.Formatter.Quote as Quote
-import qualified Haskellorls.Formatter.Size as Size
-import qualified Haskellorls.Formatter.SymbolicLink as SymbolicLink
-import qualified Haskellorls.Formatter.Time as Time
-import qualified Haskellorls.Formatter.Tree as Tree
-import qualified Haskellorls.Formatter.WrappedText as WT
-import qualified Haskellorls.LsColor as Color
-import qualified Haskellorls.NodeInfo as Node
+import Haskellorls.Formatter.Attribute qualified as Attr
+import Haskellorls.Formatter.Filemode qualified as Filemode
+import Haskellorls.Formatter.Indicator qualified as Indicator
+import Haskellorls.Formatter.Name qualified as Name
+import Haskellorls.Formatter.Ownership qualified as Ownership
+import Haskellorls.Formatter.Quote qualified as Quote
+import Haskellorls.Formatter.Size qualified as Size
+import Haskellorls.Formatter.SymbolicLink qualified as SymbolicLink
+import Haskellorls.Formatter.Time qualified as Time
+import Haskellorls.Formatter.Tree qualified as Tree
+import Haskellorls.Formatter.WrappedText qualified as WT
+import Haskellorls.LsColor qualified as Color
+import Haskellorls.NodeInfo qualified as Node
 import Haskellorls.System.Locale (LcTime (..), lcTime)
 import System.Locale.Current (currentLocale)
 import System.Locale.LocaleConv (localeConv)

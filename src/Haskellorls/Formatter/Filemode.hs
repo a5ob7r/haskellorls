@@ -5,10 +5,10 @@ module Haskellorls.Formatter.Filemode
   )
 where
 
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Haskellorls.Config.Filemode
-import qualified Haskellorls.Formatter.Attribute as Attr
-import qualified Haskellorls.Formatter.WrappedText as WT
+import Haskellorls.Formatter.Attribute qualified as Attr
+import Haskellorls.Formatter.WrappedText qualified as WT
 import Haskellorls.LsColor
 import Witch (from)
 import Prelude hiding (lookup)

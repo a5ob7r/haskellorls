@@ -4,11 +4,11 @@ import Data.Default.Class (Default (..))
 import Data.Version (showVersion)
 import Haskellorls.Config
 import Haskellorls.Config.Environment
-import qualified Haskellorls.Config.Option as Option
-import qualified Haskellorls.Formatter as Formatter
-import qualified Haskellorls.System.Locale as Locale
+import Haskellorls.Config.Option qualified as Option
+import Haskellorls.Formatter qualified as Formatter
+import Haskellorls.System.Locale qualified as Locale
 import Haskellorls.System.OsPath.Posix.Extra (encode)
-import qualified Haskellorls.Walk as Walk
+import Haskellorls.Walk qualified as Walk
 import Options.Applicative
 import Paths_haskellorls (version)
 import System.Exit
