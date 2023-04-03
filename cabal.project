@@ -2,7 +2,4 @@ packages:
   ./
   ./localeconv
 
-index-state: 2023-03-31T19:55:54Z
-
-allow-newer:
-  , microlens-th:template-haskell
+index-state: 2023-04-03T13:41:27Z
