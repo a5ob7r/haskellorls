@@ -59,10 +59,10 @@ mkNodeType :: Posix.FileStatus -> NodeType
 mkNodeType status
   | Posix.isRegularFile status =
       if
-          | mode `Posix.hasFileMode` Posix.setUserIDMode -> Setuid
-          | mode `Posix.hasFileMode` Posix.setGroupIDMode -> Setgid
-          | mode `Posix.hasFileModesOr` [Posix.ownerExecuteMode, Posix.groupExecuteMode, Posix.otherExecuteMode] -> Executable
-          | otherwise -> File
+        | mode `Posix.hasFileMode` Posix.setUserIDMode -> Setuid
+        | mode `Posix.hasFileMode` Posix.setGroupIDMode -> Setgid
+        | mode `Posix.hasFileModesOr` [Posix.ownerExecuteMode, Posix.groupExecuteMode, Posix.otherExecuteMode] -> Executable
+        | otherwise -> File
   | Posix.isDirectory status = case (mode `Posix.hasFileMode` Posix.otherWriteMode, mode `Posix.hasFileMode` Posix.stickyMode) of
       (True, True) -> StickyOtherWritable
       (True, _) -> OtherWritable
