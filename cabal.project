@@ -2,4 +2,10 @@ packages:
   ./
   ./localeconv
 
-index-state: 2023-04-19T21:29:05Z
+index-state: 2023-05-25T12:00:16Z
+
+-- FIXME: A workaround to fix blocking output by ansi-wl-pprint (probably).
+-- Remove this if switch to optparse-applicative v0.18.0.0 because it no longer
+-- uses it.
+constraints:
+  ansi-wl-pprint == 0.6.9

@@ -87,7 +87,7 @@ data Option = Option
   }
 
 opts :: ParserInfo Option
-opts = info (optionParser <**> helper) $ fullDesc <> (headerDoc . Just . text) header
+opts = info (optionParser <**> helper) $ fullDesc <> (headerDoc . Just . pretty) header
   where
     header =
       unlines
