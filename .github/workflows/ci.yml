@@ -17,7 +17,7 @@ jobs:
           - ubuntu-latest
           - macOS-latest
         ghc:
-          - '9.6.1'
+          - '9.6.2'
           - '9.4.5'
           - '9.2.7'
         cabal:
