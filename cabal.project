@@ -2,7 +2,7 @@ packages:
   ./
   ./localeconv
 
-index-state: 2023-08-10T19:26:25Z
+index-state: 2023-10-05T21:19:55Z
 
 constraints:
   -- FIXME: "autodocodec", which is a dependency of "sydtest", v0.2.0.4 or
