@@ -4,6 +4,7 @@ module Haskellorls.Config.Option
   )
 where
 
+import Data.Version (showVersion)
 import Haskellorls.Config.Format (Format)
 import Haskellorls.Config.Indicator (IndicatorStyle (..))
 import Haskellorls.Config.Quote (QuotingStyle)
@@ -15,6 +16,7 @@ import Haskellorls.Config.When qualified as W
 import Haskellorls.Data.Infinitable (Infinitable (..))
 import Options.Applicative hiding (header)
 import Options.Applicative.Help.Pretty
+import Paths_haskellorls (version)
 import Text.Read (readMaybe)
 import Witch (TryFromException (..), tryFrom)
 
@@ -82,13 +84,13 @@ data Option = Option
     oContext :: Bool,
     oZero :: Bool,
     oOneline :: Bool,
-    oVersion :: Bool,
     oTargets :: [FilePath]
   }
 
 opts :: ParserInfo Option
-opts = info (optionParser <**> helper) $ fullDesc <> (headerDoc . Just . pretty) header
+opts = info parser $ fullDesc <> (headerDoc . Just . pretty) header
   where
+    parser = optionParser <**> simpleVersioner (showVersion version) <**> helper
     header =
       unlines
         [ " _   _           _        _ _            _     ",
@@ -393,9 +395,6 @@ optionParser =
     <*> switch do
       short '1'
         <> help "Enable oneline layout which outputs one file by one line"
-    <*> switch do
-      long "version"
-        <> help "Show version info"
     <*> do
       many . strArgument $
         metavar "[FILE]..."

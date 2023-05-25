@@ -1,7 +1,7 @@
 module Haskellorls (haskellorls) where
 
+import Control.Exception.Safe (catch)
 import Data.Default.Class (Default (..))
-import Data.Version (showVersion)
 import Haskellorls.Config
 import Haskellorls.Config.Environment
 import Haskellorls.Config.Option qualified as Option
@@ -10,7 +10,6 @@ import Haskellorls.System.Locale qualified as Locale
 import Haskellorls.System.OsPath.Posix.Extra (encode)
 import Haskellorls.Walk qualified as Walk
 import Options.Applicative
-import Paths_haskellorls (version)
 import System.Exit
 
 -- | Run @ls@.
@@ -26,13 +25,7 @@ haskellorls :: [String] -> IO ExitCode
 haskellorls args = do
   Locale.initialize
 
-  options <- argParser args
-
-  if Option.oVersion options
-    then do
-      putStrLn $ showVersion version
-      return ExitSuccess
-    else run options
+  (argParser args >>= run) `catch` return
 
 run :: Option.Option -> IO ExitCode
 run opt = do
