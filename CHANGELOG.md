@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- `--time=mtime` and `--time=modification`.
+
 ## 0.6.1.0 -- 2023-05-26
 
 ### Fixed
