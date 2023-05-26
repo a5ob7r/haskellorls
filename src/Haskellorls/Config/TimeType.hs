@@ -21,7 +21,8 @@ instance Show TimeTypeException where
         "Valid time kind formats are as below.",
         "  - atime, access, use",
         "  - ctime, status",
-        "  - mtime, modification"
+        "  - mtime, modification",
+        "  - birth, creation"
       ]
 
 instance Exception TimeTypeException
@@ -35,6 +36,8 @@ instance TryFrom String TimeType where
     "status" -> Right CHANGE
     "mtime" -> Right MODIFICATION
     "modification" -> Right MODIFICATION
-    -- "birth" -> BIRTH
-    -- "creation" -> BIRTH
+    -- Fallback to modification time because we can't probably get file
+    -- creation times now.
+    "birth" -> Right MODIFICATION
+    "creation" -> Right MODIFICATION
     s -> Left . TryFromException s . Just $ toException InvalidFormat
