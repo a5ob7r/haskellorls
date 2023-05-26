@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.1.0 -- 2023-05-26
+
 ### Fixed
 
 - Dig all of sibling directories recursively when `--tree` and `--level=LEVEL` are enabled at the same time.
