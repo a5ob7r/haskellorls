@@ -31,7 +31,8 @@ common common-options
   default-language: GHC2021
   ghc-options:
     -W -Wall -Wcompat -Wredundant-constraints -Wpartial-fields
-    -Wunused-packages -Widentities
+    -Wunused-packages -Widentities -Wprepositive-qualified-module
+    -Wredundant-bang-patterns
 
   if flag(pedantic)
     ghc-options: -Werror
