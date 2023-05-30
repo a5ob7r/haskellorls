@@ -11,13 +11,6 @@ import Haskellorls.Config.Sort
 import Haskellorls.NodeInfo qualified as Node
 import Haskellorls.System.OsPath.Posix.Extra (decode)
 
--- | Compare naturally.
-newtype NaturalS a = NaturalS a
-  deriving (Eq)
-
-instance (Eq a, NSort.NaturalSort a) => Ord (NaturalS a) where
-  compare (NaturalS x) (NaturalS y) = x `NSort.compare` y
-
 sort :: Config.Config -> [Node.NodeInfo] -> [Node.NodeInfo]
 sort config =
   merge . separate . case Config.sort config of
@@ -48,7 +41,7 @@ sortByTime :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortByTime = sortOn $ Down . Node.fileTime
 
 sortByVersion :: [Node.NodeInfo] -> [Node.NodeInfo]
-sortByVersion = sortOn $ NaturalS . toText
+sortByVersion = sortOn $ NSort.sortKey . toText
 
 sortByExtension :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortByExtension = sortOn $ \node -> let path = toText node in (normalize $ T.takeWhileEnd (/= '.') path, normalize path, path)
