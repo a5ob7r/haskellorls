@@ -5,6 +5,7 @@ import Data.Char (isPunctuation)
 import Data.List (partition, sortOn)
 import Data.Ord
 import Data.Text qualified as T
+import Haskellorls.Class (termLength)
 import Haskellorls.Config qualified as Config
 import Haskellorls.Config.Sort
 import Haskellorls.NodeInfo qualified as Node
@@ -26,6 +27,7 @@ sort config =
     TIME -> sortByTime
     VERSION -> sortByVersion
     EXTENSION -> sortByExtension
+    WIDTH -> sortByWidth
   where
     separate =
       if Config.groupDirectoriesFirst config && Config.sort config /= NONE
@@ -50,6 +52,9 @@ sortByVersion = sortOn $ NaturalS . toText
 
 sortByExtension :: [Node.NodeInfo] -> [Node.NodeInfo]
 sortByExtension = sortOn $ \node -> let path = toText node in (normalize $ T.takeWhileEnd (/= '.') path, normalize path, path)
+
+sortByWidth :: [Node.NodeInfo] -> [Node.NodeInfo]
+sortByWidth = sortOn $ \node -> let path = toText node in (termLength path, path)
 
 -- | Create a "Text" for name comparison from "NodeInfo".
 toText :: Node.NodeInfo -> T.Text

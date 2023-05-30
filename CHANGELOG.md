@@ -6,6 +6,7 @@
 
 - `--time=mtime` and `--time=modification`.
 - `--time=birth` and `--time=creation`, but now it falls back to `--time=mtime` or `--time=modification`.
+- `--sort=width` to sort by the display width of the filename.
 
 ## 0.6.1.0 -- 2023-05-26
 

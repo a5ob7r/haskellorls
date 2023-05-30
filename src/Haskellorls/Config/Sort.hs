@@ -11,6 +11,7 @@ data SortType
   | TIME
   | VERSION
   | EXTENSION
+  | WIDTH
   deriving (Show, Eq, Ord)
 
 data SortTypeException = InvalidFormat
@@ -26,7 +27,8 @@ instance Show SortTypeException where
         "  - size",
         "  - time",
         "  - version",
-        "  - extension"
+        "  - extension",
+        "  - width"
       ]
 
 instance Exception SortTypeException
@@ -38,4 +40,5 @@ instance TryFrom String SortType where
     "time" -> Right TIME
     "version" -> Right VERSION
     "extension" -> Right EXTENSION
+    "width" -> Right WIDTH
     s -> Left . TryFromException s . Just $ toException InvalidFormat
