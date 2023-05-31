@@ -37,33 +37,34 @@ import Haskellorls.Formatter.Attribute qualified as Attr
 import Haskellorls.Formatter.Layout.Grid qualified as Grid
 import Haskellorls.Formatter.Quote qualified as Quote
 import Haskellorls.Formatter.WrappedText qualified as WT
-import Haskellorls.Lens.Micro (makeLenses', use, view, (%=), (.=))
 import Haskellorls.NodeInfo qualified as Node
 import Haskellorls.System.OsPath.Posix.Extra (PosixPath, decode, encode, (</>))
 import Haskellorls.Walk.Dired qualified as Dired
 import Haskellorls.Walk.Listing qualified as Listing
 import Haskellorls.Walk.Sort qualified as Sort
 import Haskellorls.Walk.Utils qualified as Walk
+import Lens.Micro.Mtl (use, view, (%=), (.=))
+import Lens.Micro.TH (makeLenses)
 import System.IO.Unsafe (unsafePerformIO)
 import Witch (from, via)
 
 data LsConf = LsConf
-  { _config :: Config.Config,
+  { _configL :: Config.Config,
     printers :: Formatter.Printers
   }
 
-$(makeLenses' ''LsConf)
+makeLenses ''LsConf
 
 data LsState = LsState
-  { _inodes :: Walk.Inodes,
-    _indices :: Dired.NameIndeces,
-    _errors :: [SomeException]
+  { _inodesL :: Walk.Inodes,
+    _indicesL :: Dired.NameIndeces,
+    _errorsL :: [SomeException]
   }
 
 instance Default LsState where
   def = LsState mempty Dired.empty []
 
-$(makeLenses' ''LsState)
+makeLenses ''LsState
 
 -- | A central piece monad of haskellorls.
 --
