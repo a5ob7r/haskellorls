@@ -13,6 +13,7 @@ import Data.List (isSuffixOf)
 import Data.Maybe (fromMaybe)
 import Data.Text qualified as T
 import Data.Text.Lazy qualified as TL
+import GHC.IO.Encoding (TextEncoding)
 import Haskellorls.Config.Environment qualified as Env
 import Haskellorls.Config.Format (Format (..))
 import Haskellorls.Config.Indicator (IndicatorStyle (..))
@@ -81,7 +82,8 @@ data Config = Config
     zero :: Bool,
     dired :: Bool,
     currentWorkingDirectory :: PosixPath,
-    hostname :: T.Text
+    hostname :: T.Text,
+    encoding :: TextEncoding
   }
 
 mkConfig :: Env.Environment -> Option -> Config
@@ -216,6 +218,7 @@ mkConfig env Option {..} = Config {..}
     toTTY = Env.toTerminal env
     currentWorkingDirectory = Env.cwd env
     hostname = T.pack $ Env.hostname env
+    encoding = Env.encoding env
 
 -- | Disable 'dereferenceCommandLine' and 'dereferenceCommandLineSymlinkToDir'
 -- of 'Config'.

@@ -9,6 +9,7 @@ import Control.Exception.Safe (MonadCatch)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Maybe (MaybeT (..))
 import Data.Gettext (Catalog, loadCatalog)
+import GHC.IO.Encoding (TextEncoding, getLocaleEncoding)
 import Haskellorls.Data.Gettext.Extra (lookupMO)
 import Haskellorls.System.Locale qualified as Locale
 import Haskellorls.System.OsPath.Posix.Extra (PosixPath, decode, encode)
@@ -31,7 +32,8 @@ data Environment = Environment
     hostname :: String,
     columnSize :: Maybe Int,
     lcMessages :: Locale.LcMessages,
-    catalog :: Maybe Catalog
+    catalog :: Maybe Catalog,
+    encoding :: TextEncoding
   }
 
 mkEnvironment :: (Alternative m, MonadCatch m, MonadIO m) => m Environment
@@ -64,5 +66,7 @@ mkEnvironment = do
     locale <- MaybeT . return $ from lcMessages
     path <- MaybeT $ lookupMO (encode "/usr/share/locale") locale "coreutils"
     MaybeT . liftIO . optional . loadCatalog $ decode path
+
+  encoding <- liftIO getLocaleEncoding
 
   return Environment {..}

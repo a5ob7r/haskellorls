@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- Change an icon (by `--icons`) to `?` if in non `UTF-8` environment, such as `ASCII`.
+
 ### Added
 
 - `--time=mtime` and `--time=modification`.

@@ -15,6 +15,7 @@ import Data.List (intercalate, transpose)
 import Data.Text qualified as T
 import Data.Time (defaultTimeLocale, getCurrentTime, getCurrentTimeZone)
 import Data.Time.Clock.POSIX (posixSecondsToUTCTime)
+import GHC.IO.Encoding (textEncodingName)
 import Haskellorls.Class (termLength)
 import Haskellorls.Config qualified as Config
 import Haskellorls.Config.Context (FileContext (..))
@@ -213,9 +214,11 @@ mkPrinters config = do
 
   -- TODO: Should we use colored icon? However we must consider charactor size
   -- and background color. e.g. @echo -e '\e[48;5;196;38;5;232;1m\e[0m'@.
-  nodeIconPrinter <- do
-    lsicons <- if Config.icon config then Color.lsIcons else return def
-    return $ \node -> Attr.Other <$> [from . maybe "" Color.unIcon $ node `Color.lookup` lsicons, from @T.Text " "]
+  nodeIconPrinter <- case textEncodingName $ Config.encoding config of
+    "UTF-8" -> do
+      lsicons <- if Config.icon config then Color.lsIcons else return def
+      return $ \node -> Attr.Other <$> [from . maybe "" Color.unIcon $ node `Color.lookup` lsicons, from @T.Text " "]
+    _ -> return $ const [Attr.Other $ from @T.Text "? "]
 
   return $ Printers {fileNamePrinters = NodeNamePrinters {..}, ..}
 

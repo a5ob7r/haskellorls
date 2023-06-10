@@ -31,6 +31,10 @@ Matching algolithm between icons and filenames is same to `LS_COLORS`.
 
 You can configure the rule for matching between filenames and icons via an environment variable `LS_ICONS`. By default, `haskellorls` only has rules for filetypes and no them for filename patterns. See [a5ob7r/LS_ICONS](https://github.com/a5ob7r/LS_ICONS) if you would like to add filename pattern rules or configure them.
 
+These icons are replaced by `?` if in non `UTF-8` environment, such as `ASCII`.
+For example, it's not possible to print these icons because `ASCII` doesn't contain them.
+In the future, maybe relax this constraint to allow other encodings if test them.
+
 ### --tree
 
 Output all files using tree style layout.
