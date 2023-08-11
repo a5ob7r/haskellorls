@@ -119,7 +119,7 @@ jobs:
 
       - uses: haskell/actions/hlint-setup@v2
         with:
-          version: '3.5'
+          version: '3.6.1'
 
       - name: Run hlint
         uses: haskell/actions/hlint-run@v2
