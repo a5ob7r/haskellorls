@@ -66,6 +66,11 @@ jobs:
       - name: Build
         run: cabal install --overwrite-policy=always
 
+      - name: Configure for Test
+        run: |
+          rm -fv cabal.project.local
+          cabal configure --enable-tests --jobs --flags=pedantic
+
       - name: Run tests
         run: cabal test
 
