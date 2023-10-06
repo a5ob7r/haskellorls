@@ -124,7 +124,7 @@ library haskellorls-internal
     , microlens-th          ^>=0.4.3.10
     , mtl                   ^>=2.3.1
     , natural-sort          ^>=0.1.2
-    , optparse-applicative  ^>=0.17.1
+    , optparse-applicative  ^>=0.18.1
     , safe-exceptions       ^>=0.1.7
     , setlocale             ^>=1.0.0.10
     , terminal-size         ^>=0.3.2

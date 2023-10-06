@@ -7,8 +7,4 @@ index-state: 2023-10-05T21:19:55Z
 constraints:
   -- FIXME: "autodocodec", which is a dependency of "sydtest", v0.2.0.4 or
   -- earlier is not compatible with "aeson" v2.2 or later now.
-  aeson < 2.2,
-  -- FIXME: A workaround to fix blocking output by ansi-wl-pprint (probably).
-  -- Remove this if switch to optparse-applicative v0.18.0.0 because it no
-  -- longer uses it.
-  ansi-wl-pprint == 0.6.9
+  aeson < 2.2
