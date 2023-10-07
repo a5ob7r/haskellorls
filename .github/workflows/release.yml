@@ -15,7 +15,7 @@ jobs:
         cabal: ['3.10.1.0']
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - id: setup-haskell
         uses: haskell/actions/setup@v2
