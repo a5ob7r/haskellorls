@@ -128,7 +128,7 @@ library haskellorls-internal
     , safe-exceptions       ^>=0.1.7
     , setlocale             ^>=1.0.0.10
     , terminal-size         ^>=0.3.2
-    , text                  ^>=2.0
+    , text                  >=2.0
     , time                  ^>=1.12.2
     , transformers          ^>=0.6.1.0
     , unix                  ^>=2.8
