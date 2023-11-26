@@ -118,8 +118,8 @@ instance TryFrom String (BlockSizeMod BlockSize) where
           _ -> Just . BlockSize $ n
         _
           | null s -> Nothing
-          | s `elem` tail (inits "human-readable") -> Just HumanReadableBI
-          | s `elem` tail (inits "si") -> Just HumanReadableSI
+          | s `elem` drop 1 (inits "human-readable") -> Just HumanReadableBI
+          | s `elem` drop 1 (inits "si") -> Just HumanReadableSI
           | otherwise -> case s of
               c : "B" -> case toUpper c of
                 'K' -> Just KiloSi

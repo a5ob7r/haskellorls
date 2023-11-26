@@ -265,7 +265,7 @@ spec = do
         _ -> False
 
     it "returns HumanReadableBI if the value is the prefix of \"human-readable\"." $ do
-      property . forAll (elements . tail $ inits "human-readable") $ \s ->
+      property . forAll (elements . drop 1 $ inits "human-readable") $ \s ->
         tryFrom s `shouldSatisfy` \case
           Right (NoMod HumanReadableBI) -> True
           _ -> False
@@ -292,7 +292,7 @@ spec = do
         _ -> True
 
     it "returns HumanReadableSI if the value is the prefix of \"si\"." $ do
-      property . forAll (elements . tail $ inits "si") $ \s ->
+      property . forAll (elements . drop 1 $ inits "si") $ \s ->
         tryFrom s `shouldSatisfy` \case
           Right (NoMod HumanReadableSI) -> True
           _ -> False
