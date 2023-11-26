@@ -17,6 +17,7 @@ jobs:
           - ubuntu-latest
           - macOS-latest
         ghc:
+          - '9.8.1'
           - '9.6.3'
           - '9.4.7'
           - '9.2.8'
