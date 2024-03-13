@@ -21,8 +21,6 @@ jobs:
           - '9.6.4'
           - '9.4.8'
           - '9.2.8'
-        cabal:
-          - '3.10.1.0'
 
     steps:
       - uses: actions/checkout@v4
@@ -31,7 +29,6 @@ jobs:
         id: setup-haskell
         with:
           ghc-version: ${{ matrix.ghc }}
-          cabal-version: ${{ matrix.cabal }}
 
       - name: Freeze dependencies
         run: cabal freeze
@@ -39,9 +36,9 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ${{ steps.setup-haskell.outputs.cabal-store }}
-          key: ci-${{ runner.os }}-${{ matrix.cabal }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
+          key: ci-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
           restore-keys: |
-            ci-${{ runner.os }}-${{ matrix.cabal }}-${{ matrix.ghc }}-
+            ci-${{ runner.os }}-${{ matrix.ghc }}-
 
       - name: Add path
         run: |
@@ -84,7 +81,6 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         ghc: ['9.2.8']
-        cabal: ['3.10.1.0']
 
     steps:
       - uses: actions/checkout@v4
@@ -93,14 +89,13 @@ jobs:
         id: setup-haskell
         with:
           ghc-version: ${{ matrix.ghc }}
-          cabal-version: ${{ matrix.cabal }}
 
       - uses: actions/cache@v4
         with:
           path: ${{ steps.setup-haskell.outputs.cabal-store }}
-          key: format-${{ runner.os }}-${{ matrix.cabal }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project') }}
+          key: format-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project') }}
           restore-keys: |
-            format-${{ runner.os }}-${{ matrix.cabal }}-${{ matrix.ghc }}-
+            format-${{ runner.os }}-${{ matrix.ghc }}-
 
       - name: Install cabal-fmt
         run: cabal install --overwrite-policy=always -j cabal-fmt
