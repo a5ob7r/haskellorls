@@ -30,13 +30,15 @@ jobs:
         with:
           ghc-version: ${{ matrix.ghc }}
 
-      - name: Freeze dependencies
-        run: cabal freeze
+      - name: Configure the build and dry-run it
+        run: |
+          cabal configure --enable-tests --jobs --flags=pedantic
+          cabal build all --dry-run
 
       - uses: actions/cache@v4
         with:
           path: ${{ steps.setup-haskell.outputs.cabal-store }}
-          key: ci-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
+          key: ci-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('**/plan.json') }}
           restore-keys: |
             ci-${{ runner.os }}-${{ matrix.ghc }}-
 
@@ -56,21 +58,11 @@ jobs:
               ;;
           esac
 
-      - name: Configure
-        run: |
-          rm cabal.project.freeze
-          cabal configure --jobs --flags=pedantic
-
-      - name: Build
-        run: cabal install --overwrite-policy=always
-
-      - name: Configure for Test
-        run: |
-          rm -fv cabal.project.local
-          cabal configure --enable-tests --jobs --flags=pedantic
-
-      - name: Run tests
+      - name: Test
         run: cabal test
+
+      - name: Install
+        run: cabal install --overwrite-policy=always
 
       - name: Run golden tests
         run: goldplate --pretty-diff golden-test
