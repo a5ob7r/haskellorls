@@ -54,10 +54,10 @@ jobs:
         run: |
           case "$OSTYPE" in
             linux* )
-              curl -L "https://github.com/fugue/goldplate/releases/download/${GOLDPLATE_TAGNAME}/goldplate-${GOLDPLATE_TAGNAME}-linux-x86_64.tar.gz" | tar xz -C .
+              curl -L "https://github.com/fugue/goldplate/releases/download/${GOLDPLATE_TAGNAME}/goldplate-${GOLDPLATE_TAGNAME}-linux-x86_64.tar.gz" | tar xz -C . goldplate
               ;;
             darwin* )
-              curl -L "https://github.com/fugue/goldplate/releases/download/${GOLDPLATE_TAGNAME}/goldplate-${GOLDPLATE_TAGNAME}-darwin-x86_64.tar.gz" | tar xz -C .
+              curl -L "https://github.com/fugue/goldplate/releases/download/${GOLDPLATE_TAGNAME}/goldplate-${GOLDPLATE_TAGNAME}-darwin-x86_64.tar.gz" | tar xz -C . goldplate
               ;;
           esac
 
