@@ -50,7 +50,7 @@ jobs:
 
       - name: Run golden tests
         env:
-          GOLDPLATE_TAGNAME: v0.2.1
+          GOLDPLATE_TAGNAME: v0.2.1.1
         run: |
           case "$OSTYPE" in
             linux* )
