@@ -115,7 +115,7 @@ library haskellorls-internal
     , directory
     , env-locale
     , extra
-    , filepath              >=1.4.100 && <1.4.200
+    , filepath              ^>=1.5
     , Glob
     , haskell-gettext
     , hostname
@@ -125,6 +125,7 @@ library haskellorls-internal
     , mtl
     , natural-sort
     , optparse-applicative  ^>=0.18.1
+    , os-string
     , safe-exceptions
     , setlocale
     , terminal-size
