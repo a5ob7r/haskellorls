@@ -171,7 +171,6 @@ module Haskellorls.Formatter.Size
 where
 
 import Control.Applicative ((<|>))
-import Data.List (foldl')
 import Data.Maybe (fromMaybe)
 import Data.Text qualified as T
 import Haskellorls.Class (lookup)

@@ -15,7 +15,6 @@ module Haskellorls.System.Posix.PosixString
 where
 
 import Data.Bits (shiftR, (.&.), (.|.))
-import Data.List (foldl')
 import System.Posix.Files (fileBlockSize, fileBlocks)
 import System.Posix.PosixString hiding (GroupEntry, UserEntry)
 import System.Posix.User.ByteString (GroupEntry, UserEntry)

@@ -98,7 +98,10 @@ library haskellorls-internal
     Haskellorls.Walk.Sort
     Haskellorls.Walk.Utils
 
-  other-modules:      Paths_haskellorls
+  other-modules:
+    Paths_haskellorls
+    Prelude
+
   autogen-modules:    Paths_haskellorls
   hs-source-dirs:     src
   default-extensions:

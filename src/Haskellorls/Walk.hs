@@ -19,7 +19,7 @@ import Data.ByteString (fromFilePath)
 import Data.Default.Class (Default (..))
 import Data.Either (partitionEithers)
 import Data.Functor ((<&>))
-import Data.List (foldl', intersperse, partition)
+import Data.List (intersperse, partition)
 import Data.Sequence (Seq (Empty, (:<|)), fromList, singleton, (|>))
 import Data.Sequence qualified as Seq
 import Data.Text qualified as T

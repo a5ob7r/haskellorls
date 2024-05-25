@@ -7,7 +7,6 @@ where
 
 import Control.Monad.State.Strict (State, gets, put)
 import Data.IntSet qualified as IS
-import Data.List (foldl')
 import Haskellorls.NodeInfo qualified as Node
 import System.Posix.Types (FileID)
 
