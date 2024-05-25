@@ -3,3 +3,6 @@ packages:
   ./localeconv
 
 index-state: 2024-05-24T23:28:18Z
+
+-- One of dependencies of sydtest.
+allow-newer: svg-builder:base
