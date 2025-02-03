@@ -95,7 +95,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run ormolu
-        uses: mrkkrp/ormolu-action@v15
+        uses: mrkkrp/ormolu-action@v17
 
   lint:
     runs-on: ubuntu-latest
