@@ -81,7 +81,7 @@ jobs:
             format-${{ runner.os }}-${{ steps.setup-haskell.outputs.ghc-version }}-
 
       - name: Install cabal-fmt
-        run: cabal install --overwrite-policy=always -j cabal-fmt
+        run: cabal install --ignore-project --overwrite-policy=always -j cabal-fmt
 
       - name: Run cabal-fmt
         run: cabal-fmt --check --Werror haskellorls.cabal
