@@ -6,14 +6,7 @@ license:            BSD-3-Clause
 license-file:       LICENSE
 maintainer:         12132068+a5ob7r@users.noreply.github.com
 author:             a5ob7r
-tested-with:
-  GHC ==9.2.8
-   || ==9.4.8
-   || ==9.6.4
-   || ==9.8.2
-   || ==9.10.1
-   || ==9.12.1
-
+tested-with:        GHC ==9.8.2 || ==9.10.1 || ==9.12.1
 extra-source-files:
   CHANGELOG.md
   README.md
@@ -34,7 +27,7 @@ flag selinux
   manual:      True
 
 common common-options
-  build-depends:    base >=4.14 && <4.22
+  build-depends:    base >=4.19 && <4.22
   default-language: GHC2021
   ghc-options:
     -W -Wall -Wcompat -Wredundant-constraints -Wpartial-fields
