@@ -40,7 +40,7 @@ spec = do
   describe "formatF" do
     it "doesn't modify any number which is infinity." $
       formatF (Config "." "," [3] 127) (1 / 0 :: Double) == "Infinity"
-        && formatF (Config "." "," [3] 127) (-1 / 0 :: Double) == "-Infinity"
+        && formatF (Config "." "," [3] 127) (-(1 / 0) :: Double) == "-Infinity"
 
     it "formats a floating number using 'decimalPoint' as a decimal point." $
       formatF (Config ".point." "," [3] 127) (1.2345 :: Double) == "1.point.2345"
