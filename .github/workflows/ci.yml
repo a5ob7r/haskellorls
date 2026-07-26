@@ -17,9 +17,9 @@ jobs:
           - ubuntu-latest
           - macOS-latest
         ghc:
-          - '9.12.1'
-          - '9.10.1'
-          - '9.8.2'
+          - '9.12.4'
+          - '9.10.3'
+          - '9.8.4'
 
     steps:
       - uses: actions/checkout@v7
