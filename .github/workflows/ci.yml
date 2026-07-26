@@ -17,9 +17,9 @@ jobs:
           - ubuntu-latest
           - macos-26-intel
         ghc:
+          - '9.14.1'
           - '9.12.4'
           - '9.10.3'
-          - '9.8.4'
 
     steps:
       - uses: actions/checkout@v7

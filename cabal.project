@@ -2,7 +2,7 @@ packages:
   ./
   ./localeconv
 
-index-state: 2025-03-01T00:31:14Z
+index-state: 2026-07-26T13:54:10Z
 
 -- One of dependencies of sydtest.
 allow-newer: svg-builder:base
