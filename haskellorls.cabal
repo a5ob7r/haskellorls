@@ -1,44 +1,50 @@
-cabal-version:      2.2
-name:               haskellorls
-version:            0.6.1.0
-synopsis:           Haskell implementation of ls
-license:            BSD-3-Clause
-license-file:       LICENSE
-maintainer:         12132068+a5ob7r@users.noreply.github.com
-author:             a5ob7r
-tested-with:        GHC ==9.8.2 || ==9.10.1 || ==9.12.1
+cabal-version: 2.2
+name: haskellorls
+version: 0.6.1.0
+synopsis: Haskell implementation of ls
+license: BSD-3-Clause
+license-file: LICENSE
+maintainer: 12132068+a5ob7r@users.noreply.github.com
+author: a5ob7r
+tested-with: ghc ==9.8.2 || ==9.10.1 || ==9.12.1
 extra-source-files:
   CHANGELOG.md
   README.md
 
 flag rtsopts
   description: Enable -rtsopts
-  default:     False
-  manual:      True
+  default: False
+  manual: True
 
 flag pedantic
   description: Enable -Werror
-  default:     False
-  manual:      True
+  default: False
+  manual: True
 
 flag selinux
   description: Enable SELinux support
-  default:     False
-  manual:      True
+  default: False
+  manual: True
 
 common common-options
-  build-depends:    base >=4.19 && <4.22
+  build-depends: base >=4.19 && <4.22
   default-language: GHC2021
   ghc-options:
-    -W -Wall -Wcompat -Wredundant-constraints -Wpartial-fields
-    -Wunused-packages -Widentities -Wprepositive-qualified-module
+    -W
+    -Wall
+    -Wcompat
+    -Wredundant-constraints
+    -Wpartial-fields
+    -Wunused-packages
+    -Widentities
+    -Wprepositive-qualified-module
     -Wredundant-bang-patterns
 
   if flag(pedantic)
     ghc-options: -Werror
 
 library haskellorls-internal
-  import:             common-options
+  import: common-options
   exposed-modules:
     Haskellorls
     Haskellorls.Class
@@ -100,8 +106,8 @@ library haskellorls-internal
     Paths_haskellorls
     Prelude
 
-  autogen-modules:    Paths_haskellorls
-  hs-source-dirs:     src
+  autogen-modules: Paths_haskellorls
+  hs-source-dirs: src
   default-extensions:
     BlockArguments
     CPP
@@ -112,56 +118,56 @@ library haskellorls-internal
     StrictData
 
   build-depends:
-    , bytestring
-    , containers
-    , data-default-class
-    , directory
-    , env-locale
-    , extra
-    , filepath              ^>=1.5
-    , Glob
-    , haskell-gettext
-    , hostname
-    , localeconv
-    , microlens-mtl
-    , microlens-th
-    , mtl
-    , natural-sort
-    , optparse-applicative  ^>=0.18.1
-    , os-string
-    , safe-exceptions
-    , setlocale
-    , terminal-size
-    , text                  >=2.0
-    , time
-    , transformers
-    , unix                  ^>=2.8
-    , witch
+    bytestring,
+    containers,
+    data-default-class,
+    directory,
+    env-locale,
+    extra,
+    filepath ^>=1.5,
+    Glob,
+    haskell-gettext,
+    hostname,
+    localeconv,
+    microlens-mtl,
+    microlens-th,
+    mtl,
+    natural-sort,
+    optparse-applicative ^>=0.18.1,
+    os-string,
+    safe-exceptions,
+    setlocale,
+    terminal-size,
+    text >=2.0,
+    time,
+    transformers,
+    unix ^>=2.8,
+    witch,
 
   if flag(selinux)
     build-depends: selinux
-    cpp-options:   -DSELINUX
+    cpp-options: -DSELINUX
 
 executable haskellorls
-  import:         common-options
-  main-is:        Main.hs
+  import: common-options
+  main-is: Main.hs
   hs-source-dirs: app
-  build-depends:  haskellorls-internal
+  build-depends: haskellorls-internal
 
   if flag(rtsopts)
     ghc-options: -rtsopts
 
 test-suite test
-  import:             common-options
-  type:               exitcode-stdio-1.0
-  main-is:            Spec.hs
-  hs-source-dirs:     test
+  import: common-options
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  hs-source-dirs: test
   build-depends:
-    , haskellorls-internal
-    , QuickCheck
-    , sydtest
-    , time
-    , witch
+    haskellorls-internal,
+    QuickCheck,
+    sydtest,
+    time,
+    witch,
 
   other-modules:
     Test.Haskellorls.Config.Option.SizeSpec
@@ -172,4 +178,7 @@ test-suite test
     Test.Haskellorls.Humanize.FileSizeSpec
 
   build-tool-depends: sydtest-discover:sydtest-discover
-  ghc-options:        -threaded -rtsopts -with-rtsopts=-N
+  ghc-options:
+    -threaded
+    -rtsopts
+    -with-rtsopts=-N
