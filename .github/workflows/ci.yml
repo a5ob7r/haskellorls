@@ -15,7 +15,7 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - macOS-latest
+          - macos-26-intel
         ghc:
           - '9.12.4'
           - '9.10.3'
