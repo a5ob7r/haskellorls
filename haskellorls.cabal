@@ -133,7 +133,7 @@ library haskellorls-internal
     microlens-th,
     mtl,
     natural-sort,
-    optparse-applicative ^>=0.18.1,
+    optparse-applicative ^>=0.19.0,
     os-string,
     safe-exceptions,
     setlocale,
