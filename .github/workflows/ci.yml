@@ -82,7 +82,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Run ormolu
-        uses: haskell-actions/run-ormolu@v19
+        uses: haskell-actions/run-ormolu@v20
 
   lint:
     runs-on: ubuntu-latest
